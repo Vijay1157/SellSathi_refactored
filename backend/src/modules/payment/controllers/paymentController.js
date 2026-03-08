@@ -5,6 +5,7 @@ const crypto = require('crypto');
 const invoiceService = require('../../../shared/services/invoiceService');
 const emailService = require('../../../shared/services/emailService');
 const shiprocketService = require('../../../shared/services/shiprocketService');
+const { reduceStock } = require('../../../utils/stockUtils');
 
 /**
  * Handle Razorpay order creation.
@@ -68,6 +69,11 @@ const verifyPayment = async (req, res) => {
             console.error("Shiprocket shipment logic error:", e.message);
         }
 
+        // Reduce stock atomically
+        if (orderData.items) {
+            reduceStock(orderData.items).catch(err => console.error("Stock reduction error:", err));
+        }
+
         return res.status(200).json({ success: true, orderId: orderData.orderId, documentId: orderRef.id });
     } catch (error) {
         return res.status(500).json({ success: false, message: "Verification failed" });
@@ -122,6 +128,11 @@ const codOrder = async (req, res) => {
             }
         } catch (e) {
             console.error("Shiprocket shipment logic error:", e.message);
+        }
+
+        // Reduce stock atomically
+        if (orderData.items) {
+            reduceStock(orderData.items).catch(err => console.error("Stock reduction error:", err));
         }
 
         return res.status(200).json({ success: true, orderId: orderData.orderId, documentId: orderRef.id });

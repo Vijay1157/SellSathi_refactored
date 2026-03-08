@@ -26,7 +26,7 @@ export default function Footer() {
         //   • Show PENDING screen if application is under review
         //   • Redirect to /seller/dashboard if already APPROVED
         //   • Show registration form if somehow NONE
-        navigate('/seller/register');
+        window.open('/seller', '_blank');
     };
 
     return (
@@ -84,7 +84,7 @@ export default function Footer() {
                                         <ShieldCheck size={16} /> Management Login
                                     </button>
                                 </li>
-                                <li><Link to="/seller/register" className="text-muted" style={{ textDecoration: 'none', fontSize: '0.9rem', fontWeight: 600 }}>Seller Portal</Link></li>
+                                <li><Link to="/seller" target="_blank" rel="noopener noreferrer" className="text-muted" style={{ textDecoration: 'none', fontSize: '0.9rem', fontWeight: 600 }}>Seller Portal</Link></li>
                             </ul>
                         </div>
 

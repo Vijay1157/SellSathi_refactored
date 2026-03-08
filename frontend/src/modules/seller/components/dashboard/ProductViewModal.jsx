@@ -137,7 +137,7 @@ export default function ProductViewModal({
                                                         const formData = new FormData();
                                                         formData.append('image', file);
                                                         try {
-                                                            const response = await authFetch('/seller/upload-image', { method: 'POST', body: formData });
+                                                            const response = await authFetch('/auth/upload-image', { method: 'POST', body: formData });
                                                             const data = await response.json();
                                                             if (data.success) setEditData({ ...editData, image: data.url });
                                                             else alert('Upload failed: ' + data.message);
@@ -350,7 +350,7 @@ export default function ProductViewModal({
                                                                     const fd = new FormData();
                                                                     fd.append('image', file);
                                                                     try {
-                                                                        const res = await authFetch('/seller/upload-image', { method: 'POST', body: fd });
+                                                                        const res = await authFetch('/auth/upload-image', { method: 'POST', body: fd });
                                                                         const rd = await res.json();
                                                                         if (rd.success) setEditData(prev => ({ ...prev, variantImages: { ...(prev.variantImages || {}), [color]: rd.url } }));
                                                                         else alert('Upload failed: ' + rd.message);

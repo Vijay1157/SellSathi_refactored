@@ -2,15 +2,21 @@ import { auth } from '@/modules/shared/config/firebase';
 import { authFetch } from './api';
 
 // Helper to get current user UID (supports Firebase and Test Login)
+// Helper to get current user UID (syncs with Navbar state and prevents ghost sessions)
 const getUID = () => {
-    try {
-        const localUser = JSON.parse(localStorage.getItem('user') || '{}');
-        const currentUser = auth.currentUser;
+    const localUserStr = localStorage.getItem('user');
+    if (!localUserStr) {
+        if (auth.currentUser) {
+            auth.signOut().catch(console.error);
+        }
+        return null;
+    }
 
-        // Priority: 1. Firebase Auth UID, 2. Stored user UID
-        return currentUser?.uid || localUser?.uid;
+    try {
+        const localUser = JSON.parse(localUserStr);
+        return auth.currentUser?.uid || localUser.uid;
     } catch (e) {
-        return auth.currentUser?.uid;
+        return null;
     }
 };
 
@@ -19,8 +25,7 @@ export const getWishlist = async () => {
     try {
         const uid = getUID();
         if (!uid) {
-            // Guest mode
-            return { success: true, items: JSON.parse(localStorage.getItem('localWishlist') || '[]') };
+            return { success: true, items: [] };
         }
 
         const response = await authFetch(`/consumer/${uid}/wishlist`);
@@ -55,12 +60,8 @@ export const addToWishlist = async (product) => {
         };
 
         if (!uid) {
-            // Guest mode: localStorage
-            const localWishlist = JSON.parse(localStorage.getItem('localWishlist') || '[]');
-            if (!localWishlist.find(i => i.id === product.id)) {
-                localWishlist.push(productToAdd);
-                localStorage.setItem('localWishlist', JSON.stringify(localWishlist));
-            }
+            window.dispatchEvent(new Event('openLoginModal'));
+            return { success: false, message: 'Login required', triggerLogin: true };
         } else {
             // Logged in: Backend API
             const response = await authFetch(`/consumer/${uid}/wishlist/add`, {
@@ -85,9 +86,7 @@ export const removeFromWishlist = async (productId) => {
     try {
         const uid = getUID();
         if (!uid) {
-            const localWishlist = JSON.parse(localStorage.getItem('localWishlist') || '[]');
-            const updated = localWishlist.filter(i => i.id !== productId);
-            localStorage.setItem('localWishlist', JSON.stringify(updated));
+            return { success: false };
         } else {
             // Logged in: Backend API
             const response = await authFetch(`/consumer/${uid}/wishlist/${productId}`, {

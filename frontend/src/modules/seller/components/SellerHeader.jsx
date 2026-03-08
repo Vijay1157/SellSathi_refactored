@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { LoginModal } from './LoginModal';
+import AuthModal from '@/modules/auth/components/AuthModal';
 
 const SellerHeader = () => {
   const [isLoginOpen, setIsLoginOpen] = useState(false);
@@ -65,7 +65,7 @@ const SellerHeader = () => {
           </div>
         </div>
       </header>
-      <LoginModal isOpen={isLoginOpen} onClose={() => setIsLoginOpen(false)} role="seller" />
+      <AuthModal isOpen={isLoginOpen} onClose={() => setIsLoginOpen(false)} hideRegister={true} />
     </>
   );
 };

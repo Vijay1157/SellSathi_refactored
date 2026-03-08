@@ -35,7 +35,7 @@ function persistUser(data, extras = {}) {
     window.dispatchEvent(new CustomEvent('userDataChanged', { detail: userData }));
 }
 
-export default function AuthModal({ isOpen, onClose, onSuccess }) {
+export default function AuthModal({ isOpen, onClose, onSuccess, hideRegister }) {
     const [step, setStep] = useState('phone');
     const [isRegistering, setIsRegistering] = useState(false);
     const [isEmailSignup, setIsEmailSignup] = useState(false);
@@ -160,8 +160,12 @@ export default function AuthModal({ isOpen, onClose, onSuccess }) {
     const handleEmailLogin = async (e) => {
         if (e) e.preventDefault();
         setError('');
-        if (!formData.fullName.trim() || !formData.dob || !formData.email.trim() || !formData.password.trim()) { setError('Please fill in all details'); return; }
-        if (new Date(formData.dob) > new Date()) { setError('Date of Birth cannot be in the future'); return; }
+        
+        // Only require email/password for login; registration fields are handled in handleRegisterDirectly
+        if (!formData.email.trim() || !formData.password.trim()) { 
+            setError('Please enter both email and password'); 
+            return; 
+        }
         setLoading(true);
         try {
             let idToken = null, isTestMode = false;
@@ -247,6 +251,7 @@ export default function AuthModal({ isOpen, onClose, onSuccess }) {
 
                         {(isEmailLogin || isEmailSignup) ? (
                             <EmailAuthForm
+                                hideRegister={hideRegister}
                                 isEmailLogin={isEmailLogin}
                                 formData={formData} setFormData={setFormData}
                                 showPassword={showPassword} setShowPassword={setShowPassword}
@@ -278,7 +283,7 @@ export default function AuthModal({ isOpen, onClose, onSuccess }) {
                             />
                         )}
 
-                        {step === 'phone' && !isEmailSignup && !isEmailLogin && (
+                        {step === 'phone' && !isEmailSignup && !isEmailLogin && !hideRegister && (
                             <div className="auth-toggle">
                                 {isRegistering
                                     ? <p>Already have an account? <button onClick={() => setIsRegistering(false)}>Login</button></p>

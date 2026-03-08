@@ -3,11 +3,10 @@
     inset: 0;
     background: rgba(0, 0, 0, 0.4);
     backdrop-filter: blur(8px);
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    display: grid; /* Improved centering */
+    place-items: center;
     z-index: 3000;
-    padding: 1rem;
+    padding: 2rem 1rem;
     overflow-y: auto;
 }
 
@@ -23,13 +22,32 @@ input::-webkit-credentials-auto-fill-button {
     background: var(--background);
     border: 1px solid var(--border);
     border-radius: 24px;
-    padding: 2rem 2.5rem;
+    padding: 2.5rem;
     position: relative;
     box-shadow: 0 20px 40px rgba(0,0,0,0.2);
-    max-height: 95vh;
-    overflow-y: auto;
+    max-height: 85vh;
+    width: 100%;
     margin: auto;
-    scrollbar-gutter: stable;
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: var(--primary) transparent;
+}
+
+/* Custom subtle scrollbar */
+.auth-modal-content::-webkit-scrollbar {
+    width: 6px;
+    display: block;
+}
+
+.auth-modal-content::-webkit-scrollbar-track {
+    background: transparent;
+    margin: 10px 0;
+}
+
+.auth-modal-content::-webkit-scrollbar-thumb {
+    background: var(--primary);
+    border-radius: 10px;
+    border: 2px solid var(--background); /* Creates a floating look */
 }
 
 /* Custom scrollbar for modal */
@@ -258,7 +276,7 @@ input::-webkit-credentials-auto-fill-button {
     border-right: 1px solid var(--border);
     background: rgba(var(--primary-rgb), 0.05);
     min-width: 85px;
-    text-align: right;
+    text-align: left; /* Alignment refinement */
     font-size: 0.9rem;
 }
 
@@ -385,6 +403,29 @@ input::-webkit-credentials-auto-fill-button {
 .auth-google-btn:disabled {
     opacity: 0.6;
     cursor: not-allowed;
+}
+
+.auth-email-toggle-btn {
+    width: 100%;
+    margin-top: 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    padding: 0.8rem;
+    background: transparent;
+    border: 1px dashed var(--primary);
+    border-radius: 12px;
+    color: var(--primary);
+    font-weight: 600;
+    font-size: 0.95rem;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.auth-email-toggle-btn:hover {
+    background: rgba(var(--primary-rgb), 0.05);
+    border-style: solid;
 }
 
 .dark .auth-google-btn {

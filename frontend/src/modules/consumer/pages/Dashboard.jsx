@@ -214,7 +214,7 @@ export default function ConsumerDashboard() {
         const formData = new FormData();
         formData.append('image', file);
         try {
-            const response = await authFetch('/seller/upload-image', { method: 'POST', body: formData });
+            const response = await authFetch('/auth/upload-image', { method: 'POST', body: formData });
             const data = await response.json();
             if (data.success && data.url) {
                 await authFetch(`/consumer/${user.uid}/profile`, {
@@ -360,7 +360,14 @@ export default function ConsumerDashboard() {
                                 ))}
 
                                 <div className="border-t border-gray-200 my-2"></div>
-                                <button onClick={() => auth.signOut()}
+                                <button onClick={async () => {
+                                    try { await auth.signOut(); } catch (e) { console.error(e); }
+                                    localStorage.removeItem('user');
+                                    localStorage.removeItem('userName');
+                                    localStorage.removeItem('dob');
+                                    window.dispatchEvent(new CustomEvent('userDataChanged'));
+                                    navigate('/');
+                                }}
                                     className="w-full flex items-center gap-3 px-3 py-2.5 rounded-md text-sm font-medium text-red-600 hover:bg-red-50 transition-colors">
                                     <LogOut size={18} /><span>Logout</span>
                                 </button>

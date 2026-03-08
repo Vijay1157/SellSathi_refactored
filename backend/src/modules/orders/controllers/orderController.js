@@ -3,6 +3,7 @@ const { admin, db } = require('../../../config/firebase');
 const cache = require('../../../utils/cache');
 const invoiceService = require('../../../shared/services/invoiceService');
 const emailService = require('../../../shared/services/emailService');
+const { reduceStock, replenishStock } = require('../../../utils/stockUtils');
 const path = require('path');
 const fs = require('fs');
 
@@ -40,6 +41,11 @@ const placeOrder = async (req, res) => {
         // Invalidate user's order cache
         cache.invalidate(`userOrders_${uid}`, 'adminAllOrders');
         cache.invalidatePrefix('adminStats');
+
+        // Reduce stock atomically
+        if (orderData.items) {
+            reduceStock(orderData.items).catch(err => console.error("Stock reduction error:", err));
+        }
 
         return res.status(200).json({ success: true, orderId, message: "Order placed successfully" });
     } catch (error) {
@@ -139,6 +145,11 @@ const cancelOrder = async (req, res) => {
             status: "Cancelled",
             cancelledAt: admin.firestore.FieldValue.serverTimestamp()
         });
+
+        // Replenish stock
+        if (orderData.items) {
+            replenishStock(orderData.items).catch(err => console.error("Stock replenishment error:", err));
+        }
 
         // Invalidate caches
         cache.invalidate(`orders_${uid}`, 'adminAllOrders');

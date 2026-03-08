@@ -80,7 +80,7 @@ export default function SellerDashboard() {
         const uid = sellerUid || getUserUid();
         if (!uid) return;
 
-        const response = await authFetch(`/seller/product/update/${selectedProduct.id}`, {
+        const response = await authFetch(`/products/${selectedProduct.id}`, {
             method: 'PUT',
             body: JSON.stringify({ sellerId: uid, productData: payloadData })
         });

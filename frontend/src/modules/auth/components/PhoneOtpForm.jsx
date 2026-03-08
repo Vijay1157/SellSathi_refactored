@@ -164,6 +164,11 @@ export default function PhoneOtpForm({
                         </svg>
                         Continue with Google
                     </button>
+
+                    <button type="button" className="auth-email-toggle-btn" onClick={onSwitchToEmailLogin} disabled={loading}>
+                        <Mail size={18} />
+                        Login with Email & Password
+                    </button>
                 </>
             )}
 

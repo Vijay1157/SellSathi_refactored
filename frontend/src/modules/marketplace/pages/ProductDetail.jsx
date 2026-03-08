@@ -18,6 +18,7 @@ import { getFrequentlyBoughtTogether, getSimilarProducts } from '@/modules/share
 
 
 
+
 export default function ProductDetail() {
     const { id } = useParams();
     const navigate = useNavigate();
@@ -143,113 +144,7 @@ export default function ProductDetail() {
         }
     };
 
-    const fetchProduct = async () => {
-        try {
-            const docRef = doc(db, "products", id);
-            const docSnap = await getDoc(docRef);
-            let data = docSnap.exists() ? { id: docSnap.id, ...docSnap.data() } : null;
 
-            const mock = deals[id] || (id.includes('fashion') ? deals["fashion-1"] : (id.includes('deal') ? deals["deal-1"] : deals["generic"]));
-            if (mock) {
-                data = {
-                    ...mock,
-                    ...data,
-                    colors: (data?.colors && data.colors.length > 0) ? data.colors : mock.colors,
-                    materials: (data?.materials && data.materials.length > 0) ? data.materials : mock.materials,
-                    types: (data?.types && data.types.length > 0) ? data.types : mock.types,
-                    specifications: (data?.specifications && Object.keys(data.specifications).length > 0) ? data.specifications : mock.specifications,
-                    description: data?.description || mock.description || ("Premium " + (data?.name || mock.name || "Product") + " with cutting-edge features.")
-                };
-            }
-
-            if (data) {
-                data.id = data.id || id;
-                // Normalise: seller products store `title` not `name`
-                if (!data.name && data.title) data.name = data.title;
-                setProduct(data);
-                if (data.colors && data.colors.length > 0) setSelectedColor(data.colors[0]);
-                if (data.sizes && data.sizes.length > 0) setSelectedSize(data.sizes[1] || data.sizes[0]);
-                if (data.storage && data.storage.length > 0) setSelectedStorage(data.storage[0]);
-                if (data.memory && data.memory.length > 0) setSelectedMemory(data.memory[0]);
-                updateRecentlyViewed(data);
-                setupSellerListener(data.sellerId);
-            }
-            setLoading(false);
-        } catch (err) {
-            console.error(err);
-            setLoading(false);
-        }
-    };
-
-    const setupReviewsListener = () => {
-        const loadReviews = async () => {
-            try {
-                const { reviews, stats } = await fetchProductReviews(id);
-                setReviews(reviews);
-                setReviewStats(stats);
-            } catch (err) {
-                console.error("Failed to load reviews:", err);
-            }
-        };
-
-        const checkEligibility = async (retryCount = 0) => {
-            let currentUid = auth.currentUser?.uid;
-
-            if (!currentUid) {
-                try {
-                    const localUser = JSON.parse(localStorage.getItem('user'));
-                    currentUid = localUser?.uid;
-                } catch (e) { }
-            }
-
-            if (!currentUid) {
-                // If no user yet, retry in 1s (Firebase auth might still be initializing)
-                if (retryCount < 3) {
-                    setTimeout(() => checkEligibility(retryCount + 1), 1000);
-                }
-                return;
-            }
-
-            try {
-                const res = await authFetch(`/orders/${currentUid}/reviewable-orders`);
-                if (!res.ok) throw new Error('Failed to fetch eligibility');
-
-                const data = await res.json();
-                if (data.success && data.orders) {
-                    // Match by ID or ProductID, trimmed and case-insensitive
-                    const order = data.orders.find(o =>
-                        String(o.productId).trim().toLowerCase() === String(id).trim().toLowerCase()
-                    );
-
-                    if (order) {
-                        setIsEligibleForReview(true);
-                        setEligibleOrder(order);
-                        return; // Success
-                    }
-                }
-                setIsEligibleForReview(false);
-                setEligibleOrder(null);
-            } catch (err) {
-                console.error("Eligibility check error:", err);
-                // Silently ignore, but maybe retry once
-                if (retryCount < 1) {
-                    setTimeout(() => checkEligibility(retryCount + 1), 2000);
-                }
-            }
-        };
-
-        loadReviews();
-        checkEligibility();
-
-        const handleUserChange = () => checkEligibility();
-        window.addEventListener('userDataChanged', handleUserChange);
-        window.addEventListener('reviewsUpdate', loadReviews);
-
-        return () => {
-            window.removeEventListener('reviewsUpdate', loadReviews);
-            window.removeEventListener('userDataChanged', handleUserChange);
-        };
-    };
 
     useEffect(() => {
         const setupSellerListener = async (sellerId) => {
@@ -485,29 +380,18 @@ export default function ProductDetail() {
 
 
     const toggleWishlist = async () => {
-        if (!auth.currentUser) {
-            window.dispatchEvent(new Event('openLoginModal'));
-            return;
-        }
-        if (!product) return;
         try {
             if (isSaved) {
-                const res = await removeFromWishlist(id);
-                if (res.success) {
-                    setIsSaved(false);
-                } else {
-                    alert('Wishlist error: ' + (res.message || 'Failed to remove'));
-                }
+                await removeFromWishlist(product.id);
+                setIsSaved(false);
             } else {
                 const res = await addToWishlist(product);
                 if (res.success) {
                     setIsSaved(true);
-                } else {
-                    alert('Wishlist error: ' + (res.message || 'Failed to add'));
                 }
             }
         } catch (err) {
-            alert('Wishlist connection error. Please ensure the backend is running.');
+            console.error('Wishlist error:', err);
         }
     };
 
@@ -550,10 +434,6 @@ export default function ProductDetail() {
     };
 
     const handleAddToCart = async () => {
-        if (!auth.currentUser) {
-            window.dispatchEvent(new Event('openLoginModal'));
-            return;
-        }
         if (!product) return;
         const inStock = product.stock !== 0 && product.status !== 'Out of Stock';
         if (!inStock) return;
@@ -570,16 +450,12 @@ export default function ProductDetail() {
         if (res.success) {
             alert('✅ Product added to cart successfully!');
             window.dispatchEvent(new Event('cartUpdate'));
-        } else {
+        } else if (!res.triggerLogin) {
             alert('❌ Failed to add product to cart: ' + (res.message || 'Please try again.'));
         }
     };
 
     const handleBuyNow = async () => {
-        if (!auth.currentUser) {
-            window.dispatchEvent(new Event('openLoginModal'));
-            return;
-        }
         if (!product) return;
         const inStock = product.stock !== 0 && product.status !== 'Out of Stock';
         if (!inStock) return;
@@ -596,7 +472,7 @@ export default function ProductDetail() {
         if (res.success) {
             // Pass the product ID as state to checkout so it knows to select only this item
             navigate('/checkout', { state: { buyNowProductId: productWithNumPrice.id } });
-        } else {
+        } else if (!res.triggerLogin) {
             alert('❌ Failed to process. Please try again.');
         }
     };

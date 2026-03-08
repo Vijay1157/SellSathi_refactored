@@ -5,6 +5,7 @@ import { Star, Heart, Eye, ShoppingCart, TrendingUp } from 'lucide-react';
 import { collection, getDocs, query, limit } from 'firebase/firestore';
 import { db, auth } from '@/modules/shared/config/firebase';
 import { addToCart } from '@/modules/shared/utils/cartUtils';
+import { listenToWishlist, addToWishlist, removeFromWishlist } from '@/modules/shared/utils/wishlistUtils';
 import QuickViewModal from '@/modules/shared/components/common/QuickViewModal';
 
 export default function Trending() {
@@ -14,10 +15,14 @@ export default function Trending() {
     const [wishlist, setWishlist] = useState([]);
     const [isQuickViewOpen, setIsQuickViewOpen] = useState(false);
     const [selectedQuickProduct, setSelectedQuickProduct] = useState(null);
+    const [loadingWishlist, setLoadingWishlist] = useState(true);
 
     useEffect(() => {
-        const saved = JSON.parse(localStorage.getItem('wishlist') || '[]');
-        setWishlist(saved);
+        const unsubscribe = listenToWishlist((items) => {
+            setWishlist(items);
+            setLoadingWishlist(false);
+        });
+        return () => unsubscribe();
     }, []);
 
     useEffect(() => {
@@ -43,33 +48,24 @@ export default function Trending() {
 
     const handleAddToCart = async (e, p) => {
         if (e) e.stopPropagation();
-        if (!auth.currentUser) {
-            window.dispatchEvent(new Event('openLoginModal'));
-            return;
-        }
         const res = await addToCart(p);
         if (res.success) {
             alert('✅ Product added to cart successfully!');
         }
     };
 
-    const toggleWishlist = (e, product) => {
+    const toggleWishlist = async (e, product) => {
         if (e) e.stopPropagation();
-        if (!auth.currentUser) {
-            window.dispatchEvent(new Event('openLoginModal'));
-            return;
+        const alreadySaved = wishlist.some(item => item.id === product.id);
+        try {
+            if (alreadySaved) {
+                await removeFromWishlist(product.id);
+            } else {
+                await addToWishlist(product);
+            }
+        } catch (error) {
+            console.error('Wishlist toggle failed:', error);
         }
-        const saved = JSON.parse(localStorage.getItem('wishlist') || '[]');
-        const alreadySaved = saved.some(item => item.id === product.id);
-        let updated;
-        if (alreadySaved) {
-            updated = saved.filter(item => item.id !== product.id);
-        } else {
-            updated = [...saved, product];
-        }
-        localStorage.setItem('wishlist', JSON.stringify(updated));
-        setWishlist(updated);
-        window.dispatchEvent(new CustomEvent('wishlistUpdated'));
     };
 
     const openQuickView = (e, product) => {

@@ -22,6 +22,7 @@ import ConsumerDashboard from '@/modules/consumer/pages/Dashboard';
 import Navbar from '@/modules/shared/components/layout/Navbar';
 import Footer from '@/modules/shared/components/layout/Footer';
 import ProtectedRoute from '@/modules/shared/components/common/ProtectedRoute';
+import ScrollToTop from '@/modules/shared/components/common/ScrollToTop';
 
 function AppContent() {
   const location = useLocation();
@@ -37,6 +38,7 @@ function AppContent() {
 
   return (
     <div className="app-container">
+      <ScrollToTop />
       {!isSellerPage && <Navbar />}
       <main className="main-content">
         <Routes>

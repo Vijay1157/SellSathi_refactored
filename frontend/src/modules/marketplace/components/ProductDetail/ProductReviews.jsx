@@ -104,7 +104,7 @@ export default function ProductReviews({
         formData.append('image', file);
 
         try {
-            const res = await authFetch('/seller/upload-image', {
+            const res = await authFetch('/auth/upload-image', {
                 method: 'POST',
                 body: formData
             });

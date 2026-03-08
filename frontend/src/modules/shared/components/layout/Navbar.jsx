@@ -3,7 +3,7 @@ import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { ShoppingCart, User, Search, LogOut, ChevronDown, Heart, ShoppingBag } from 'lucide-react';
 import AuthModal from '@/modules/auth/components/AuthModal';
 import { collection, getDocs, query, limit } from 'firebase/firestore';
-import { db } from '@/modules/shared/config/firebase';
+import { db, auth } from '@/modules/shared/config/firebase';
 import { listenToCart } from '@/modules/shared/utils/cartUtils';
 import { listenToWishlist } from '@/modules/shared/utils/wishlistUtils';
 import { MAIN_CATEGORIES, SPECIAL_CATEGORIES, SUBCATEGORIES } from '@/modules/shared/config/categories';
@@ -203,7 +203,12 @@ export default function Navbar() {
         };
     }, []);
 
-    const handleSignOut = () => {
+    const handleSignOut = async () => {
+        try {
+            await auth.signOut();
+        } catch (error) {
+            console.error('Error signing out from Firebase:', error);
+        }
         localStorage.removeItem('user');
         localStorage.removeItem('userName');
         localStorage.removeItem('dob');
@@ -271,8 +276,10 @@ export default function Navbar() {
                                 </div>
 
                                 <Link 
-                                    to="/seller/register" 
+                                    to="/seller" 
                                     className="btn btn-seller"
+                                    target="_blank"
+                                    rel="noopener noreferrer"
                                 >
                                     Become a Seller
                                 </Link>
