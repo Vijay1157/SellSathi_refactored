@@ -46,7 +46,7 @@ export default function SellerProfileTab({ profile }) {
                             <h3 className="text-xl font-bold text-gray-900 border-b pb-4">Identity Details</h3>
                             <div className="grid grid-cols-1 gap-6">
                                 {[
-                                    { label: 'Full Name', value: profile.fullName || profile.name },
+                                { label: 'Full Name', value: profile.fullName || profile.name || 'N/A' },
                                     { label: 'Aadhaar Number', value: profile.aadhaarNumber ? `XXXX XXXX ${profile.aadhaarNumber.slice(-4)}` : 'N/A' },
                                     { label: 'Phone Number', value: profile.phoneNumber || 'N/A' },
                                     { label: 'Age', value: profile.age || 'N/A' },

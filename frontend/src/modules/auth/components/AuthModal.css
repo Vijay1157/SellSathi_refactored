@@ -3,11 +3,11 @@
     inset: 0;
     background: rgba(0, 0, 0, 0.4);
     backdrop-filter: blur(8px);
-    display: grid; /* Improved centering */
-    place-items: center;
+    display: flex; /* Robust centering */
+    align-items: center;
+    justify-content: center;
     z-index: 3000;
     padding: 2rem 1rem;
-    overflow-y: auto;
 }
 
 /* Hide native browser password reveal icon */
@@ -25,50 +25,36 @@ input::-webkit-credentials-auto-fill-button {
     padding: 2.5rem;
     position: relative;
     box-shadow: 0 20px 40px rgba(0,0,0,0.2);
-    max-height: 85vh;
+    max-height: 90vh;
     width: 100%;
     margin: auto;
     overflow-y: auto;
+    scrollbar-gutter: stable both-edges; /* Modern way to keep content perfectly centered on both sides */
+    
+    /* Subtle Greyish-White for Firefox */
     scrollbar-width: thin;
-    scrollbar-color: var(--primary) transparent;
+    scrollbar-color: rgba(255, 255, 255, 0.15) transparent;
 }
 
-/* Custom subtle scrollbar */
+/* Custom subtle greyish-white scrollbar */
 .auth-modal-content::-webkit-scrollbar {
-    width: 6px;
-    display: block;
+    width: 4px;
 }
 
 .auth-modal-content::-webkit-scrollbar-track {
     background: transparent;
-    margin: 10px 0;
 }
 
 .auth-modal-content::-webkit-scrollbar-thumb {
-    background: var(--primary);
+    background: rgba(255, 255, 255, 0.15); /* Semi-transparent greyish white */
     border-radius: 10px;
-    border: 2px solid var(--background); /* Creates a floating look */
-}
-
-/* Custom scrollbar for modal */
-.auth-modal-content::-webkit-scrollbar {
-    width: 6px;
-}
-
-.auth-modal-content::-webkit-scrollbar-track {
-    background: transparent;
-    margin: 8px 0;
-}
-
-.auth-modal-content::-webkit-scrollbar-thumb {
-    background: linear-gradient(180deg, var(--primary) 0%, var(--secondary) 100%);
-    border-radius: 10px;
-    transition: all 0.3s ease;
 }
 
 .auth-modal-content::-webkit-scrollbar-thumb:hover {
-    background: linear-gradient(180deg, var(--secondary) 0%, var(--primary) 100%);
+    background: rgba(255, 255, 255, 0.3); /* Slightly more visible on hover */
 }
+
+/* No longer needed - simplified above */
 
 /* Firefox scrollbar */
 .auth-modal-content {

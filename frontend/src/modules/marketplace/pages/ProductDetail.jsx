@@ -155,7 +155,7 @@ export default function ProductDetail() {
 
             // Primary: Fetch seller via public backend API (no auth needed, avoids Firestore quota)
             try {
-                const response = await fetch(`${API_BASE}/api/seller/${sellerId}/public-profile`);
+                const response = await fetch(`${API_BASE}/seller/${sellerId}/public-profile`);
                 const data = await response.json();
 
                 if (data.success && data.seller) {

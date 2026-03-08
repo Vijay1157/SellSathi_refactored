@@ -44,6 +44,8 @@ export default function AuthModal({ isOpen, onClose, onSuccess, hideRegister }) 
     const [otp, setOtp] = useState('');
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
+    const [emailOtpStep, setEmailOtpStep] = useState('details'); // 'details' | 'otp'
+    const [emailOtp, setEmailOtp] = useState('');
     const [confirmationResult, setConfirmationResult] = useState(null);
     const [isTestNumber, setIsTestNumber] = useState(false);
     const [formData, setFormData] = useState({ fullName: '', dob: '', email: '', password: '', confirmPassword: '' });
@@ -65,13 +67,31 @@ export default function AuthModal({ isOpen, onClose, onSuccess, hideRegister }) 
         setStep('phone'); setPhone(''); setOtp(''); setError('');
         setConfirmationResult(null); setIsTestNumber(false); setIsRegistering(false);
         setIsEmailSignup(false); setIsEmailLogin(false);
+        setEmailOtpStep('details'); setEmailOtp('');
         setFormData({ fullName: '', dob: '', email: '', password: '', confirmPassword: '' });
         cleanupRecaptcha();
         onClose();
     };
 
     useEffect(() => { return () => cleanupRecaptcha(); }, []);
-    useEffect(() => { if (!isOpen) handleClose(); }, [isOpen]);
+    useEffect(() => { 
+        if (!isOpen) handleClose(); 
+        
+        // Lock body scroll when modal is open
+        if (isOpen) {
+            document.body.style.overflow = 'hidden';
+            // Optional: add padding to prevent layout shift if needed
+            // document.body.style.paddingRight = 'var(--scrollbar-width, 15px)';
+        } else {
+            document.body.style.overflow = '';
+            document.body.style.paddingRight = '';
+        }
+
+        return () => {
+            document.body.style.overflow = '';
+            document.body.style.paddingRight = '';
+        };
+    }, [isOpen]);
 
     const setupRecaptcha = () => {
         cleanupRecaptcha();
@@ -145,6 +165,14 @@ export default function AuthModal({ isOpen, onClose, onSuccess, hideRegister }) 
             const response = await authFetch('/auth/google-login', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ idToken }) });
             const data = await response.json();
             if (data.success) {
+                if (data.requiresRegistration) {
+                    // Google authenticated successfully, but user doesn't exist
+                    setFormData({ ...formData, email: data.email, fullName: data.fullName || '' });
+                    setIsEmailSignup(true);
+                    setIsRegistering(true);
+                    setError('Please complete your profile to finish registration.');
+                    return;
+                }
                 persistUser(data, { email: data.email, fullName: data.fullName, status: data.status, sellerStatus: data.sellerStatus, shopName: data.shopName });
                 localStorage.setItem('userName', data.fullName || '');
                 redirectByRole(data, navigate);
@@ -182,7 +210,7 @@ export default function AuthModal({ isOpen, onClose, onSuccess, hideRegister }) 
             const response = await authFetch('/auth/login', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ idToken, isTest: isTestMode, email: formData.email, password: formData.password }) });
             const data = await response.json();
             if (data.success) {
-                persistUser(data, { email: formData.email, fullName: formData.fullName, dob: formData.dob });
+                persistUser(data, { email: formData.email, fullName: data.fullName || formData.fullName, dob: formData.dob });
                 redirectByRole(data, navigate);
                 if (onSuccess) onSuccess(data);
                 handleClose();
@@ -201,6 +229,37 @@ export default function AuthModal({ isOpen, onClose, onSuccess, hideRegister }) 
         if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) { setError('Please enter a valid email address'); return; }
         if (formData.password.length < 6) { setError('Password must be at least 6 characters'); return; }
         if (formData.password !== formData.confirmPassword) { setError('Passwords do not match'); return; }
+        
+        // If we haven't sent the OTP yet, do that first
+        if (emailOtpStep === 'details') {
+            setLoading(true);
+            try {
+                const response = await authFetch('/auth/send-email-otp', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email: formData.email })
+                });
+                const data = await response.json();
+                if (data.success) {
+                    setEmailOtpStep('otp');
+                    setError(''); // clear any previous errors
+                } else {
+                    setError(data.message || 'Failed to send OTP');
+                }
+            } catch (err) {
+                setError('Network error. Failed to send OTP.');
+            } finally {
+                setLoading(false);
+            }
+            return;
+        }
+
+        // If we are at the OTP step but this was called (shouldn't happen natively, but just in case)
+        if (emailOtpStep === 'otp' && emailOtp.length !== 6) {
+            setError('Please enter the 6-digit OTP');
+            return;
+        }
+
         setLoading(true);
         try {
             let idToken = null, isTestMode = false;
@@ -209,8 +268,16 @@ export default function AuthModal({ isOpen, onClose, onSuccess, hideRegister }) 
                 const cred = await createUserWithEmailAndPassword(auth, formData.email, formData.password);
                 await updateProfile(cred.user, { displayName: formData.email.split('@')[0] });
                 idToken = await cred.user.getIdToken();
-            } catch (fbErr) { if (fbErr.code === 'auth/operation-not-allowed') isTestMode = true; else throw fbErr; }
-            const response = await authFetch('/auth/register', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ idToken, isTest: isTestMode, email: formData.email, phone: isEmailSignup ? null : `+91${phone}`, password: formData.password }) });
+            } catch (fbErr) { 
+                if (fbErr.code === 'auth/operation-not-allowed') isTestMode = true; 
+                else if (fbErr.code === 'auth/email-already-in-use') {
+                    // Try to sign in instead to get the idToken for backend linking
+                    const cred = await signInWithEmailAndPassword(auth, formData.email, formData.password);
+                    idToken = await cred.user.getIdToken();
+                }
+                else throw fbErr; 
+            }
+            const response = await authFetch('/auth/register', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ idToken, isTest: isTestMode, email: formData.email, phone: isEmailSignup ? null : `+91${phone}`, password: formData.password, fullName: formData.fullName, dob: formData.dob, otp: emailOtp }) });
             const data = await response.json();
             if (data.success) {
                 persistUser(data, { phone: `+91${phone}`, email: formData.email, isDevMode: isTestMode, fullName: formData.fullName, dob: formData.dob });
@@ -260,9 +327,13 @@ export default function AuthModal({ isOpen, onClose, onSuccess, hideRegister }) 
                                 loading={loading}
                                 onEmailLogin={handleEmailLogin}
                                 onEmailSignup={handleRegisterDirectly}
-                                onSwitchToLogin={() => { setIsEmailSignup(false); setIsEmailLogin(true); }}
-                                onSwitchToSignup={() => { setIsEmailLogin(false); setIsRegistering(true); }}
-                                onBackToPhone={() => { setIsEmailLogin(false); setIsEmailSignup(false); }}
+                                step={emailOtpStep}
+                                otp={emailOtp}
+                                setOtp={setEmailOtp}
+                                onVerifyOtp={handleRegisterDirectly} // The function handles both based on state
+                                onSwitchToLogin={() => { setIsEmailSignup(false); setIsEmailLogin(true); setEmailOtpStep('details'); }}
+                                onSwitchToSignup={() => { setIsEmailLogin(false); setIsRegistering(true); setEmailOtpStep('details'); }}
+                                onBackToPhone={() => { setIsEmailLogin(false); setIsEmailSignup(false); setEmailOtpStep('details'); }}
                             />
                         ) : (
                             <PhoneOtpForm

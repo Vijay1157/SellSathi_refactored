@@ -430,3 +430,49 @@ exports.sendSellerRejectionEmail = async (sellerEmail, sellerName, shopName, rej
         return null;
     }
 };
+
+exports.sendOtpEmail = async (email, otpCode) => {
+    try {
+        console.log(`📧 Sending OTP email to ${email}`);
+
+        const mailOptions = {
+            from: `"Sellsathi Marketplace" <${MAILER_CONFIG.user}>`,
+            to: email,
+            subject: `Your Sellsathi Verification Code: ${otpCode}`,
+            html: `
+                <div style="font-family: Arial, sans-serif; padding: 20px; color: #333; line-height: 1.6;">
+                    <div style="text-align: center; margin-bottom: 20px;">
+                        <h1 style="color: #2563eb; margin: 0;">Sellsathi</h1>
+                        <p style="color: #64748b; margin: 5px 0;">Your Shopping Partner</p>
+                    </div>
+                    <div style="background: white; border: 1px solid #e2e8f0; border-radius: 12px; padding: 32px; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1); max-width: 500px; margin: 0 auto; text-align: center;">
+                        <h2 style="color: #1e293b; margin-top: 0;">Verify Your Email</h2>
+                        <p style="color: #475569; margin-bottom: 24px;">Please use the following 6-digit code to verify your email address and complete your registration.</p>
+                        
+                        <div style="background: #f8fafc; padding: 16px; border-radius: 8px; margin: 24px 0; border: 1px dashed #cbd5e1;">
+                            <span style="font-size: 32px; font-weight: 700; color: #2563eb; letter-spacing: 8px;">${otpCode}</span>
+                        </div>
+
+                        <p style="color: #ef4444; font-size: 14px; margin-top: 24px;">
+                            This code will expire in 10 minutes.
+                        </p>
+                        <p style="color: #64748b; font-size: 14px;">
+                            If you did not request this code, please ignore this email.
+                        </p>
+                    </div>
+                    <div style="text-align: center; margin-top: 24px; color: #94a3b8; font-size: 12px;">
+                        <p>&copy; 2026 Sellsathi Marketplace. All rights reserved.</p>
+                    </div>
+                </div>
+            `
+        };
+
+        const result = await transporter.sendMail(mailOptions);
+        console.log('✅ OTP email sent successfully:', result.messageId);
+        return result;
+
+    } catch (error) {
+        console.error('❌ OTP Email Error:', error);
+        return null;
+    }
+};

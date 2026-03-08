@@ -57,6 +57,17 @@ export default function SellerDashboard() {
                 const data = await response.json();
                 if (data.success) {
                     setProfile(data.profile);
+                    
+                    // Sync with Navbar and LocalStorage
+                    if (data.profile.fullName || data.profile.name) {
+                        const name = data.profile.fullName || data.profile.name;
+                        localStorage.setItem('userName', name);
+                        const localUser = JSON.parse(localStorage.getItem('user') || '{}');
+                        localUser.fullName = name;
+                        localStorage.setItem('user', JSON.stringify(localUser));
+                        window.dispatchEvent(new CustomEvent('userDataChanged'));
+                    }
+
                     setStats(data.stats);
                     setProducts(data.products);
                     setOrders(data.orders);

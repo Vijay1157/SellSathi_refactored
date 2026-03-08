@@ -57,7 +57,11 @@ export default function RelatedProducts({
                             <div className="detail-item">
                                 <span className="label">Member Since</span>
                                 <span className="value">
-                                    {seller.joinedAt ? new Date(seller.joinedAt).toLocaleDateString('en-IN', { month: 'long', year: 'numeric' }) : '2023'}
+                                    {(() => {
+                                        if (!seller.joinedAt) return '2026';
+                                        const d = seller.joinedAt instanceof Date ? seller.joinedAt : new Date(seller.joinedAt);
+                                        return isNaN(d) ? '2026' : d.toLocaleDateString('en-IN', { month: 'long', year: 'numeric' });
+                                    })()}
                                 </span>
                             </div>
                         </div>

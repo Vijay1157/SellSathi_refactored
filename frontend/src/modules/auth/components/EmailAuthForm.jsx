@@ -22,6 +22,10 @@ export default function EmailAuthForm({
     onSwitchToLogin,
     onSwitchToSignup,
     onBackToPhone,
+    step = 'details', // 'details' | 'otp'
+    otp,
+    setOtp,
+    onVerifyOtp
 }) {
     const dateMax = new Date().toISOString().split('T')[0];
 
@@ -107,34 +111,57 @@ export default function EmailAuthForm({
 
     // Email Signup form
     return (
-        <form onSubmit={onEmailSignup} className="auth-form">
+        <form onSubmit={step === 'otp' ? onVerifyOtp : onEmailSignup} className="auth-form">
             <div className="auth-fields-grid">
-                {registrationOnlyFields}
-                {emailField}
-                {passwordField}
-                <div className="auth-input-group">
-                    <Lock size={18} className="auth-field-icon" />
-                    <input
-                        type={showConfirmPassword ? 'text' : 'password'}
-                        placeholder="Confirm Password"
-                        value={formData.confirmPassword}
-                        onChange={e => setFormData({ ...formData, confirmPassword: e.target.value })}
-                        required
-                    />
-                    <button
-                        type="button"
-                        className="password-toggle-btn"
-                        onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                    >
-                        {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-                    </button>
-                </div>
+                {step === 'details' ? (
+                    <>
+                        {registrationOnlyFields}
+                        {emailField}
+                        {passwordField}
+                        <div className="auth-input-group">
+                            <Lock size={18} className="auth-field-icon" />
+                            <input
+                                type={showConfirmPassword ? 'text' : 'password'}
+                                placeholder="Confirm Password"
+                                value={formData.confirmPassword}
+                                onChange={e => setFormData({ ...formData, confirmPassword: e.target.value })}
+                                required
+                            />
+                            <button
+                                type="button"
+                                className="password-toggle-btn"
+                                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                            >
+                                {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                            </button>
+                        </div>
+                    </>
+                ) : (
+                    <div className="auth-input-group otp-group">
+                        <input
+                            type="text"
+                            placeholder="Enter 6-digit Email OTP"
+                            value={otp}
+                            onChange={(e) => setOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                            maxLength={6}
+                            required
+                        />
+                    </div>
+                )}
+                
                 <button type="submit" className="auth-submit-btn" disabled={loading}>
-                    {loading ? 'Registering...' : 'Register with Email'}
+                    {loading ? 'Processing...' : step === 'otp' ? 'Verify & Register' : 'Continue'}
                 </button>
+                
                 <div className="auth-form-footer">
-                    <p>Already have an account? <button type="button" onClick={onSwitchToLogin}>Login</button></p>
-                    <button type="button" className="auth-back-link" onClick={onBackToPhone}>Back to Phone Login</button>
+                    {step === 'details' ? (
+                        <>
+                            <p>Already have an account? <button type="button" onClick={onSwitchToLogin}>Login</button></p>
+                            <button type="button" className="auth-back-link" onClick={onBackToPhone}>Back to Phone Login</button>
+                        </>
+                    ) : (
+                        <button type="button" className="auth-back-link" onClick={() => onSwitchToSignup()}>Back to Details</button>
+                    )}
                 </div>
             </div>
         </form>
