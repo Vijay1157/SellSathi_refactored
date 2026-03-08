@@ -10,12 +10,12 @@ import { listenToWishlist, removeFromWishlist as removeFromWishlistAPI } from '@
 import ReviewModal from '@/modules/shared/components/common/ReviewModal';
 import { fetchWithCache } from '@/modules/shared/utils/firestoreCache';
 
-import ConsumerOverviewTab from '@/modules/consumer/components/dashboard/ConsumerOverviewTab';
-import ConsumerOrdersTab from '@/modules/consumer/components/dashboard/ConsumerOrdersTab';
-import ConsumerWishlistTab from '@/modules/consumer/components/dashboard/ConsumerWishlistTab';
-import ConsumerAddressTab from '@/modules/consumer/components/dashboard/ConsumerAddressTab';
-import ConsumerReviewsTab from '@/modules/consumer/components/dashboard/ConsumerReviewsTab';
-import ConsumerSettingsTab from '@/modules/consumer/components/dashboard/ConsumerSettingsTab';
+import ConsumerOverviewTab from '@/modules/consumer/components/Dashboard/ConsumerOverviewTab';
+import ConsumerOrdersTab from '@/modules/consumer/components/Dashboard/ConsumerOrdersTab';
+import ConsumerWishlistTab from '@/modules/consumer/components/Dashboard/ConsumerWishlistTab';
+import ConsumerAddressTab from '@/modules/consumer/components/Dashboard/ConsumerAddressTab';
+import ConsumerReviewsTab from '@/modules/consumer/components/Dashboard/ConsumerReviewsTab';
+import ConsumerSettingsTab from '@/modules/consumer/components/Dashboard/ConsumerSettingsTab';
 
 const calculateAge = (dob) => {
     if (!dob) return null;
@@ -44,7 +44,7 @@ export default function ConsumerDashboard() {
     const [loading, setLoading] = useState(true);
     const [editingAddress, setEditingAddress] = useState(null);
     const [editingProfile, setEditingProfile] = useState(false);
-    const [profileData, setProfileData] = useState({ displayName: '', email: '', phone: '' });
+    const [profileData, setProfileData] = useState({ fullName: '', email: '', phone: '' });
     const [savingProfile, setSavingProfile] = useState(false);
     const [recentlyViewed, setRecentlyViewed] = useState([]);
     const [recommendedProducts, setRecommendedProducts] = useState([]);
@@ -63,20 +63,55 @@ export default function ConsumerDashboard() {
                 setUserName(name);
                 setUserPhoto(localUser.photoURL || currentUser.photoURL || null);
                 setProfileData({
-                    displayName: name,
+                    fullName: name,
                     email: localUser.email || currentUser.email || '',
                     phone: localUser.phone || localUser.phoneNumber || ''
                 });
 
                 try {
-                    await Promise.race([
+                    const [profileRes, _] = await Promise.race([
                         Promise.all([
+                            authFetch(`/consumer/${currentUser.uid}/profile`),
                             fetchOrders(currentUser.uid),
                             fetchAddresses(currentUser.uid),
                             fetchReviewableOrders(currentUser.uid)
                         ]),
                         new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), 8000))
                     ]);
+
+                    if (profileRes && profileRes.ok) {
+                        const profileDataJson = await profileRes.json();
+                        if (profileDataJson.success) {
+                            const p = profileDataJson.profile;
+                            const name = p.fullName || 'User';
+                            setUserName(name);
+                            setUserPhoto(p.photoURL);
+                            setProfileData({
+                                fullName: p.fullName || '',
+                                email: p.email || '',
+                                phone: p.phone || ''
+                            });
+                            
+                            // Sync with Navbar and LocalStorage
+                            localStorage.setItem('userName', name);
+                            const localUser = JSON.parse(localStorage.getItem('user') || '{}');
+                            localUser.fullName = name;
+                            localUser.photoURL = p.photoURL;
+                            localStorage.setItem('user', JSON.stringify(localUser));
+                            window.dispatchEvent(new CustomEvent('userDataChanged'));
+                        }
+                    } else {
+                        // Fallback to local user data if profile fetch fails
+                        const localUser = JSON.parse(localStorage.getItem('user') || '{}');
+                        const name = localUser.fullName || localUser.name || currentUser.displayName || 'User';
+                        setUserName(name);
+                        setUserPhoto(localUser.photoURL || currentUser.photoURL || null);
+                        setProfileData({
+                            fullName: name,
+                            email: localUser.email || currentUser.email || '',
+                            phone: localUser.phone || localUser.phoneNumber || ''
+                        });
+                    }
                 } catch (error) {
                     console.error('Error loading dashboard data:', error);
                 }
@@ -241,17 +276,17 @@ export default function ConsumerDashboard() {
         try {
             const response = await authFetch(`/consumer/${user.uid}/profile`, {
                 method: 'POST', headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ profileData: { name: profileData.displayName, fullName: profileData.displayName, phone: profileData.phone } })
+                body: JSON.stringify({ profileData: { fullName: profileData.fullName, phone: profileData.phone } })
             });
             const data = await response.json();
             if (data.success) {
-                setUserName(profileData.displayName);
+                setUserName(profileData.fullName);
                 const localUser = JSON.parse(localStorage.getItem('user') || '{}');
-                localUser.fullName = profileData.displayName;
-                localUser.name = profileData.displayName;
+                localUser.fullName = profileData.fullName;
                 localUser.phone = profileData.phone;
                 localStorage.setItem('user', JSON.stringify(localUser));
-                localStorage.setItem('userName', profileData.displayName);
+                localStorage.setItem('userName', profileData.fullName);
+                window.dispatchEvent(new CustomEvent('userDataChanged'));
                 setEditingProfile(false);
                 alert('Profile updated successfully!');
             } else { alert('Failed to update profile: ' + (data.message || 'Unknown error')); }
@@ -323,7 +358,7 @@ export default function ConsumerDashboard() {
                                         </div>
                                     )}
                                     <p className="text-xs text-gray-600 mb-1">Hello,</p>
-                                    <p className="font-semibold text-gray-900 text-sm">{localStorage.getItem('userName') || userName || 'User'}</p>
+                                    <p className="font-semibold text-gray-900 text-sm">{userName || 'User'}</p>
                                     {(() => {
                                         const localUser = JSON.parse(localStorage.getItem('user') || '{}');
                                         const firebaseUser = JSON.parse(localStorage.getItem('firebaseUser') || '{}');

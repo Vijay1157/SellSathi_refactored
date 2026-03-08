@@ -31,6 +31,18 @@ const login = async (req, res) => {
         const userSnap = await userRef.get();
 
         if (!userSnap.exists) {
+            // If they are logging in from Google but don't exist yet, we require them to complete registration
+            // We distinguish Google logins by the presence of both decodedToken.firebase.sign_in_provider === 'google.com'
+            if (decodedToken && decodedToken.firebase && decodedToken.firebase.sign_in_provider === 'google.com') {
+                return res.status(200).json({
+                    success: true,
+                    requiresRegistration: true,
+                    email: email,
+                    fullName: fullName
+                });
+            }
+
+            // Fallback for standard ID token automatic creation (e.g. standard email/password link if we were doing that)
             await userRef.set({
                 uid,
                 phone: phoneNumber,
@@ -87,11 +99,49 @@ const login = async (req, res) => {
 };
 
 /**
+ * Sends a 6-digit OTP to the user's email address.
+ */
+const sendEmailOtp = async (req, res) => {
+    try {
+        const { email } = req.body;
+        if (!email) {
+            return res.status(400).json({ success: false, message: "Email is required" });
+        }
+
+        // Generate 6 digit OTP
+        const otpCode = Math.floor(100000 + Math.random() * 900000).toString();
+        
+        // Save to Firestore with 10 minute expiration
+        const expiresAt = new Date();
+        expiresAt.setMinutes(expiresAt.getMinutes() + 10);
+        
+        await db.collection('email_otps').doc(email.toLowerCase()).set({
+            otp: otpCode,
+            expiresAt: admin.firestore.Timestamp.fromDate(expiresAt),
+            createdAt: admin.firestore.FieldValue.serverTimestamp()
+        });
+
+        // Send via Nodemailer
+        const emailService = require('../../../shared/services/emailService');
+        const emailResult = await emailService.sendOtpEmail(email, otpCode);
+        
+        if (!emailResult) {
+            return res.status(500).json({ success: false, message: "Failed to send OTP email" });
+        }
+
+        return res.status(200).json({ success: true, message: "OTP sent to email" });
+    } catch (error) {
+        console.error("SEND OTP ERROR:", error);
+        return res.status(500).json({ success: false, message: "Failed to process OTP request" });
+    }
+};
+
+/**
  * Handles user registration.
  */
 const register = async (req, res) => {
     try {
-        const { idToken, phone, fullName, email, password, isTest, otp } = req.body;
+        const { idToken, phone, fullName, dob, email, password, isTest, otp } = req.body;
         let uid;
         let phoneNumber = phone;
 
@@ -102,6 +152,25 @@ const register = async (req, res) => {
             const decodedToken = await admin.auth().verifyIdToken(idToken);
             uid = decodedToken.uid;
             phoneNumber = decodedToken.phone_number || phone;
+            
+            // If they provided an OTP, it means this relies on our custom Email verification
+            if (otp && email) {
+                const otpDoc = await db.collection('email_otps').doc(email.toLowerCase()).get();
+                if (!otpDoc.exists) {
+                    return res.status(400).json({ success: false, message: "Invalid or expired OTP" });
+                }
+                const otpData = otpDoc.data();
+                if (otpData.otp !== otp) {
+                    return res.status(400).json({ success: false, message: "Incorrect OTP" });
+                }
+                if (otpData.expiresAt.toDate() < new Date()) {
+                    await db.collection('email_otps').doc(email.toLowerCase()).delete();
+                    return res.status(400).json({ success: false, message: "OTP has expired. Please request a new one." });
+                }
+                
+                // OTP is valid, delete it to prevent reuse
+                await db.collection('email_otps').doc(email.toLowerCase()).delete();
+            }
         }
 
         const userRef = db.collection("users").doc(uid);
@@ -109,14 +178,16 @@ const register = async (req, res) => {
 
         const userData = {
             uid, phone: phoneNumber || null, fullName: fullName || "User",
-            email: email || null, password: password || null, role: "CONSUMER",
-            isActive: true, createdAt: admin.firestore.FieldValue.serverTimestamp(),
+            dateOfBirth: dob || null, email: email || null, password: password || null, 
+            role: "CONSUMER", isActive: true, 
+            createdAt: admin.firestore.FieldValue.serverTimestamp(),
             updatedAt: admin.firestore.FieldValue.serverTimestamp(),
         };
 
         if (userSnap.exists) {
             const updates = { updatedAt: admin.firestore.FieldValue.serverTimestamp() };
             if (fullName) updates.fullName = fullName;
+            if (dob) updates.dateOfBirth = dob;
             if (email) updates.email = email;
             if (password) updates.password = password;
             await userRef.update(updates);
@@ -356,5 +427,5 @@ const testLogin = async (req, res) => {
     }
 };
 
-module.exports = { login, register, applySeller, extractAadhar, uploadImage, testLogin };
+module.exports = { login, register, applySeller, extractAadhar, uploadImage, testLogin, sendEmailOtp };
 

@@ -1,5 +1,5 @@
 'use strict';
-const { db } = require('../../../config/firebase');
+const { admin, db } = require('../../../config/firebase');
 const cache = require('../../../utils/cache');
 
 const CONSUMER_CACHE_TTL = 2 * 60 * 1000; // 2 minutes
@@ -185,20 +185,51 @@ const deleteAddress = async (req, res) => {
 };
 
 /**
+ * Get user profile.
+ */
+const getProfile = async (req, res) => {
+    try {
+        const { uid } = req.params;
+        const userDoc = await db.collection('users').doc(uid).get();
+        if (!userDoc.exists) return res.status(404).json({ success: false, message: "User not found" });
+        
+        const userData = userDoc.data();
+        return res.json({ 
+            success: true, 
+            profile: {
+                uid: userData.uid,
+                fullName: userData.fullName || userData.displayName || userData.name || userData.extractedName || "User",
+                email: userData.email || "",
+                phone: userData.phone || userData.phoneNumber || "",
+                photoURL: userData.photoURL || userData.profilePhoto || null,
+                role: userData.role,
+                dateOfBirth: userData.dateOfBirth || null
+            }
+        });
+    } catch (error) {
+        console.error("Error fetching profile:", error);
+        return res.status(500).json({ success: false, message: "Failed to fetch profile" });
+    }
+};
+
+/**
  * Update user profile.
  */
 const updateProfile = async (req, res) => {
     try {
         const { uid } = req.params;
-        const { displayName, phone, profilePhoto } = req.body;
+        const { profileData } = req.body;
         
+        if (!profileData) return res.status(400).json({ success: false, message: "Profile data is required" });
+
         const updateData = {};
-        if (displayName !== undefined) updateData.displayName = displayName;
-        if (phone !== undefined) updateData.phone = phone;
-        if (profilePhoto !== undefined) updateData.profilePhoto = profilePhoto;
+        if (profileData.fullName !== undefined) updateData.fullName = profileData.fullName;
+        if (profileData.displayName !== undefined) updateData.fullName = profileData.displayName; // Fallback
+        if (profileData.phone !== undefined) updateData.phone = profileData.phone;
+        if (profileData.photoURL !== undefined) updateData.photoURL = profileData.photoURL;
 
         if (Object.keys(updateData).length > 0) {
-            updateData.updatedAt = new Date().toISOString();
+            updateData.updatedAt = admin.firestore.FieldValue.serverTimestamp();
             await db.collection('users').doc(uid).update(updateData);
         }
 
@@ -239,6 +270,7 @@ module.exports = {
     getWishlist,
     addToWishlist,
     removeFromWishlist,
+    getProfile,
     updateProfile,
     deleteAccount
 };

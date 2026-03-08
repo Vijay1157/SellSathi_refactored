@@ -76,7 +76,8 @@ const getDashboardData = async (req, res) => {
         const responseData = {
             profile: {
                 ...sellerData,
-                name: userData?.fullName || sellerData.fullName || "Seller",
+                fullName: userData?.fullName || sellerData.fullName || sellerData.name || "Seller",
+                name: userData?.fullName || sellerData.fullName || sellerData.name || "Seller",
                 status: sellerData.sellerStatus // Standardize status key for frontend
             },
             stats: {
