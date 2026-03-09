@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { ShieldCheck, Users, Box, Truck, AlertOctagon, Loader, Home, Mail, DollarSign, FileText } from 'lucide-react';
+import { ShieldCheck, Users, Box, Truck, AlertOctagon, Loader, Home, Mail, DollarSign, FileText, UserCircle } from 'lucide-react';
 import { authFetch } from '@/modules/shared/utils/api';
 import SellerAnalyticsModal from '@/modules/admin/components/SellerAnalyticsModal';
 import SellerInvoiceModal from '@/modules/admin/components/SellerInvoiceModal';
@@ -10,6 +10,7 @@ import OrdersTab from '@/modules/admin/components/OrdersTab';
 import ReviewsTab from '@/modules/admin/components/ReviewsTab';
 import PayoutsTab from '@/modules/admin/components/PayoutsTab';
 import InvoicesTab from '@/modules/admin/components/InvoicesTab';
+import ProfileTab from '@/modules/admin/components/ProfileTab';
 
 export default function AdminDashboard() {
     const [activeTab, setActiveTab] = useState('home');
@@ -34,6 +35,7 @@ export default function AdminDashboard() {
     const [isDownloadingPDF, setIsDownloadingPDF] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedProductDate, setSelectedProductDate] = useState('');
+    const [adminProfile, setAdminProfile] = useState(null);
 
     // Track which tabs have already been loaded
     const [loadedTabs, setLoadedTabs] = useState(new Set());
@@ -48,6 +50,27 @@ export default function AdminDashboard() {
             }
         }
     }, [allSellers]);
+
+    // Log when selectedAnalyticsSeller changes
+    useEffect(() => {
+        if (selectedAnalyticsSeller) {
+            console.log('[Dashboard] selectedAnalyticsSeller changed:', selectedAnalyticsSeller.shopName, 'UID:', selectedAnalyticsSeller.uid);
+            console.log('[Dashboard] Full seller data:', selectedAnalyticsSeller);
+        } else {
+            console.log('[Dashboard] selectedAnalyticsSeller cleared');
+        }
+    }, [selectedAnalyticsSeller]);
+
+    // Update selected analytics seller when analytics data changes
+    useEffect(() => {
+        if (selectedAnalyticsSeller && analytics.length > 0) {
+            const updatedSeller = analytics.find(s => s.uid === selectedAnalyticsSeller.uid);
+            if (updatedSeller) {
+                setSelectedAnalyticsSeller(updatedSeller);
+                console.log('[Dashboard] Auto-updated selected analytics seller:', updatedSeller.shopName, 'Products:', updatedSeller.metrics?.totalProducts);
+            }
+        }
+    }, [analytics]);
 
     // Fetch only stats on mount
     useEffect(() => {
@@ -71,6 +94,7 @@ export default function AdminDashboard() {
     };
 
     const fetchStats = async () => {
+        setLoading(true);
         try {
             const res = await safeFetch('/admin/stats');
             if (res.ok) {
@@ -85,6 +109,22 @@ export default function AdminDashboard() {
             }
         } catch (err) {
             console.warn('[fetchStats] failed:', err.message);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const fetchAdminProfile = async () => {
+        try {
+            const res = await safeFetch('/admin/profile');
+            if (res.ok) {
+                const d = await res.json();
+                if (d.success) {
+                    setAdminProfile(d.profile);
+                }
+            }
+        } catch (err) {
+            console.warn('[fetchAdminProfile] failed:', err.message);
         }
     };
 
@@ -146,9 +186,13 @@ export default function AdminDashboard() {
                     const d = await res.json();
                     if (d.success && d.analytics) {
                         setAnalytics(d.analytics);
+                        console.log('[fetchTabData:payout] Fetched', d.analytics.length, 'analytics');
                         if (selectedAnalyticsSeller) {
                             const updated = d.analytics.find(s => s.uid === selectedAnalyticsSeller.uid);
-                            if (updated) setSelectedAnalyticsSeller(updated);
+                            if (updated) {
+                                setSelectedAnalyticsSeller(updated);
+                                console.log('[fetchTabData:payout] Updated selected analytics seller:', updated.shopName, 'Products:', updated.metrics?.totalProducts);
+                            }
                         }
                     }
                 }
@@ -168,6 +212,8 @@ export default function AdminDashboard() {
                         }
                     }
                 }
+            } else if (tab === 'profile') {
+                await fetchAdminProfile();
             }
             setLoadedTabs(prev => new Set([...prev, tab]));
         } catch (err) {
@@ -221,12 +267,13 @@ export default function AdminDashboard() {
 
     const tabs = [
         { key: 'home', label: 'Home', icon: <Home size={20} /> },
-        { key: 'sellers', label: 'Seller Mgmt', icon: <Users size={20} /> },
+        { key: 'sellers', label: 'Seller Management', icon: <Users size={20} /> },
         { key: 'products', label: 'Product Review', icon: <Box size={20} /> },
         { key: 'orders', label: 'Global Orders', icon: <Truck size={20} /> },
         { key: 'feedback', label: 'Customer Feedback', icon: <Mail size={20} /> },
         { key: 'payout', label: 'Payout', icon: <DollarSign size={20} /> },
         { key: 'invoice', label: 'Seller Invoice', icon: <FileText size={20} /> },
+        { key: 'profile', label: 'Profile', icon: <UserCircle size={20} /> },
     ];
 
     return (
@@ -296,6 +343,7 @@ export default function AdminDashboard() {
                                     {activeTab === 'feedback' && <ReviewsTab reviews={reviews} fetchAllData={fetchAllData} />}
                                     {activeTab === 'payout' && <PayoutsTab analytics={analytics} setSelectedAnalyticsSeller={setSelectedAnalyticsSeller} fetchAllData={fetchAllData} />}
                                     {activeTab === 'invoice' && <InvoicesTab allSellers={allSellers} setSelectedInvoiceSeller={setSelectedInvoiceSeller} fetchAllData={fetchAllData} />}
+                                    {activeTab === 'profile' && <ProfileTab adminData={adminProfile} fetchAdminProfile={fetchAdminProfile} />}
                                 </div>
                             </div>
                         )}

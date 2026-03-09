@@ -80,6 +80,14 @@ const getAllReviews = async (req, res) => {
                 ? productReviews.reduce((sum, d) => sum + (d.data().rating || 0), 0) / productReviewCount 
                 : 0;
 
+            // Get product image - check multiple possible fields
+            const productImage = product.image || 
+                                product.images?.[0] || 
+                                product.imageUrl || 
+                                product.thumbnail || 
+                                product.mainImage || 
+                                null;
+
             reviews.push({
                 id: doc.id,
                 ...data,
@@ -87,6 +95,7 @@ const getAllReviews = async (req, res) => {
                 customerId: data.userId || data.customerId || 'N/A',
                 productName: product.title,
                 productId: productId,
+                productImage: productImage,  // Add product image
                 productCategory: product.category,
                 productBrand: product.brand,
                 productAvgRating: parseFloat(productAvgRating.toFixed(1)),
@@ -370,6 +379,7 @@ const deleteReview = async (req, res) => {
         }
 
         cache.invalidate('adminAllReviews');
+        cache.invalidate('adminStats'); // Invalidate stats cache to update review count
         if (productId) cache.invalidate(`reviews_${productId}`);
 
         return res.status(200).json({ 

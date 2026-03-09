@@ -1,5 +1,6 @@
 const nodemailer = require('nodemailer');
 const path = require('path');
+const { getAdminConfig } = require('./adminConfigService');
 
 // Configure credentials via env variables
 const MAILER_CONFIG = {
@@ -21,15 +22,19 @@ exports.sendOrderConfirmation = async (email, order, invoicePath) => {
     try {
         console.log(`📧 Sending order confirmation email to ${email} for order ${order.orderId}`);
 
+        // Get admin configuration
+        const adminConfig = await getAdminConfig();
+
         const mailOptions = {
-            from: `"Sellsathi Marketplace" <${MAILER_CONFIG.user}>`,
+            from: `"${adminConfig.websiteName}" <${MAILER_CONFIG.user}>`,
+            replyTo: adminConfig.email,
             to: email,
-            subject: `Order Confirmed: #${order.orderId}`,
+            subject: `Order Confirmed: #${order.orderId} - ${adminConfig.websiteName}`,
             html: `
                 <div style="font-family: Arial, sans-serif; padding: 20px; color: #333; line-height: 1.6;">
                     <div style="text-align: center; margin-bottom: 20px;">
-                        <h1 style="color: #2563eb; margin: 0;">Sellsathi</h1>
-                        <p style="color: #64748b; margin: 5px 0;">Your Shopping Partner</p>
+                        <h1 style="color: #2563eb; margin: 0;">${adminConfig.websiteName}</h1>
+                        <p style="color: #64748b; margin: 5px 0;">${adminConfig.websiteInfo}</p>
                     </div>
                     <div style="background: white; border: 1px solid #e2e8f0; border-radius: 12px; padding: 24px; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);">
                         <h2 style="color: #1e293b; margin-top: 0;">Thank you for your order!</h2>
@@ -59,7 +64,7 @@ exports.sendOrderConfirmation = async (email, order, invoicePath) => {
                         </div>
                     </div>
                     <div style="text-align: center; margin-top: 24px; color: #94a3b8; font-size: 12px;">
-                        <p>&copy; 2026 Sellsathi Marketplace. All rights reserved.</p>
+                        <p>&copy; 2026 ${adminConfig.websiteName}. All rights reserved.</p>
                     </div>
                 </div>
             `,
@@ -85,10 +90,14 @@ exports.sendSellerNotification = async (sellerEmail, order, sellerItems) => {
     try {
         console.log(`📧 Sending seller notification to ${sellerEmail}`);
 
+        // Get admin configuration
+        const adminConfig = await getAdminConfig();
+
         const mailOptions = {
-            from: `"Sellsathi Marketplace" <${MAILER_CONFIG.user}>`,
+            from: `"${adminConfig.websiteName}" <${MAILER_CONFIG.user}>`,
+            replyTo: adminConfig.email,
             to: sellerEmail,
-            subject: `New Order Received: #${order.orderId}`,
+            subject: `New Order Received: #${order.orderId} - ${adminConfig.websiteName}`,
             html: `
                 <div style="font-family: Arial, sans-serif; padding: 20px; color: #333;">
                     <h2 style="color: #2563eb;">New Order Alert!</h2>
@@ -98,6 +107,9 @@ exports.sendSellerNotification = async (sellerEmail, order, sellerItems) => {
                     </ul>
                     <p><strong>Customer:</strong> ${order.customerName}</p>
                     <p>Please log in to your dashboard to manage this order.</p>
+                    <p style="margin-top: 20px; color: #64748b; font-size: 14px;">
+                        For support, contact us at <a href="mailto:${adminConfig.email}">${adminConfig.email}</a>
+                    </p>
                 </div>
             `
         };
@@ -115,15 +127,19 @@ exports.sendSellerBlockedEmail = async (sellerEmail, sellerName, shopName, block
     try {
         console.log(`📧 Sending seller blocked notification to ${sellerEmail}`);
 
+        // Get admin configuration
+        const adminConfig = await getAdminConfig();
+
         const mailOptions = {
-            from: `"Sellsathi Marketplace" <${MAILER_CONFIG.user}>`,
+            from: `"${adminConfig.websiteName}" <${MAILER_CONFIG.user}>`,
+            replyTo: adminConfig.email,
             to: sellerEmail,
-            subject: `Account Blocked - Action Required`,
+            subject: `Account Blocked - Action Required - ${adminConfig.websiteName}`,
             html: `
                 <div style="font-family: Arial, sans-serif; padding: 20px; color: #333; line-height: 1.6;">
                     <div style="text-align: center; margin-bottom: 20px;">
-                        <h1 style="color: #dc2626; margin: 0;">Sellsathi</h1>
-                        <p style="color: #64748b; margin: 5px 0;">Your Shopping Partner</p>
+                        <h1 style="color: #dc2626; margin: 0;">${adminConfig.websiteName}</h1>
+                        <p style="color: #64748b; margin: 5px 0;">${adminConfig.websiteInfo}</p>
                     </div>
                     <div style="background: white; border: 2px solid #fca5a5; border-radius: 12px; padding: 24px; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);">
                         <div style="background: #fee2e2; padding: 16px; border-radius: 8px; margin-bottom: 20px; text-align: center;">
@@ -157,8 +173,9 @@ exports.sendSellerBlockedEmail = async (sellerEmail, sellerName, shopName, block
                         <div style="background: #f1f5f9; padding: 16px; border-radius: 8px; margin: 24px 0;">
                             <p style="margin: 0; color: #334155; font-size: 14px;">
                                 <strong>Need Help?</strong><br>
-                                Contact our support team at <a href="mailto:support@sellsathi.com" style="color: #2563eb;">support@sellsathi.com</a><br>
-                                or call us at <strong>+91-XXXX-XXXXXX</strong>
+                                Contact our support team at <a href="mailto:${adminConfig.email}" style="color: #2563eb;">${adminConfig.email}</a><br>
+                                ${adminConfig.phone !== 'Not provided' ? `Phone: <strong>${adminConfig.phone}</strong><br>` : ''}
+                                Admin: <strong>${adminConfig.name}</strong>
                             </p>
                         </div>
 
@@ -167,7 +184,7 @@ exports.sendSellerBlockedEmail = async (sellerEmail, sellerName, shopName, block
                         </p>
                     </div>
                     <div style="text-align: center; margin-top: 24px; color: #94a3b8; font-size: 12px;">
-                        <p>&copy; 2026 Sellsathi Marketplace. All rights reserved.</p>
+                        <p>&copy; 2026 ${adminConfig.websiteName}. All rights reserved.</p>
                     </div>
                 </div>
             `
@@ -187,15 +204,19 @@ exports.sendSellerUnblockedEmail = async (sellerEmail, sellerName, shopName) => 
     try {
         console.log(`📧 Sending seller unblocked notification to ${sellerEmail}`);
 
+        // Get admin configuration
+        const adminConfig = await getAdminConfig();
+
         const mailOptions = {
-            from: `"Sellsathi Marketplace" <${MAILER_CONFIG.user}>`,
+            from: `"${adminConfig.websiteName}" <${MAILER_CONFIG.user}>`,
+            replyTo: adminConfig.email,
             to: sellerEmail,
-            subject: `Account Unblocked - Pending Re-approval`,
+            subject: `Account Unblocked - Pending Re-approval - ${adminConfig.websiteName}`,
             html: `
                 <div style="font-family: Arial, sans-serif; padding: 20px; color: #333; line-height: 1.6;">
                     <div style="text-align: center; margin-bottom: 20px;">
-                        <h1 style="color: #2563eb; margin: 0;">Sellsathi</h1>
-                        <p style="color: #64748b; margin: 5px 0;">Your Shopping Partner</p>
+                        <h1 style="color: #2563eb; margin: 0;">${adminConfig.websiteName}</h1>
+                        <p style="color: #64748b; margin: 5px 0;">${adminConfig.websiteInfo}</p>
                     </div>
                     <div style="background: white; border: 2px solid #86efac; border-radius: 12px; padding: 24px; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);">
                         <div style="background: #dcfce7; padding: 16px; border-radius: 8px; margin-bottom: 20px; text-align: center;">
@@ -240,8 +261,9 @@ exports.sendSellerUnblockedEmail = async (sellerEmail, sellerName, shopName) => 
                         <div style="background: #f1f5f9; padding: 16px; border-radius: 8px; margin: 24px 0;">
                             <p style="margin: 0; color: #334155; font-size: 14px;">
                                 <strong>Questions?</strong><br>
-                                Contact our support team at <a href="mailto:support@sellsathi.com" style="color: #2563eb;">support@sellsathi.com</a><br>
-                                or call us at <strong>+91-XXXX-XXXXXX</strong>
+                                Contact our support team at <a href="mailto:${adminConfig.email}" style="color: #2563eb;">${adminConfig.email}</a><br>
+                                ${adminConfig.phone !== 'Not provided' ? `Phone: <strong>${adminConfig.phone}</strong><br>` : ''}
+                                Admin: <strong>${adminConfig.name}</strong>
                             </p>
                         </div>
 
@@ -250,7 +272,7 @@ exports.sendSellerUnblockedEmail = async (sellerEmail, sellerName, shopName) => 
                         </p>
                     </div>
                     <div style="text-align: center; margin-top: 24px; color: #94a3b8; font-size: 12px;">
-                        <p>&copy; 2026 Sellsathi Marketplace. All rights reserved.</p>
+                        <p>&copy; 2026 ${adminConfig.websiteName}. All rights reserved.</p>
                     </div>
                 </div>
             `
@@ -270,15 +292,19 @@ exports.sendSellerApprovalEmail = async (sellerEmail, sellerName, shopName) => {
     try {
         console.log(`📧 Sending seller approval notification to ${sellerEmail}`);
 
+        // Get admin configuration
+        const adminConfig = await getAdminConfig();
+
         const mailOptions = {
-            from: `"Sellsathi Marketplace" <${MAILER_CONFIG.user}>`,
+            from: `"${adminConfig.websiteName}" <${MAILER_CONFIG.user}>`,
+            replyTo: adminConfig.email,
             to: sellerEmail,
-            subject: `🎉 Congratulations! Your Seller Account is Approved`,
+            subject: `🎉 Congratulations! Your Seller Account is Approved - ${adminConfig.websiteName}`,
             html: `
                 <div style="font-family: Arial, sans-serif; padding: 20px; color: #333; line-height: 1.6;">
                     <div style="text-align: center; margin-bottom: 20px;">
-                        <h1 style="color: #2563eb; margin: 0;">Sellsathi</h1>
-                        <p style="color: #64748b; margin: 5px 0;">Your Shopping Partner</p>
+                        <h1 style="color: #2563eb; margin: 0;">${adminConfig.websiteName}</h1>
+                        <p style="color: #64748b; margin: 5px 0;">${adminConfig.websiteInfo}</p>
                     </div>
                     <div style="background: white; border: 2px solid #86efac; border-radius: 12px; padding: 24px; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);">
                         <div style="background: #dcfce7; padding: 16px; border-radius: 8px; margin-bottom: 20px; text-align: center;">
@@ -325,17 +351,18 @@ exports.sendSellerApprovalEmail = async (sellerEmail, sellerName, shopName) => {
                             <p style="margin: 0; color: #334155; font-size: 14px;">
                                 <strong>Need Help?</strong><br>
                                 Our support team is here to help you succeed!<br>
-                                Email: <a href="mailto:support@sellsathi.com" style="color: #2563eb;">support@sellsathi.com</a><br>
-                                Phone: <strong>+91-XXXX-XXXXXX</strong>
+                                Email: <a href="mailto:${adminConfig.email}" style="color: #2563eb;">${adminConfig.email}</a><br>
+                                ${adminConfig.phone !== 'Not provided' ? `Phone: <strong>${adminConfig.phone}</strong><br>` : ''}
+                                Admin: <strong>${adminConfig.name}</strong>
                             </p>
                         </div>
 
                         <p style="color: #64748b; font-size: 14px; margin-top: 24px;">
-                            Welcome to the Sellsathi family! We're excited to have you as a seller and look forward to your success on our platform.
+                            Welcome to the ${adminConfig.websiteName} family! We're excited to have you as a seller and look forward to your success on our platform.
                         </p>
                     </div>
                     <div style="text-align: center; margin-top: 24px; color: #94a3b8; font-size: 12px;">
-                        <p>&copy; 2026 Sellsathi Marketplace. All rights reserved.</p>
+                        <p>&copy; 2026 ${adminConfig.websiteName}. All rights reserved.</p>
                     </div>
                 </div>
             `
@@ -355,15 +382,19 @@ exports.sendSellerRejectionEmail = async (sellerEmail, sellerName, shopName, rej
     try {
         console.log(`📧 Sending seller rejection notification to ${sellerEmail}`);
 
+        // Get admin configuration
+        const adminConfig = await getAdminConfig();
+
         const mailOptions = {
-            from: `"Sellsathi Marketplace" <${MAILER_CONFIG.user}>`,
+            from: `"${adminConfig.websiteName}" <${MAILER_CONFIG.user}>`,
+            replyTo: adminConfig.email,
             to: sellerEmail,
-            subject: `Application Status Update - Sellsathi Marketplace`,
+            subject: `Application Status Update - ${adminConfig.websiteName}`,
             html: `
                 <div style="font-family: Arial, sans-serif; padding: 20px; color: #333; line-height: 1.6;">
                     <div style="text-align: center; margin-bottom: 20px;">
-                        <h1 style="color: #2563eb; margin: 0;">Sellsathi</h1>
-                        <p style="color: #64748b; margin: 5px 0;">Your Shopping Partner</p>
+                        <h1 style="color: #2563eb; margin: 0;">${adminConfig.websiteName}</h1>
+                        <p style="color: #64748b; margin: 5px 0;">${adminConfig.websiteInfo}</p>
                     </div>
                     <div style="background: white; border: 2px solid #fca5a5; border-radius: 12px; padding: 24px; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);">
                         <div style="background: #fee2e2; padding: 16px; border-radius: 8px; margin-bottom: 20px; text-align: center;">
@@ -372,7 +403,7 @@ exports.sendSellerRejectionEmail = async (sellerEmail, sellerName, shopName, rej
                         
                         <p>Dear <strong>${sellerName}</strong>,</p>
                         
-                        <p>Thank you for your interest in becoming a seller on Sellsathi Marketplace. After careful review of your application for <strong>${shopName}</strong>, we regret to inform you that we are unable to approve your seller account at this time.</p>
+                        <p>Thank you for your interest in becoming a seller on ${adminConfig.websiteName}. After careful review of your application for <strong>${shopName}</strong>, we regret to inform you that we are unable to approve your seller account at this time.</p>
                         
                         <div style="background: #fef3c7; border-left: 4px solid #f59e0b; padding: 16px; margin: 20px 0; border-radius: 4px;">
                             <p style="margin: 0; color: #92400e;"><strong>Reason:</strong> ${rejectionReason}</p>
@@ -405,17 +436,18 @@ exports.sendSellerRejectionEmail = async (sellerEmail, sellerName, shopName, rej
                             <p style="margin: 0; color: #334155; font-size: 14px;">
                                 <strong>Questions?</strong><br>
                                 Contact our support team for more information:<br>
-                                Email: <a href="mailto:support@sellsathi.com" style="color: #2563eb;">support@sellsathi.com</a><br>
-                                Phone: <strong>+91-XXXX-XXXXXX</strong>
+                                Email: <a href="mailto:${adminConfig.email}" style="color: #2563eb;">${adminConfig.email}</a><br>
+                                ${adminConfig.phone !== 'Not provided' ? `Phone: <strong>${adminConfig.phone}</strong><br>` : ''}
+                                Admin: <strong>${adminConfig.name}</strong>
                             </p>
                         </div>
 
                         <p style="color: #64748b; font-size: 14px; margin-top: 24px;">
-                            We appreciate your interest in Sellsathi and hope to work with you in the future. Thank you for your understanding.
+                            We appreciate your interest in ${adminConfig.websiteName} and hope to work with you in the future. Thank you for your understanding.
                         </p>
                     </div>
                     <div style="text-align: center; margin-top: 24px; color: #94a3b8; font-size: 12px;">
-                        <p>&copy; 2026 Sellsathi Marketplace. All rights reserved.</p>
+                        <p>&copy; 2026 ${adminConfig.websiteName}. All rights reserved.</p>
                     </div>
                 </div>
             `
