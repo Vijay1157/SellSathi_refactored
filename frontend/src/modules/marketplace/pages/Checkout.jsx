@@ -96,15 +96,25 @@ export default function Checkout() {
     }, []);
 
     useEffect(() => {
+        const { buyNowProduct, selectedItemIds } = location.state || {};
+        
+        // If Buy Now product is provided, use it directly without cart
+        if (buyNowProduct) {
+            setCheckoutItems([buyNowProduct]);
+            setCartItems([]);
+            setLoading(false);
+            return;
+        }
+        
+        // Otherwise, listen to cart for normal checkout
         const unsubscribe = listenToCart((items) => {
             setCartItems(items);
-            const { buyNowProductId, selectedItemIds } = location.state || {};
             let itemsToCheckout = items;
-            if (buyNowProductId) {
-                itemsToCheckout = items.filter(item => (item.id || item.productId) === buyNowProductId);
-            } else if (selectedItemIds && selectedItemIds.length > 0) {
+            
+            if (selectedItemIds && selectedItemIds.length > 0) {
                 itemsToCheckout = items.filter(item => selectedItemIds.includes(item.id || item.productId));
             }
+            
             setCheckoutItems(itemsToCheckout);
             setLoading(false);
         });
@@ -188,7 +198,12 @@ export default function Checkout() {
                             const verifyResult = await verifyResponse.json();
 
                             if (verifyResult.success) {
-                                selectedCartItems.forEach(item => removeFromCart(item.id || item.productId));
+                                // Only remove items from cart if they're not Buy Now items
+                                const isBuyNow = location.state?.buyNowProduct;
+                                if (!isBuyNow) {
+                                    selectedCartItems.forEach(item => removeFromCart(item.id || item.productId));
+                                }
+                                
                                 if (addressMode === 'new' && saveAddressForFuture && user) {
                                     try {
                                         const newAddress = { ...shippingAddress, isDefault: setAsDefault };
@@ -283,7 +298,13 @@ export default function Checkout() {
                         console.error("Error saving address:", error);
                     }
                 }
-                selectedCartItems.forEach(item => removeFromCart(item.id || item.productId));
+                
+                // Only remove items from cart if they're not Buy Now items
+                const isBuyNow = location.state?.buyNowProduct;
+                if (!isBuyNow) {
+                    selectedCartItems.forEach(item => removeFromCart(item.id || item.productId));
+                }
+                
                 setOrderId(result.orderId);
                 setShowAnimation(true);
             } else {
@@ -392,8 +413,14 @@ export default function Checkout() {
                             <div className="p-8 space-y-4">
                                 {checkoutItems.map((item) => {
                                     const itemId = item.id || item.productId;
+                                    const isBuyNowItem = location.state?.buyNowProduct?.id === itemId;
                                     return (
-                                        <div key={itemId} className="flex gap-6 items-center p-4 rounded-2xl border bg-white border-primary/30 shadow-sm group hover:border-primary/40 transition-all">
+                                        <div key={itemId} className={`flex gap-6 items-center p-4 rounded-2xl border shadow-sm group hover:border-primary/40 transition-all ${isBuyNowItem ? 'bg-orange-50 border-orange-300' : 'bg-white border-primary/30'}`}>
+                                            {isBuyNowItem && (
+                                                <div className="absolute top-2 right-2 bg-orange-500 text-white text-xs font-bold px-3 py-1 rounded-full">
+                                                    BUY NOW
+                                                </div>
+                                            )}
                                             <div className="w-20 h-20 rounded-xl overflow-hidden shadow-sm flex-shrink-0">
                                                 <img src={item.imageUrl || item.image} alt={item.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
                                             </div>
@@ -416,9 +443,11 @@ export default function Checkout() {
                                             </div>
                                             <div className="flex flex-col items-end gap-3 flex-shrink-0">
                                                 <PriceDisplay product={{ ...item, price: item.originalPrice || item.price, discountPrice: item.price }} size="sm" showBadge={false} />
-                                                <button onClick={() => handleRemove(itemId)} className="p-2 text-gray-300 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all" title="Remove">
-                                                    <Trash2 size={16} />
-                                                </button>
+                                                {!isBuyNowItem && (
+                                                    <button onClick={() => handleRemove(itemId)} className="p-2 text-gray-300 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all" title="Remove">
+                                                        <Trash2 size={16} />
+                                                    </button>
+                                                )}
                                             </div>
                                         </div>
                                     );

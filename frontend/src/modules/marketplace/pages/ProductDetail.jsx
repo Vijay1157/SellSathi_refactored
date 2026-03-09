@@ -591,14 +591,26 @@ export default function ProductDetail() {
             memory: selectedMemory,
             purchaseOption: purchaseOption
         };
-        const productWithNumPrice = { ...product, price: Number(product.price) };
-        const res = await addToCart(productWithNumPrice, selections);
-        if (res.success) {
-            // Pass the product ID as state to checkout so it knows to select only this item
-            navigate('/checkout', { state: { buyNowProductId: productWithNumPrice.id } });
-        } else {
-            alert('❌ Failed to process. Please try again.');
-        }
+        
+        // Calculate correct prices based on selections (same as addToCart)
+        const { finalPrice, strikethroughPrice } = getProductPricing(product, selections);
+        
+        // Create a temporary cart item for Buy Now (don't add to actual cart)
+        const buyNowItem = {
+            ...product,
+            id: product.id,
+            productId: product.id,
+            sellerId: product.sellerId || null,
+            name: product.name || product.title,
+            price: finalPrice,
+            originalPrice: strikethroughPrice,
+            quantity: 1,
+            imageUrl: product.image || product.imageUrl,
+            selections: selections
+        };
+        
+        // Navigate directly to checkout with Buy Now product data
+        navigate('/checkout', { state: { buyNowProduct: buyNowItem } });
     };
 
     const toggleFbt = (index) => {
