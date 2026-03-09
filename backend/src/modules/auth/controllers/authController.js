@@ -12,6 +12,7 @@ const login = async (req, res) => {
         let phoneNumber = null;
         let email = null;
         let fullName = null;
+        let decodedToken = null;
 
         if (isTest) {
             uid = phone ? `test_${phone.replace(/[^0-9]/g, '')}` : `test_email_${(testEmail || "user").replace(/[^a-zA-Z0-9]/g, '')}`;
@@ -20,7 +21,7 @@ const login = async (req, res) => {
             phoneNumber = phone || null;
         } else {
             if (!idToken) return res.status(400).json({ success: false, message: "ID token is required" });
-            const decodedToken = await admin.auth().verifyIdToken(idToken);
+            decodedToken = await admin.auth().verifyIdToken(idToken);
             uid = decodedToken.uid;
             phoneNumber = decodedToken.phone_number || null;
             email = decodedToken.email || null;
@@ -212,7 +213,7 @@ const applySeller = async (req, res) => {
                 console.log(`[ApplySeller] ERROR: User is already a SELLER with status: ${existingSellerData.sellerStatus}`);
                 return res.status(400).json({ success: false, message: `Already a seller (status: ${existingSellerData.sellerStatus})` });
             }
-            
+
             // If REJECTED or BLOCKED, allow reapplication by updating the existing document
             if (existingSellerData.sellerStatus === "REJECTED" || existingSellerData.isBlocked === true) {
                 console.log(`[ApplySeller] Seller was ${existingSellerData.sellerStatus || 'BLOCKED'}. Allowing reapplication.`);
@@ -227,19 +228,19 @@ const applySeller = async (req, res) => {
                     blockedAt: admin.firestore.FieldValue.delete(),
                     blockReason: admin.firestore.FieldValue.delete()
                 });
-                
+
                 // Ensure user is active and has SELLER role
-                await userRef.update({ 
-                    role: "SELLER", 
+                await userRef.update({
+                    role: "SELLER",
                     isActive: true,
-                    updatedAt: admin.firestore.FieldValue.serverTimestamp() 
+                    updatedAt: admin.firestore.FieldValue.serverTimestamp()
                 });
-                
-                return res.status(200).json({ 
-                    success: true, 
-                    uid, 
-                    message: "Reapplication submitted successfully. Pending admin approval.", 
-                    status: "PENDING" 
+
+                return res.status(200).json({
+                    success: true,
+                    uid,
+                    message: "Reapplication submitted successfully. Pending admin approval.",
+                    status: "PENDING"
                 });
             }
         }
