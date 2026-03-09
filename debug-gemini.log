@@ -2,3 +2,7 @@
 [2026-03-08T07:55:01.286Z] Attempt with: gemini-flash-latest | Attempt: 1
 [2026-03-08T07:55:09.570Z] RAW AI RESPONSE (TRUNCATED): {"name": "Auupati Naresh", "aadhaar_no": "5288 0728 7008", "address": "S/O Auupati Mani, 6-3-563/K, Venkata Ramana colony, bagath singh statuch, Khairatabad, Khairatabad, Hyderabad, Andhra Pradesh, 500004", "dob": "1987", "gender": "MALE", "phone": "null", "pincode": "500004"}
 [2026-03-08T07:55:09.573Z] FINAL PARSED: {"name":"Auupati Naresh","aadhaar_no":"5288 0728 7008","address":"S/O Auupati Mani, 6-3-563/K, Venkata Ramana colony, bagath singh statuch, Khairatabad, Khairatabad, Hyderabad, Andhra Pradesh, 500004","dob":"1987","gender":"MALE","phone":"null","pincode":"500004"}
+[2026-03-09T05:41:18.176Z] --- START NEW EXTRACTION (MIME: image/png) ---
+[2026-03-09T05:41:18.284Z] Attempt with: gemini-flash-latest | Attempt: 1
+[2026-03-09T05:41:25.353Z] RAW AI RESPONSE (TRUNCATED): {"name": "Auupati Naresh", "aadhaar_no": "5288 0728 7008", "address": "S/O Auupati Mani, 6-3-563/K, Venkata Ramana colony, bagath singh statuch, Khairatabad, Khairatabad, Hyderabad, Andhra Pradesh, 500004", "dob": "1987", "gender": "MALE", "phone": "null", "pincode": "500004"}
+[2026-03-09T05:41:25.356Z] FINAL PARSED: {"name":"Auupati Naresh","aadhaar_no":"5288 0728 7008","address":"S/O Auupati Mani, 6-3-563/K, Venkata Ramana colony, bagath singh statuch, Khairatabad, Khairatabad, Hyderabad, Andhra Pradesh, 500004","dob":"1987","gender":"MALE","phone":"null","pincode":"500004"}
