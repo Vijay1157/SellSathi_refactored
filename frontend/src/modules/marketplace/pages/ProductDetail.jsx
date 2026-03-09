@@ -186,7 +186,11 @@ export default function ProductDetail() {
             try {
                 const { reviews, stats } = await fetchProductReviews(id);
                 setReviews(reviews);
-                setReviewStats(stats);
+                setReviewStats({
+                    average: stats.averageRating,
+                    total: stats.totalReviews,
+                    distribution: stats.distribution
+                });
             } catch (err) {
                 console.error("Failed to load reviews:", err);
             }
@@ -393,7 +397,11 @@ export default function ProductDetail() {
                 try {
                     const { reviews, stats } = await fetchProductReviews(id);
                     setReviews(reviews);
-                    setReviewStats(stats);
+                    setReviewStats({
+                        average: stats.averageRating,
+                        total: stats.totalReviews,
+                        distribution: stats.distribution
+                    });
                 } catch (err) {
                     console.error("Failed to load reviews:", err);
                 }
