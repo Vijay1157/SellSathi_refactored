@@ -118,15 +118,22 @@ export default function AdminLoginModal({ isOpen, onClose }) {
                 if (TEST_CREDENTIALS[formattedPhone].otp !== otp) {
                     throw new Error('Invalid test OTP');
                 }
+                // For test numbers, use the test-login endpoint or send isTest flag
             } else {
                 const result = await confirmationResult.confirm(otp);
                 idToken = await result.user.getIdToken();
             }
 
-            const response = await authFetch('/auth/login', {
+            // Use the correct endpoint and payload based on test vs real auth
+            const endpoint = isTestNumber ? '/auth/test-login' : '/auth/login';
+            const payload = isTestNumber
+                ? { phone: formattedPhone, otp }
+                : { idToken };
+
+            const response = await authFetch(endpoint, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(isTestNumber ? { phone: formattedPhone, otp } : { idToken }),
+                body: JSON.stringify(payload),
             });
 
             const data = await response.json();

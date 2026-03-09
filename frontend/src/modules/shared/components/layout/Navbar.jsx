@@ -9,6 +9,7 @@ import { listenToWishlist } from '@/modules/shared/utils/wishlistUtils';
 import { MAIN_CATEGORIES, SPECIAL_CATEGORIES, SUBCATEGORIES } from '@/modules/shared/config/categories';
 import { fetchWithCache } from '@/modules/shared/utils/firestoreCache';
 import NavbarMegaMenu from './NavbarMegaMenu';
+import { authFetch } from '@/modules/shared/utils/api';
 import './Navbar.css';
 
 export default function Navbar() {
@@ -242,6 +243,37 @@ export default function Navbar() {
         navigate(`/products?category=${category}&sub=${subCategory}&item=${item}`);
     };
 
+    const handleBecomeSellerClick = async () => {
+        if (!user) {
+            setIsLoginModalOpen(true);
+            return;
+        }
+
+        if (user.role === 'ADMIN') {
+            return; // Admin button is already hidden, but safety check
+        }
+
+        // Check seller status via backend
+        try {
+            const response = await authFetch('/auth/check-seller-status');
+            const data = await response.json();
+            if (data.success && data.hasApplied) {
+                if (data.sellerStatus === 'APPROVED') {
+                    window.open('/seller/dashboard', '_blank');
+                    return;
+                } else if (data.sellerStatus === 'PENDING') {
+                    alert('You have already applied to become a seller. Your application is currently under review. Please wait for admin approval.');
+                    return;
+                }
+                // REJECTED — allow re-application
+            }
+        } catch (err) {
+            console.error('Error checking seller status:', err);
+        }
+
+        window.open('/seller', '_blank');
+    };
+
     return (
         <>
             <nav className="navbar-container" ref={menuRef}>
@@ -275,30 +307,21 @@ export default function Navbar() {
                                     />
                                 </div>
 
-                                {user && user.role === 'SELLER' ? (
-                                    <Link
-                                        to="/seller/dashboard"
+                                {user && user.role !== 'ADMIN' ? (
+                                    <button
+                                        onClick={handleBecomeSellerClick}
                                         className="btn btn-seller"
                                     >
-                                        Dashboard
-                                    </Link>
-                                ) : user ? (
-                                    <Link
-                                        to="/seller"
-                                        className="btn btn-seller"
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                    >
-                                        Become a Seller
-                                    </Link>
-                                ) : (
+                                        {user.role === 'SELLER' ? 'Dashboard' : 'Become a Seller'}
+                                    </button>
+                                ) : !user ? (
                                     <button
                                         onClick={() => setIsLoginModalOpen(true)}
                                         className="btn btn-seller"
                                     >
                                         Become a Seller
                                     </button>
-                                )}
+                                ) : null}
                             </>
                         )}
 
@@ -377,7 +400,7 @@ export default function Navbar() {
 
                 {/* Categories section - Only visible on Home page */}
                 {location.pathname === '/' && (
-                    <div 
+                    <div
                         className="sub-nav-wrapper"
                         style={{ display: 'block' }}
                     >
