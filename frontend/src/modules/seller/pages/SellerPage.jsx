@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import SellerHeader from '../components/SellerHeader';
@@ -7,6 +7,7 @@ import StatsSection from '../components/StatsSection';
 import WhySellSathi from '../components/WhySellSathi';
 import HowItWorks from '../components/HowItWorks';
 import Testimonials from '../components/Testimonials';
+import AuthModal from '@/modules/auth/components/AuthModal';
 import { ArrowRight, BookOpen, Truck, Rocket, BarChart3, Mail, Zap, Play } from 'lucide-react';
 
 const categories = [
@@ -16,12 +17,14 @@ const categories = [
 ];
 
 export const SellerPage = () => {
+  const [isLoginOpen, setIsLoginOpen] = useState(false);
+
   return (
     <div className="min-h-screen bg-white">
-      <SellerHeader />
+      <SellerHeader onLoginClick={() => setIsLoginOpen(true)} />
       
       {/* Hero Section */}
-      <section className="relative pt-16 pb-24 lg:pt-24 lg:pb-32 overflow-hidden bg-gradient-to-b from-brand/5 to-white">
+      <section id="sell-online" className="relative pt-16 pb-24 lg:pt-24 lg:pb-32 overflow-hidden bg-gradient-to-b from-brand/5 to-white">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex flex-col lg:flex-row items-center gap-12 lg:gap-20">
             <motion.div 
@@ -76,7 +79,7 @@ export const SellerPage = () => {
       <HowItWorks />
 
       {/* Learning Hub Section */}
-      <section className="py-20 bg-brand">
+      <section id="pricing-commission" className="py-20 bg-brand">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex flex-col md:flex-row items_center justify-between gap-8 bg-white/10 backdrop-blur-md rounded-[2.5rem] p-8 md:p-16 border border-white/20">
             <div className="text-center md:text-left">
@@ -96,7 +99,7 @@ export const SellerPage = () => {
       </section>
 
       {/* Grow Your Business Section */}
-      <section className="py-24 bg-white">
+      <section id="grow-business" className="py-24 bg-white">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-16 text-center">
             Grow Your Business With SellSathi
@@ -143,7 +146,7 @@ export const SellerPage = () => {
       </section>
 
       {/* Popular Categories Section */}
-      <section className="py-20 bg-gray-50">
+      <section id="shipping-returns" className="py-20 bg-gray-50">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <h2 className="text-2xl font-bold text-gray-900 mb-10">Popular Categories To Sell Online</h2>
           <div className="flex flex-wrap gap-4 mb-8">
@@ -174,6 +177,7 @@ export const SellerPage = () => {
       </section>
 
       <Footer />
+      <AuthModal isOpen={isLoginOpen} onClose={() => setIsLoginOpen(false)} hideRegister={true} />
     </div>
   );
 };
