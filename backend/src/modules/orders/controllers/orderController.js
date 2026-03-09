@@ -181,19 +181,36 @@ const cancelOrder = async (req, res) => {
 const getReviewableOrders = async (req, res) => {
     try {
         const { uid } = req.params;
+        
+        // Get all delivered orders for the user
         const snapshot = await db.collection("orders")
             .where("userId", "==", uid)
             .where("status", "==", "Delivered")
             .get();
 
+        // Get all reviews by this user to filter out already reviewed products
+        const reviewsSnapshot = await db.collection("reviews")
+            .where("userId", "==", uid)
+            .get();
+        
+        const reviewedProductIds = new Set();
+        reviewsSnapshot.forEach(doc => {
+            const reviewData = doc.data();
+            if (reviewData.productId) {
+                reviewedProductIds.add(reviewData.productId);
+            }
+        });
+
         const reviewableOrders = [];
         for (const doc of snapshot.docs) {
             const data = doc.data();
             for (const item of data.items || []) {
-                if (!item.reviewed) {
+                const productId = item.productId || item.id;
+                // Only include if not already reviewed
+                if (!reviewedProductIds.has(productId)) {
                     reviewableOrders.push({
                         orderId: data.orderId || doc.id,
-                        productId: item.productId || item.id,
+                        productId: productId,
                         productName: item.name,
                         productImage: item.imageUrl || item.image,
                         deliveredAt: data.deliveredAt || data.updatedAt || data.createdAt
