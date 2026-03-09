@@ -484,42 +484,43 @@ export default function OrderTracking() {
                         className="glass-card"
                         style={{
                             maxWidth: '500px',
-                            width: '100%',
-                            padding: '2rem',
-                            maxHeight: '90vh',
-                            overflowY: 'auto'
+                            width: '90%',
+                            padding: '1.5rem',
+                            maxHeight: '80vh',
+                            overflowY: 'auto',
+                            margin: 'auto'
                         }}
                         onClick={(e) => e.stopPropagation()}
                     >
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1.5rem' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1rem' }}>
                             <div style={{
-                                width: '48px',
-                                height: '48px',
-                                borderRadius: '12px',
+                                width: '40px',
+                                height: '40px',
+                                borderRadius: '10px',
                                 background: 'rgba(239, 68, 68, 0.1)',
                                 display: 'flex',
                                 alignItems: 'center',
                                 justifyContent: 'center'
                             }}>
-                                <XCircle size={24} style={{ color: '#ef4444' }} />
+                                <XCircle size={20} style={{ color: '#ef4444' }} />
                             </div>
                             <div>
-                                <h3 style={{ margin: 0, fontSize: '1.5rem' }}>Cancel Order</h3>
-                                <p className="text-muted" style={{ margin: '0.25rem 0 0 0', fontSize: '0.9rem' }}>
+                                <h3 style={{ margin: 0, fontSize: '1.25rem' }}>Cancel Order</h3>
+                                <p className="text-muted" style={{ margin: '0.25rem 0 0 0', fontSize: '0.85rem' }}>
                                     Order #{order.orderId || order.id}
                                 </p>
                             </div>
                         </div>
 
-                        <p style={{ marginBottom: '1.5rem', color: 'var(--text-muted)' }}>
+                        <p style={{ marginBottom: '1rem', color: 'var(--text-muted)', fontSize: '0.9rem' }}>
                             Please select a reason for cancelling this order. This helps us improve our service.
                         </p>
 
-                        <div style={{ marginBottom: '1.5rem' }}>
-                            <label style={{ display: 'block', marginBottom: '0.75rem', fontWeight: '600' }}>
+                        <div style={{ marginBottom: '1rem' }}>
+                            <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '600', fontSize: '0.9rem' }}>
                                 Cancellation Reason <span style={{ color: '#ef4444' }}>*</span>
                             </label>
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
                                 {cancellationReasons.map((reason) => (
                                     <label
                                         key={reason}
@@ -527,7 +528,7 @@ export default function OrderTracking() {
                                             display: 'flex',
                                             alignItems: 'center',
                                             gap: '0.75rem',
-                                            padding: '1rem',
+                                            padding: '0.75rem 1rem',
                                             background: cancellationReason === reason ? 'rgba(99, 102, 241, 0.1)' : 'var(--surface)',
                                             border: `2px solid ${cancellationReason === reason ? 'var(--primary)' : 'var(--border)'}`,
                                             borderRadius: '12px',
@@ -570,23 +571,23 @@ export default function OrderTracking() {
                             <motion.div
                                 initial={{ opacity: 0, height: 0 }}
                                 animate={{ opacity: 1, height: 'auto' }}
-                                style={{ marginBottom: '1.5rem' }}
+                                style={{ marginBottom: '1rem' }}
                             >
-                                <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '600' }}>
+                                <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '600', fontSize: '0.9rem' }}>
                                     Please specify <span style={{ color: '#ef4444' }}>*</span>
                                 </label>
                                 <textarea
                                     value={customReason}
                                     onChange={(e) => setCustomReason(e.target.value)}
                                     placeholder="Enter your reason for cancellation..."
-                                    rows={4}
+                                    rows={3}
                                     style={{
                                         width: '100%',
                                         padding: '0.75rem',
                                         borderRadius: '12px',
                                         border: '2px solid var(--border)',
                                         background: 'var(--surface)',
-                                        fontSize: '0.95rem',
+                                        fontSize: '0.9rem',
                                         resize: 'vertical',
                                         fontFamily: 'inherit'
                                     }}
@@ -595,18 +596,18 @@ export default function OrderTracking() {
                         )}
 
                         <div style={{
-                            padding: '1rem',
+                            padding: '0.75rem',
                             background: 'rgba(239, 68, 68, 0.05)',
                             border: '1px solid rgba(239, 68, 68, 0.2)',
                             borderRadius: '12px',
-                            marginBottom: '1.5rem'
+                            marginBottom: '1rem'
                         }}>
-                            <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--text-muted)' }}>
+                            <p style={{ margin: 0, fontSize: '0.8rem', color: 'var(--text-muted)' }}>
                                 ⚠️ Once cancelled, this action cannot be undone. Any applicable refunds will be processed according to our refund policy.
                             </p>
                         </div>
 
-                        <div style={{ display: 'flex', gap: '1rem' }}>
+                        <div style={{ display: 'flex', gap: '0.75rem' }}>
                             <button
                                 onClick={() => {
                                     setShowCancelModal(false);
@@ -617,10 +618,11 @@ export default function OrderTracking() {
                                 className="btn"
                                 style={{
                                     flex: 1,
-                                    padding: '1rem',
+                                    padding: '0.875rem',
                                     background: 'var(--surface)',
                                     fontWeight: '600',
-                                    borderRadius: '12px'
+                                    borderRadius: '12px',
+                                    fontSize: '0.95rem'
                                 }}
                             >
                                 Keep Order
@@ -631,11 +633,12 @@ export default function OrderTracking() {
                                 className="btn"
                                 style={{
                                     flex: 1,
-                                    padding: '1rem',
+                                    padding: '0.875rem',
                                     background: '#ef4444',
                                     color: 'white',
                                     fontWeight: '600',
                                     borderRadius: '12px',
+                                    fontSize: '0.95rem',
                                     opacity: (cancelling || !cancellationReason || (cancellationReason === 'Other' && !customReason.trim())) ? 0.5 : 1,
                                     cursor: (cancelling || !cancellationReason || (cancellationReason === 'Other' && !customReason.trim())) ? 'not-allowed' : 'pointer'
                                 }}

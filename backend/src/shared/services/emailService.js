@@ -19,16 +19,28 @@ const transporter = nodemailer.createTransport({
     }
 });
 
+/**
+ * Get sender email configuration
+ * Gmail requires the authenticated email as sender, but we can set admin email in replyTo
+ */
+const getSenderConfig = async () => {
+    const adminConfig = await getAdminConfig();
+    return {
+        from: `"${adminConfig.websiteName}" <${MAILER_CONFIG.user}>`, // Must use authenticated email
+        replyTo: adminConfig.email // Admin email for replies
+    };
+};
+
 exports.sendOrderConfirmation = async (email, order, invoicePath) => {
     try {
         console.log(`📧 Sending order confirmation email to ${email} for order ${order.orderId}`);
 
-        // Get admin configuration
+        // Get admin configuration and sender config
         const adminConfig = await getAdminConfig();
+        const senderConfig = await getSenderConfig();
 
         const mailOptions = {
-            from: `"${adminConfig.websiteName}" <${MAILER_CONFIG.user}>`,
-            replyTo: adminConfig.email,
+            ...senderConfig,
             to: email,
             subject: `Order Confirmed: #${order.orderId} - ${adminConfig.websiteName}`,
             html: `
@@ -91,8 +103,9 @@ exports.sendSellerNotification = async (sellerEmail, order, sellerItems) => {
     try {
         console.log(`📧 Sending seller notification to ${sellerEmail}`);
 
-        // Get admin configuration
+        // Get admin configuration and sender config
         const adminConfig = await getAdminConfig();
+        const senderConfig = await getSenderConfig();
 
         const itemsHtml = sellerItems.map(item => {
             const hasDiscount = item.originalPrice && item.originalPrice > item.price;
@@ -127,8 +140,7 @@ exports.sendSellerNotification = async (sellerEmail, order, sellerItems) => {
         const totalAmount = sellerItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
 
         const mailOptions = {
-            from: `"${adminConfig.websiteName}" <${MAILER_CONFIG.user}>`,
-            replyTo: adminConfig.email,
+            ...senderConfig,
             to: sellerEmail,
             subject: `🎉 New Order Received: #${order.orderId} - ${adminConfig.websiteName}`,
             html: `
@@ -236,12 +248,12 @@ exports.sendSellerBlockedEmail = async (sellerEmail, sellerName, shopName, block
     try {
         console.log(`📧 Sending seller blocked notification to ${sellerEmail}`);
 
-        // Get admin configuration
+        // Get admin configuration and sender config
         const adminConfig = await getAdminConfig();
+        const senderConfig = await getSenderConfig();
 
         const mailOptions = {
-            from: `"${adminConfig.websiteName}" <${MAILER_CONFIG.user}>`,
-            replyTo: adminConfig.email,
+            ...senderConfig,
             to: sellerEmail,
             subject: `Account Blocked - Action Required - ${adminConfig.websiteName}`,
             html: `
@@ -313,12 +325,12 @@ exports.sendSellerUnblockedEmail = async (sellerEmail, sellerName, shopName) => 
     try {
         console.log(`📧 Sending seller unblocked notification to ${sellerEmail}`);
 
-        // Get admin configuration
+        // Get admin configuration and sender config
         const adminConfig = await getAdminConfig();
+        const senderConfig = await getSenderConfig();
 
         const mailOptions = {
-            from: `"${adminConfig.websiteName}" <${MAILER_CONFIG.user}>`,
-            replyTo: adminConfig.email,
+            ...senderConfig,
             to: sellerEmail,
             subject: `Account Unblocked - Pending Re-approval - ${adminConfig.websiteName}`,
             html: `
@@ -401,12 +413,12 @@ exports.sendSellerApprovalEmail = async (sellerEmail, sellerName, shopName) => {
     try {
         console.log(`📧 Sending seller approval notification to ${sellerEmail}`);
 
-        // Get admin configuration
+        // Get admin configuration and sender config
         const adminConfig = await getAdminConfig();
+        const senderConfig = await getSenderConfig();
 
         const mailOptions = {
-            from: `"${adminConfig.websiteName}" <${MAILER_CONFIG.user}>`,
-            replyTo: adminConfig.email,
+            ...senderConfig,
             to: sellerEmail,
             subject: `🎉 Congratulations! Your Seller Account is Approved - ${adminConfig.websiteName}`,
             html: `
@@ -491,12 +503,12 @@ exports.sendSellerRejectionEmail = async (sellerEmail, sellerName, shopName, rej
     try {
         console.log(`📧 Sending seller rejection notification to ${sellerEmail}`);
 
-        // Get admin configuration
+        // Get admin configuration and sender config
         const adminConfig = await getAdminConfig();
+        const senderConfig = await getSenderConfig();
 
         const mailOptions = {
-            from: `"${adminConfig.websiteName}" <${MAILER_CONFIG.user}>`,
-            replyTo: adminConfig.email,
+            ...senderConfig,
             to: sellerEmail,
             subject: `Application Status Update - ${adminConfig.websiteName}`,
             html: `
@@ -665,10 +677,14 @@ exports.sendOrderCancellation = async (email, order) => {
     try {
         console.log(`📧 Sending order cancellation email to ${email} for order ${order.orderId}`);
 
+        // Get admin configuration and sender config
+        const adminConfig = await getAdminConfig();
+        const senderConfig = await getSenderConfig();
+
         const mailOptions = {
-            from: `"Sellsathi Marketplace" <${MAILER_CONFIG.user}>`,
+            ...senderConfig,
             to: email,
-            subject: `Order Cancelled: #${order.orderId}`,
+            subject: `Order Cancelled: #${order.orderId} - ${adminConfig.websiteName}`,
             html: `
                 <div style="font-family: Arial, sans-serif; padding: 20px; color: #333; line-height: 1.6;">
                     <div style="text-align: center; margin-bottom: 20px;">
