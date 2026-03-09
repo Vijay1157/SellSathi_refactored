@@ -33,6 +33,8 @@ const placeOrder = async (req, res) => {
             if (orderData.email) {
                 emailService.sendOrderConfirmation(orderData.email, fullOrder, invoicePath).catch(err => console.error(err));
             }
+            // Notify sellers about the new order
+            emailService.notifySellers(fullOrder).catch(err => console.error('[PlaceOrder] Seller notification error:', err));
         } catch (e) {
             console.error("Invoice skip:", e.message);
         }

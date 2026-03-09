@@ -1,6 +1,7 @@
 const nodemailer = require('nodemailer');
 const path = require('path');
 const { getAdminConfig } = require('./adminConfigService');
+const { db } = require('../../config/firebase');
 
 // Configure credentials via env variables
 const MAILER_CONFIG = {
@@ -93,23 +94,131 @@ exports.sendSellerNotification = async (sellerEmail, order, sellerItems) => {
         // Get admin configuration
         const adminConfig = await getAdminConfig();
 
+        const itemsHtml = sellerItems.map(item => {
+            const hasDiscount = item.originalPrice && item.originalPrice > item.price;
+            const priceDisplay = hasDiscount 
+                ? `<div style="display: flex; align-items: center; gap: 8px; justify-content: flex-end;">
+                     <span style="text-decoration: line-through; color: #94a3b8; font-size: 14px;">₹${(item.originalPrice * item.quantity).toFixed(2)}</span>
+                     <span style="font-weight: 600; color: #16a34a;">₹${(item.price * item.quantity).toFixed(2)}</span>
+                   </div>`
+                : `₹${(item.price * item.quantity).toFixed(2)}`;
+            
+            return `
+            <tr style="border-bottom: 1px solid #e2e8f0;">
+                <td style="padding: 12px 8px;">
+                    <div style="display: flex; align-items: center; gap: 12px;">
+                        <img src="${item.imageUrl || item.image || ''}" alt="${item.name}" style="width: 50px; height: 50px; object-fit: cover; border-radius: 8px;" />
+                        <div>
+                            <div style="font-weight: 600; color: #1e293b;">${item.name}</div>
+                            ${item.selections ? `<div style="font-size: 12px; color: #64748b; margin-top: 4px;">
+                                ${item.selections.color ? `Color: ${item.selections.color}` : ''}
+                                ${item.selections.size ? ` | Size: ${item.selections.size}` : ''}
+                                ${item.selections.storage ? ` | Storage: ${item.selections.storage}` : ''}
+                            </div>` : ''}
+                        </div>
+                    </div>
+                </td>
+                <td style="padding: 12px 8px; text-align: center; color: #475569;">x${item.quantity}</td>
+                <td style="padding: 12px 8px; text-align: right; font-weight: 600; color: #1e293b;">${priceDisplay}</td>
+            </tr>
+        `;
+        }).join('');
+
+        const totalAmount = sellerItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+
         const mailOptions = {
             from: `"${adminConfig.websiteName}" <${MAILER_CONFIG.user}>`,
             replyTo: adminConfig.email,
             to: sellerEmail,
-            subject: `New Order Received: #${order.orderId} - ${adminConfig.websiteName}`,
+            subject: `🎉 New Order Received: #${order.orderId} - ${adminConfig.websiteName}`,
             html: `
-                <div style="font-family: Arial, sans-serif; padding: 20px; color: #333;">
-                    <h2 style="color: #2563eb;">New Order Alert!</h2>
-                    <p>You have received a new order for the following items:</p>
-                    <ul>
-                        ${sellerItems.map(item => `<li>${item.name} x ${item.quantity} - ₹${item.price * item.quantity}</li>`).join('')}
-                    </ul>
-                    <p><strong>Customer:</strong> ${order.customerName}</p>
-                    <p>Please log in to your dashboard to manage this order.</p>
-                    <p style="margin-top: 20px; color: #64748b; font-size: 14px;">
-                        For support, contact us at <a href="mailto:${adminConfig.email}">${adminConfig.email}</a>
-                    </p>
+                <div style="font-family: Arial, sans-serif; padding: 20px; color: #333; line-height: 1.6;">
+                    <div style="text-align: center; margin-bottom: 20px;">
+                        <h1 style="color: #2563eb; margin: 0;">${adminConfig.websiteName}</h1>
+                        <p style="color: #64748b; margin: 5px 0;">${adminConfig.websiteInfo}</p>
+                    </div>
+                    
+                    <div style="background: white; border: 2px solid #86efac; border-radius: 12px; padding: 24px; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);">
+                        <div style="background: #dcfce7; padding: 16px; border-radius: 8px; margin-bottom: 20px; text-align: center;">
+                            <h2 style="color: #16a34a; margin: 0; font-size: 24px;">🎉 New Order Alert!</h2>
+                        </div>
+                        
+                        <p style="font-size: 16px; color: #1e293b;">You have received a new order. Please prepare the following items for shipment:</p>
+                        
+                        <div style="background: #f8fafc; padding: 20px; border-radius: 8px; margin: 24px 0;">
+                            <h3 style="margin-top: 0; color: #334155; font-size: 16px;">Order Details</h3>
+                            <table style="width: 100%; border-collapse: collapse; margin-bottom: 16px;">
+                                <tr>
+                                    <td style="padding: 8px 0; color: #64748b;">Order ID:</td>
+                                    <td style="padding: 8px 0; text-align: right; color: #1e293b; font-weight: 600;">#${order.orderId}</td>
+                                </tr>
+                                <tr>
+                                    <td style="padding: 8px 0; color: #64748b;">Customer Name:</td>
+                                    <td style="padding: 8px 0; text-align: right; color: #1e293b; font-weight: 600;">${order.customerName}</td>
+                                </tr>
+                                <tr>
+                                    <td style="padding: 8px 0; color: #64748b;">Payment Method:</td>
+                                    <td style="padding: 8px 0; text-align: right; color: #1e293b; font-weight: 600;">${order.paymentMethod || 'COD'}</td>
+                                </tr>
+                                <tr>
+                                    <td style="padding: 8px 0; color: #64748b;">Order Date:</td>
+                                    <td style="padding: 8px 0; text-align: right; color: #1e293b; font-weight: 600;">${new Date().toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}</td>
+                                </tr>
+                            </table>
+                        </div>
+
+                        <div style="background: white; border: 1px solid #e2e8f0; border-radius: 8px; margin: 24px 0; overflow: hidden;">
+                            <h3 style="margin: 0; padding: 16px; background: #f8fafc; color: #334155; font-size: 16px; border-bottom: 1px solid #e2e8f0;">Your Products</h3>
+                            <table style="width: 100%; border-collapse: collapse;">
+                                <thead>
+                                    <tr style="background: #f8fafc; border-bottom: 2px solid #e2e8f0;">
+                                        <th style="padding: 12px 8px; text-align: left; color: #64748b; font-weight: 600; font-size: 12px; text-transform: uppercase;">Product</th>
+                                        <th style="padding: 12px 8px; text-align: center; color: #64748b; font-weight: 600; font-size: 12px; text-transform: uppercase;">Qty</th>
+                                        <th style="padding: 12px 8px; text-align: right; color: #64748b; font-weight: 600; font-size: 12px; text-transform: uppercase;">Amount</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${itemsHtml}
+                                    <tr style="background: #f8fafc;">
+                                        <td colspan="2" style="padding: 16px 8px; text-align: right; font-weight: 600; color: #1e293b; font-size: 16px;">Total:</td>
+                                        <td style="padding: 16px 8px; text-align: right; font-weight: 700; color: #16a34a; font-size: 18px;">₹${totalAmount.toFixed(2)}</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div style="background: #dbeafe; border-left: 4px solid #2563eb; padding: 16px; margin: 24px 0; border-radius: 4px;">
+                            <h4 style="margin: 0 0 8px 0; color: #1e40af; font-size: 14px;">📦 Shipping Address</h4>
+                            <p style="margin: 0; color: #1e40af; line-height: 1.6;">
+                                <strong>${order.customerName}</strong><br>
+                                ${order.shippingAddress?.addressLine || ''}<br>
+                                ${order.shippingAddress?.city || ''}, ${order.shippingAddress?.state || ''} - ${order.shippingAddress?.pincode || ''}<br>
+                                ${order.phone ? `Phone: ${order.phone}` : ''}
+                            </p>
+                        </div>
+
+                        <div style="background: #fef3c7; border-left: 4px solid #f59e0b; padding: 16px; margin: 24px 0; border-radius: 4px;">
+                            <p style="margin: 0; color: #92400e;">
+                                <strong>⚡ Action Required:</strong> Please prepare these items for shipment. The delivery partner will collect the package soon.
+                            </p>
+                        </div>
+
+                        <div style="text-align: center; margin: 24px 0;">
+                            <a href="http://localhost:5173/seller/dashboard" style="background: #2563eb; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: 600; display: inline-block;">Go to Seller Dashboard</a>
+                        </div>
+
+                        <div style="background: #f1f5f9; padding: 16px; border-radius: 8px; margin: 24px 0;">
+                            <p style="margin: 0; color: #334155; font-size: 14px;">
+                                <strong>Need Help?</strong><br>
+                                Contact support at <a href="mailto:${adminConfig.email}" style="color: #2563eb;">${adminConfig.email}</a><br>
+                                ${adminConfig.phone !== 'Not provided' ? `Phone: <strong>${adminConfig.phone}</strong>` : ''}
+                            </p>
+                        </div>
+                    </div>
+                    
+                    <div style="text-align: center; margin-top: 24px; color: #94a3b8; font-size: 12px;">
+                        <p>&copy; 2026 ${adminConfig.websiteName}. All rights reserved.</p>
+                    </div>
                 </div>
             `
         };
@@ -460,5 +569,94 @@ exports.sendSellerRejectionEmail = async (sellerEmail, sellerName, shopName, rej
     } catch (error) {
         console.error('❌ Seller Rejection Email Error:', error);
         return null;
+    }
+};
+
+
+/**
+ * Notify sellers about new orders
+ * Groups items by seller and sends individual emails
+ * Optimized with batch email fetching (max 10 sellers per query)
+ */
+exports.notifySellers = async (orderData) => {
+    try {
+        const items = orderData.items || [];
+        if (items.length === 0) return;
+
+        // Group items by sellerId
+        const sellerItemsMap = {};
+        items.forEach(item => {
+            const sellerId = item.sellerId;
+            if (!sellerId || sellerId === 'system_generated' || sellerId === 'official') return;
+            
+            if (!sellerItemsMap[sellerId]) {
+                sellerItemsMap[sellerId] = [];
+            }
+            sellerItemsMap[sellerId].push(item);
+        });
+
+        const sellerIds = Object.keys(sellerItemsMap);
+        if (sellerIds.length === 0) {
+            console.log('[NotifySellers] No valid sellers to notify');
+            return;
+        }
+
+        console.log(`[NotifySellers] Notifying ${sellerIds.length} seller(s) for order ${orderData.orderId}`);
+
+        // Batch fetch seller emails (Firestore 'in' query supports up to 10 items)
+        const sellerEmails = {};
+        
+        // Process in batches of 10
+        for (let i = 0; i < sellerIds.length; i += 10) {
+            const batch = sellerIds.slice(i, i + 10);
+            
+            try {
+                const sellersSnap = await db.collection('sellers')
+                    .where('__name__', 'in', batch)
+                    .get();
+
+                for (const doc of sellersSnap.docs) {
+                    const sellerData = doc.data();
+                    if (sellerData.sellerStatus === 'APPROVED') {
+                        // Try to get email from seller document first
+                        let email = sellerData.email || sellerData.contactEmail;
+                        
+                        // If not found, fetch from users collection
+                        if (!email) {
+                            const userDoc = await db.collection('users').doc(doc.id).get();
+                            if (userDoc.exists()) {
+                                email = userDoc.data().email;
+                            }
+                        }
+                        
+                        if (email) {
+                            sellerEmails[doc.id] = email;
+                        }
+                    }
+                }
+            } catch (batchError) {
+                console.error(`[NotifySellers] Error fetching batch ${i / 10 + 1}:`, batchError);
+            }
+        }
+
+        // Send emails to each seller
+        const emailPromises = [];
+        for (const [sellerId, items] of Object.entries(sellerItemsMap)) {
+            const sellerEmail = sellerEmails[sellerId];
+            if (sellerEmail) {
+                emailPromises.push(
+                    exports.sendSellerNotification(sellerEmail, orderData, items)
+                        .catch(err => console.error(`[NotifySellers] Failed to send to ${sellerEmail}:`, err))
+                );
+            } else {
+                console.warn(`[NotifySellers] No email found for seller ${sellerId}`);
+            }
+        }
+
+        await Promise.all(emailPromises);
+        console.log(`[NotifySellers] Sent ${emailPromises.length} seller notification(s)`);
+        
+    } catch (error) {
+        console.error('[NotifySellers] Error:', error);
     }
 };
