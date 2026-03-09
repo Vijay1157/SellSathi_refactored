@@ -282,7 +282,7 @@ export default function Navbar() {
                                     >
                                         Dashboard
                                     </Link>
-                                ) : (
+                                ) : user ? (
                                     <Link
                                         to="/seller"
                                         className="btn btn-seller"
@@ -291,6 +291,13 @@ export default function Navbar() {
                                     >
                                         Become a Seller
                                     </Link>
+                                ) : (
+                                    <button
+                                        onClick={() => setIsLoginModalOpen(true)}
+                                        className="btn btn-seller"
+                                    >
+                                        Become a Seller
+                                    </button>
                                 )}
                             </>
                         )}
