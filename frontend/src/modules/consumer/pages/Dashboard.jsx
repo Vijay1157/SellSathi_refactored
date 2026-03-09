@@ -205,7 +205,7 @@ export default function ConsumerDashboard() {
 
     const handleDownloadInvoice = async (orderId) => {
         try {
-            const response = await authFetch(`/api/invoice/${orderId}`);
+            const response = await authFetch(`/orders/invoice/${orderId}`);
             if (!response.ok) throw new Error('Failed to download invoice');
             const blob = await response.blob();
             const url = window.URL.createObjectURL(blob);
@@ -292,6 +292,39 @@ export default function ConsumerDashboard() {
             } else { alert('Failed to update profile: ' + (data.message || 'Unknown error')); }
         } catch (error) { console.error('Error updating profile:', error); alert('Failed to update profile. Please try again.'); }
         finally { setSavingProfile(false); }
+    };
+
+    const handleCancelOrder = async (orderId) => {
+        console.log(`[CANCEL] Triggered for order: ${orderId}`);
+        if (!window.confirm('Are you sure you want to cancel this order?')) return;
+        try {
+            const url = `/orders/${orderId}/cancel`;
+            console.log(`[CANCEL] Sending request to: ${url}`);
+            const response = await authFetch(url, { method: 'POST' });
+            console.log(`[CANCEL] Response status: ${response.status}`);
+            
+            const text = await response.text();
+            console.log(`[CANCEL] Raw response text: ${text.substring(0, 500)}`);
+            
+            let data;
+            try {
+                data = JSON.parse(text);
+                console.log(`[CANCEL] Parsed response data:`, data);
+            } catch (e) {
+                console.error('[CANCEL] Failed to parse JSON:', e);
+                throw new Error(`Invalid server response: ${text.substring(0, 100)}`);
+            }
+
+            if (data.success) {
+                alert('Order cancelled successfully');
+                await fetchOrders(user.uid);
+            } else {
+                alert(data.message || 'Failed to cancel order');
+            }
+        } catch (error) {
+            console.error('[CANCEL] Error caught:', error);
+            alert(`Failed to cancel order. Please try again. (${error.message})`);
+        }
     };
 
     const handleDeleteAccount = async () => {
@@ -418,6 +451,7 @@ export default function ConsumerDashboard() {
                                 selectedOrder={selectedOrder} setSelectedOrder={setSelectedOrder}
                                 recentlyViewed={recentlyViewed} recommendedProducts={recommendedProducts}
                                 onDownloadInvoice={handleDownloadInvoice} onSwitchTab={setActiveTab}
+                                onCancelOrder={handleCancelOrder}
                             />
                         )}
                         {activeTab === 'orders' && (
@@ -425,6 +459,7 @@ export default function ConsumerDashboard() {
                                 orders={orders}
                                 onSelectOrder={(order) => { setSelectedOrder(order); setActiveTab('dashboard'); }}
                                 onDownloadInvoice={handleDownloadInvoice}
+                                onCancelOrder={handleCancelOrder}
                             />
                         )}
                         {activeTab === 'wishlist' && (

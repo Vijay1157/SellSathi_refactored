@@ -4,7 +4,9 @@
   "scripts": {
     "dev": "nodemon src/server.js",
     "start": "node src/server.js",
-    "test:shiprocket": "node test-shiprocket.js"
+    "test:shiprocket": "node test-shiprocket.js",
+    "test": "jest --runInBand",
+    "test:watch": "jest --watch"
   },
   "dependencies": {
     "@google/generative-ai": "^0.24.1",
@@ -21,6 +23,9 @@
     "razorpay": "^2.9.6"
   },
   "devDependencies": {
+    "@types/jest": "^30.0.0",
+    "fast-check": "^4.6.0",
+    "jest": "^30.2.0",
     "nodemon": "^3.0.1"
   }
 }

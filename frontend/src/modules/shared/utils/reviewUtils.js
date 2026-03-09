@@ -104,7 +104,7 @@ export const clearAllReviewCache = () => {
  */
 export const submitReview = async (productId, reviewData) => {
     try {
-        const response = await authFetch('/api/reviews', {
+        const response = await authFetch('/reviews', {
             method: 'POST',
             body: JSON.stringify({
                 productId,
