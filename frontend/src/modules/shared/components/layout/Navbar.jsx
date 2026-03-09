@@ -375,9 +375,9 @@ export default function Navbar() {
                     </div>
                 </div>
 
-                {/* Categories section - Always visible (static) */}
-                {!location.pathname.startsWith('/checkout') && (
-                    <div
+                {/* Categories section - Only visible on Home page */}
+                {location.pathname === '/' && (
+                    <div 
                         className="sub-nav-wrapper"
                         style={{ display: 'block' }}
                     >
