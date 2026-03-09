@@ -8,6 +8,8 @@ const productController = require('../controllers/productManagementController');
 const orderController = require('../controllers/orderManagementController');
 const reviewController = require('../controllers/reviewManagementController');
 const pdfController = require('../controllers/pdfController');
+const adminProfileController = require('../controllers/adminProfileController');
+const upload = require('../../../middleware/upload');
 const { verifyAuth, verifyAdmin } = require('../../../middleware/auth');
 
 router.use(verifyAuth);
@@ -15,6 +17,11 @@ router.use(verifyAdmin);
 
 // Dashboard stats
 router.get('/stats', adminController.getStats);
+
+// Admin profile management
+router.get('/profile', adminProfileController.getAdminProfile);
+router.put('/profile', adminProfileController.updateAdminProfile);
+router.post('/profile/image', upload.single('profileImage'), adminProfileController.uploadProfileImage);
 
 // Seller management — queries
 router.get('/sellers', sellerController.getPendingSellers);
