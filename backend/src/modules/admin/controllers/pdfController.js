@@ -263,6 +263,20 @@ const generateInvoicePDF = async (req, res) => {
 
         const productsSnap = await db.collection("products").where("sellerId", "==", uid).get();
         const totalProducts = productsSnap.size;
+        
+        // Collect all products for the seller
+        const sellerProducts = [];
+        productsSnap.forEach(p => {
+            const prod = p.data();
+            sellerProducts.push({
+                id: p.id,
+                name: prod.title || 'N/A',
+                price: prod.price || 0,
+                discountedPrice: prod.discountedPrice || null,
+                stock: prod.stock || 0,
+                category: prod.category || 'N/A'
+            });
+        });
 
         const ordersSnap = await db.collection("orders").where("status", "==", "Delivered").get();
 
@@ -389,9 +403,121 @@ const generateInvoicePDF = async (req, res) => {
         doc.fontSize(22).fillColor('#4f46e5').font('Helvetica-Bold')
             .text(`Rs.${amountToReceive.toFixed(2)}`, 50 + (boxWidth + boxGap) * 3 + 5, boxY + 38, { width: boxWidth - 10, align: 'center' });
 
+        // Products Listed by Seller
+        const productsTableY = boxY + boxHeight + 30;
+        doc.rect(50, productsTableY, 495, 18).fillAndStroke('#f3f4f6', '#e5e7eb');
+        doc.fontSize(12).fillColor('#000000').font('Helvetica-Bold').text('PRODUCTS LISTED BY SELLER', 55, productsTableY + 6);
+
+        const prodTableTop = productsTableY + 35;
+        doc.rect(50, prodTableTop, 495, 22).fillAndStroke('#6366f1', '#6366f1');
+        doc.fontSize(9).fillColor('#ffffff').font('Helvetica-Bold');
+        doc.text('Product Name', 55, prodTableTop + 7);
+        doc.text('Category', 280, prodTableTop + 7);
+        doc.text('Price', 380, prodTableTop + 7);
+        doc.text('Stock', 480, prodTableTop + 7);
+
+        let prodY = prodTableTop + 27;
+        doc.font('Helvetica').fillColor('#000000');
+
+        if (sellerProducts.length === 0) {
+            doc.fontSize(10).fillColor('#999999').text('No products listed by this seller.', 55, prodY, { align: 'center', width: 495 });
+            prodY += 30;
+        } else {
+            sellerProducts.forEach((product, index) => {
+                if (prodY > 700) {
+                    doc.addPage();
+                    prodY = 50;
+                    // Redraw table header on new page
+                    doc.rect(50, prodY, 495, 22).fillAndStroke('#6366f1', '#6366f1');
+                    doc.fontSize(9).fillColor('#ffffff').font('Helvetica-Bold');
+                    doc.text('Product Name', 55, prodY + 7);
+                    doc.text('Category', 280, prodY + 7);
+                    doc.text('Price', 380, prodY + 7);
+                    doc.text('Stock', 480, prodY + 7);
+                    prodY += 27;
+                }
+
+                // Alternate row background
+                if (index % 2 === 0) {
+                    doc.rect(50, prodY - 3, 495, 20).fillAndStroke('#f9fafb', '#f9fafb');
+                }
+
+                doc.fontSize(8).fillColor('#000000').font('Helvetica');
+                doc.text(product.name.substring(0, 35), 55, prodY);
+                doc.text(product.category, 280, prodY);
+                const displayPrice = product.discountedPrice ? `Rs.${product.discountedPrice} (Rs.${product.price})` : `Rs.${product.price}`;
+                doc.text(displayPrice, 380, prodY);
+                doc.text(product.stock.toString(), 480, prodY);
+                prodY += 20;
+            });
+        }
+
+        // Order Details Table
+        const orderTableY = prodY + 30;
+        doc.rect(50, orderTableY, 495, 18).fillAndStroke('#f3f4f6', '#e5e7eb');
+        doc.fontSize(12).fillColor('#000000').font('Helvetica-Bold').text('ORDER DETAILS', 55, orderTableY + 6);
+
+        const tableTop = orderTableY + 35;
+        doc.rect(50, tableTop, 495, 22).fillAndStroke('#6366f1', '#6366f1');
+        doc.fontSize(9).fillColor('#ffffff').font('Helvetica-Bold');
+        doc.text('Order ID', 55, tableTop + 7);
+        doc.text('Date', 140, tableTop + 7);
+        doc.text('Product', 210, tableTop + 7);
+        doc.text('Qty', 380, tableTop + 7);
+        doc.text('Price', 420, tableTop + 7);
+        doc.text('Total', 480, tableTop + 7);
+
+        let y = tableTop + 27;
+        doc.font('Helvetica').fillColor('#000000');
+
+        if (orderDetails.length === 0) {
+            doc.fontSize(10).fillColor('#999999').text('No delivered orders found for this seller.', 55, y, { align: 'center', width: 495 });
+            y += 30;
+        } else {
+            orderDetails.forEach((order, index) => {
+                if (y > 700) {
+                    doc.addPage();
+                    y = 50;
+                    // Redraw table header on new page
+                    doc.rect(50, y, 495, 22).fillAndStroke('#6366f1', '#6366f1');
+                    doc.fontSize(9).fillColor('#ffffff').font('Helvetica-Bold');
+                    doc.text('Order ID', 55, y + 7);
+                    doc.text('Date', 140, y + 7);
+                    doc.text('Product', 210, y + 7);
+                    doc.text('Qty', 380, y + 7);
+                    doc.text('Price', 420, y + 7);
+                    doc.text('Total', 480, y + 7);
+                    y += 27;
+                }
+
+                // Alternate row background
+                if (index % 2 === 0) {
+                    doc.rect(50, y - 3, 495, 20).fillAndStroke('#f9fafb', '#f9fafb');
+                }
+
+                doc.fontSize(8).fillColor('#000000').font('Helvetica');
+                doc.text(order.orderId.substring(0, 12) + '...', 55, y);
+                doc.text(order.orderDate, 140, y);
+                doc.text(order.productName.substring(0, 25), 210, y);
+                doc.text(order.quantity.toString(), 380, y);
+                doc.text(`Rs.${order.price}`, 420, y);
+                doc.text(`Rs.${order.total}`, 480, y);
+                y += 20;
+            });
+        }
+
+        // Add some spacing before footer
+        const footerY = y + 30 > 750 ? 750 : y + 30;
+
         // Footer
-        doc.fontSize(9).fillColor('#cccccc').font('Helvetica')
-            .text(`Generated by SellSathi | ${reportDate}`, 50, 750, { align: 'center' });
+        if (footerY > 700) {
+            doc.addPage();
+            doc.fontSize(9).fillColor('#cccccc').font('Helvetica')
+                .text(`Generated by SellSathi | ${reportDate}`, 50, 750, { align: 'center' });
+        } else {
+            doc.fontSize(9).fillColor('#cccccc').font('Helvetica')
+                .text(`Generated by SellSathi | ${reportDate}`, 50, footerY, { align: 'center' });
+        }
 
         doc.end();
     } catch (err) {

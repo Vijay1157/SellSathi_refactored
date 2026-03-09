@@ -38,6 +38,17 @@ export default function AdminDashboard() {
     // Track which tabs have already been loaded
     const [loadedTabs, setLoadedTabs] = useState(new Set());
 
+    // Update selected invoice seller when allSellers data changes
+    useEffect(() => {
+        if (selectedInvoiceSeller && allSellers.length > 0) {
+            const updatedSeller = allSellers.find(s => s.uid === selectedInvoiceSeller.uid);
+            if (updatedSeller) {
+                setSelectedInvoiceSeller(updatedSeller);
+                console.log('[Dashboard] Auto-updated selected invoice seller:', updatedSeller.shopName, 'Products:', updatedSeller.financials?.totalProducts);
+            }
+        }
+    }, [allSellers]);
+
     // Fetch only stats on mount
     useEffect(() => {
         fetchStats();
@@ -83,9 +94,10 @@ export default function AdminDashboard() {
         setError('');
         try {
             if (tab === 'sellers') {
+                const timestamp = Date.now(); // Cache buster
                 const [sellersRes, allSellersRes] = await Promise.allSettled([
-                    safeFetch('/admin/sellers'),
-                    safeFetch('/admin/all-sellers'),
+                    safeFetch(`/admin/sellers?_t=${timestamp}`),
+                    safeFetch(`/admin/all-sellers?_t=${timestamp}`),
                 ]);
                 if (sellersRes.status === 'fulfilled' && sellersRes.value.ok) {
                     const d = await sellersRes.value.json();
@@ -95,9 +107,13 @@ export default function AdminDashboard() {
                     const d = await allSellersRes.value.json();
                     if (d.success) {
                         setAllSellers(d.sellers);
+                        console.log('[fetchTabData] Fetched', d.sellers.length, 'sellers');
                         if (selectedInvoiceSeller) {
                             const updated = d.sellers.find(s => s.uid === selectedInvoiceSeller.uid);
-                            if (updated) setSelectedInvoiceSeller(updated);
+                            if (updated) {
+                                setSelectedInvoiceSeller(updated);
+                                console.log('[fetchTabData] Updated selected invoice seller:', updated.shopName, 'Products:', updated.financials?.totalProducts);
+                            }
                         }
                     }
                 }
@@ -124,7 +140,8 @@ export default function AdminDashboard() {
                     }
                 }
             } else if (tab === 'payouts' || tab === 'payout' || tab === 'invoice' || tab === 'invoices') {
-                const res = await safeFetch('/admin/seller-analytics');
+                const timestamp = Date.now(); // Cache buster
+                const res = await safeFetch(`/admin/seller-analytics?_t=${timestamp}`);
                 if (res.ok) {
                     const d = await res.json();
                     if (d.success && d.analytics) {
@@ -132,6 +149,22 @@ export default function AdminDashboard() {
                         if (selectedAnalyticsSeller) {
                             const updated = d.analytics.find(s => s.uid === selectedAnalyticsSeller.uid);
                             if (updated) setSelectedAnalyticsSeller(updated);
+                        }
+                    }
+                }
+                // Also fetch all sellers for invoice tab
+                const allSellersRes = await safeFetch(`/admin/all-sellers?_t=${timestamp}`);
+                if (allSellersRes.ok) {
+                    const d = await allSellersRes.json();
+                    if (d.success) {
+                        setAllSellers(d.sellers);
+                        console.log('[fetchTabData:invoice] Fetched', d.sellers.length, 'sellers');
+                        if (selectedInvoiceSeller) {
+                            const updated = d.sellers.find(s => s.uid === selectedInvoiceSeller.uid);
+                            if (updated) {
+                                setSelectedInvoiceSeller(updated);
+                                console.log('[fetchTabData:invoice] Updated selected invoice seller:', updated.shopName, 'Products:', updated.financials?.totalProducts);
+                            }
                         }
                     }
                 }
@@ -146,6 +179,9 @@ export default function AdminDashboard() {
     };
 
     const fetchAllData = async () => {
+        // Clear cache to force fresh data
+        const cacheKey = 'allSellers';
+        
         await Promise.all([
             fetchStats(),
             activeTab !== 'home' ? fetchTabData(activeTab, true) : Promise.resolve()
