@@ -21,12 +21,11 @@ const getDashboardData = async (req, res) => {
             return res.status(200).json({ success: true, ...cached });
         }
 
-        const [sellerSnap, userSnap, productsSnap, subProductsSnap, allOrdersSnap] = await Promise.all([
+        const [sellerSnap, userSnap, productsSnap, subProductsSnap] = await Promise.all([
             db.collection("sellers").doc(uid).get(),
             db.collection("users").doc(uid).get(),
             db.collection("products").where("sellerId", "==", uid).limit(50).get(),
-            db.collection("sellers").doc(uid).collection("listedproducts").limit(50).get(),
-            db.collection("orders").where("sellerId", "==", uid).limit(50).get()
+            db.collection("sellers").doc(uid).collection("listedproducts").limit(50).get()
         ]);
 
         if (!sellerSnap.exists) return res.status(404).json({ success: false, message: "Seller not found" });
@@ -45,6 +44,14 @@ const getDashboardData = async (req, res) => {
         const products = Array.from(productsMap.values());
 
         console.log(`[SellerDashboard] UID: ${uid} | Merged Total: ${products.length}`);
+
+        // Fetch orders - need to get ALL orders and filter by seller items
+        // Since Firestore doesn't support array-contains-any with multiple fields,
+        // we fetch orders where sellerId matches OR fetch all recent orders and filter
+        const allOrdersSnap = await db.collection("orders")
+            .orderBy("createdAt", "desc")
+            .limit(200)  // Increased limit to catch orders from multiple sellers
+            .get();
 
         let totalSales = 0, newOrdersCount = 0, pendingOrdersCount = 0;
         const sellerOrders = [];

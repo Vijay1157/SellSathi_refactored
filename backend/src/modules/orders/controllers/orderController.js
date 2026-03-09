@@ -215,9 +215,25 @@ const cancelOrder = async (req, res) => {
         // Invalidate caches
         try {
             cache.invalidate(`userOrders_${uid}`, 'adminAllOrders');
+            
+            // Invalidate cache for ALL sellers in this order
             if (orderData.sellerId) {
                 cache.invalidate(`sellerDash_${orderData.sellerId}`);
             }
+            
+            // Also invalidate cache for sellers of individual items
+            if (orderData.items && Array.isArray(orderData.items)) {
+                const sellerIds = new Set();
+                orderData.items.forEach(item => {
+                    if (item.sellerId) {
+                        sellerIds.add(item.sellerId);
+                    }
+                });
+                sellerIds.forEach(sellerId => {
+                    cache.invalidate(`sellerDash_${sellerId}`);
+                });
+            }
+            
             cache.invalidate('adminStats', 'allSellers');
         } catch (cacheErr) {
             console.error("CACHE INVALIDATION ERROR:", cacheErr);
