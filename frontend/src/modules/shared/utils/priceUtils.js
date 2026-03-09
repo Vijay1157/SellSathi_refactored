@@ -50,7 +50,7 @@ export const getProductPricing = (product, selections = {}) => {
     const constantMRP = baseOriginalPrice;
 
     // 2. Apply Size-Specific Pricing
-    // IMPORTANT: Only the selling price changes, MRP stays constant
+    // IMPORTANT: For varied pricing, sizePrices are the selling prices, and base price is the MRP
     if (product.pricingType === 'varied' && selections.size && product.sizePrices) {
         let sizePrice = null;
         // Handle both array format [{size, price}] and object format {"S": 500}
@@ -66,6 +66,21 @@ export const getProductPricing = (product, selections = {}) => {
             // The seller's inputted sizePrice is the Selling Price for this variant
             baseSellingPrice = sizePrice;
             // MRP stays constant - do NOT recalculate it
+            baseOriginalPrice = constantMRP;
+        }
+    } else if (product.pricingType === 'varied' && !selections.size && product.sizePrices) {
+        // No size selected yet, but product has varied pricing
+        // Use the first available size price as default
+        let firstSizePrice = null;
+        if (Array.isArray(product.sizePrices) && product.sizePrices.length > 0) {
+            firstSizePrice = Number(product.sizePrices[0].price);
+        } else if (typeof product.sizePrices === 'object') {
+            const firstKey = Object.keys(product.sizePrices)[0];
+            if (firstKey) firstSizePrice = Number(product.sizePrices[firstKey]);
+        }
+        
+        if (firstSizePrice !== null) {
+            baseSellingPrice = firstSizePrice;
             baseOriginalPrice = constantMRP;
         }
     }
