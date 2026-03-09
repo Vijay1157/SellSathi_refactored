@@ -238,36 +238,6 @@ export default function AuthModal({ isOpen, onClose, onSuccess, hideRegister }) 
         if (formData.password.length < 6) { setError('Password must be at least 6 characters'); return; }
         if (formData.password !== formData.confirmPassword) { setError('Passwords do not match'); return; }
         
-        // If we haven't sent the OTP yet, do that first
-        if (emailOtpStep === 'details') {
-            setLoading(true);
-            try {
-                const response = await authFetch('/auth/send-email-otp', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ email: formData.email })
-                });
-                const data = await response.json();
-                if (data.success) {
-                    setEmailOtpStep('otp');
-                    setError(''); // clear any previous errors
-                } else {
-                    setError(data.message || 'Failed to send OTP');
-                }
-            } catch (err) {
-                setError('Network error. Failed to send OTP.');
-            } finally {
-                setLoading(false);
-            }
-            return;
-        }
-
-        // If we are at the OTP step but this was called (shouldn't happen natively, but just in case)
-        if (emailOtpStep === 'otp' && emailOtp.length !== 6) {
-            setError('Please enter the 6-digit OTP');
-            return;
-        }
-
         setLoading(true);
         try {
             let idToken = null, isTestMode = false;
@@ -285,7 +255,7 @@ export default function AuthModal({ isOpen, onClose, onSuccess, hideRegister }) 
                 }
                 else throw fbErr; 
             }
-            const response = await authFetch('/auth/register', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ idToken, isTest: isTestMode, email: formData.email, phone: isEmailSignup ? null : `+91${phone}`, password: formData.password, fullName: formData.fullName, dob: formData.dob, otp: emailOtp }) });
+            const response = await authFetch('/auth/register', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ idToken, isTest: isTestMode, email: formData.email, phone: isEmailSignup ? null : `+91${phone}`, password: formData.password, fullName: formData.fullName, dob: formData.dob }) });
             const data = await response.json();
             if (data.success) {
                 persistUser(data, { phone: `+91${phone}`, email: formData.email, isDevMode: isTestMode, fullName: formData.fullName, dob: formData.dob });

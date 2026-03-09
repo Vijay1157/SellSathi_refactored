@@ -141,7 +141,7 @@ const sendEmailOtp = async (req, res) => {
  */
 const register = async (req, res) => {
     try {
-        const { idToken, phone, fullName, dob, email, password, isTest, otp } = req.body;
+        const { idToken, phone, fullName, dob, email, password, isTest } = req.body;
         let uid;
         let phoneNumber = phone;
 
@@ -152,25 +152,6 @@ const register = async (req, res) => {
             const decodedToken = await admin.auth().verifyIdToken(idToken);
             uid = decodedToken.uid;
             phoneNumber = decodedToken.phone_number || phone;
-            
-            // If they provided an OTP, it means this relies on our custom Email verification
-            if (otp && email) {
-                const otpDoc = await db.collection('email_otps').doc(email.toLowerCase()).get();
-                if (!otpDoc.exists) {
-                    return res.status(400).json({ success: false, message: "Invalid or expired OTP" });
-                }
-                const otpData = otpDoc.data();
-                if (otpData.otp !== otp) {
-                    return res.status(400).json({ success: false, message: "Incorrect OTP" });
-                }
-                if (otpData.expiresAt.toDate() < new Date()) {
-                    await db.collection('email_otps').doc(email.toLowerCase()).delete();
-                    return res.status(400).json({ success: false, message: "OTP has expired. Please request a new one." });
-                }
-                
-                // OTP is valid, delete it to prevent reuse
-                await db.collection('email_otps').doc(email.toLowerCase()).delete();
-            }
         }
 
         const userRef = db.collection("users").doc(uid);

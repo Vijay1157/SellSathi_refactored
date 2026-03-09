@@ -68,7 +68,15 @@ const getDashboardData = async (req, res) => {
                     customer: order.customerName || "Customer",
                     total: orderSales,
                     status: order.status,
-                    date: formatDateDDMMYYYY(order.createdAt)
+                    date: formatDateDDMMYYYY(order.createdAt),
+                    cancellationReason: order.cancellationReason || null,
+                    awbNumber: order.awbNumber || null,
+                    courierName: order.courierName || null,
+                    shippingStatus: order.shippingStatus || null,
+                    estimatedDeliveryDays: order.estimatedDeliveryDays || null,
+                    labelUrl: order.labelUrl || null,
+                    paymentMethod: order.paymentMethod || null,
+                    items: sellerItems
                 });
             }
         });
