@@ -10,6 +10,8 @@
  *  - Seller products use `title` instead of `name`
  *  - sizePrices: stored as plain object { "S": 500, "M": 600 } — NOT an array
  *
+ * IMPORTANT: Base price (MRP) remains constant. Only discount price changes with variants.
+ *
  * @param {Object} product - The product object from Firestore or mock data.
  * @param {Object} selections - User selections (size, color, storage, memory, purchaseOption).
  * @returns {Object} - { finalPrice, strikethroughPrice, discountTag, showDiscount, baseSellingPrice }
@@ -17,47 +19,38 @@
 export const getProductPricing = (product, selections = {}) => {
     if (!product) return { finalPrice: 0, strikethroughPrice: 0, discountTag: null, showDiscount: false, baseSellingPrice: 0 };
 
-    // 1. Determine Base Price
-    // AddProduct stores: price, discountPrice
-    // Due to old UI mapping, some products have price=Selling, discountPrice=MRP (swapped)
+    // 1. Determine Base Price (MRP) - This stays constant
     let p1 = Number(product.price) || 0;
+    let baseOriginalPrice = p1; // MRP - stays constant
+    let baseSellingPrice = p1;  // Selling price - changes with variants
 
-    let baseOriginalPrice = p1;
-    let baseSellingPrice = p1;
-    let hasGlobalDiscount = false;
-    let globalDiscountDiff = 0;
-
+    // Determine if there's a discount and what the base selling price is
     if (product.discountPrice !== null && product.discountPrice !== undefined && product.discountPrice !== '') {
         const p2 = Number(product.discountPrice);
         if (p2 > p1) {
             // Seller swapped them! p1 is Selling, p2 is MRP (e.g. price: 265, discountPrice: 300)
-            baseOriginalPrice = p2;
-            baseSellingPrice = p1;
-            hasGlobalDiscount = true;
-            globalDiscountDiff = p2 - p1;
+            baseOriginalPrice = p2; // MRP
+            baseSellingPrice = p1;  // Selling price
         } else if (p2 < p1) {
             // Standard: p1 is MRP, p2 is Selling (e.g. price: 300, discountPrice: 265)
-            baseOriginalPrice = p1;
-            baseSellingPrice = p2;
-            hasGlobalDiscount = true;
-            globalDiscountDiff = p1 - p2;
+            baseOriginalPrice = p1; // MRP
+            baseSellingPrice = p2;  // Selling price
         }
     }
 
     // Handle products that only have oldPrice (seed/mock data pattern)
-    // e.g.: { price: 50000, oldPrice: 65000 } → oldPrice is MRP, price is selling price
     if (product.oldPrice && Number(product.oldPrice) > baseOriginalPrice) {
         baseOriginalPrice = Number(product.oldPrice);
-        // discountPrice overrides; if no discountPrice, 'price' was already the selling price
         if (product.discountPrice === null || product.discountPrice === undefined || product.discountPrice === '') {
             baseSellingPrice = Number(product.price);
-            hasGlobalDiscount = true;
-            globalDiscountDiff = baseOriginalPrice - baseSellingPrice;
         }
     }
 
+    // Store the original MRP - this will NEVER change regardless of variants
+    const constantMRP = baseOriginalPrice;
+
     // 2. Apply Size-Specific Pricing
-    // sizePrices is stored as a plain object: { "S": 500, "M": 600 }
+    // IMPORTANT: For varied pricing, sizePrices are the selling prices, and base price is the MRP
     if (product.pricingType === 'varied' && selections.size && product.sizePrices) {
         let sizePrice = null;
         // Handle both array format [{size, price}] and object format {"S": 500}
@@ -70,16 +63,25 @@ export const getProductPricing = (product, selections = {}) => {
         }
 
         if (sizePrice !== null) {
-            // The seller's inputted sizePrice is explicitly the Selling Price
+            // The seller's inputted sizePrice is the Selling Price for this variant
             baseSellingPrice = sizePrice;
-
-            // Re-apply the global discount diff *upwards* to infer the correct original price
-            if (hasGlobalDiscount && globalDiscountDiff > 0) {
-                // ALWAYS extrapolate upwards for all explicit numbers to maintain consistent discount percentage
-                baseOriginalPrice = sizePrice + globalDiscountDiff;
-            } else {
-                baseOriginalPrice = sizePrice;
-            }
+            // MRP stays constant - do NOT recalculate it
+            baseOriginalPrice = constantMRP;
+        }
+    } else if (product.pricingType === 'varied' && !selections.size && product.sizePrices) {
+        // No size selected yet, but product has varied pricing
+        // Use the first available size price as default
+        let firstSizePrice = null;
+        if (Array.isArray(product.sizePrices) && product.sizePrices.length > 0) {
+            firstSizePrice = Number(product.sizePrices[0].price);
+        } else if (typeof product.sizePrices === 'object') {
+            const firstKey = Object.keys(product.sizePrices)[0];
+            if (firstKey) firstSizePrice = Number(product.sizePrices[firstKey]);
+        }
+        
+        if (firstSizePrice !== null) {
+            baseSellingPrice = firstSizePrice;
+            baseOriginalPrice = constantMRP;
         }
     }
 
@@ -99,7 +101,7 @@ export const getProductPricing = (product, selections = {}) => {
         finalSellingPrice = finalSellingPrice * 1.1;
     }
 
-    // 5. Calculate Discount Display
+    // 5. Calculate Discount Display - Dynamic based on actual prices
     const hasDiscount = Math.round(finalSellingPrice) < Math.round(finalOriginalPrice);
     let discountTag = null;
 

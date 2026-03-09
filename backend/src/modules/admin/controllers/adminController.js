@@ -46,6 +46,7 @@ const getStats = async (req, res) => {
 
         console.log(`[GetStats] Total PENDING sellers: ${pendingSellersSnap.docs.length}, Non-blocked: ${nonBlockedPendingSellers.length}`);
         console.log(`[GetStats] Today's orders: ${todayOrdersCount.data().count}`);
+        console.log(`[GetStats] Total reviews: ${totalReviewsCount.data().count}`);
 
         const stats = {
             totalSellers: totalSellersCount.data().count,

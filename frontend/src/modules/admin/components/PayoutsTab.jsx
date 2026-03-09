@@ -95,8 +95,24 @@ export default function PayoutsTab({ analytics, setSelectedAnalyticsSeller, fetc
                                     <td style={{ padding: '1.25rem 1.5rem', textAlign: 'right' }}><span style={{ fontWeight: 800, color: 'var(--success)', fontSize: '1.1rem' }}>₹{s.metrics.grossRevenue.toLocaleString()}</span></td>
                                     <td style={{ padding: '1.25rem 1.5rem', textAlign: 'center' }}>
                                         <div className="flex gap-2 justify-center">
-                                            <button className="btn btn-secondary" onClick={() => setSelectedAnalyticsSeller(s)} style={{ padding: '0.5rem 1rem', fontSize: '0.85rem', fontWeight: 600 }}>View</button>
-                                            <button className="btn btn-primary" onClick={() => handleDownloadPDF(`/admin/seller/${s.uid}/analytics-pdf`, `analytics_${(s.shopName || 'seller').replace(/\s+/g, '_')}.pdf`)} disabled={isDownloadingPDF} style={{ padding: '0.5rem 1rem', fontSize: '0.85rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '4px' }} title="Download PDF">
+                                            <button 
+                                                className="btn btn-secondary" 
+                                                onClick={() => {
+                                                    console.log('[PayoutsTab] View button clicked for seller:', s.shopName, 'UID:', s.uid);
+                                                    console.log('[PayoutsTab] Seller data:', s);
+                                                    setSelectedAnalyticsSeller(s);
+                                                }} 
+                                                style={{ padding: '0.5rem 1rem', fontSize: '0.85rem', fontWeight: 600 }}
+                                            >
+                                                View
+                                            </button>
+                                            <button 
+                                                className="btn btn-primary" 
+                                                onClick={() => handleDownloadPDF(`/admin/seller/${s.uid}/analytics-pdf`, `analytics_${(s.shopName || 'seller').replace(/\s+/g, '_')}.pdf`)} 
+                                                disabled={isDownloadingPDF} 
+                                                style={{ padding: '0.5rem 1rem', fontSize: '0.85rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '4px' }} 
+                                                title="Download PDF"
+                                            >
                                                 {isDownloadingPDF ? <Loader size={16} className="animate-spin" /> : <Download size={16} />} PDF
                                             </button>
                                         </div>

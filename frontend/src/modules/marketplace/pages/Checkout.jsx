@@ -99,6 +99,17 @@ export default function Checkout() {
     }, []);
 
     useEffect(() => {
+        const { buyNowProduct, selectedItemIds } = location.state || {};
+        
+        // If Buy Now product is provided, use it directly without cart
+        if (buyNowProduct) {
+            setCheckoutItems([buyNowProduct]);
+            setCartItems([]);
+            setLoading(false);
+            return;
+        }
+        
+        // Otherwise, listen to cart for normal checkout
         const unsubscribe = listenToCart((items) => {
             setCartItems(items);
             const { buyNowProduct, selectedItemIds } = location.state || {};
@@ -146,6 +157,13 @@ export default function Checkout() {
                 setSelectedItems(new Set(items.map(item => item.id || item.productId)));
             }
             
+            let itemsToCheckout = items;
+            
+            if (selectedItemIds && selectedItemIds.length > 0) {
+                itemsToCheckout = items.filter(item => selectedItemIds.includes(item.id || item.productId));
+            }
+            
+            setCheckoutItems(itemsToCheckout);
             setLoading(false);
         });
         return () => unsubscribe && unsubscribe();
@@ -228,7 +246,12 @@ export default function Checkout() {
                             const verifyResult = await verifyResponse.json();
 
                             if (verifyResult.success) {
-                                selectedCartItems.forEach(item => removeFromCart(item.id || item.productId));
+                                // Only remove items from cart if they're not Buy Now items
+                                const isBuyNow = location.state?.buyNowProduct;
+                                if (!isBuyNow) {
+                                    selectedCartItems.forEach(item => removeFromCart(item.id || item.productId));
+                                }
+                                
                                 if (addressMode === 'new' && saveAddressForFuture && user) {
                                     try {
                                         const newAddress = { ...shippingAddress, isDefault: setAsDefault };
@@ -323,7 +346,13 @@ export default function Checkout() {
                         console.error("Error saving address:", error);
                     }
                 }
-                selectedCartItems.forEach(item => removeFromCart(item.id || item.productId));
+                
+                // Only remove items from cart if they're not Buy Now items
+                const isBuyNow = location.state?.buyNowProduct;
+                if (!isBuyNow) {
+                    selectedCartItems.forEach(item => removeFromCart(item.id || item.productId));
+                }
+                
                 setOrderId(result.orderId);
                 setShowAnimation(true);
             } else {

@@ -114,19 +114,36 @@ const getAllSellers = async (req, res) => {
         }
 
         const financialsMap = {};
+        const oneWeekAgo = new Date();
+        oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
+        
         deliveredOrders.forEach(order => {
             if (!order.items || !Array.isArray(order.items)) return;
+            
+            // Get order date
+            const orderDate = order.createdAt?.toDate ? order.createdAt.toDate() : null;
+            const isWithinWeek = orderDate && orderDate >= oneWeekAgo;
+            
             const sellerHits = {};
             order.items.forEach(item => {
                 if (!item.sellerId) return;
                 if (!sellerHits[item.sellerId]) {
-                    sellerHits[item.sellerId] = { rev: 0 };
-                    financialsMap[item.sellerId] = financialsMap[item.sellerId] || { totalRevenue: 0, deliveredCount: 0 };
+                    sellerHits[item.sellerId] = { rev: 0, weeklyRev: 0 };
+                    financialsMap[item.sellerId] = financialsMap[item.sellerId] || { 
+                        totalRevenue: 0, 
+                        deliveredCount: 0,
+                        weeklySales: 0 
+                    };
                 }
-                sellerHits[item.sellerId].rev += (item.price || 0) * (item.quantity || 1);
+                const itemRevenue = (item.price || 0) * (item.quantity || 1);
+                sellerHits[item.sellerId].rev += itemRevenue;
+                if (isWithinWeek) {
+                    sellerHits[item.sellerId].weeklyRev += itemRevenue;
+                }
             });
-            Object.entries(sellerHits).forEach(([sid, { rev }]) => {
+            Object.entries(sellerHits).forEach(([sid, { rev, weeklyRev }]) => {
                 financialsMap[sid].totalRevenue += rev;
+                financialsMap[sid].weeklySales += weeklyRev;
                 financialsMap[sid].deliveredCount += 1;
             });
         });
@@ -134,7 +151,7 @@ const getAllSellers = async (req, res) => {
         const sellers = sellersSnap.docs.map(doc => {
             const sellerData = doc.data();
             const userData = userMap[doc.id] || {};
-            const fin = financialsMap[doc.id] || { totalRevenue: 0, deliveredCount: 0 };
+            const fin = financialsMap[doc.id] || { totalRevenue: 0, deliveredCount: 0, weeklySales: 0 };
             
             let formattedDate = 'N/A';
             const dateField = sellerData.createdAt || sellerData.appliedAt;
@@ -176,7 +193,8 @@ const getAllSellers = async (req, res) => {
                 financials: {
                     totalProducts: productCountMap[doc.id] || 0,
                     totalRevenue: fin.totalRevenue,
-                    deliveredCount: fin.deliveredCount
+                    deliveredCount: fin.deliveredCount,
+                    weeklySales: fin.weeklySales
                 }
             };
         });

@@ -55,6 +55,8 @@ const verifyPayment = async (req, res) => {
             const invPath = await invoiceService.generateInvoice({ ...orderData, documentId: orderRef.id });
             await orderRef.update({ invoiceGenerated: true, invoicePath: invPath });
             if (orderData.email) emailService.sendOrderConfirmation(orderData.email, { ...orderData, documentId: orderRef.id }, invPath).catch(err => console.error(err));
+            // Notify sellers about the new order
+            emailService.notifySellers({ ...orderData, documentId: orderRef.id }).catch(err => console.error('[VerifyPayment] Seller notification error:', err));
         } catch (e) {
             console.error("Invoice generation error:", e.message);
         }
@@ -110,6 +112,8 @@ const codOrder = async (req, res) => {
             const invPath = await invoiceService.generateInvoice({ ...orderData, documentId: orderRef.id });
             await orderRef.update({ invoiceGenerated: true, invoicePath: invPath });
             if (orderData.email) emailService.sendOrderConfirmation(orderData.email, { ...orderData, documentId: orderRef.id }, invPath).catch(err => console.error(err));
+            // Notify sellers about the new order
+            emailService.notifySellers({ ...orderData, documentId: orderRef.id }).catch(err => console.error('[CODOrder] Seller notification error:', err));
         } catch (e) {
             console.error("Invoice generation error:", e.message);
         }

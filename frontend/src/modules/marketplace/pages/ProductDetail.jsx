@@ -59,90 +59,27 @@ export default function ProductDetail() {
     // Build comprehensive images array including main image, additional images, and variant images
     const images = useMemo(() => {
         if (!product) return [];
-        
+
         const imageSet = new Set();
-        
+
         if (product.image) imageSet.add(product.image);
         if (product.imageUrl) imageSet.add(product.imageUrl);
-        
+
         if (product.images && Array.isArray(product.images)) {
             product.images.forEach(img => {
                 if (img && typeof img === 'string') imageSet.add(img);
             });
         }
-        
+
         if (product.variantImages && typeof product.variantImages === 'object') {
             Object.values(product.variantImages).forEach(img => {
                 if (img && typeof img === 'string') imageSet.add(img);
             });
         }
-        
+
         const imagesArray = Array.from(imageSet).filter(Boolean);
         return imagesArray.length > 0 ? imagesArray : ['/placeholder-image.jpg'];
     }, [product]);
-
-
-    const setupSellerListener = async (sellerId) => {
-        if (!sellerId || sellerId === "system_generated" || sellerId === "official") {
-            setSeller(null);
-            return;
-        }
-
-        // Primary: Fetch seller via public backend API (no auth needed, avoids Firestore quota)
-        try {
-            const response = await fetch(`${API_BASE}/seller/${sellerId}/public-profile`);
-            const data = await response.json();
-
-            if (data.success && data.seller) {
-                const s = data.seller;
-                setSeller({
-                    name: s.name || "Verified Seller",
-                    shopName: s.shopName || "SellSathi Partner",
-                    companyName: s.shopName || "Registered Hub",
-                    city: s.city || "India",
-                    category: s.category || "General",
-                    joinedAt: s.joinedAt ? new Date(s.joinedAt) : null
-                });
-                return;
-            }
-        } catch (apiErr) {
-            console.log("API seller fetch failed, trying Firestore:", apiErr.message);
-        }
-
-        // Fallback: Firestore direct — use one-time getDoc (NOT onSnapshot).
-        // Seller info is static; a real-time listener wastes quota on reconnects
-        // and fires a read on every doc mutation in the background.
-        try {
-            const sSnap = await getDoc(doc(db, "sellers", sellerId));
-            if (sSnap.exists()) {
-                const sData = sSnap.data();
-                if (sData.sellerStatus !== 'APPROVED') { setSeller(null); return; }
-
-                const uSnap = await getDoc(doc(db, "users", sellerId));
-                const uData = uSnap.exists() ? uSnap.data() : {};
-                let city = "India";
-                if (sData.address) {
-                    const parts = sData.address.split(',').map(p => p.trim());
-                    const vtcPart = parts.find(p => p.startsWith('VTC:'));
-                    if (vtcPart) city = vtcPart.replace('VTC:', '').trim();
-                    else if (parts.length >= 2) city = parts[1];
-                    else city = parts[0];
-                }
-                setSeller({
-                    name: uData.fullName || sData.extractedName || "Verified Seller",
-                    shopName: sData.shopName || "SellSathi Partner",
-                    companyName: sData.shopName || "Registered Hub",
-                    city, category: sData.category || "General",
-                    joinedAt: sData.approvedAt ?
-                        (sData.approvedAt.toDate ? sData.approvedAt.toDate() : new Date(sData.approvedAt._seconds * 1000)) :
-                        (sData.appliedAt ? (sData.appliedAt.toDate ? sData.appliedAt.toDate() : new Date(sData.appliedAt._seconds * 1000)) : null)
-                });
-            } else { setSeller(null); }
-        } catch (err) {
-            console.error("All seller fetch methods failed:", err);
-            setSeller(null);
-        }
-    };
 
 
 
@@ -179,9 +116,9 @@ export default function ProductDetail() {
                 const sellerSnap = await getDoc(doc(db, "sellers", sellerId));
                 if (sellerSnap.exists()) {
                     const sData = sellerSnap.data();
-                    if (sData.sellerStatus !== 'APPROVED') { 
-                        setSeller(null); 
-                        return; 
+                    if (sData.sellerStatus !== 'APPROVED') {
+                        setSeller(null);
+                        return;
                     }
 
                     const userSnap = await getDoc(doc(db, "users", sellerId));
@@ -203,8 +140,8 @@ export default function ProductDetail() {
                             (sData.approvedAt.toDate ? sData.approvedAt.toDate() : new Date(sData.approvedAt._seconds * 1000)) :
                             (sData.appliedAt ? (sData.appliedAt.toDate ? sData.appliedAt.toDate() : new Date(sData.appliedAt._seconds * 1000)) : null)
                     });
-                } else { 
-                    setSeller(null); 
+                } else {
+                    setSeller(null);
                 }
             } catch (err) {
                 console.error("All seller fetch methods failed:", err);
@@ -274,7 +211,7 @@ export default function ProductDetail() {
                     });
                     setFbtSelections(selections);
                 }
-                
+
                 // Load similar products
                 const similar = await getSimilarProducts(productData);
                 setSimilarProducts(similar);
@@ -288,11 +225,10 @@ export default function ProductDetail() {
                 try {
                     const { reviews, stats } = await fetchProductReviews(id);
                     setReviews(reviews);
-                    // Map stats to match component expectations
                     setReviewStats({
-                        average: stats.averageRating || 0,
-                        total: stats.totalReviews || 0,
-                        distribution: stats.distribution || { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 }
+                        average: stats.averageRating,
+                        total: stats.totalReviews,
+                        distribution: stats.distribution
                     });
                 } catch (err) {
                     console.error("Failed to load reviews:", err);
@@ -472,20 +408,26 @@ export default function ProductDetail() {
             memory: selectedMemory,
             purchaseOption: purchaseOption
         };
-        
-        const productWithNumPrice = { ...product, price: Number(product.price) };
-        
+
+        // Calculate correct prices based on selections (same as addToCart)
+        const { finalPrice, strikethroughPrice } = getProductPricing(product, selections);
+
+        // Create a temporary cart item for Buy Now (don't add to actual cart)
+        const buyNowItem = {
+            ...product,
+            id: product.id,
+            productId: product.id,
+            sellerId: product.sellerId || null,
+            name: product.name || product.title,
+            price: finalPrice,
+            originalPrice: strikethroughPrice,
+            quantity: 1,
+            imageUrl: product.image || product.imageUrl,
+            selections: selections
+        };
+
         // Navigate directly to checkout with Buy Now product data
-        // Don't add to cart - pass product with selections as state
-        navigate('/checkout', { 
-            state: { 
-                buyNowProduct: {
-                    ...productWithNumPrice,
-                    selections: selections,
-                    quantity: 1
-                }
-            } 
-        });
+        navigate('/checkout', { state: { buyNowProduct: buyNowItem } });
     };
 
     const toggleFbt = (index) => {
@@ -513,8 +455,8 @@ export default function ProductDetail() {
 
                 <div className="pd-main-grid">
                     {/* Left: Interactive Media */}
-                    <ProductGallery 
-                        product={product} 
+                    <ProductGallery
+                        product={product}
                         images={images}
                         activeImageIndex={activeImageIndex}
                         setActiveImageIndex={setActiveImageIndex}

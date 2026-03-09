@@ -5,6 +5,18 @@ export default function SellerInvoiceModal({ seller, onClose, onDownloadPDF, isD
     if (!seller) return null;
 
     const [selectedPeriod, setSelectedPeriod] = useState('');
+    const [isRefreshing, setIsRefreshing] = useState(false);
+
+    // Handle refresh with loading state
+    const handleRefresh = async () => {
+        setIsRefreshing(true);
+        try {
+            await onRefresh();
+        } finally {
+            // Keep loading state for a bit to show feedback
+            setTimeout(() => setIsRefreshing(false), 500);
+        }
+    };
 
     // Format date as dd/mm/yyyy
     const formatDate = (dateString) => {
@@ -80,14 +92,26 @@ export default function SellerInvoiceModal({ seller, onClose, onDownloadPDF, isD
                     </div>
                     <div className="flex gap-2">
                         <button
-                            onClick={onRefresh}
+                            onClick={handleRefresh}
+                            disabled={isRefreshing}
                             className="btn"
-                            style={{ padding: '0.75rem 1.5rem', display: 'flex', alignItems: 'center', gap: '8px', background: 'rgba(255,255,255,0.2)', color: 'white', border: 'none', fontWeight: 600 }}
-                            onMouseOver={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.3)'}
-                            onMouseOut={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.2)'}
+                            style={{ 
+                                padding: '0.75rem 1.5rem', 
+                                display: 'flex', 
+                                alignItems: 'center', 
+                                gap: '8px', 
+                                background: isRefreshing ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.2)', 
+                                color: 'white', 
+                                border: 'none', 
+                                fontWeight: 600,
+                                cursor: isRefreshing ? 'not-allowed' : 'pointer',
+                                opacity: isRefreshing ? 0.7 : 1
+                            }}
+                            onMouseOver={(e) => !isRefreshing && (e.currentTarget.style.background = 'rgba(255,255,255,0.3)')}
+                            onMouseOut={(e) => !isRefreshing && (e.currentTarget.style.background = 'rgba(255,255,255,0.2)')}
                         >
-                            <RefreshCw size={18} />
-                            Refresh Data
+                            <RefreshCw size={18} className={isRefreshing ? 'animate-spin' : ''} />
+                            {isRefreshing ? 'Refreshing...' : 'Refresh Data'}
                         </button>
                         <button
                             onClick={() => onDownloadPDF(`/admin/seller/${seller.uid}/pdf?fromDate=${invoiceFilterDateFrom}&toDate=${invoiceFilterDateTo}`, `invoice_${(seller.shopName || 'seller').replace(/\s+/g, '_')}.pdf`)}

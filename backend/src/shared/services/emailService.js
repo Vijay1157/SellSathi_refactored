@@ -1,5 +1,7 @@
 const nodemailer = require('nodemailer');
 const path = require('path');
+const { getAdminConfig } = require('./adminConfigService');
+const { db } = require('../../config/firebase');
 
 // Configure credentials via env variables
 const MAILER_CONFIG = {
@@ -21,15 +23,19 @@ exports.sendOrderConfirmation = async (email, order, invoicePath) => {
     try {
         console.log(`📧 Sending order confirmation email to ${email} for order ${order.orderId}`);
 
+        // Get admin configuration
+        const adminConfig = await getAdminConfig();
+
         const mailOptions = {
-            from: `"Sellsathi Marketplace" <${MAILER_CONFIG.user}>`,
+            from: `"${adminConfig.websiteName}" <${MAILER_CONFIG.user}>`,
+            replyTo: adminConfig.email,
             to: email,
-            subject: `Order Confirmed: #${order.orderId}`,
+            subject: `Order Confirmed: #${order.orderId} - ${adminConfig.websiteName}`,
             html: `
                 <div style="font-family: Arial, sans-serif; padding: 20px; color: #333; line-height: 1.6;">
                     <div style="text-align: center; margin-bottom: 20px;">
-                        <h1 style="color: #2563eb; margin: 0;">Sellsathi</h1>
-                        <p style="color: #64748b; margin: 5px 0;">Your Shopping Partner</p>
+                        <h1 style="color: #2563eb; margin: 0;">${adminConfig.websiteName}</h1>
+                        <p style="color: #64748b; margin: 5px 0;">${adminConfig.websiteInfo}</p>
                     </div>
                     <div style="background: white; border: 1px solid #e2e8f0; border-radius: 12px; padding: 24px; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);">
                         <h2 style="color: #1e293b; margin-top: 0;">Thank you for your order!</h2>
@@ -59,7 +65,7 @@ exports.sendOrderConfirmation = async (email, order, invoicePath) => {
                         </div>
                     </div>
                     <div style="text-align: center; margin-top: 24px; color: #94a3b8; font-size: 12px;">
-                        <p>&copy; 2026 Sellsathi Marketplace. All rights reserved.</p>
+                        <p>&copy; 2026 ${adminConfig.websiteName}. All rights reserved.</p>
                     </div>
                 </div>
             `,
@@ -85,19 +91,134 @@ exports.sendSellerNotification = async (sellerEmail, order, sellerItems) => {
     try {
         console.log(`📧 Sending seller notification to ${sellerEmail}`);
 
+        // Get admin configuration
+        const adminConfig = await getAdminConfig();
+
+        const itemsHtml = sellerItems.map(item => {
+            const hasDiscount = item.originalPrice && item.originalPrice > item.price;
+            const priceDisplay = hasDiscount 
+                ? `<div style="display: flex; align-items: center; gap: 8px; justify-content: flex-end;">
+                     <span style="text-decoration: line-through; color: #94a3b8; font-size: 14px;">₹${(item.originalPrice * item.quantity).toFixed(2)}</span>
+                     <span style="font-weight: 600; color: #16a34a;">₹${(item.price * item.quantity).toFixed(2)}</span>
+                   </div>`
+                : `₹${(item.price * item.quantity).toFixed(2)}`;
+            
+            return `
+            <tr style="border-bottom: 1px solid #e2e8f0;">
+                <td style="padding: 12px 8px;">
+                    <div style="display: flex; align-items: center; gap: 12px;">
+                        <img src="${item.imageUrl || item.image || ''}" alt="${item.name}" style="width: 50px; height: 50px; object-fit: cover; border-radius: 8px;" />
+                        <div>
+                            <div style="font-weight: 600; color: #1e293b;">${item.name}</div>
+                            ${item.selections ? `<div style="font-size: 12px; color: #64748b; margin-top: 4px;">
+                                ${item.selections.color ? `Color: ${item.selections.color}` : ''}
+                                ${item.selections.size ? ` | Size: ${item.selections.size}` : ''}
+                                ${item.selections.storage ? ` | Storage: ${item.selections.storage}` : ''}
+                            </div>` : ''}
+                        </div>
+                    </div>
+                </td>
+                <td style="padding: 12px 8px; text-align: center; color: #475569;">x${item.quantity}</td>
+                <td style="padding: 12px 8px; text-align: right; font-weight: 600; color: #1e293b;">${priceDisplay}</td>
+            </tr>
+        `;
+        }).join('');
+
+        const totalAmount = sellerItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+
         const mailOptions = {
-            from: `"Sellsathi Marketplace" <${MAILER_CONFIG.user}>`,
+            from: `"${adminConfig.websiteName}" <${MAILER_CONFIG.user}>`,
+            replyTo: adminConfig.email,
             to: sellerEmail,
-            subject: `New Order Received: #${order.orderId}`,
+            subject: `🎉 New Order Received: #${order.orderId} - ${adminConfig.websiteName}`,
             html: `
-                <div style="font-family: Arial, sans-serif; padding: 20px; color: #333;">
-                    <h2 style="color: #2563eb;">New Order Alert!</h2>
-                    <p>You have received a new order for the following items:</p>
-                    <ul>
-                        ${sellerItems.map(item => `<li>${item.name} x ${item.quantity} - ₹${item.price * item.quantity}</li>`).join('')}
-                    </ul>
-                    <p><strong>Customer:</strong> ${order.customerName}</p>
-                    <p>Please log in to your dashboard to manage this order.</p>
+                <div style="font-family: Arial, sans-serif; padding: 20px; color: #333; line-height: 1.6;">
+                    <div style="text-align: center; margin-bottom: 20px;">
+                        <h1 style="color: #2563eb; margin: 0;">${adminConfig.websiteName}</h1>
+                        <p style="color: #64748b; margin: 5px 0;">${adminConfig.websiteInfo}</p>
+                    </div>
+                    
+                    <div style="background: white; border: 2px solid #86efac; border-radius: 12px; padding: 24px; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);">
+                        <div style="background: #dcfce7; padding: 16px; border-radius: 8px; margin-bottom: 20px; text-align: center;">
+                            <h2 style="color: #16a34a; margin: 0; font-size: 24px;">🎉 New Order Alert!</h2>
+                        </div>
+                        
+                        <p style="font-size: 16px; color: #1e293b;">You have received a new order. Please prepare the following items for shipment:</p>
+                        
+                        <div style="background: #f8fafc; padding: 20px; border-radius: 8px; margin: 24px 0;">
+                            <h3 style="margin-top: 0; color: #334155; font-size: 16px;">Order Details</h3>
+                            <table style="width: 100%; border-collapse: collapse; margin-bottom: 16px;">
+                                <tr>
+                                    <td style="padding: 8px 0; color: #64748b;">Order ID:</td>
+                                    <td style="padding: 8px 0; text-align: right; color: #1e293b; font-weight: 600;">#${order.orderId}</td>
+                                </tr>
+                                <tr>
+                                    <td style="padding: 8px 0; color: #64748b;">Customer Name:</td>
+                                    <td style="padding: 8px 0; text-align: right; color: #1e293b; font-weight: 600;">${order.customerName}</td>
+                                </tr>
+                                <tr>
+                                    <td style="padding: 8px 0; color: #64748b;">Payment Method:</td>
+                                    <td style="padding: 8px 0; text-align: right; color: #1e293b; font-weight: 600;">${order.paymentMethod || 'COD'}</td>
+                                </tr>
+                                <tr>
+                                    <td style="padding: 8px 0; color: #64748b;">Order Date:</td>
+                                    <td style="padding: 8px 0; text-align: right; color: #1e293b; font-weight: 600;">${new Date().toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}</td>
+                                </tr>
+                            </table>
+                        </div>
+
+                        <div style="background: white; border: 1px solid #e2e8f0; border-radius: 8px; margin: 24px 0; overflow: hidden;">
+                            <h3 style="margin: 0; padding: 16px; background: #f8fafc; color: #334155; font-size: 16px; border-bottom: 1px solid #e2e8f0;">Your Products</h3>
+                            <table style="width: 100%; border-collapse: collapse;">
+                                <thead>
+                                    <tr style="background: #f8fafc; border-bottom: 2px solid #e2e8f0;">
+                                        <th style="padding: 12px 8px; text-align: left; color: #64748b; font-weight: 600; font-size: 12px; text-transform: uppercase;">Product</th>
+                                        <th style="padding: 12px 8px; text-align: center; color: #64748b; font-weight: 600; font-size: 12px; text-transform: uppercase;">Qty</th>
+                                        <th style="padding: 12px 8px; text-align: right; color: #64748b; font-weight: 600; font-size: 12px; text-transform: uppercase;">Amount</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${itemsHtml}
+                                    <tr style="background: #f8fafc;">
+                                        <td colspan="2" style="padding: 16px 8px; text-align: right; font-weight: 600; color: #1e293b; font-size: 16px;">Total:</td>
+                                        <td style="padding: 16px 8px; text-align: right; font-weight: 700; color: #16a34a; font-size: 18px;">₹${totalAmount.toFixed(2)}</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div style="background: #dbeafe; border-left: 4px solid #2563eb; padding: 16px; margin: 24px 0; border-radius: 4px;">
+                            <h4 style="margin: 0 0 8px 0; color: #1e40af; font-size: 14px;">📦 Shipping Address</h4>
+                            <p style="margin: 0; color: #1e40af; line-height: 1.6;">
+                                <strong>${order.customerName}</strong><br>
+                                ${order.shippingAddress?.addressLine || ''}<br>
+                                ${order.shippingAddress?.city || ''}, ${order.shippingAddress?.state || ''} - ${order.shippingAddress?.pincode || ''}<br>
+                                ${order.phone ? `Phone: ${order.phone}` : ''}
+                            </p>
+                        </div>
+
+                        <div style="background: #fef3c7; border-left: 4px solid #f59e0b; padding: 16px; margin: 24px 0; border-radius: 4px;">
+                            <p style="margin: 0; color: #92400e;">
+                                <strong>⚡ Action Required:</strong> Please prepare these items for shipment. The delivery partner will collect the package soon.
+                            </p>
+                        </div>
+
+                        <div style="text-align: center; margin: 24px 0;">
+                            <a href="http://localhost:5173/seller/dashboard" style="background: #2563eb; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: 600; display: inline-block;">Go to Seller Dashboard</a>
+                        </div>
+
+                        <div style="background: #f1f5f9; padding: 16px; border-radius: 8px; margin: 24px 0;">
+                            <p style="margin: 0; color: #334155; font-size: 14px;">
+                                <strong>Need Help?</strong><br>
+                                Contact support at <a href="mailto:${adminConfig.email}" style="color: #2563eb;">${adminConfig.email}</a><br>
+                                ${adminConfig.phone !== 'Not provided' ? `Phone: <strong>${adminConfig.phone}</strong>` : ''}
+                            </p>
+                        </div>
+                    </div>
+                    
+                    <div style="text-align: center; margin-top: 24px; color: #94a3b8; font-size: 12px;">
+                        <p>&copy; 2026 ${adminConfig.websiteName}. All rights reserved.</p>
+                    </div>
                 </div>
             `
         };
@@ -115,15 +236,19 @@ exports.sendSellerBlockedEmail = async (sellerEmail, sellerName, shopName, block
     try {
         console.log(`📧 Sending seller blocked notification to ${sellerEmail}`);
 
+        // Get admin configuration
+        const adminConfig = await getAdminConfig();
+
         const mailOptions = {
-            from: `"Sellsathi Marketplace" <${MAILER_CONFIG.user}>`,
+            from: `"${adminConfig.websiteName}" <${MAILER_CONFIG.user}>`,
+            replyTo: adminConfig.email,
             to: sellerEmail,
-            subject: `Account Blocked - Action Required`,
+            subject: `Account Blocked - Action Required - ${adminConfig.websiteName}`,
             html: `
                 <div style="font-family: Arial, sans-serif; padding: 20px; color: #333; line-height: 1.6;">
                     <div style="text-align: center; margin-bottom: 20px;">
-                        <h1 style="color: #dc2626; margin: 0;">Sellsathi</h1>
-                        <p style="color: #64748b; margin: 5px 0;">Your Shopping Partner</p>
+                        <h1 style="color: #dc2626; margin: 0;">${adminConfig.websiteName}</h1>
+                        <p style="color: #64748b; margin: 5px 0;">${adminConfig.websiteInfo}</p>
                     </div>
                     <div style="background: white; border: 2px solid #fca5a5; border-radius: 12px; padding: 24px; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);">
                         <div style="background: #fee2e2; padding: 16px; border-radius: 8px; margin-bottom: 20px; text-align: center;">
@@ -157,8 +282,9 @@ exports.sendSellerBlockedEmail = async (sellerEmail, sellerName, shopName, block
                         <div style="background: #f1f5f9; padding: 16px; border-radius: 8px; margin: 24px 0;">
                             <p style="margin: 0; color: #334155; font-size: 14px;">
                                 <strong>Need Help?</strong><br>
-                                Contact our support team at <a href="mailto:support@sellsathi.com" style="color: #2563eb;">support@sellsathi.com</a><br>
-                                or call us at <strong>+91-XXXX-XXXXXX</strong>
+                                Contact our support team at <a href="mailto:${adminConfig.email}" style="color: #2563eb;">${adminConfig.email}</a><br>
+                                ${adminConfig.phone !== 'Not provided' ? `Phone: <strong>${adminConfig.phone}</strong><br>` : ''}
+                                Admin: <strong>${adminConfig.name}</strong>
                             </p>
                         </div>
 
@@ -167,7 +293,7 @@ exports.sendSellerBlockedEmail = async (sellerEmail, sellerName, shopName, block
                         </p>
                     </div>
                     <div style="text-align: center; margin-top: 24px; color: #94a3b8; font-size: 12px;">
-                        <p>&copy; 2026 Sellsathi Marketplace. All rights reserved.</p>
+                        <p>&copy; 2026 ${adminConfig.websiteName}. All rights reserved.</p>
                     </div>
                 </div>
             `
@@ -187,15 +313,19 @@ exports.sendSellerUnblockedEmail = async (sellerEmail, sellerName, shopName) => 
     try {
         console.log(`📧 Sending seller unblocked notification to ${sellerEmail}`);
 
+        // Get admin configuration
+        const adminConfig = await getAdminConfig();
+
         const mailOptions = {
-            from: `"Sellsathi Marketplace" <${MAILER_CONFIG.user}>`,
+            from: `"${adminConfig.websiteName}" <${MAILER_CONFIG.user}>`,
+            replyTo: adminConfig.email,
             to: sellerEmail,
-            subject: `Account Unblocked - Pending Re-approval`,
+            subject: `Account Unblocked - Pending Re-approval - ${adminConfig.websiteName}`,
             html: `
                 <div style="font-family: Arial, sans-serif; padding: 20px; color: #333; line-height: 1.6;">
                     <div style="text-align: center; margin-bottom: 20px;">
-                        <h1 style="color: #2563eb; margin: 0;">Sellsathi</h1>
-                        <p style="color: #64748b; margin: 5px 0;">Your Shopping Partner</p>
+                        <h1 style="color: #2563eb; margin: 0;">${adminConfig.websiteName}</h1>
+                        <p style="color: #64748b; margin: 5px 0;">${adminConfig.websiteInfo}</p>
                     </div>
                     <div style="background: white; border: 2px solid #86efac; border-radius: 12px; padding: 24px; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);">
                         <div style="background: #dcfce7; padding: 16px; border-radius: 8px; margin-bottom: 20px; text-align: center;">
@@ -240,8 +370,9 @@ exports.sendSellerUnblockedEmail = async (sellerEmail, sellerName, shopName) => 
                         <div style="background: #f1f5f9; padding: 16px; border-radius: 8px; margin: 24px 0;">
                             <p style="margin: 0; color: #334155; font-size: 14px;">
                                 <strong>Questions?</strong><br>
-                                Contact our support team at <a href="mailto:support@sellsathi.com" style="color: #2563eb;">support@sellsathi.com</a><br>
-                                or call us at <strong>+91-XXXX-XXXXXX</strong>
+                                Contact our support team at <a href="mailto:${adminConfig.email}" style="color: #2563eb;">${adminConfig.email}</a><br>
+                                ${adminConfig.phone !== 'Not provided' ? `Phone: <strong>${adminConfig.phone}</strong><br>` : ''}
+                                Admin: <strong>${adminConfig.name}</strong>
                             </p>
                         </div>
 
@@ -250,7 +381,7 @@ exports.sendSellerUnblockedEmail = async (sellerEmail, sellerName, shopName) => 
                         </p>
                     </div>
                     <div style="text-align: center; margin-top: 24px; color: #94a3b8; font-size: 12px;">
-                        <p>&copy; 2026 Sellsathi Marketplace. All rights reserved.</p>
+                        <p>&copy; 2026 ${adminConfig.websiteName}. All rights reserved.</p>
                     </div>
                 </div>
             `
@@ -270,15 +401,19 @@ exports.sendSellerApprovalEmail = async (sellerEmail, sellerName, shopName) => {
     try {
         console.log(`📧 Sending seller approval notification to ${sellerEmail}`);
 
+        // Get admin configuration
+        const adminConfig = await getAdminConfig();
+
         const mailOptions = {
-            from: `"Sellsathi Marketplace" <${MAILER_CONFIG.user}>`,
+            from: `"${adminConfig.websiteName}" <${MAILER_CONFIG.user}>`,
+            replyTo: adminConfig.email,
             to: sellerEmail,
-            subject: `🎉 Congratulations! Your Seller Account is Approved`,
+            subject: `🎉 Congratulations! Your Seller Account is Approved - ${adminConfig.websiteName}`,
             html: `
                 <div style="font-family: Arial, sans-serif; padding: 20px; color: #333; line-height: 1.6;">
                     <div style="text-align: center; margin-bottom: 20px;">
-                        <h1 style="color: #2563eb; margin: 0;">Sellsathi</h1>
-                        <p style="color: #64748b; margin: 5px 0;">Your Shopping Partner</p>
+                        <h1 style="color: #2563eb; margin: 0;">${adminConfig.websiteName}</h1>
+                        <p style="color: #64748b; margin: 5px 0;">${adminConfig.websiteInfo}</p>
                     </div>
                     <div style="background: white; border: 2px solid #86efac; border-radius: 12px; padding: 24px; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);">
                         <div style="background: #dcfce7; padding: 16px; border-radius: 8px; margin-bottom: 20px; text-align: center;">
@@ -325,17 +460,18 @@ exports.sendSellerApprovalEmail = async (sellerEmail, sellerName, shopName) => {
                             <p style="margin: 0; color: #334155; font-size: 14px;">
                                 <strong>Need Help?</strong><br>
                                 Our support team is here to help you succeed!<br>
-                                Email: <a href="mailto:support@sellsathi.com" style="color: #2563eb;">support@sellsathi.com</a><br>
-                                Phone: <strong>+91-XXXX-XXXXXX</strong>
+                                Email: <a href="mailto:${adminConfig.email}" style="color: #2563eb;">${adminConfig.email}</a><br>
+                                ${adminConfig.phone !== 'Not provided' ? `Phone: <strong>${adminConfig.phone}</strong><br>` : ''}
+                                Admin: <strong>${adminConfig.name}</strong>
                             </p>
                         </div>
 
                         <p style="color: #64748b; font-size: 14px; margin-top: 24px;">
-                            Welcome to the Sellsathi family! We're excited to have you as a seller and look forward to your success on our platform.
+                            Welcome to the ${adminConfig.websiteName} family! We're excited to have you as a seller and look forward to your success on our platform.
                         </p>
                     </div>
                     <div style="text-align: center; margin-top: 24px; color: #94a3b8; font-size: 12px;">
-                        <p>&copy; 2026 Sellsathi Marketplace. All rights reserved.</p>
+                        <p>&copy; 2026 ${adminConfig.websiteName}. All rights reserved.</p>
                     </div>
                 </div>
             `
@@ -355,15 +491,19 @@ exports.sendSellerRejectionEmail = async (sellerEmail, sellerName, shopName, rej
     try {
         console.log(`📧 Sending seller rejection notification to ${sellerEmail}`);
 
+        // Get admin configuration
+        const adminConfig = await getAdminConfig();
+
         const mailOptions = {
-            from: `"Sellsathi Marketplace" <${MAILER_CONFIG.user}>`,
+            from: `"${adminConfig.websiteName}" <${MAILER_CONFIG.user}>`,
+            replyTo: adminConfig.email,
             to: sellerEmail,
-            subject: `Application Status Update - Sellsathi Marketplace`,
+            subject: `Application Status Update - ${adminConfig.websiteName}`,
             html: `
                 <div style="font-family: Arial, sans-serif; padding: 20px; color: #333; line-height: 1.6;">
                     <div style="text-align: center; margin-bottom: 20px;">
-                        <h1 style="color: #2563eb; margin: 0;">Sellsathi</h1>
-                        <p style="color: #64748b; margin: 5px 0;">Your Shopping Partner</p>
+                        <h1 style="color: #2563eb; margin: 0;">${adminConfig.websiteName}</h1>
+                        <p style="color: #64748b; margin: 5px 0;">${adminConfig.websiteInfo}</p>
                     </div>
                     <div style="background: white; border: 2px solid #fca5a5; border-radius: 12px; padding: 24px; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);">
                         <div style="background: #fee2e2; padding: 16px; border-radius: 8px; margin-bottom: 20px; text-align: center;">
@@ -372,7 +512,7 @@ exports.sendSellerRejectionEmail = async (sellerEmail, sellerName, shopName, rej
                         
                         <p>Dear <strong>${sellerName}</strong>,</p>
                         
-                        <p>Thank you for your interest in becoming a seller on Sellsathi Marketplace. After careful review of your application for <strong>${shopName}</strong>, we regret to inform you that we are unable to approve your seller account at this time.</p>
+                        <p>Thank you for your interest in becoming a seller on ${adminConfig.websiteName}. After careful review of your application for <strong>${shopName}</strong>, we regret to inform you that we are unable to approve your seller account at this time.</p>
                         
                         <div style="background: #fef3c7; border-left: 4px solid #f59e0b; padding: 16px; margin: 20px 0; border-radius: 4px;">
                             <p style="margin: 0; color: #92400e;"><strong>Reason:</strong> ${rejectionReason}</p>
@@ -405,17 +545,18 @@ exports.sendSellerRejectionEmail = async (sellerEmail, sellerName, shopName, rej
                             <p style="margin: 0; color: #334155; font-size: 14px;">
                                 <strong>Questions?</strong><br>
                                 Contact our support team for more information:<br>
-                                Email: <a href="mailto:support@sellsathi.com" style="color: #2563eb;">support@sellsathi.com</a><br>
-                                Phone: <strong>+91-XXXX-XXXXXX</strong>
+                                Email: <a href="mailto:${adminConfig.email}" style="color: #2563eb;">${adminConfig.email}</a><br>
+                                ${adminConfig.phone !== 'Not provided' ? `Phone: <strong>${adminConfig.phone}</strong><br>` : ''}
+                                Admin: <strong>${adminConfig.name}</strong>
                             </p>
                         </div>
 
                         <p style="color: #64748b; font-size: 14px; margin-top: 24px;">
-                            We appreciate your interest in Sellsathi and hope to work with you in the future. Thank you for your understanding.
+                            We appreciate your interest in ${adminConfig.websiteName} and hope to work with you in the future. Thank you for your understanding.
                         </p>
                     </div>
                     <div style="text-align: center; margin-top: 24px; color: #94a3b8; font-size: 12px;">
-                        <p>&copy; 2026 Sellsathi Marketplace. All rights reserved.</p>
+                        <p>&copy; 2026 ${adminConfig.websiteName}. All rights reserved.</p>
                     </div>
                 </div>
             `
@@ -431,49 +572,92 @@ exports.sendSellerRejectionEmail = async (sellerEmail, sellerName, shopName, rej
     }
 };
 
-exports.sendOtpEmail = async (email, otpCode) => {
+
+/**
+ * Notify sellers about new orders
+ * Groups items by seller and sends individual emails
+ * Optimized with batch email fetching (max 10 sellers per query)
+ */
+exports.notifySellers = async (orderData) => {
     try {
-        console.log(`📧 Sending OTP email to ${email}`);
+        const items = orderData.items || [];
+        if (items.length === 0) return;
 
-        const mailOptions = {
-            from: `"Sellsathi Marketplace" <${MAILER_CONFIG.user}>`,
-            to: email,
-            subject: `Your Sellsathi Verification Code: ${otpCode}`,
-            html: `
-                <div style="font-family: Arial, sans-serif; padding: 20px; color: #333; line-height: 1.6;">
-                    <div style="text-align: center; margin-bottom: 20px;">
-                        <h1 style="color: #2563eb; margin: 0;">Sellsathi</h1>
-                        <p style="color: #64748b; margin: 5px 0;">Your Shopping Partner</p>
-                    </div>
-                    <div style="background: white; border: 1px solid #e2e8f0; border-radius: 12px; padding: 32px; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1); max-width: 500px; margin: 0 auto; text-align: center;">
-                        <h2 style="color: #1e293b; margin-top: 0;">Verify Your Email</h2>
-                        <p style="color: #475569; margin-bottom: 24px;">Please use the following 6-digit code to verify your email address and complete your registration.</p>
+        // Group items by sellerId
+        const sellerItemsMap = {};
+        items.forEach(item => {
+            const sellerId = item.sellerId;
+            if (!sellerId || sellerId === 'system_generated' || sellerId === 'official') return;
+            
+            if (!sellerItemsMap[sellerId]) {
+                sellerItemsMap[sellerId] = [];
+            }
+            sellerItemsMap[sellerId].push(item);
+        });
+
+        const sellerIds = Object.keys(sellerItemsMap);
+        if (sellerIds.length === 0) {
+            console.log('[NotifySellers] No valid sellers to notify');
+            return;
+        }
+
+        console.log(`[NotifySellers] Notifying ${sellerIds.length} seller(s) for order ${orderData.orderId}`);
+
+        // Batch fetch seller emails (Firestore 'in' query supports up to 10 items)
+        const sellerEmails = {};
+        
+        // Process in batches of 10
+        for (let i = 0; i < sellerIds.length; i += 10) {
+            const batch = sellerIds.slice(i, i + 10);
+            
+            try {
+                const sellersSnap = await db.collection('sellers')
+                    .where('__name__', 'in', batch)
+                    .get();
+
+                for (const doc of sellersSnap.docs) {
+                    const sellerData = doc.data();
+                    if (sellerData.sellerStatus === 'APPROVED') {
+                        // Try to get email from seller document first
+                        let email = sellerData.email || sellerData.contactEmail;
                         
-                        <div style="background: #f8fafc; padding: 16px; border-radius: 8px; margin: 24px 0; border: 1px dashed #cbd5e1;">
-                            <span style="font-size: 32px; font-weight: 700; color: #2563eb; letter-spacing: 8px;">${otpCode}</span>
-                        </div>
+                        // If not found, fetch from users collection
+                        if (!email) {
+                            const userDoc = await db.collection('users').doc(doc.id).get();
+                            if (userDoc.exists()) {
+                                email = userDoc.data().email;
+                            }
+                        }
+                        
+                        if (email) {
+                            sellerEmails[doc.id] = email;
+                        }
+                    }
+                }
+            } catch (batchError) {
+                console.error(`[NotifySellers] Error fetching batch ${i / 10 + 1}:`, batchError);
+            }
+        }
 
-                        <p style="color: #ef4444; font-size: 14px; margin-top: 24px;">
-                            This code will expire in 10 minutes.
-                        </p>
-                        <p style="color: #64748b; font-size: 14px;">
-                            If you did not request this code, please ignore this email.
-                        </p>
-                    </div>
-                    <div style="text-align: center; margin-top: 24px; color: #94a3b8; font-size: 12px;">
-                        <p>&copy; 2026 Sellsathi Marketplace. All rights reserved.</p>
-                    </div>
-                </div>
-            `
-        };
+        // Send emails to each seller
+        const emailPromises = [];
+        for (const [sellerId, items] of Object.entries(sellerItemsMap)) {
+            const sellerEmail = sellerEmails[sellerId];
+            if (sellerEmail) {
+                emailPromises.push(
+                    exports.sendSellerNotification(sellerEmail, orderData, items)
+                        .catch(err => console.error(`[NotifySellers] Failed to send to ${sellerEmail}:`, err))
+                );
+            } else {
+                console.warn(`[NotifySellers] No email found for seller ${sellerId}`);
+            }
+        }
 
-        const result = await transporter.sendMail(mailOptions);
-        console.log('✅ OTP email sent successfully:', result.messageId);
-        return result;
-
+        await Promise.all(emailPromises);
+        console.log(`[NotifySellers] Sent ${emailPromises.length} seller notification(s)`);
+        
     } catch (error) {
-        console.error('❌ OTP Email Error:', error);
-        return null;
+        console.error('[NotifySellers] Error:', error);
     }
 };
 
