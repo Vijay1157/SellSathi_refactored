@@ -476,3 +476,61 @@ exports.sendOtpEmail = async (email, otpCode) => {
         return null;
     }
 };
+
+exports.sendOrderCancellation = async (email, order) => {
+    try {
+        console.log(`📧 Sending order cancellation email to ${email} for order ${order.orderId}`);
+
+        const mailOptions = {
+            from: `"Sellsathi Marketplace" <${MAILER_CONFIG.user}>`,
+            to: email,
+            subject: `Order Cancelled: #${order.orderId}`,
+            html: `
+                <div style="font-family: Arial, sans-serif; padding: 20px; color: #333; line-height: 1.6;">
+                    <div style="text-align: center; margin-bottom: 20px;">
+                        <h1 style="color: #ef4444; margin: 0;">Sellsathi</h1>
+                        <p style="color: #64748b; margin: 5px 0;">Your Shopping Partner</p>
+                    </div>
+                    <div style="background: white; border: 1px solid #e2e8f0; border-radius: 12px; padding: 24px; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);">
+                        <h2 style="color: #1e293b; margin-top: 0;">Order Cancelled</h2>
+                        <p>Hi <strong>${order.customerName}</strong>,</p>
+                        <p>This email is to confirm that your order <strong>#${order.orderId}</strong> has been successfully cancelled.</p>
+                        
+                        <div style="background: #fff1f2; padding: 20px; border-radius: 8px; margin: 24px 0; border: 1px solid #fecdd3;">
+                            <h3 style="margin-top: 0; color: #9f1239; font-size: 16px;">Order Summary</h3>
+                            <table style="width: 100%; border-collapse: collapse;">
+                                <tr>
+                                    <td style="padding: 8px 0; color: #64748b;">Order Total:</td>
+                                    <td style="padding: 8px 0; text-align: right; color: #1e293b; font-weight: 600;">₹${order.total}</td>
+                                </tr>
+                                <tr>
+                                    <td style="padding: 8px 0; color: #64748b;">Status:</td>
+                                    <td style="padding: 8px 0; text-align: right; color: #ef4444; font-weight: 600;">Cancelled</td>
+                                </tr>
+                            </table>
+                        </div>
+
+                        <p style="color: #475569; font-size: 14px; margin-bottom: 24px;">
+                            The refund (if any) will be processed according to our refund policy. You can check the status of your refund in your dashboard.
+                        </p>
+
+                        <div style="text-align: center;">
+                            <a href="http://localhost:5173/dashboard" style="background: #2563eb; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: 600; display: inline-block;">Go to Dashboard</a>
+                        </div>
+                    </div>
+                    <div style="text-align: center; margin-top: 24px; color: #94a3b8; font-size: 12px;">
+                        <p>&copy; 2026 Sellsathi Marketplace. All rights reserved.</p>
+                    </div>
+                </div>
+            `
+        };
+
+        const result = await transporter.sendMail(mailOptions);
+        console.log('✅ Cancellation email sent successfully:', result.messageId);
+        return result;
+
+    } catch (error) {
+        console.error('❌ Cancellation Email Error:', error);
+        return null;
+    }
+};

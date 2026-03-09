@@ -4,6 +4,7 @@ const cache = require('../../../utils/cache');
 const invoiceService = require('../../../shared/services/invoiceService');
 const emailService = require('../../../shared/services/emailService');
 const { reduceStock, replenishStock } = require('../../../utils/stockUtils');
+const shiprocketService = require('../../../shared/services/shiprocketService');
 const path = require('path');
 const fs = require('fs');
 
@@ -109,7 +110,15 @@ const getOrderById = async (req, res) => {
 const cancelOrder = async (req, res) => {
     try {
         const { orderId } = req.params;
-        const uid = req.user.uid;
+        const { cancellationReason } = req.body; // Get cancellation reason from request body
+        const uid = req.user?.uid;
+        
+        console.log(`[CANCEL REQUEST] Order: ${orderId} | User: ${uid} | Reason: ${cancellationReason}`);
+        
+        if (!uid) {
+            console.error("[CANCEL] Missing user UID in request");
+            return res.status(401).json({ success: false, message: "Authentication required" });
+        }
 
         const orderRef = db.collection("orders").doc(orderId);
         const orderSnap = await orderRef.get();
@@ -122,29 +131,44 @@ const cancelOrder = async (req, res) => {
 
         // Ensure the user owns the order
         if (orderData.uid !== uid && orderData.userId !== uid) {
+            console.warn(`[CANCEL] Access Denied: User ${uid} trying to cancel order owned by ${orderData.userId || orderData.uid}`);
             return res.status(403).json({ success: false, message: "Access denied" });
         }
 
         // Check if order can be cancelled
-        if (["Shipped", "Delivered", "Cancelled"].includes(orderData.status)) {
+        if (orderData.status === "Cancelled") {
+            console.log(`[CANCEL] Order ${orderId} is already cancelled. Returning success.`);
+            return res.status(200).json({ success: true, message: "Order is already cancelled" });
+        }
+
+        if (["Shipped", "Delivered"].includes(orderData.status)) {
+            console.warn(`[CANCEL] Invalid state: Order ${orderId} is in ${orderData.status} state`);
             return res.status(400).json({ success: false, message: `Cannot cancel order in ${orderData.status} state` });
         }
 
         // Handle Shiprocket cancellation if applicable
         if (orderData.shiprocketOrderId) {
-            const shiprocketResult = await shiprocketService.cancelShipment([orderData.awbNumber || orderData.shiprocketOrderId]);
-            if (!shiprocketResult.success) {
-                console.error("Failed to cancel Shiprocket order:", shiprocketResult.error);
-                // Decide whether to fail the whole cancel operation or log and continue
-                // For now, continue but log the error
+            try {
+                const shiprocketResult = await shiprocketService.cancelOrder(orderData.shiprocketOrderId, orderId);
+                if (!shiprocketResult.success) {
+                    console.error("Failed to cancel Shiprocket order:", shiprocketResult.error);
+                }
+            } catch (shiprocketErr) {
+                console.error("SHIPROCKET SERVICE CRASH:", shiprocketErr);
             }
         }
 
-        // Update status
-        await orderRef.update({
-            status: "Cancelled",
-            cancelledAt: admin.firestore.FieldValue.serverTimestamp()
-        });
+        // Update status with cancellation reason
+        try {
+            await orderRef.update({
+                status: "Cancelled",
+                cancelledAt: admin.firestore.FieldValue.serverTimestamp(),
+                cancellationReason: cancellationReason || "No reason provided"
+            });
+        } catch (updateErr) {
+            console.error("FIRESTORE UPDATE ERROR:", updateErr);
+            throw updateErr;
+        }
 
         // Replenish stock
         if (orderData.items) {
@@ -152,11 +176,16 @@ const cancelOrder = async (req, res) => {
         }
 
         // Invalidate caches
-        cache.invalidate(`orders_${uid}`, 'adminAllOrders');
-        if (orderData.sellerId) {
-            cache.invalidate(`sellerDash_${orderData.sellerId}`);
+        try {
+            cache.invalidate(`userOrders_${uid}`, 'adminAllOrders');
+            if (orderData.sellerId) {
+                cache.invalidate(`sellerDash_${orderData.sellerId}`);
+            }
+            cache.invalidate('adminStats', 'allSellers');
+        } catch (cacheErr) {
+            console.error("CACHE INVALIDATION ERROR:", cacheErr);
+            // Don't throw, cache failure shouldn't block cancellation success message
         }
-        cache.invalidate('adminStats', 'allSellers');
 
         // Optional: Send cancellation email
         if (orderData.email) {
@@ -171,7 +200,7 @@ const cancelOrder = async (req, res) => {
         return res.status(200).json({ success: true, message: "Order cancelled successfully" });
     } catch (error) {
         console.error("CANCEL ORDER ERROR:", error);
-        return res.status(500).json({ success: false, message: "Failed to cancel order" });
+        return res.status(500).json({ success: false, message: `Failed to cancel order: ${error.message}` });
     }
 };
 

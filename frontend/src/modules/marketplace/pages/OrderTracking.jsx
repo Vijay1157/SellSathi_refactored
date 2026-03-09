@@ -17,7 +17,20 @@ export default function OrderTracking() {
     const [order, setOrder] = useState(null);
     const [loading, setLoading] = useState(true);
     const [cancelling, setCancelling] = useState(false);
-    const [showCancelConfirm, setShowCancelConfirm] = useState(false);
+    const [showCancelModal, setShowCancelModal] = useState(false);
+    const [cancellationReason, setCancellationReason] = useState('');
+    const [customReason, setCustomReason] = useState('');
+
+    const cancellationReasons = [
+        'Changed my mind',
+        'Found a better price elsewhere',
+        'Ordered by mistake',
+        'Delivery time is too long',
+        'Product no longer needed',
+        'Want to change shipping address',
+        'Want to modify order items',
+        'Other'
+    ];
 
     useEffect(() => {
         const fetchOrder = async () => {
@@ -58,16 +71,44 @@ export default function OrderTracking() {
     const handleCancelOrder = async () => {
         if (!order || !order.id) return;
 
+        // Validate reason selection
+        if (!cancellationReason) {
+            alert('Please select a reason for cancellation');
+            return;
+        }
+
+        if (cancellationReason === 'Other' && !customReason.trim()) {
+            alert('Please provide a reason for cancellation');
+            return;
+        }
+
+        const finalReason = cancellationReason === 'Other' ? customReason : cancellationReason;
+
+        console.log(`[CANCEL-TRACK] Triggered for order: ${order.id} with reason: ${finalReason}`);
         setCancelling(true);
         try {
-            const response = await authFetch(`/api/orders/${order.id}/cancel`, {
+            const url = `/orders/${order.id}/cancel`;
+            console.log(`[CANCEL-TRACK] Sending request to: ${url}`);
+            const response = await authFetch(url, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
-                }
+                },
+                body: JSON.stringify({ cancellationReason: finalReason })
             });
 
-            const data = await response.json();
+            console.log(`[CANCEL-TRACK] Response status: ${response.status}`);
+            const text = await response.text();
+            console.log(`[CANCEL-TRACK] Raw response: ${text.substring(0, 500)}`);
+
+            let data;
+            try {
+                data = JSON.parse(text);
+                console.log(`[CANCEL-TRACK] Parsed data:`, data);
+            } catch (e) {
+                console.error('[CANCEL-TRACK] JSON parse failure:', e);
+                throw new Error(`Invalid server response: ${text.substring(0, 100)}`);
+            }
 
             if (data.success) {
                 // Refresh order data
@@ -77,7 +118,7 @@ export default function OrderTracking() {
                 }
                 
                 // Show refund information
-                const refundInfo = data.refundInfo;
+                const refundInfo = data.refundInfo || data.data?.refundInfo;
                 if (refundInfo) {
                     alert(
                         `Order cancelled successfully!\n\n` +
@@ -91,15 +132,19 @@ export default function OrderTracking() {
                 } else {
                     alert('Order cancelled successfully!');
                 }
+                
+                // Reset modal state
+                setShowCancelModal(false);
+                setCancellationReason('');
+                setCustomReason('');
             } else {
                 alert(`Failed to cancel order: ${data.message}`);
             }
         } catch (error) {
-            console.error('Error cancelling order:', error);
-            alert('Failed to cancel order. Please try again.');
+            console.error('[CANCEL-TRACK] Error caught:', error);
+            alert(`Failed to cancel order. Please try again. (${error.message})`);
         } finally {
             setCancelling(false);
-            setShowCancelConfirm(false);
         }
     };
 
@@ -393,63 +438,214 @@ export default function OrderTracking() {
                     </button>
 
                     {canCancel && (
-                        <>
-                            {!showCancelConfirm ? (
-                                <button
-                                    onClick={() => setShowCancelConfirm(true)}
-                                    className="btn flex items-center justify-center gap-3"
-                                    style={{
-                                        width: '100%',
-                                        padding: '1.25rem',
-                                        borderRadius: '16px',
-                                        background: 'rgba(239, 68, 68, 0.1)',
-                                        border: '2px solid rgba(239, 68, 68, 0.3)',
-                                        color: '#ef4444',
-                                        fontWeight: '700',
-                                        fontSize: '1rem'
-                                    }}
-                                >
-                                    <XCircle size={20} />
-                                    Cancel Order
-                                </button>
-                            ) : (
-                                <div className="glass-card" style={{ padding: '1.5rem' }}>
-                                    <p style={{ marginBottom: '1rem', fontWeight: '600' }}>Are you sure you want to cancel this order?</p>
-                                    <div style={{ display: 'flex', gap: '1rem' }}>
-                                        <button
-                                            onClick={handleCancelOrder}
-                                            disabled={cancelling}
-                                            className="btn"
-                                            style={{
-                                                flex: 1,
-                                                padding: '0.75rem',
-                                                background: '#ef4444',
-                                                color: 'white',
-                                                fontWeight: '600'
-                                            }}
-                                        >
-                                            {cancelling ? 'Cancelling...' : 'Yes, Cancel'}
-                                        </button>
-                                        <button
-                                            onClick={() => setShowCancelConfirm(false)}
-                                            disabled={cancelling}
-                                            className="btn"
-                                            style={{
-                                                flex: 1,
-                                                padding: '0.75rem',
-                                                background: 'var(--surface)',
-                                                fontWeight: '600'
-                                            }}
-                                        >
-                                            No, Keep Order
-                                        </button>
-                                    </div>
-                                </div>
-                            )}
-                        </>
+                        <button
+                            onClick={() => setShowCancelModal(true)}
+                            className="btn flex items-center justify-center gap-3"
+                            style={{
+                                width: '100%',
+                                padding: '1.25rem',
+                                borderRadius: '16px',
+                                background: 'rgba(239, 68, 68, 0.1)',
+                                border: '2px solid rgba(239, 68, 68, 0.3)',
+                                color: '#ef4444',
+                                fontWeight: '700',
+                                fontSize: '1rem'
+                            }}
+                        >
+                            <XCircle size={20} />
+                            Cancel Order
+                        </button>
                     )}
                 </div>
             </div>
+
+            {/* Cancellation Modal */}
+            {showCancelModal && (
+                <div
+                    style={{
+                        position: 'fixed',
+                        top: 0,
+                        left: 0,
+                        right: 0,
+                        bottom: 0,
+                        background: 'rgba(0, 0, 0, 0.7)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        zIndex: 1000,
+                        padding: '1rem',
+                        backdropFilter: 'blur(4px)'
+                    }}
+                    onClick={() => !cancelling && setShowCancelModal(false)}
+                >
+                    <motion.div
+                        initial={{ opacity: 0, scale: 0.9 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        className="glass-card"
+                        style={{
+                            maxWidth: '500px',
+                            width: '100%',
+                            padding: '2rem',
+                            maxHeight: '90vh',
+                            overflowY: 'auto'
+                        }}
+                        onClick={(e) => e.stopPropagation()}
+                    >
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1.5rem' }}>
+                            <div style={{
+                                width: '48px',
+                                height: '48px',
+                                borderRadius: '12px',
+                                background: 'rgba(239, 68, 68, 0.1)',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center'
+                            }}>
+                                <XCircle size={24} style={{ color: '#ef4444' }} />
+                            </div>
+                            <div>
+                                <h3 style={{ margin: 0, fontSize: '1.5rem' }}>Cancel Order</h3>
+                                <p className="text-muted" style={{ margin: '0.25rem 0 0 0', fontSize: '0.9rem' }}>
+                                    Order #{order.orderId || order.id}
+                                </p>
+                            </div>
+                        </div>
+
+                        <p style={{ marginBottom: '1.5rem', color: 'var(--text-muted)' }}>
+                            Please select a reason for cancelling this order. This helps us improve our service.
+                        </p>
+
+                        <div style={{ marginBottom: '1.5rem' }}>
+                            <label style={{ display: 'block', marginBottom: '0.75rem', fontWeight: '600' }}>
+                                Cancellation Reason <span style={{ color: '#ef4444' }}>*</span>
+                            </label>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                                {cancellationReasons.map((reason) => (
+                                    <label
+                                        key={reason}
+                                        style={{
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            gap: '0.75rem',
+                                            padding: '1rem',
+                                            background: cancellationReason === reason ? 'rgba(99, 102, 241, 0.1)' : 'var(--surface)',
+                                            border: `2px solid ${cancellationReason === reason ? 'var(--primary)' : 'var(--border)'}`,
+                                            borderRadius: '12px',
+                                            cursor: 'pointer',
+                                            transition: 'all 0.2s ease'
+                                        }}
+                                        onMouseEnter={(e) => {
+                                            if (cancellationReason !== reason) {
+                                                e.currentTarget.style.borderColor = 'var(--primary-light)';
+                                            }
+                                        }}
+                                        onMouseLeave={(e) => {
+                                            if (cancellationReason !== reason) {
+                                                e.currentTarget.style.borderColor = 'var(--border)';
+                                            }
+                                        }}
+                                    >
+                                        <input
+                                            type="radio"
+                                            name="cancellationReason"
+                                            value={reason}
+                                            checked={cancellationReason === reason}
+                                            onChange={(e) => setCancellationReason(e.target.value)}
+                                            style={{
+                                                width: '20px',
+                                                height: '20px',
+                                                cursor: 'pointer',
+                                                accentColor: 'var(--primary)'
+                                            }}
+                                        />
+                                        <span style={{ flex: 1, fontWeight: cancellationReason === reason ? '600' : '400' }}>
+                                            {reason}
+                                        </span>
+                                    </label>
+                                ))}
+                            </div>
+                        </div>
+
+                        {cancellationReason === 'Other' && (
+                            <motion.div
+                                initial={{ opacity: 0, height: 0 }}
+                                animate={{ opacity: 1, height: 'auto' }}
+                                style={{ marginBottom: '1.5rem' }}
+                            >
+                                <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '600' }}>
+                                    Please specify <span style={{ color: '#ef4444' }}>*</span>
+                                </label>
+                                <textarea
+                                    value={customReason}
+                                    onChange={(e) => setCustomReason(e.target.value)}
+                                    placeholder="Enter your reason for cancellation..."
+                                    rows={4}
+                                    style={{
+                                        width: '100%',
+                                        padding: '0.75rem',
+                                        borderRadius: '12px',
+                                        border: '2px solid var(--border)',
+                                        background: 'var(--surface)',
+                                        fontSize: '0.95rem',
+                                        resize: 'vertical',
+                                        fontFamily: 'inherit'
+                                    }}
+                                />
+                            </motion.div>
+                        )}
+
+                        <div style={{
+                            padding: '1rem',
+                            background: 'rgba(239, 68, 68, 0.05)',
+                            border: '1px solid rgba(239, 68, 68, 0.2)',
+                            borderRadius: '12px',
+                            marginBottom: '1.5rem'
+                        }}>
+                            <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--text-muted)' }}>
+                                ⚠️ Once cancelled, this action cannot be undone. Any applicable refunds will be processed according to our refund policy.
+                            </p>
+                        </div>
+
+                        <div style={{ display: 'flex', gap: '1rem' }}>
+                            <button
+                                onClick={() => {
+                                    setShowCancelModal(false);
+                                    setCancellationReason('');
+                                    setCustomReason('');
+                                }}
+                                disabled={cancelling}
+                                className="btn"
+                                style={{
+                                    flex: 1,
+                                    padding: '1rem',
+                                    background: 'var(--surface)',
+                                    fontWeight: '600',
+                                    borderRadius: '12px'
+                                }}
+                            >
+                                Keep Order
+                            </button>
+                            <button
+                                onClick={handleCancelOrder}
+                                disabled={cancelling || !cancellationReason || (cancellationReason === 'Other' && !customReason.trim())}
+                                className="btn"
+                                style={{
+                                    flex: 1,
+                                    padding: '1rem',
+                                    background: '#ef4444',
+                                    color: 'white',
+                                    fontWeight: '600',
+                                    borderRadius: '12px',
+                                    opacity: (cancelling || !cancellationReason || (cancellationReason === 'Other' && !customReason.trim())) ? 0.5 : 1,
+                                    cursor: (cancelling || !cancellationReason || (cancellationReason === 'Other' && !customReason.trim())) ? 'not-allowed' : 'pointer'
+                                }}
+                            >
+                                {cancelling ? 'Cancelling...' : 'Confirm Cancellation'}
+                            </button>
+                        </div>
+                    </motion.div>
+                </div>
+            )}
         </div>
     );
 }
