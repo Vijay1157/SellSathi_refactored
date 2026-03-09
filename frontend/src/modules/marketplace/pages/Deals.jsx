@@ -1,12 +1,16 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Star, Heart, Eye, ShoppingCart } from 'lucide-react';
+import { Heart, Eye, ShoppingCart } from 'lucide-react';
 import { collection, getDocs, query, limit } from 'firebase/firestore';
-import { db, auth } from '@/modules/shared/config/firebase';
+import { db } from '@/modules/shared/config/firebase';
 import { addToCart } from '@/modules/shared/utils/cartUtils';
 import { listenToWishlist, addToWishlist, removeFromWishlist } from '@/modules/shared/utils/wishlistUtils';
+import { fetchProductReviews } from '@/modules/shared/utils/reviewUtils';
 import QuickViewModal from '@/modules/shared/components/common/QuickViewModal';
+import Rating from '@/modules/shared/components/common/Rating';
+import PriceDisplay from '@/modules/shared/components/common/PriceDisplay';
+import './Deals.css';
 
 export default function Deals() {
     const navigate = useNavigate();
@@ -15,6 +19,7 @@ export default function Deals() {
     const [wishlist, setWishlist] = useState([]);
     const [isQuickViewOpen, setIsQuickViewOpen] = useState(false);
     const [selectedQuickProduct, setSelectedQuickProduct] = useState(null);
+    const [productReviews, setProductReviews] = useState({});
 
     useEffect(() => {
         const unsubscribe = listenToWishlist((items) => {
@@ -31,12 +36,11 @@ export default function Deals() {
                 const data = snap.docs.map(doc => ({
                     id: doc.id,
                     ...doc.data(),
-                    discount: Math.floor(Math.random() * 30) + 10, // Mock discount
-                    rating: (Math.random() * 1 + 4).toFixed(1),
-                    reviews: Math.floor(Math.random() * 1000) + 100
+                    discount: doc.data().discount || (Math.floor(Math.random() * 30) + 10) // Use existing or mock
                 }));
                 setProducts(data);
                 setLoading(false);
+                fetchReviewsForProducts(data);
             } catch (err) {
                 console.error(err);
                 setLoading(false);
@@ -44,6 +48,29 @@ export default function Deals() {
         };
         fetchDeals();
     }, []);
+
+    const fetchReviewsForProducts = async (productsToFetch) => {
+        const reviewPromises = productsToFetch.map(async (product) => {
+            try {
+                const { reviews, stats } = await fetchProductReviews(product.id);
+                return { productId: product.id, reviews, stats };
+            } catch (error) {
+                console.error(`Failed to fetch reviews for product ${product.id}:`, error);
+                return { productId: product.id, reviews: [], stats: { averageRating: 0, totalReviews: 0 } };
+            }
+        });
+
+        try {
+            const reviewResults = await Promise.all(reviewPromises);
+            const reviewsMap = {};
+            reviewResults.forEach(result => {
+                reviewsMap[result.productId] = result;
+            });
+            setProductReviews(reviewsMap);
+        } catch (error) {
+            console.error('Error fetching product reviews:', error);
+        }
+    };
 
     const handleAddToCart = async (e, p) => {
         if (e) e.stopPropagation();
@@ -125,37 +152,20 @@ export default function Deals() {
                                         </button>
                                     </div>
                                 </div>
-                                <div className="card-info">
-                                    <span className="category">{p.category || 'Deal'}</span>
-                                    <h3 className="title">{p.name}</h3>
-
-                                    <div className="rating-row">
-                                        <Star size={14} fill="#FFB800" color="#FFB800" />
-                                        <span>{p.rating}</span>
-                                        <span className="reviews-count">({p.reviews})</span>
+                                <div className="product-details">
+                                    <p className="p-cat">{p.category || 'Deal'}</p>
+                                    <h3 className="p-name">{p.name}</h3>
+                                    <div className="p-rating">
+                                        <Rating
+                                            averageRating={productReviews[p.id]?.stats?.averageRating || 0}
+                                            totalReviews={productReviews[p.id]?.stats?.totalReviews || 0}
+                                            size={14}
+                                            showCount={true}
+                                        />
                                     </div>
-
-                                    <div className="info-bottom">
-                                        <div className="price-group">
-                                            <span className="current-price">
-                                                ₹{(() => {
-                                                    const orig = Number(p.price) || 0;
-                                                    const disc = Number(p.discountPrice) || 0;
-                                                    return (disc > 0 && disc < orig ? disc : orig).toLocaleString();
-                                                })()}
-                                            </span>
-                                            {(() => {
-                                                const orig = Number(p.price) || 0;
-                                                const disc = Number(p.discountPrice) || 0;
-                                                const old = Number(p.oldPrice) || 0;
-
-                                                if (old > 0 && old > orig) return <span className="old-price">₹{old.toLocaleString()}</span>;
-                                                if (disc > 0 && disc < orig) return <span className="old-price">₹{orig.toLocaleString()}</span>;
-
-                                                // Fallback to mock calculation for seed/mock deals if no real old price exists
-                                                const mockOld = (p.price * (1 + (p.discount || 20) / 100)).toFixed(0);
-                                                return <span className="old-price">₹{Number(mockOld).toLocaleString()}</span>;
-                                            })()}
+                                    <div className="p-footer">
+                                        <div className="p-price-group">
+                                            <PriceDisplay product={p} size="sm" />
                                         </div>
                                         <button
                                             onClick={(e) => handleAddToCart(e, p)}
@@ -172,136 +182,6 @@ export default function Deals() {
                 )}
             </div>
 
-            <style>{`
-                .deals-page { padding: 4rem 0 8rem; min-height: 100vh; }
-                .page-header { margin-bottom: 4rem; }
-                .page-header h1 { font-size: 3rem; font-weight: 850; margin-bottom: 0.5rem; }
-                .page-header p { font-size: 1.2rem; color: var(--text-muted); }
-
-                .deals-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 2.5rem; }
-                
-                .product-card-premium { 
-                    background: white; 
-                    border-radius: 28px; 
-                    padding: 1.25rem; 
-                    border: 1px solid #f1f5f9; 
-                    transition: 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); 
-                    display: flex; 
-                    flex-direction: column; 
-                    height: 100%; 
-                    cursor: pointer;
-                    position: relative;
-                }
-                .product-card-premium:hover {
-                    transform: translateY(-8px);
-                    box-shadow: 0 20px 40px rgba(0,0,0,0.06);
-                }
-                .card-media { 
-                    height: 280px; 
-                    background: #f8fafc; 
-                    border-radius: 20px; 
-                    position: relative; 
-                    overflow: hidden; 
-                    display: flex; 
-                    align-items: center; 
-                    justify-content: center; 
-                    margin-bottom: 1.25rem; 
-                    padding: 2rem;
-                }
-                .card-media img { 
-                    max-width: 100%; 
-                    max-height: 100%; 
-                    object-fit: contain; 
-                    transition: 0.5s;
-                }
-                .product-card-premium:hover .card-media img {
-                    transform: scale(1.08);
-                }
-                .discount-badge { 
-                    position: absolute; 
-                    top: 1rem; 
-                    left: 1rem; 
-                    background: #E11D48; 
-                    color: white; 
-                    padding: 0.4rem 0.75rem; 
-                    border-radius: 10px; 
-                    font-weight: 800; 
-                    font-size: 0.75rem; 
-                    z-index: 2;
-                }
-                
-                .overlay-tools {
-                    position: absolute;
-                    top: 1rem;
-                    right: 1rem;
-                    display: flex;
-                    flex-direction: column;
-                    gap: 0.6rem;
-                    z-index: 20;
-                }
-                .tool-btn {
-                    width: 42px;
-                    height: 42px;
-                    background: white;
-                    border-radius: 50%;
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-                    border: none;
-                    cursor: pointer;
-                    transition: 0.3s;
-                    color: #64748b;
-                }
-                .tool-btn:hover {
-                    background: white;
-                    transform: scale(1.1);
-                    color: var(--primary);
-                }
-                .tool-btn.active {
-                    color: #ef4444;
-                }
-
-                .card-info { flex: 1; display: flex; flex-direction: column; }
-                .card-info .category { font-size: 0.75rem; font-weight: 700; text-transform: uppercase; color: #94a3b8; letter-spacing: 0.5px; }
-                .card-info .title { font-size: 1.15rem; font-weight: 800; margin: 0.5rem 0 0.75rem; color: #1e293b; line-height: 1.4; height: 3.2em; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
-                
-                .rating-row { display: flex; align-items: center; gap: 0.4rem; margin-bottom: 1rem; }
-                .rating-row span { font-size: 0.85rem; font-weight: 700; color: #64748b; }
-                .reviews-count { font-size: 0.8rem; color: #94a3b8; font-weight: 500; }
-
-                .info-bottom { 
-                    margin-top: auto; 
-                    display: flex; 
-                    justify-content: space-between; 
-                    align-items: center; 
-                }
-                .price-group { display: flex; flex-direction: column; gap: 0.1rem; }
-                .current-price { font-size: 1.4rem; font-weight: 950; color: #0f172a; }
-                .old-price { font-size: 0.9rem; text-decoration: line-through; color: #94a3b8; font-weight: 600; }
-                
-                .add-to-cart-simple { 
-                    width: 48px; 
-                    height: 48px; 
-                    background: #4f46e5; 
-                    color: white; 
-                    border-radius: 14px; 
-                    display: flex; 
-                    align-items: center; 
-                    justify-content: center; 
-                    transition: 0.3s; 
-                    border: none;
-                    cursor: pointer;
-                    box-shadow: 0 4px 12px rgba(79, 70, 229, 0.2);
-                }
-                .add-to-cart-simple:hover { 
-                    background: #4338ca; 
-                    transform: scale(1.05); 
-                    box-shadow: 0 6px 16px rgba(79, 70, 229, 0.3);
-                }
-
-                .loading { text-align: center; padding: 10rem 0; font-size: 1.5rem; font-weight: 700; color: var(--text-muted); }
-            `}</style>
             <QuickViewModal
                 isOpen={isQuickViewOpen}
                 onClose={() => setIsQuickViewOpen(false)}
