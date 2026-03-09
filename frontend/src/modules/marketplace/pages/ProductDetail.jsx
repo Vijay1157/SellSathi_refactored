@@ -467,14 +467,20 @@ export default function ProductDetail() {
             memory: selectedMemory,
             purchaseOption: purchaseOption
         };
+        
         const productWithNumPrice = { ...product, price: Number(product.price) };
-        const res = await addToCart(productWithNumPrice, selections);
-        if (res.success) {
-            // Pass the product ID as state to checkout so it knows to select only this item
-            navigate('/checkout', { state: { buyNowProductId: productWithNumPrice.id } });
-        } else if (!res.triggerLogin) {
-            alert('❌ Failed to process. Please try again.');
-        }
+        
+        // Navigate directly to checkout with Buy Now product data
+        // Don't add to cart - pass product with selections as state
+        navigate('/checkout', { 
+            state: { 
+                buyNowProduct: {
+                    ...productWithNumPrice,
+                    selections: selections,
+                    quantity: 1
+                }
+            } 
+        });
     };
 
     const toggleFbt = (index) => {
