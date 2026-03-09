@@ -26,12 +26,14 @@ import ScrollToTop from '@/modules/shared/components/common/ScrollToTop';
 
 function AppContent() {
   const location = useLocation();
-  // Only hide navbar for registration and onboarding flows
-  const isSellerPage = location.pathname.startsWith('/seller/register') ||
+  // Hide navbar for seller landing, registration, and onboarding flows (they have their own SellerHeader)
+  const isSellerPage = location.pathname === '/seller' ||
+    location.pathname.startsWith('/seller/register') ||
     location.pathname.startsWith('/seller/onboarding');
 
   // Routes where footer should be hidden
   const hideFooterRoutes = [
+    "/seller",
     "/seller/register",
     "/seller/onboarding"
   ];

@@ -112,7 +112,7 @@ export default function Navbar() {
                         );
                     } else {
                         // For other categories, try exact match first, then fuzzy match
-                        catProducts = products.filter(p => 
+                        catProducts = products.filter(p =>
                             p.category === cat ||
                             p.category?.toLowerCase().includes(cat.toLowerCase()) ||
                             p.subCategory?.toLowerCase().includes(cat.toLowerCase())
@@ -275,14 +275,23 @@ export default function Navbar() {
                                     />
                                 </div>
 
-                                <Link 
-                                    to="/seller" 
-                                    className="btn btn-seller"
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                >
-                                    Become a Seller
-                                </Link>
+                                {user && user.role === 'SELLER' ? (
+                                    <Link
+                                        to="/seller/dashboard"
+                                        className="btn btn-seller"
+                                    >
+                                        Dashboard
+                                    </Link>
+                                ) : (
+                                    <Link
+                                        to="/seller"
+                                        className="btn btn-seller"
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                    >
+                                        Become a Seller
+                                    </Link>
+                                )}
                             </>
                         )}
 
@@ -361,7 +370,7 @@ export default function Navbar() {
 
                 {/* Categories section - Always visible (static) */}
                 {!location.pathname.startsWith('/checkout') && (
-                    <div 
+                    <div
                         className="sub-nav-wrapper"
                         style={{ display: 'block' }}
                     >
