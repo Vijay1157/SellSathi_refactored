@@ -393,18 +393,10 @@ export default function ProductDetail() {
                 try {
                     const { reviews, stats } = await fetchProductReviews(id);
                     setReviews(reviews);
-<<<<<<< HEAD
-                    // Map stats to match component expectations
-                    setReviewStats({
-                        average: stats.averageRating || 0,
-                        total: stats.totalReviews || 0,
-                        distribution: stats.distribution || { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 }
-=======
                     setReviewStats({
                         average: stats.averageRating,
                         total: stats.totalReviews,
                         distribution: stats.distribution
->>>>>>> da544763b19edadd24134f057f6b8ed4621548e7
                     });
                 } catch (err) {
                     console.error("Failed to load reviews:", err);
@@ -585,21 +577,6 @@ export default function ProductDetail() {
             purchaseOption: purchaseOption
         };
         
-<<<<<<< HEAD
-        const productWithNumPrice = { ...product, price: Number(product.price) };
-        
-        // Navigate directly to checkout with Buy Now product data
-        // Don't add to cart - pass product with selections as state
-        navigate('/checkout', { 
-            state: { 
-                buyNowProduct: {
-                    ...productWithNumPrice,
-                    selections: selections,
-                    quantity: 1
-                }
-            } 
-        });
-=======
         // Calculate correct prices based on selections (same as addToCart)
         const { finalPrice, strikethroughPrice } = getProductPricing(product, selections);
         
@@ -619,7 +596,6 @@ export default function ProductDetail() {
         
         // Navigate directly to checkout with Buy Now product data
         navigate('/checkout', { state: { buyNowProduct: buyNowItem } });
->>>>>>> da544763b19edadd24134f057f6b8ed4621548e7
     };
 
     const toggleFbt = (index) => {

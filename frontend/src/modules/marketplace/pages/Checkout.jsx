@@ -477,7 +477,6 @@ export default function Checkout() {
                                 </h3>
                             </div>
                             <div className="p-8 space-y-4">
-<<<<<<< HEAD
                                 {(() => {
                                     // Separate selected and unselected items
                                     const selectedItemsList = checkoutItems.filter(item => 
@@ -508,18 +507,6 @@ export default function Checkout() {
                                                 />
                                             </div>
                                             
-=======
-                                {checkoutItems.map((item) => {
-                                    const itemId = item.id || item.productId;
-                                    const isBuyNowItem = location.state?.buyNowProduct?.id === itemId;
-                                    return (
-                                        <div key={itemId} className={`flex gap-6 items-center p-4 rounded-2xl border shadow-sm group hover:border-primary/40 transition-all ${isBuyNowItem ? 'bg-orange-50 border-orange-300' : 'bg-white border-primary/30'}`}>
-                                            {isBuyNowItem && (
-                                                <div className="absolute top-2 right-2 bg-orange-500 text-white text-xs font-bold px-3 py-1 rounded-full">
-                                                    BUY NOW
-                                                </div>
-                                            )}
->>>>>>> da544763b19edadd24134f057f6b8ed4621548e7
                                             <div className="w-20 h-20 rounded-xl overflow-hidden shadow-sm flex-shrink-0">
                                                 <img src={item.imageUrl || item.image} alt={item.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
                                             </div>
