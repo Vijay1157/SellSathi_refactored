@@ -110,11 +110,11 @@ const sendEmailOtp = async (req, res) => {
 
         // Generate 6 digit OTP
         const otpCode = Math.floor(100000 + Math.random() * 900000).toString();
-        
+
         // Save to Firestore with 10 minute expiration
         const expiresAt = new Date();
         expiresAt.setMinutes(expiresAt.getMinutes() + 10);
-        
+
         await db.collection('email_otps').doc(email.toLowerCase()).set({
             otp: otpCode,
             expiresAt: admin.firestore.Timestamp.fromDate(expiresAt),
@@ -124,7 +124,7 @@ const sendEmailOtp = async (req, res) => {
         // Send via Nodemailer
         const emailService = require('../../../shared/services/emailService');
         const emailResult = await emailService.sendOtpEmail(email, otpCode);
-        
+
         if (!emailResult) {
             return res.status(500).json({ success: false, message: "Failed to send OTP email" });
         }
@@ -152,7 +152,7 @@ const register = async (req, res) => {
             const decodedToken = await admin.auth().verifyIdToken(idToken);
             uid = decodedToken.uid;
             phoneNumber = decodedToken.phone_number || phone;
-            
+
             // If they provided an OTP, it means this relies on our custom Email verification
             if (otp && email) {
                 const otpDoc = await db.collection('email_otps').doc(email.toLowerCase()).get();
@@ -167,7 +167,7 @@ const register = async (req, res) => {
                     await db.collection('email_otps').doc(email.toLowerCase()).delete();
                     return res.status(400).json({ success: false, message: "OTP has expired. Please request a new one." });
                 }
-                
+
                 // OTP is valid, delete it to prevent reuse
                 await db.collection('email_otps').doc(email.toLowerCase()).delete();
             }
@@ -178,8 +178,8 @@ const register = async (req, res) => {
 
         const userData = {
             uid, phone: phoneNumber || null, fullName: fullName || "User",
-            dateOfBirth: dob || null, email: email || null, password: password || null, 
-            role: "CONSUMER", isActive: true, 
+            dateOfBirth: dob || null, email: email || null, password: password || null,
+            role: "CONSUMER", isActive: true,
             createdAt: admin.firestore.FieldValue.serverTimestamp(),
             updatedAt: admin.firestore.FieldValue.serverTimestamp(),
         };
@@ -243,7 +243,7 @@ const applySeller = async (req, res) => {
 
         console.log(`Storing seller data in DB...`);
         await sellerRef.set({
-            uid, 
+            uid,
             ...finalData,
             sellerStatus: "PENDING",
             isBlocked: false,
@@ -255,6 +255,32 @@ const applySeller = async (req, res) => {
         return res.status(200).json({ success: true, uid, message: "Applied successfully", status: "PENDING" });
     } catch (error) {
         return res.status(500).json({ success: false, message: "Application failed" });
+    }
+};
+
+/**
+ * Check if a user has already applied as a seller and return status.
+ */
+const checkSellerStatus = async (req, res) => {
+    try {
+        const uid = req.user.uid;
+        const sellerRef = db.collection("sellers").doc(uid);
+        const sellerSnap = await sellerRef.get();
+
+        if (!sellerSnap.exists) {
+            return res.status(200).json({ success: true, hasApplied: false, sellerStatus: null });
+        }
+
+        const sellerData = sellerSnap.data();
+        return res.status(200).json({
+            success: true,
+            hasApplied: true,
+            sellerStatus: sellerData.sellerStatus || 'PENDING',
+            shopName: sellerData.shopName || ''
+        });
+    } catch (error) {
+        console.error('CHECK SELLER STATUS ERROR:', error);
+        return res.status(500).json({ success: false, message: 'Failed to check seller status' });
     }
 };
 
@@ -338,12 +364,16 @@ const testLogin = async (req, res) => {
         const userSnap = await userRef.get();
 
         if (!userSnap.exists) {
+            // Determine role based on phone number
+            const ADMIN_PHONE = "+917483743936";
+            const initialRole = phone === ADMIN_PHONE ? "ADMIN" : "CONSUMER";
+
             // Create new test user
             await userRef.set({
                 uid,
                 phone,
-                fullName: `User ${phone.slice(-4)}`,
-                role: "CONSUMER",
+                fullName: phone === ADMIN_PHONE ? "Admin User" : `User ${phone.slice(-4)}`,
+                role: initialRole,
                 isActive: true,
                 isTest: true,
                 createdAt: admin.firestore.FieldValue.serverTimestamp(),
@@ -352,10 +382,10 @@ const testLogin = async (req, res) => {
             return res.status(200).json({
                 success: true,
                 uid,
-                role: "CONSUMER",
-                fullName: `User ${phone.slice(-4)}`,
-                status: "NEW_USER",
-                message: "New test user created as CONSUMER",
+                role: initialRole,
+                fullName: phone === ADMIN_PHONE ? "Admin User" : `User ${phone.slice(-4)}`,
+                status: initialRole === "ADMIN" ? "AUTHORIZED" : "NEW_USER",
+                message: initialRole === "ADMIN" ? "Admin login successful" : "New test user created as CONSUMER",
             });
         }
 
@@ -368,12 +398,29 @@ const testLogin = async (req, res) => {
             });
         }
 
+        // Check for admin phone number (same as login handler)
+        const ADMIN_PHONE = "+917483743936";
+        if (userData.role === "ADMIN" || phone === ADMIN_PHONE) {
+            if (phone === ADMIN_PHONE && userData.role !== "ADMIN") {
+                try { await userRef.update({ role: "ADMIN" }); } catch (_) { }
+            }
+            return res.status(200).json({
+                success: true,
+                uid,
+                role: "ADMIN",
+                status: "AUTHORIZED",
+                phone: phone,
+                fullName: userData.fullName || "Admin User",
+                message: "Admin login successful"
+            });
+        }
+
         // Check if user is a seller
         const sellerSnap = await db.collection("sellers").doc(uid).get();
         if (sellerSnap.exists) {
             const sellerData = sellerSnap.data();
             const sellerStatus = sellerData.sellerStatus || "PENDING";
-            
+
             if (userData.role !== "SELLER") {
                 try { await userRef.update({ role: "SELLER" }); } catch (_) { }
             }
@@ -427,5 +474,5 @@ const testLogin = async (req, res) => {
     }
 };
 
-module.exports = { login, register, applySeller, extractAadhar, uploadImage, testLogin, sendEmailOtp };
+module.exports = { login, register, applySeller, extractAadhar, uploadImage, testLogin, sendEmailOtp, checkSellerStatus };
 

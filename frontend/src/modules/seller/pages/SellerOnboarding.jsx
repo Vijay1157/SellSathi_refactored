@@ -107,19 +107,23 @@ const SellerOnboarding = () => {
           sellerData.buildingNumber &&
           sellerData.streetLocality;
       case 2: // Business (Shop, GST, Pickup)
-        const isBaseValid = sellerData.shopName && sellerData.shopCategory && sellerData.hasGST;
+        const shopCatValid = sellerData.shopCategory &&
+          (sellerData.shopCategory.startsWith('other:') ? sellerData.shopCategory.length > 6 : true);
+        const isBaseValid = sellerData.shopName && shopCatValid && sellerData.hasGST;
         if (!isBaseValid) return false;
         if (sellerData.hasGST === 'yes' && sellerData.gstNumber?.length !== 15) return false;
         const isPickupValid = sellerData.pickupAddress && sellerData.pickupCity && sellerData.pickupState && sellerData.pickupPincode?.length === 6;
         if (!isPickupValid) return false;
         return true;
       case 3: // Bank & Supplier Details
+        const prodCatValid = sellerData.productCategory &&
+          (sellerData.productCategory.startsWith('other:') ? sellerData.productCategory.length > 6 : true);
         return sellerData.bankAccountName &&
           sellerData.accountNumber &&
           sellerData.ifscCode &&
           sellerData.supplierName &&
           sellerData.businessType &&
-          sellerData.productCategory &&
+          prodCatValid &&
           sellerData.contactEmail;
       default:
         return true;
