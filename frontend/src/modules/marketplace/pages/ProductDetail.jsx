@@ -288,7 +288,12 @@ export default function ProductDetail() {
                 try {
                     const { reviews, stats } = await fetchProductReviews(id);
                     setReviews(reviews);
-                    setReviewStats(stats);
+                    // Map stats to match component expectations
+                    setReviewStats({
+                        average: stats.averageRating || 0,
+                        total: stats.totalReviews || 0,
+                        distribution: stats.distribution || { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 }
+                    });
                 } catch (err) {
                     console.error("Failed to load reviews:", err);
                 }
