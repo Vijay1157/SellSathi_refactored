@@ -164,6 +164,35 @@ export default function PhoneOtpForm({
                         </svg>
                         Continue with Google
                     </button>
+
+                    {!isRegistering && (
+                        <button 
+                            type="button" 
+                            className="auth-email-btn" 
+                            onClick={onSwitchToEmailLogin} 
+                            disabled={loading}
+                            style={{
+                                width: '100%',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                gap: '12px',
+                                padding: '0.875rem',
+                                background: 'white',
+                                border: '1px solid #e2e8f0',
+                                borderRadius: '1rem',
+                                color: '#334155',
+                                fontWeight: 600,
+                                fontSize: '0.95rem',
+                                cursor: 'pointer',
+                                transition: '0.2s',
+                                marginTop: '0.75rem'
+                            }}
+                        >
+                            <Mail size={20} />
+                            Login with Email
+                        </button>
+                    )}
                 </>
             )}
 
