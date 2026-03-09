@@ -103,7 +103,28 @@ export default function Checkout() {
         
         // If Buy Now product is provided, use it directly without cart
         if (buyNowProduct) {
-            setCheckoutItems([buyNowProduct]);
+            const { finalPrice, strikethroughPrice } = getProductPricing(buyNowProduct, buyNowProduct.selections || {});
+            
+            const buyNowCartItem = {
+                id: `buynow_${buyNowProduct.id}_${Date.now()}`,
+                productId: buyNowProduct.id,
+                sellerId: buyNowProduct.sellerId || null,
+                name: buyNowProduct.name || buyNowProduct.title,
+                price: finalPrice,
+                originalPrice: strikethroughPrice,
+                imageUrl: buyNowProduct.imageUrl || buyNowProduct.image,
+                quantity: buyNowProduct.quantity || 1,
+                category: buyNowProduct.category,
+                selections: buyNowProduct.selections,
+                selectedColor: buyNowProduct.selections?.color,
+                selectedSize: buyNowProduct.selections?.size,
+                selectedStorage: buyNowProduct.selections?.storage?.label || buyNowProduct.selections?.storage,
+                selectedMemory: buyNowProduct.selections?.memory?.label || buyNowProduct.selections?.memory,
+                isBuyNow: true
+            };
+            
+            setCheckoutItems([buyNowCartItem]);
+            setSelectedItems(new Set([buyNowCartItem.id]));
             setCartItems([]);
             setLoading(false);
             return;
