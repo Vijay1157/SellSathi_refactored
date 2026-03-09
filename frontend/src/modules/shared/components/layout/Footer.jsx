@@ -84,7 +84,31 @@ export default function Footer() {
                                         <ShieldCheck size={16} /> Management Login
                                     </button>
                                 </li>
-                                <li><Link to="/seller" target="_blank" rel="noopener noreferrer" className="text-muted" style={{ textDecoration: 'none', fontSize: '0.9rem', fontWeight: 600 }}>Seller Portal</Link></li>
+                                <li>
+                                    <button
+                                        onClick={() => {
+                                            const rawUser = localStorage.getItem('user');
+                                            if (!rawUser) {
+                                                alert('Please login as a customer first to access the Seller Portal.');
+                                                return;
+                                            }
+                                            window.open('/seller', '_blank');
+                                        }}
+                                        className="text-muted"
+                                        style={{
+                                            background: 'none',
+                                            border: 'none',
+                                            padding: 0,
+                                            fontSize: '0.9rem',
+                                            fontWeight: 600,
+                                            cursor: 'pointer',
+                                            textDecoration: 'none',
+                                            display: 'inline'
+                                        }}
+                                    >
+                                        Seller Portal
+                                    </button>
+                                </li>
                             </ul>
                         </div>
 
