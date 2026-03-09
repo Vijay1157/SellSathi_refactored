@@ -13,6 +13,7 @@ import {
 import { motion, AnimatePresence } from 'framer-motion';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { listenToCart, removeFromCart, updateCartItemQuantity } from '@/modules/shared/utils/cartUtils';
+import { getProductPricing } from '@/modules/shared/utils/priceUtils';
 import { auth } from '@/modules/shared/config/firebase';
 import { authFetch } from '@/modules/shared/utils/api';
 import PriceDisplay from '@/modules/shared/components/common/PriceDisplay';
@@ -28,6 +29,8 @@ export default function Checkout() {
     const [step, setStep] = useState(1);
     const [cartItems, setCartItems] = useState([]);
     const [checkoutItems, setCheckoutItems] = useState([]);
+    const [selectedItems, setSelectedItems] = useState(new Set()); // Add item selection state
+    const [showAllItems, setShowAllItems] = useState(false); // Add show more state
     const [loading, setLoading] = useState(true);
     const [shippingAddress, setShippingAddress] = useState({
         firstName: '',
@@ -98,14 +101,51 @@ export default function Checkout() {
     useEffect(() => {
         const unsubscribe = listenToCart((items) => {
             setCartItems(items);
-            const { buyNowProductId, selectedItemIds } = location.state || {};
-            let itemsToCheckout = items;
-            if (buyNowProductId) {
-                itemsToCheckout = items.filter(item => (item.id || item.productId) === buyNowProductId);
+            const { buyNowProduct, selectedItemIds } = location.state || {};
+            
+            if (buyNowProduct) {
+                // Buy Now flow: Create temporary cart item for Buy Now product
+                const { finalPrice, strikethroughPrice } = getProductPricing(buyNowProduct, buyNowProduct.selections || {});
+                
+                const buyNowCartItem = {
+                    id: `buynow_${buyNowProduct.id}_${Date.now()}`,
+                    productId: buyNowProduct.id,
+                    sellerId: buyNowProduct.sellerId || null,
+                    name: buyNowProduct.name || buyNowProduct.title,
+                    price: finalPrice,
+                    originalPrice: strikethroughPrice,
+                    imageUrl: buyNowProduct.imageUrl || buyNowProduct.image,
+                    quantity: buyNowProduct.quantity || 1,
+                    category: buyNowProduct.category,
+                    selections: buyNowProduct.selections,
+                    selectedColor: buyNowProduct.selections?.color,
+                    selectedSize: buyNowProduct.selections?.size,
+                    selectedStorage: buyNowProduct.selections?.storage?.label || buyNowProduct.selections?.storage,
+                    selectedMemory: buyNowProduct.selections?.memory?.label || buyNowProduct.selections?.memory,
+                    isBuyNow: true // Flag to identify Buy Now item
+                };
+                
+                // Combine Buy Now product with cart items (Buy Now first)
+                const allItems = [buyNowCartItem, ...items];
+                setCheckoutItems(allItems);
+                
+                // Pre-select ONLY the Buy Now product
+                setSelectedItems(new Set([buyNowCartItem.id]));
+                
             } else if (selectedItemIds && selectedItemIds.length > 0) {
-                itemsToCheckout = items.filter(item => selectedItemIds.includes(item.id || item.productId));
+                // Regular cart checkout: Show only selected items
+                const itemsToCheckout = items.filter(item => 
+                    selectedItemIds.includes(item.id || item.productId)
+                );
+                setCheckoutItems(itemsToCheckout);
+                // All items selected by default
+                setSelectedItems(new Set(itemsToCheckout.map(item => item.id || item.productId)));
+            } else {
+                // Fallback: show all cart items, all selected
+                setCheckoutItems(items);
+                setSelectedItems(new Set(items.map(item => item.id || item.productId)));
             }
-            setCheckoutItems(itemsToCheckout);
+            
             setLoading(false);
         });
         return () => unsubscribe && unsubscribe();
@@ -127,7 +167,7 @@ export default function Checkout() {
     const handleRazorpayPayment = async () => {
         setRazorpayLoading(true);
         try {
-            const selectedCartItems = checkoutItems;
+            const selectedCartItems = selectedCheckoutItems;
             const customerInfo = {
                 firstName: shippingAddress.firstName,
                 lastName: shippingAddress.lastName,
@@ -170,7 +210,7 @@ export default function Checkout() {
                     image: '/logo.png',
                     handler: async function (response) {
                         try {
-                            const selectedCartItems = checkoutItems;
+                            const selectedCartItems = selectedCheckoutItems;
                             const verifyResponse = await authFetch('/payment/verify', {
                                 method: 'POST',
                                 headers: { 'Content-Type': 'application/json' },
@@ -242,7 +282,7 @@ export default function Checkout() {
     const processOrder = async (paymentType, paymentId = null) => {
         setLoading(true);
         try {
-            const selectedCartItems = checkoutItems;
+            const selectedCartItems = selectedCheckoutItems;
             const customerInfo = {
                 firstName: shippingAddress.firstName,
                 lastName: shippingAddress.lastName,
@@ -333,7 +373,25 @@ export default function Checkout() {
         }
     };
 
-    const subtotal = checkoutItems.reduce((acc, item) => acc + (item.price * item.quantity), 0);
+    // Toggle item selection in checkout
+    const toggleItemSelection = (itemId) => {
+        setSelectedItems(prev => {
+            const newSet = new Set(prev);
+            if (newSet.has(itemId)) {
+                newSet.delete(itemId);
+            } else {
+                newSet.add(itemId);
+            }
+            return newSet;
+        });
+    };
+
+    // Filter selected items for payment
+    const selectedCheckoutItems = checkoutItems.filter(item => 
+        selectedItems.has(item.id || item.productId)
+    );
+
+    const subtotal = selectedCheckoutItems.reduce((acc, item) => acc + (item.price * item.quantity), 0);
 
     const handleQuantityChange = async (item, newQuantity) => {
         if (newQuantity < 1) return;
@@ -386,19 +444,72 @@ export default function Checkout() {
                             <div className="p-8 border-b border-gray-50">
                                 <h3 className="text-xl font-bold text-gray-900 flex items-center gap-3">
                                     <ShoppingBag size={22} className="text-primary" />
-                                    Your Items ({checkoutItems.length})
+                                    Your Items ({selectedItems.size} of {checkoutItems.length} selected)
                                 </h3>
                             </div>
                             <div className="p-8 space-y-4">
-                                {checkoutItems.map((item) => {
-                                    const itemId = item.id || item.productId;
-                                    return (
-                                        <div key={itemId} className="flex gap-6 items-center p-4 rounded-2xl border bg-white border-primary/30 shadow-sm group hover:border-primary/40 transition-all">
+                                {(() => {
+                                    // Separate selected and unselected items
+                                    const selectedItemsList = checkoutItems.filter(item => 
+                                        selectedItems.has(item.id || item.productId)
+                                    );
+                                    const unselectedItemsList = checkoutItems.filter(item => 
+                                        !selectedItems.has(item.id || item.productId)
+                                    );
+                                    
+                                    // Show all selected items + limited unselected items
+                                    const unselectedToShow = showAllItems ? unselectedItemsList : unselectedItemsList.slice(0, 3);
+                                    const itemsToDisplay = [...selectedItemsList, ...unselectedToShow];
+                                    
+                                    return itemsToDisplay.map((item) => {
+                                        const itemId = item.id || item.productId;
+                                        const isSelected = selectedItems.has(itemId);
+                                        const isBuyNowItem = item.isBuyNow;
+                                        
+                                        return (
+                                            <div key={itemId} className={`flex gap-4 items-center p-4 rounded-2xl border bg-white shadow-sm group hover:shadow-md transition-all ${isSelected ? 'border-primary border-2' : 'border-gray-200'}`}>
+                                            {/* Checkbox */}
+                                            <div className="flex items-center pt-1">
+                                                <input
+                                                    type="checkbox"
+                                                    checked={isSelected}
+                                                    onChange={() => toggleItemSelection(itemId)}
+                                                    className="w-5 h-5 rounded border-gray-300 text-primary focus:ring-primary cursor-pointer"
+                                                />
+                                            </div>
+                                            
                                             <div className="w-20 h-20 rounded-xl overflow-hidden shadow-sm flex-shrink-0">
                                                 <img src={item.imageUrl || item.image} alt={item.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
                                             </div>
                                             <div className="flex-1 min-w-0">
-                                                <h4 className="font-bold text-gray-900 mb-1 truncate">{item.name}</h4>
+                                                <div className="flex items-center gap-2 mb-1">
+                                                    <h4 className="font-bold text-gray-900 truncate">{item.name}</h4>
+                                                    {isBuyNowItem && (
+                                                        <span className="bg-orange-500 text-white text-xs px-2 py-0.5 rounded-full font-semibold flex-shrink-0">
+                                                            Buy Now
+                                                        </span>
+                                                    )}
+                                                </div>
+                                                {/* Variant Info */}
+                                                {(item.selectedColor || item.selectedSize || item.selectedStorage) && (
+                                                    <div className="flex gap-1 mt-1 text-xs text-gray-600 flex-wrap">
+                                                        {item.selectedColor && (
+                                                            <span className="px-2 py-0.5 bg-gray-100 rounded">
+                                                                {item.selectedColor}
+                                                            </span>
+                                                        )}
+                                                        {item.selectedSize && (
+                                                            <span className="px-2 py-0.5 bg-gray-100 rounded">
+                                                                {item.selectedSize}
+                                                            </span>
+                                                        )}
+                                                        {item.selectedStorage && (
+                                                            <span className="px-2 py-0.5 bg-gray-100 rounded">
+                                                                {item.selectedStorage}
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                )}
                                                 <div className="flex items-center gap-2 mt-2">
                                                     <span className="text-xs font-semibold text-gray-500">Qty:</span>
                                                     <div className="flex items-center gap-1 bg-gray-100 rounded-lg p-0.5">
@@ -416,13 +527,48 @@ export default function Checkout() {
                                             </div>
                                             <div className="flex flex-col items-end gap-3 flex-shrink-0">
                                                 <PriceDisplay product={{ ...item, price: item.originalPrice || item.price, discountPrice: item.price }} size="sm" showBadge={false} />
-                                                <button onClick={() => handleRemove(itemId)} className="p-2 text-gray-300 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all" title="Remove">
-                                                    <Trash2 size={16} />
-                                                </button>
+                                                {!isBuyNowItem && (
+                                                    <button onClick={() => handleRemove(itemId)} className="p-2 text-gray-300 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all" title="Remove">
+                                                        <Trash2 size={16} />
+                                                    </button>
+                                                )}
                                             </div>
                                         </div>
                                     );
-                                })}
+                                });
+                                })()}
+                                
+                                {/* Show More / Show Less Button - Only for unselected items */}
+                                {(() => {
+                                    const unselectedCount = checkoutItems.filter(item => 
+                                        !selectedItems.has(item.id || item.productId)
+                                    ).length;
+                                    
+                                    if (unselectedCount <= 3) return null;
+                                    
+                                    const hiddenCount = unselectedCount - 3;
+                                    
+                                    return (
+                                        <div className="pt-4 border-t border-gray-100">
+                                            <button
+                                                onClick={() => setShowAllItems(!showAllItems)}
+                                                className="w-full py-3 px-4 bg-gray-50 hover:bg-gray-100 text-gray-700 font-semibold rounded-xl transition-all flex items-center justify-center gap-2"
+                                            >
+                                                {showAllItems ? (
+                                                    <>
+                                                        <Minus size={18} />
+                                                        Show Less
+                                                    </>
+                                                ) : (
+                                                    <>
+                                                        <Plus size={18} />
+                                                        Show {hiddenCount} More {hiddenCount === 1 ? 'Item' : 'Items'}
+                                                    </>
+                                                )}
+                                            </button>
+                                        </div>
+                                    );
+                                })()}
                             </div>
                         </section>
 
