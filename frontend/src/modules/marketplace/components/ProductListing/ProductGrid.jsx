@@ -1,7 +1,7 @@
 import React from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Star, Search, LayoutGrid, List, ShoppingCart, Heart, Eye } from 'lucide-react';
+import { Search, LayoutGrid, List, ShoppingCart, Heart, Eye } from 'lucide-react';
 import Rating from '@/modules/shared/components/common/Rating';
 import PriceDisplay from '@/modules/shared/components/common/PriceDisplay';
 
@@ -99,11 +99,6 @@ export default function ProductGrid({
                                                 color={wishlist.some(item => item.id === p.id) ? "#E11D48" : "currentColor"}
                                             />
                                         </button>
-                                        <button onClick={(e) => {
-                                            e.stopPropagation();
-                                            setSelectedProduct(p);
-                                            setIsReviewModalOpen(true);
-                                        }} className="tool-btn" title="Write a Review"><Star size={18} /></button>
                                         <button className="tool-btn" title="View Details" onClick={(e) => {
                                             e.stopPropagation();
                                             setSelectedQuickProduct(p);

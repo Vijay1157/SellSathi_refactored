@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { ShieldCheck, Users, Box, Truck, AlertOctagon, Loader, Home, Mail, DollarSign, FileText } from 'lucide-react';
+import { ShieldCheck, Users, Box, Truck, AlertOctagon, Loader, Home, Mail, DollarSign, FileText, UserCircle } from 'lucide-react';
 import { authFetch } from '@/modules/shared/utils/api';
 import SellerAnalyticsModal from '@/modules/admin/components/SellerAnalyticsModal';
 import SellerInvoiceModal from '@/modules/admin/components/SellerInvoiceModal';
@@ -10,6 +10,7 @@ import OrdersTab from '@/modules/admin/components/OrdersTab';
 import ReviewsTab from '@/modules/admin/components/ReviewsTab';
 import PayoutsTab from '@/modules/admin/components/PayoutsTab';
 import InvoicesTab from '@/modules/admin/components/InvoicesTab';
+import ProfileTab from '@/modules/admin/components/ProfileTab';
 
 export default function AdminDashboard() {
     const [activeTab, setActiveTab] = useState('home');
@@ -34,9 +35,42 @@ export default function AdminDashboard() {
     const [isDownloadingPDF, setIsDownloadingPDF] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedProductDate, setSelectedProductDate] = useState('');
+    const [adminProfile, setAdminProfile] = useState(null);
 
     // Track which tabs have already been loaded
     const [loadedTabs, setLoadedTabs] = useState(new Set());
+
+    // Update selected invoice seller when allSellers data changes
+    useEffect(() => {
+        if (selectedInvoiceSeller && allSellers.length > 0) {
+            const updatedSeller = allSellers.find(s => s.uid === selectedInvoiceSeller.uid);
+            if (updatedSeller) {
+                setSelectedInvoiceSeller(updatedSeller);
+                console.log('[Dashboard] Auto-updated selected invoice seller:', updatedSeller.shopName, 'Products:', updatedSeller.financials?.totalProducts);
+            }
+        }
+    }, [allSellers]);
+
+    // Log when selectedAnalyticsSeller changes
+    useEffect(() => {
+        if (selectedAnalyticsSeller) {
+            console.log('[Dashboard] selectedAnalyticsSeller changed:', selectedAnalyticsSeller.shopName, 'UID:', selectedAnalyticsSeller.uid);
+            console.log('[Dashboard] Full seller data:', selectedAnalyticsSeller);
+        } else {
+            console.log('[Dashboard] selectedAnalyticsSeller cleared');
+        }
+    }, [selectedAnalyticsSeller]);
+
+    // Update selected analytics seller when analytics data changes
+    useEffect(() => {
+        if (selectedAnalyticsSeller && analytics.length > 0) {
+            const updatedSeller = analytics.find(s => s.uid === selectedAnalyticsSeller.uid);
+            if (updatedSeller) {
+                setSelectedAnalyticsSeller(updatedSeller);
+                console.log('[Dashboard] Auto-updated selected analytics seller:', updatedSeller.shopName, 'Products:', updatedSeller.metrics?.totalProducts);
+            }
+        }
+    }, [analytics]);
 
     // Fetch only stats on mount
     useEffect(() => {
@@ -60,6 +94,7 @@ export default function AdminDashboard() {
     };
 
     const fetchStats = async () => {
+        setLoading(true);
         try {
             setLoading(true);
             const res = await safeFetch('/admin/stats');
@@ -81,9 +116,22 @@ export default function AdminDashboard() {
             }
         } catch (err) {
             console.warn('[fetchStats] failed:', err.message);
-            setError('Failed to connect to server. Please check your connection and try again.');
         } finally {
             setLoading(false);
+        }
+    };
+
+    const fetchAdminProfile = async () => {
+        try {
+            const res = await safeFetch('/admin/profile');
+            if (res.ok) {
+                const d = await res.json();
+                if (d.success) {
+                    setAdminProfile(d.profile);
+                }
+            }
+        } catch (err) {
+            console.warn('[fetchAdminProfile] failed:', err.message);
         }
     };
 
@@ -93,9 +141,10 @@ export default function AdminDashboard() {
         setError('');
         try {
             if (tab === 'sellers') {
+                const timestamp = Date.now(); // Cache buster
                 const [sellersRes, allSellersRes] = await Promise.allSettled([
-                    safeFetch('/admin/sellers'),
-                    safeFetch('/admin/all-sellers'),
+                    safeFetch(`/admin/sellers?_t=${timestamp}`),
+                    safeFetch(`/admin/all-sellers?_t=${timestamp}`),
                 ]);
                 if (sellersRes.status === 'fulfilled' && sellersRes.value.ok) {
                     const d = await sellersRes.value.json();
@@ -105,9 +154,13 @@ export default function AdminDashboard() {
                     const d = await allSellersRes.value.json();
                     if (d.success) {
                         setAllSellers(d.sellers);
+                        console.log('[fetchTabData] Fetched', d.sellers.length, 'sellers');
                         if (selectedInvoiceSeller) {
                             const updated = d.sellers.find(s => s.uid === selectedInvoiceSeller.uid);
-                            if (updated) setSelectedInvoiceSeller(updated);
+                            if (updated) {
+                                setSelectedInvoiceSeller(updated);
+                                console.log('[fetchTabData] Updated selected invoice seller:', updated.shopName, 'Products:', updated.financials?.totalProducts);
+                            }
                         }
                     }
                 }
@@ -134,17 +187,40 @@ export default function AdminDashboard() {
                     }
                 }
             } else if (tab === 'payouts' || tab === 'payout' || tab === 'invoice' || tab === 'invoices') {
-                const res = await safeFetch('/admin/seller-analytics');
+                const timestamp = Date.now(); // Cache buster
+                const res = await safeFetch(`/admin/seller-analytics?_t=${timestamp}`);
                 if (res.ok) {
                     const d = await res.json();
                     if (d.success && d.analytics) {
                         setAnalytics(d.analytics);
+                        console.log('[fetchTabData:payout] Fetched', d.analytics.length, 'analytics');
                         if (selectedAnalyticsSeller) {
                             const updated = d.analytics.find(s => s.uid === selectedAnalyticsSeller.uid);
-                            if (updated) setSelectedAnalyticsSeller(updated);
+                            if (updated) {
+                                setSelectedAnalyticsSeller(updated);
+                                console.log('[fetchTabData:payout] Updated selected analytics seller:', updated.shopName, 'Products:', updated.metrics?.totalProducts);
+                            }
                         }
                     }
                 }
+                // Also fetch all sellers for invoice tab
+                const allSellersRes = await safeFetch(`/admin/all-sellers?_t=${timestamp}`);
+                if (allSellersRes.ok) {
+                    const d = await allSellersRes.json();
+                    if (d.success) {
+                        setAllSellers(d.sellers);
+                        console.log('[fetchTabData:invoice] Fetched', d.sellers.length, 'sellers');
+                        if (selectedInvoiceSeller) {
+                            const updated = d.sellers.find(s => s.uid === selectedInvoiceSeller.uid);
+                            if (updated) {
+                                setSelectedInvoiceSeller(updated);
+                                console.log('[fetchTabData:invoice] Updated selected invoice seller:', updated.shopName, 'Products:', updated.financials?.totalProducts);
+                            }
+                        }
+                    }
+                }
+            } else if (tab === 'profile') {
+                await fetchAdminProfile();
             }
             setLoadedTabs(prev => new Set([...prev, tab]));
         } catch (err) {
@@ -156,6 +232,9 @@ export default function AdminDashboard() {
     };
 
     const fetchAllData = async () => {
+        // Clear cache to force fresh data
+        const cacheKey = 'allSellers';
+        
         await Promise.all([
             fetchStats(),
             activeTab !== 'home' ? fetchTabData(activeTab, true) : Promise.resolve()
@@ -195,12 +274,13 @@ export default function AdminDashboard() {
 
     const tabs = [
         { key: 'home', label: 'Home', icon: <Home size={20} /> },
-        { key: 'sellers', label: 'Seller Mgmt', icon: <Users size={20} /> },
+        { key: 'sellers', label: 'Seller Management', icon: <Users size={20} /> },
         { key: 'products', label: 'Product Review', icon: <Box size={20} /> },
         { key: 'orders', label: 'Global Orders', icon: <Truck size={20} /> },
         { key: 'feedback', label: 'Customer Feedback', icon: <Mail size={20} /> },
         { key: 'payout', label: 'Payout', icon: <DollarSign size={20} /> },
         { key: 'invoice', label: 'Seller Invoice', icon: <FileText size={20} /> },
+        { key: 'profile', label: 'Profile', icon: <UserCircle size={20} /> },
     ];
 
     return (
@@ -270,6 +350,7 @@ export default function AdminDashboard() {
                                     {activeTab === 'feedback' && <ReviewsTab reviews={reviews} fetchAllData={fetchAllData} />}
                                     {activeTab === 'payout' && <PayoutsTab analytics={analytics} setSelectedAnalyticsSeller={setSelectedAnalyticsSeller} fetchAllData={fetchAllData} />}
                                     {activeTab === 'invoice' && <InvoicesTab allSellers={allSellers} setSelectedInvoiceSeller={setSelectedInvoiceSeller} fetchAllData={fetchAllData} />}
+                                    {activeTab === 'profile' && <ProfileTab adminData={adminProfile} fetchAdminProfile={fetchAdminProfile} />}
                                 </div>
                             </div>
                         )}

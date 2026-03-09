@@ -83,7 +83,8 @@ const login = async (req, res) => {
             if (userData.role !== "SELLER") try { await userRef.update({ role: "SELLER" }); } catch (_) { }
 
             if (sellerStatus === "APPROVED") return res.status(200).json({ success: true, uid, role: "SELLER", status: "APPROVED", sellerStatus: "APPROVED", shopName: sellerData.shopName, message: "Seller login successful" });
-            if (sellerStatus === "REJECTED") return res.status(403).json({ success: false, uid, role: "SELLER", status: "REJECTED", message: "Your seller application was rejected." });
+            if (sellerStatus === "REJECTED") return res.status(200).json({ success: true, uid, role: "SELLER", status: "REJECTED", sellerStatus: "REJECTED", message: "Your seller application was rejected. You can reapply with updated information.", canReapply: true });
+            if (sellerData.isBlocked === true) return res.status(200).json({ success: true, uid, role: "SELLER", status: "BLOCKED", sellerStatus: "BLOCKED", message: "Your seller account is blocked. Contact admin for more information.", canReapply: false });
             return res.status(200).json({ success: true, uid, role: "SELLER", status: "PENDING", sellerStatus: "PENDING", shopName: sellerData.shopName, message: "Seller approval pending" });
         }
 
@@ -227,21 +228,51 @@ const applySeller = async (req, res) => {
             const existingSellerData = sellerSnap.data();
             // Only block if they are an APPROVED or PENDING seller
             if (existingSellerData.sellerStatus === "APPROVED" || existingSellerData.sellerStatus === "PENDING") {
-                console.log(`ERROR: User is already a SELLER with status: ${existingSellerData.sellerStatus}`);
+                console.log(`[ApplySeller] ERROR: User is already a SELLER with status: ${existingSellerData.sellerStatus}`);
                 return res.status(400).json({ success: false, message: `Already a seller (status: ${existingSellerData.sellerStatus})` });
+            }
+            
+            // If REJECTED or BLOCKED, allow reapplication by updating the existing document
+            if (existingSellerData.sellerStatus === "REJECTED" || existingSellerData.isBlocked === true) {
+                console.log(`[ApplySeller] Seller was ${existingSellerData.sellerStatus || 'BLOCKED'}. Allowing reapplication.`);
+                await sellerRef.update({
+                    ...sellerDetails,
+                    sellerStatus: "PENDING",
+                    isBlocked: false,
+                    reappliedAt: admin.firestore.FieldValue.serverTimestamp(),
+                    previousStatus: existingSellerData.sellerStatus,
+                    rejectedAt: admin.firestore.FieldValue.delete(),
+                    rejectionReason: admin.firestore.FieldValue.delete(),
+                    blockedAt: admin.firestore.FieldValue.delete(),
+                    blockReason: admin.firestore.FieldValue.delete()
+                });
+                
+                // Ensure user is active and has SELLER role
+                await userRef.update({ 
+                    role: "SELLER", 
+                    isActive: true,
+                    updatedAt: admin.firestore.FieldValue.serverTimestamp() 
+                });
+                
+                return res.status(200).json({ 
+                    success: true, 
+                    uid, 
+                    message: "Reapplication submitted successfully. Pending admin approval.", 
+                    status: "PENDING" 
+                });
             }
         }
 
         // If role says SELLER but no seller doc exists, reset the role so they can re-apply
         if (userData.role === "SELLER" && !sellerSnap.exists) {
-            console.log(`Seller doc missing despite SELLER role. Resetting role to CONSUMER to allow re-application.`);
+            console.log(`[ApplySeller] Seller doc missing despite SELLER role. Resetting role to CONSUMER to allow re-application.`);
             await userRef.update({ role: "CONSUMER" });
         }
 
         // Scrub undefined values to prevent Firestore errors
         const finalData = JSON.parse(JSON.stringify(sellerDetails));
 
-        console.log(`Storing seller data in DB...`);
+        console.log(`[ApplySeller] Storing new seller data in DB...`);
         await sellerRef.set({
             uid,
             ...finalData,
@@ -437,12 +468,25 @@ const testLogin = async (req, res) => {
                 });
             }
             if (sellerStatus === "REJECTED") {
-                return res.status(403).json({
-                    success: false,
+                return res.status(200).json({
+                    success: true,
                     uid,
                     role: "SELLER",
                     status: "REJECTED",
-                    message: "Your seller application was rejected."
+                    sellerStatus: "REJECTED",
+                    message: "Your seller application was rejected. You can reapply with updated information.",
+                    canReapply: true
+                });
+            }
+            if (sellerData.isBlocked === true) {
+                return res.status(200).json({
+                    success: true,
+                    uid,
+                    role: "SELLER",
+                    status: "BLOCKED",
+                    sellerStatus: "BLOCKED",
+                    message: "Your seller account is blocked. Contact admin for more information.",
+                    canReapply: false
                 });
             }
             return res.status(200).json({

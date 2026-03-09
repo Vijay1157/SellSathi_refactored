@@ -10,6 +10,12 @@ export default function InvoicesTab({ allSellers, setSelectedInvoiceSeller, fetc
 
     const approvedSellers = allSellers.filter(s => s.status === 'APPROVED');
 
+    // Calculate weekly sales from financials data
+    const calculateWeeklySales = (seller) => {
+        if (!seller.financials || !seller.financials.weeklySales) return '0';
+        return seller.financials.weeklySales.toLocaleString();
+    };
+
     const handleDownloadPDF = async (url, filename) => {
         setIsDownloadingPDF(true);
         try {
@@ -98,8 +104,8 @@ export default function InvoicesTab({ allSellers, setSelectedInvoiceSeller, fetc
                                     </td>
                                     <td style={{ padding: '1rem 1.5rem', textAlign: 'center' }}><span style={{ padding: '4px 10px', background: 'var(--glass)', border: '1px solid var(--border)', borderRadius: '6px', fontSize: '0.8rem', fontWeight: 600 }}>{s.category}</span></td>
                                     <td style={{ padding: '1rem 1.5rem', textAlign: 'center' }}><span style={{ fontSize: '0.9rem' }}>{s.joined || formatDate(s.createdAt)}</span></td>
-                                    <td style={{ padding: '1rem 1.5rem', textAlign: 'center' }}><span style={{ fontWeight: 600 }}>{s.productCount || 0}</span></td>
-                                    <td style={{ padding: '1rem 1.5rem', textAlign: 'center' }}><span style={{ fontWeight: 700, color: 'var(--success)' }}>₹{(s.weeklySales || 0).toLocaleString()}</span></td>
+                                    <td style={{ padding: '1rem 1.5rem', textAlign: 'center' }}><span style={{ fontWeight: 600 }}>{s.financials?.totalProducts || 0}</span></td>
+                                    <td style={{ padding: '1rem 1.5rem', textAlign: 'center' }}><span style={{ fontWeight: 700, color: 'var(--success)' }}>₹{calculateWeeklySales(s)}</span></td>
                                     <td style={{ padding: '1rem 1.5rem', textAlign: 'center' }}>
                                         <div className="flex gap-2 justify-center">
                                             <button className="btn btn-secondary" onClick={() => setSelectedInvoiceSeller(s)} style={{ padding: '0.5rem 1rem', fontSize: '0.85rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '4px' }}><User size={14} /> View Details</button>
