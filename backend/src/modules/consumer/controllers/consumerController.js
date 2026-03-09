@@ -117,7 +117,40 @@ const getWishlist = async (req, res) => {
         const { uid } = req.params;
         const snapshot = await db.collection("users").doc(uid).collection("wishlist").get();
         const items = [];
-        snapshot.forEach(doc => items.push({ id: doc.id, ...doc.data() }));
+        
+        // Fetch fresh product data for each wishlist item
+        for (const doc of snapshot.docs) {
+            const wishlistItem = doc.data();
+            
+            try {
+                // Get latest product data from products collection
+                const productDoc = await db.collection("products").doc(doc.id).get();
+                
+                if (productDoc.exists) {
+                    const productData = productDoc.data();
+                    // Merge wishlist item with fresh product data (prioritize fresh data)
+                    items.push({
+                        id: doc.id,
+                        ...wishlistItem,
+                        // Update with fresh data - always use database rating, not wishlist cache
+                        rating: productData.rating !== undefined ? productData.rating : 0,
+                        reviewCount: productData.reviewCount || 0,
+                        price: productData.price || wishlistItem.price,
+                        oldPrice: productData.oldPrice || wishlistItem.oldPrice,
+                        stock: productData.stock,
+                        status: productData.status
+                    });
+                } else {
+                    // Product no longer exists, keep wishlist item as is
+                    items.push({ id: doc.id, ...wishlistItem });
+                }
+            } catch (err) {
+                console.error(`Error fetching product ${doc.id}:`, err);
+                // If error, use wishlist data
+                items.push({ id: doc.id, ...wishlistItem });
+            }
+        }
+        
         return res.status(200).json({ success: true, items });
     } catch (error) {
         console.error("Error fetching wishlist:", error);
