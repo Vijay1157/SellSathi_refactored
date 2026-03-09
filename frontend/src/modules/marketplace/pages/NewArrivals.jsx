@@ -34,10 +34,15 @@ export default function NewArrivals() {
                 // In a real app, we'd order by createdAt desc
                 const q = query(collection(db, "products"), limit(12));
                 const snap = await getDocs(q);
-                const data = snap.docs.map(doc => ({
-                    id: doc.id,
-                    ...doc.data()
-                }));
+                const data = snap.docs.map(doc => {
+                    const productData = doc.data();
+                    return {
+                        id: doc.id,
+                        ...productData,
+                        rating: productData.rating !== undefined ? productData.rating : 0,
+                        reviews: productData.reviewCount || 0
+                    };
+                });
                 setProducts(data);
                 setLoading(false);
                 fetchReviewsForProducts(data);

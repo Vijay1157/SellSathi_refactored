@@ -34,6 +34,8 @@ const placeOrder = async (req, res) => {
             if (orderData.email) {
                 emailService.sendOrderConfirmation(orderData.email, fullOrder, invoicePath).catch(err => console.error(err));
             }
+            // Notify sellers about the new order
+            emailService.notifySellers(fullOrder).catch(err => console.error('[PlaceOrder] Seller notification error:', err));
         } catch (e) {
             console.error("Invoice skip:", e.message);
         }
@@ -109,7 +111,12 @@ const getOrderById = async (req, res) => {
 const cancelOrder = async (req, res) => {
     try {
         const { orderId } = req.params;
+        const { cancellationReason } = req.body;
         const uid = req.user.uid;
+
+        if (!cancellationReason || !cancellationReason.trim()) {
+            return res.status(400).json({ success: false, message: "Cancellation reason is required" });
+        }
 
         const orderRef = db.collection("orders").doc(orderId);
         const orderSnap = await orderRef.get();
@@ -140,11 +147,43 @@ const cancelOrder = async (req, res) => {
             }
         }
 
-        // Update status
-        await orderRef.update({
+        // Determine refund information
+        let refundInfo = null;
+        if (orderData.paymentMethod === 'razorpay' || orderData.paymentMethod === 'online') {
+            refundInfo = {
+                message: 'Your refund will be processed shortly.',
+                refundAmount: orderData.total || 0,
+                refundMethod: 'Original Payment Method',
+                processingTime: '5-7 business days'
+            };
+        } else if (orderData.paymentMethod === 'cod') {
+            refundInfo = {
+                message: 'No refund applicable for Cash on Delivery orders.',
+                refundAmount: 0,
+                refundMethod: 'Not Applicable',
+                processingTime: 'N/A'
+            };
+        }
+
+        // Update status with cancellation reason and refund details
+        const updateData = {
             status: "Cancelled",
-            cancelledAt: admin.firestore.FieldValue.serverTimestamp()
-        });
+            cancellationReason: cancellationReason.trim(),
+            cancelledAt: admin.firestore.FieldValue.serverTimestamp(),
+            cancelledBy: uid
+        };
+
+        if (refundInfo && refundInfo.refundAmount > 0) {
+            updateData.refundStatus = 'Pending';
+            updateData.refundAmount = refundInfo.refundAmount;
+            updateData.refundMethod = refundInfo.refundMethod;
+            updateData.refundProcessingTime = refundInfo.processingTime;
+        } else {
+            updateData.refundStatus = 'Not Applicable';
+            updateData.refundAmount = 0;
+        }
+
+        await orderRef.update(updateData);
 
         // Replenish stock
         if (orderData.items) {
@@ -168,7 +207,11 @@ const cancelOrder = async (req, res) => {
             }).catch(e => console.error("Cancellation email error:", e));
         }
 
-        return res.status(200).json({ success: true, message: "Order cancelled successfully" });
+        return res.status(200).json({ 
+            success: true, 
+            message: "Order cancelled successfully",
+            refundInfo
+        });
     } catch (error) {
         console.error("CANCEL ORDER ERROR:", error);
         return res.status(500).json({ success: false, message: "Failed to cancel order" });
