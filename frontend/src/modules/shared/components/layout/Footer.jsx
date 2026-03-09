@@ -2,12 +2,13 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useState } from 'react';
 import AdminLoginModal from '@/modules/auth/components/AdminLoginModal';
 import { ShieldCheck } from 'lucide-react';
+import { authFetch } from '@/modules/shared/utils/api';
 
 export default function Footer() {
     const navigate = useNavigate();
     const [isAdminModalOpen, setIsAdminModalOpen] = useState(false);
 
-    const handleBecomeSellerClick = () => {
+    const handleBecomeSellerClick = async () => {
         const rawUser = localStorage.getItem('user');
         if (!rawUser) {
             alert('Please login as a customer first before becoming a seller.');
@@ -22,10 +23,25 @@ export default function Footer() {
             return;
         }
 
-        // For SELLER role — navigate to registration page which will:
-        //   • Show PENDING screen if application is under review
-        //   • Redirect to /seller/dashboard if already APPROVED
-        //   • Show registration form if somehow NONE
+        // Check if user has already applied as a seller
+        try {
+            const response = await authFetch('/auth/check-seller-status');
+            const data = await response.json();
+            if (data.success && data.hasApplied) {
+                if (data.sellerStatus === 'APPROVED') {
+                    alert('You are already an approved seller! Redirecting to your dashboard.');
+                    window.open('/seller/dashboard', '_blank');
+                    return;
+                } else if (data.sellerStatus === 'PENDING') {
+                    alert('You have already applied to become a seller. Your application is currently under review. Please wait for admin approval.');
+                    return;
+                }
+                // REJECTED status — allow re-application
+            }
+        } catch (err) {
+            console.error('Error checking seller status:', err);
+        }
+
         window.open('/seller', '_blank');
     };
 

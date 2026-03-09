@@ -1,8 +1,11 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { CheckCircle2 } from 'lucide-react';
 import { INDIAN_STATES, CITY_DATA } from './onboardingConfig';
 
 export default function BusinessInfoStep({ sellerData, updateSellerData, nextStep, prevStep }) {
+  const [customShopCategory, setCustomShopCategory] = useState(
+    sellerData.shopCategory?.startsWith('other:') ? sellerData.shopCategory.slice(6) : ''
+  );
   const handleGSTSelection = (hasGST) => updateSellerData('hasGST', hasGST);
 
   const availableCities = CITY_DATA[sellerData.pickupState] || [];
@@ -52,8 +55,17 @@ export default function BusinessInfoStep({ sellerData, updateSellerData, nextSte
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">Shop Category *</label>
             <select
-              value={sellerData.shopCategory}
-              onChange={(e) => updateSellerData('shopCategory', e.target.value)}
+              value={sellerData.shopCategory?.startsWith('other:') ? 'other' : sellerData.shopCategory}
+              onChange={(e) => {
+                const val = e.target.value;
+                if (val === 'other') {
+                  setCustomShopCategory('');
+                  updateSellerData('shopCategory', 'other:');
+                } else {
+                  setCustomShopCategory('');
+                  updateSellerData('shopCategory', val);
+                }
+              }}
               className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#7B4DDB] focus:border-[#7B4DDB]"
             >
               <option value="">Select Category</option>
@@ -65,7 +77,20 @@ export default function BusinessInfoStep({ sellerData, updateSellerData, nextSte
               <option value="books">Books & Media</option>
               <option value="sports">Sports & Fitness</option>
               <option value="toys">Toys & Games</option>
+              <option value="other">Other</option>
             </select>
+            {(sellerData.shopCategory?.startsWith('other:') || sellerData.shopCategory === 'other') && (
+              <input
+                type="text"
+                value={customShopCategory}
+                onChange={(e) => {
+                  setCustomShopCategory(e.target.value);
+                  updateSellerData('shopCategory', `other:${e.target.value}`);
+                }}
+                className="w-full mt-2 px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#7B4DDB] focus:border-[#7B4DDB]"
+                placeholder="Please specify your shop category"
+              />
+            )}
           </div>
         </div>
 

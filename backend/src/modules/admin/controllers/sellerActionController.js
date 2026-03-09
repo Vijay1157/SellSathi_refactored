@@ -4,7 +4,7 @@ const cache = require('../../../utils/cache');
 
 /**
  * Approve a pending seller.
- * Updates sellers collection, syncs role to users collection.
+ * Updates sellers collection, syncs role to users collection, and sends approval email.
  */
 const approveSeller = async (req, res) => {
     try {
@@ -14,6 +14,24 @@ const approveSeller = async (req, res) => {
             approvedAt: admin.firestore.FieldValue.serverTimestamp()
         });
         await db.collection('users').doc(uid).update({ role: 'SELLER' });
+        
+        // Send approval notification email
+        const [sellerDoc, userDoc] = await Promise.all([
+            db.collection('sellers').doc(uid).get(),
+            db.collection('users').doc(uid).get()
+        ]);
+
+        if (sellerDoc.exists && userDoc.exists) {
+            const sellerData = sellerDoc.data();
+            const userData = userDoc.data();
+            const emailService = require('../../../shared/services/emailService');
+            await emailService.sendSellerApprovalEmail(
+                userData.email || userData.phone,
+                userData.fullName || 'Seller',
+                sellerData.shopName
+            );
+        }
+        
         cache.invalidate('adminStats', 'allSellers');
         return res.status(200).json({ success: true, message: 'Seller approved successfully' });
     } catch (error) {
@@ -23,15 +41,37 @@ const approveSeller = async (req, res) => {
 };
 
 /**
- * Reject a pending seller.
+ * Reject a pending seller and send rejection email.
  */
 const rejectSeller = async (req, res) => {
     try {
         const { uid } = req.params;
+        const { reason } = req.body;
+        
         await db.collection('sellers').doc(uid).update({
             sellerStatus: 'REJECTED',
-            rejectedAt: admin.firestore.FieldValue.serverTimestamp()
+            rejectedAt: admin.firestore.FieldValue.serverTimestamp(),
+            rejectionReason: reason || 'Application did not meet our requirements'
         });
+        
+        // Send rejection notification email
+        const [sellerDoc, userDoc] = await Promise.all([
+            db.collection('sellers').doc(uid).get(),
+            db.collection('users').doc(uid).get()
+        ]);
+
+        if (sellerDoc.exists && userDoc.exists) {
+            const sellerData = sellerDoc.data();
+            const userData = userDoc.data();
+            const emailService = require('../../../shared/services/emailService');
+            await emailService.sendSellerRejectionEmail(
+                userData.email || userData.phone,
+                userData.fullName || 'Seller',
+                sellerData.shopName,
+                reason || 'Application did not meet our requirements'
+            );
+        }
+        
         cache.invalidate('adminStats', 'allSellers');
         return res.status(200).json({ success: true, message: 'Seller rejected successfully' });
     } catch (error) {

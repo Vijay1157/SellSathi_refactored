@@ -75,17 +75,61 @@ export default function ReviewsTab({ reviews, fetchAllData }) {
                             filteredReviews.map(r => (
                                 <tr key={r.id} style={{ borderBottom: '1px solid var(--border)', transition: 'background 0.2s' }} onMouseOver={(e) => e.currentTarget.style.background = 'var(--surface)'} onMouseOut={(e) => e.currentTarget.style.background = 'transparent'}>
                                     <td style={{ padding: '1.25rem 1.5rem' }}>
-                                        <div className="flex flex-col gap-1">
-                                            <span style={{ fontWeight: 700, fontSize: '1rem', color: 'var(--text)' }}>{r.productName}</span>
-                                            <div className="flex gap-3" style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-                                                <span>Category: <strong>{r.productCategory}</strong></span>
-                                                <span>Brand: <strong>{r.productBrand}</strong></span>
+                                        <div className="flex items-start gap-3">
+                                            {/* Product Image */}
+                                            <div style={{ 
+                                                width: '80px', 
+                                                height: '80px', 
+                                                borderRadius: '8px', 
+                                                overflow: 'hidden', 
+                                                border: '1px solid var(--border)',
+                                                flexShrink: 0,
+                                                background: 'var(--surface)'
+                                            }}>
+                                                {r.productImage ? (
+                                                    <img 
+                                                        src={r.productImage} 
+                                                        alt={r.productName}
+                                                        style={{ 
+                                                            width: '100%', 
+                                                            height: '100%', 
+                                                            objectFit: 'cover' 
+                                                        }}
+                                                        onError={(e) => {
+                                                            e.target.style.display = 'none';
+                                                            e.target.parentElement.innerHTML = '<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;background:var(--surface);color:var(--text-muted);font-size:0.7rem;text-align:center;padding:4px;">No Image</div>';
+                                                        }}
+                                                    />
+                                                ) : (
+                                                    <div style={{ 
+                                                        width: '100%', 
+                                                        height: '100%', 
+                                                        display: 'flex', 
+                                                        alignItems: 'center', 
+                                                        justifyContent: 'center',
+                                                        background: 'var(--surface)',
+                                                        color: 'var(--text-muted)',
+                                                        fontSize: '0.7rem',
+                                                        textAlign: 'center',
+                                                        padding: '4px'
+                                                    }}>
+                                                        No Image
+                                                    </div>
+                                                )}
                                             </div>
-                                            <div className="flex items-center gap-2" style={{ marginTop: '4px' }}>
-                                                <div style={{ display: 'flex', gap: '1px' }}>
-                                                    {[...Array(5)].map((_, i) => (<span key={i} style={{ color: i < Math.round(r.productAvgRating) ? '#fbbf24' : '#d1d5db', fontSize: '0.9rem' }}>★</span>))}
+                                            {/* Product Details */}
+                                            <div className="flex flex-col gap-1" style={{ flex: 1 }}>
+                                                <span style={{ fontWeight: 700, fontSize: '1rem', color: 'var(--text)' }}>{r.productName}</span>
+                                                <div className="flex gap-3" style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                                                    <span>Category: <strong>{r.productCategory}</strong></span>
+                                                    <span>Brand: <strong>{r.productBrand}</strong></span>
                                                 </div>
-                                                <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-muted)' }}>{r.productAvgRating.toFixed(1)} ({r.productReviewCount} reviews)</span>
+                                                <div className="flex items-center gap-2" style={{ marginTop: '4px' }}>
+                                                    <div style={{ display: 'flex', gap: '1px' }}>
+                                                        {[...Array(5)].map((_, i) => (<span key={i} style={{ color: i < Math.round(r.productAvgRating) ? '#fbbf24' : '#d1d5db', fontSize: '0.9rem' }}>★</span>))}
+                                                    </div>
+                                                    <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-muted)' }}>{r.productAvgRating.toFixed(1)} ({r.productReviewCount} reviews)</span>
+                                                </div>
                                             </div>
                                         </div>
                                     </td>

@@ -132,8 +132,8 @@ const getWishlist = async (req, res) => {
                     items.push({
                         id: doc.id,
                         ...wishlistItem,
-                        // Update with fresh data
-                        rating: productData.rating || wishlistItem.rating || 0,
+                        // Update with fresh data - always use database rating, not wishlist cache
+                        rating: productData.rating !== undefined ? productData.rating : 0,
                         reviewCount: productData.reviewCount || 0,
                         price: productData.price || wishlistItem.price,
                         oldPrice: productData.oldPrice || wishlistItem.oldPrice,
