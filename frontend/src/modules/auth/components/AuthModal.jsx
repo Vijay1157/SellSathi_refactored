@@ -19,7 +19,15 @@ const TEST_CREDENTIALS = {
 /** Redirects user based on role/status after a successful auth response */
 function redirectByRole(data, navigate) {
     if (data.role === 'ADMIN') navigate('/admin');
-    else if (data.role === 'SELLER' && (data.status === 'APPROVED' || data.sellerStatus === 'APPROVED')) navigate('/seller/dashboard');
+    else if (data.role === 'SELLER' && (data.status === 'APPROVED' || data.sellerStatus === 'APPROVED')) {
+        const newWindow = window.open('/seller/dashboard', '_blank');
+        // If the browser blocks the popup (since this happens after an async API call)
+        if (!newWindow || newWindow.closed || typeof newWindow.closed === 'undefined') {
+            navigate('/seller/dashboard'); // Fallback: open in current tab if blocked
+        } else {
+            navigate('/'); // If successful, redirect original tab to home
+        }
+    }
     else if (data.role === 'SELLER' && (data.status === 'PENDING' || data.sellerStatus === 'PENDING')) {
         alert(`⏳ Your seller application for "${data.shopName || 'your shop'}" is pending admin approval.`);
         navigate('/');
