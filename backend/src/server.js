@@ -69,5 +69,5 @@ app.use((err, req, res, next) => {
 app.listen(PORT, () => {
     console.log(`✅ SellSathi Backend (Modular) running on port ${PORT}`);
     console.log(`   Mode: ${process.env.NODE_ENV || 'development'}`);
-    console.log(`   Fix Version: Aadhaar-Age-v4 (Robust Age Calculation)`);
+    console.log(`   F`);
 });

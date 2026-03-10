@@ -27,6 +27,7 @@ const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
 // Models prioritized by verified stability for this specific API key
 const GEMINI_MODELS = [
+    'gemini-flash-latest',
     'gemini-1.5-flash',
     'gemini-1.5-flash-latest',
     'gemini-2.0-flash-exp',
@@ -46,16 +47,17 @@ const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 async function extractAadhaarData(imageBuffer, mimeType, retries = 2) {
     logDebug(`--- START NEW EXTRACTION (MIME: ${mimeType}) ---`);
 
-    const prompt = `You are a professional Indian Identity Document OCR system. Analyze this Aadhaar Card image and extract the following fields EXACTLY as named:
-    - fullName: The person's full name in English.
-    - aadhaarNumber: The 12-digit number (format: XXXX XXXX XXXX). Do not include spaces or dashes.
-    - age: Calculate the current age (years only) from Date of Birth (DD/MM/YYYY) or Year of Birth (YYYY). E.g., if year is 1990, return "36".
-    - dob: Date of Birth as DD/MM/YYYY.
-    - gender: MALE or FEMALE.
-    - address: Full address including Pincode.
-    - phoneNumber: 10-digit mobile number if found.
-    
-    IMPORTANT: Return valid JSON. If numeric fields like age or aadhaarNumber have labels, return ONLY the digits.`;
+    const prompt = `Analyze this Aadhaar Card image and return ONLY a valid JSON object with these fields. NO MARKDOWN. NO CODE BLOCKS.
+    {
+      "fullName": "Name in English",
+      "aadhaarNumber": "12-digit number (no spaces)",
+      "phoneNumber": "10-digit mobile number",
+      "age": "Current age (numbers only)",
+      "dob": "DD/MM/YYYY",
+      "gender": "MALE or FEMALE",
+      "address": "Full address with PIN"
+    }
+    If a field is missing, use empty string "".`;
 
     const ocrSchema = {
         type: SchemaType.OBJECT,
@@ -80,9 +82,11 @@ async function extractAadhaarData(imageBuffer, mimeType, retries = 2) {
 
                 const model = genAI.getGenerativeModel({ model: modelName.trim(), safetySettings });
                 const generationConfig = {
-                    temperature: 0,
-                    responseMimeType: "application/json",
-                    responseSchema: ocrSchema
+                    temperature: 0.1,
+                    topP: 0.95,
+                    topK: 40,
+                    maxOutputTokens: 2048,
+                    responseMimeType: "text/plain",
                 };
 
                 const imgPart = { inlineData: { data: imageBuffer.toString("base64"), mimeType } };
@@ -194,7 +198,10 @@ async function extractAadhaarData(imageBuffer, mimeType, retries = 2) {
                 lastError = err;
                 logDebug(`ERROR with ${modelName}: ${err.message}`);
 
-                if (err.status === 404) break;
+                if (err.status === 404) {
+                    logDebug(`Model ${modelName} not found, trying next...`);
+                    continue;
+                }
                 if (err.status === 429) { await delay(2000); continue; }
                 await delay(1000);
             }
