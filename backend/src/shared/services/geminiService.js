@@ -49,13 +49,13 @@ async function extractAadhaarData(imageBuffer, mimeType, retries = 2) {
     const prompt = `You are a professional Indian Identity Document OCR system. Analyze this Aadhaar Card image and extract the following fields EXACTLY as named:
     - fullName: The person's full name in English.
     - aadhaarNumber: The 12-digit number (format: XXXX XXXX XXXX). Do not include spaces or dashes.
-    - age: Calculate current age based on Date of Birth (DD/MM/YYYY) or Year of Birth (YYYY) found on the card.
+    - age: Calculate the current age (years only) from Date of Birth (DD/MM/YYYY) or Year of Birth (YYYY). E.g., if year is 1990, return "36".
     - dob: Date of Birth as DD/MM/YYYY.
     - gender: MALE or FEMALE.
     - address: Full address including Pincode.
     - phoneNumber: 10-digit mobile number if found.
     
-    IMPORTANT: Return valid JSON with these EXACT keys. If a value is missing, return an empty string.`;
+    IMPORTANT: Return valid JSON. If numeric fields like age or aadhaarNumber have labels, return ONLY the digits.`;
 
     const ocrSchema = {
         type: SchemaType.OBJECT,
@@ -106,7 +106,7 @@ async function extractAadhaarData(imageBuffer, mimeType, retries = 2) {
                     dob: (aiData.dob || '').trim(),
                     gender: aiData.gender || '',
                     address: aiData.address || '',
-                    age: (aiData.age || '').toString()
+                    age: (aiData.age || '').toString().replace(/\D/g, '') // Strip "Age: " or "years"
                 };
 
                 // Fallback for Aadhaar number if pattern found in raw text but not in JSON
@@ -154,11 +154,19 @@ async function extractAadhaarData(imageBuffer, mimeType, retries = 2) {
                 }
 
                 // Final fallback for age: scan REAL raw output (not just JSON) for a year
-                if (!data.age) {
+                if (!data.age || data.age === "0") {
+                    // Look for 4-digit years but avoid those that are part of 12-digit blocks
+                    const rawNumbers = rawText.replace(/\s+/g, '');
                     const years = rawText.match(/\b(19|20)\d{2}\b/g) || [];
+
                     for (const yearStr of years) {
                         const year = parseInt(yearStr);
-                        if (year > 1940 && year < 2012) { // 12+ years old
+                        if (year > 1940 && year < 2012) {
+                            // Check if this year is just part of the Aadhaar number
+                            if (data.aadhaarNumber.includes(yearStr)) {
+                                logDebug(`Skipping year ${yearStr} - likely part of Aadhaar number.`);
+                                continue;
+                            }
                             data.age = (new Date().getFullYear() - year).toString();
                             logDebug(`Fallback Age: ${data.age} from matched string: ${yearStr}`);
                             break;
@@ -166,8 +174,11 @@ async function extractAadhaarData(imageBuffer, mimeType, retries = 2) {
                     }
                 }
 
-                // Ensure age is always a string and not "0" or "NaN"
-                if (!data.age || data.age === "NaN") data.age = (aiData.age || "").toString();
+                // Final Clean: Ensure age is only digits and not nonsense
+                if (data.age) data.age = data.age.replace(/\D/g, '');
+                if (!data.age || data.age === "NaN" || data.age === "0") {
+                    data.age = (aiData.age || "").toString().replace(/\D/g, '');
+                }
 
                 logDebug(`FINAL PARSED: ${JSON.stringify(data)}`);
                 return data;
