@@ -48,12 +48,12 @@ async function extractAadhaarData(imageBuffer, mimeType, retries = 2) {
 
     const prompt = `You are a professional Indian Identity Document OCR system. Analyze this Aadhaar Card image and extract the following fields EXACTLY as named:
     - fullName: The person's full name in English.
-    - aadharNumber: The 12-digit number (format: XXXX XXXX XXXX). Do not include spaces or dashes.
+    - aadhaarNumber: The 12-digit number (format: XXXX XXXX XXXX). Do not include spaces or dashes.
     - age: Calculate current age based on Date of Birth (DD/MM/YYYY) or Year of Birth (YYYY) found on the card.
     - dob: Date of Birth as DD/MM/YYYY.
     - gender: MALE or FEMALE.
     - address: Full address including Pincode.
-    - phone: 10-digit mobile number if found.
+    - phoneNumber: 10-digit mobile number if found.
     
     IMPORTANT: Return valid JSON with these EXACT keys. If a value is missing, return an empty string.`;
 
@@ -61,12 +61,12 @@ async function extractAadhaarData(imageBuffer, mimeType, retries = 2) {
         type: SchemaType.OBJECT,
         properties: {
             fullName: { type: SchemaType.STRING, description: "Full name on the card" },
-            aadharNumber: { type: SchemaType.STRING, description: "12 digit number without spaces" },
+            aadhaarNumber: { type: SchemaType.STRING, description: "12 digit number without spaces" },
             age: { type: SchemaType.STRING, description: "Calculated current age" },
             dob: { type: SchemaType.STRING, description: "DD/MM/YYYY" },
             gender: { type: SchemaType.STRING },
             address: { type: SchemaType.STRING },
-            phone: { type: SchemaType.STRING }
+            phoneNumber: { type: SchemaType.STRING }
         },
         required: ["fullName"]
     };
@@ -101,7 +101,7 @@ async function extractAadhaarData(imageBuffer, mimeType, retries = 2) {
                 // --- POST-PROCESSING & MAPPING ---
                 const data = {
                     fullName: aiData.fullName || aiData.name || '',
-                    aadharNumber: (aiData.aadharNumber || aiData.aadhaar_no || '').replace(/\D/g, ''),
+                    aadhaarNumber: (aiData.aadhaarNumber || aiData.aadhaar_no || '').replace(/\D/g, ''),
                     phoneNumber: (aiData.phoneNumber || aiData.phone || '').replace(/\D/g, ''),
                     dob: aiData.dob || '',
                     gender: aiData.gender || '',
@@ -110,9 +110,9 @@ async function extractAadhaarData(imageBuffer, mimeType, retries = 2) {
                 };
 
                 // Fallback for Aadhaar number if pattern found in raw text but not in JSON
-                if (!data.aadharNumber || data.aadharNumber.length < 12) {
+                if (!data.aadhaarNumber || data.aadhaarNumber.length < 12) {
                     const match = rawText.match(/\d{4}[\s-]?\d{4}[\s-]?\d{4}/);
-                    if (match) data.aadharNumber = match[0].replace(/\D/g, '');
+                    if (match) data.aadhaarNumber = match[0].replace(/\D/g, '');
                 }
 
                 // Fallback for Phone
