@@ -23,6 +23,7 @@ import Navbar from '@/modules/shared/components/layout/Navbar';
 import Footer from '@/modules/shared/components/layout/Footer';
 import ProtectedRoute from '@/modules/shared/components/common/ProtectedRoute';
 import ScrollToTop from '@/modules/shared/components/common/ScrollToTop';
+import ErrorBoundary from '@/modules/shared/components/common/ErrorBoundary';
 
 function AppContent() {
   const location = useLocation();
@@ -139,7 +140,9 @@ function AppContent() {
 function App() {
   return (
     <Router>
-      <AppContent />
+      <ErrorBoundary>
+        <AppContent />
+      </ErrorBoundary>
     </Router>
   );
 }
