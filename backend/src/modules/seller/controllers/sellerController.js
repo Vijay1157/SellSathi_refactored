@@ -28,7 +28,10 @@ const getDashboardData = async (req, res) => {
             db.collection("sellers").doc(uid).collection("listedproducts").limit(50).get()
         ]);
 
-        if (!sellerSnap.exists) return res.status(404).json({ success: false, message: "Seller not found" });
+        if (!sellerSnap.exists) {
+            console.warn(`[SellerDashboard] Seller profile MISSING for UID: ${uid}`);
+            return res.status(404).json({ success: false, message: "Seller not found" });
+        }
         const sellerData = sellerSnap.data();
         const userData = userSnap.data();
 
