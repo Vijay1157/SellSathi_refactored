@@ -46,9 +46,9 @@ export const SellerRegister = () => {
         navigate('/seller/onboarding', {
           state: {
             extractedData: {
-              fullName: result.data.name || '',
+              fullName: result.data.fullName || '',
               aadhaarNumber: result.data.aadharNumber || '',
-              phoneNumber: result.data.phone || '',
+              phoneNumber: result.data.phoneNumber || '',
               age: result.data.age || '',
               shopAddress: result.data.address || '', // Optionally pre-fill address if available
               aadhaarImageUrl: result.data.imageUrl || '' // Cloudinary URL from extraction
