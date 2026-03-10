@@ -253,8 +253,8 @@ export default function Navbar() {
 
         // If ALREADY marked as SELLER in localStorage, go directly. Don't wait for API.
         if (user.role === 'SELLER') {
-            console.log("[Navbar] Role is SELLER, navigating to DASHBOARD in new tab...");
-            window.open('/#/seller/dashboard', '_blank');
+            console.log("[Navbar] Role is SELLER, navigating to DASHBOARD...");
+            navigate('/seller/dashboard');
             return;
         }
 
@@ -273,7 +273,7 @@ export default function Navbar() {
                     localStorage.setItem('user', JSON.stringify(localUser));
                     window.dispatchEvent(new CustomEvent('userDataChanged'));
 
-                    window.open('/#/seller/dashboard', '_blank');
+                    navigate('/seller/dashboard');
                     return;
                 } else if (data.sellerStatus === 'PENDING') {
                     alert('You have already applied to become a seller. Your application is currently under review. Please wait for admin approval.');
@@ -284,7 +284,7 @@ export default function Navbar() {
             console.error('[Navbar] Error checking seller status:', err);
         }
 
-        window.open('/#/seller', '_blank');
+        navigate('/seller');
     };
 
     return (
@@ -387,7 +387,7 @@ export default function Navbar() {
                                             <div className="menu-items">
                                                 <button onClick={() => {
                                                     const path = user.role === 'ADMIN' ? '/admin' : (user.role === 'SELLER' ? '/seller/dashboard' : '/dashboard');
-                                                    window.open(path, '_blank');
+                                                    navigate(path);
                                                     setIsProfileOpen(false);
                                                 }}>
                                                     <ShoppingBag size={16} /> My Dashboard
