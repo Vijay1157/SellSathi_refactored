@@ -26,6 +26,7 @@ export default function SellerDashboard() {
     const [activeTab, setActiveTab] = useState('overview');
     const [loading, setLoading] = useState(true);
     const [sellerUid, setSellerUid] = useState(null);
+    const [error, setError] = useState(null);
 
     // Data States
     const [stats, setStats] = useState({ totalSales: 0, totalProducts: 0, newOrders: 0, pendingOrders: 0 });
@@ -49,15 +50,26 @@ export default function SellerDashboard() {
         const loadDashboard = async () => {
             const uid = getUserUid();
             setSellerUid(uid);
-            if (!uid) { setLoading(false); return; }
+            if (!uid) {
+                setLoading(false);
+                setError("Session expired. Please login again.");
+                return;
+            }
 
             try {
                 setLoading(true);
+                setError(null);
                 const response = await authFetch(`/seller/${uid}/dashboard-data`);
+
+                if (response.status === 404) {
+                    setError("Seller profile not found. Have you completed onboarding?");
+                    return;
+                }
+
                 const data = await response.json();
                 if (data.success) {
                     setProfile(data.profile);
-                    
+
                     // Sync with Navbar and LocalStorage
                     if (data.profile.fullName || data.profile.name) {
                         const name = data.profile.fullName || data.profile.name;
@@ -72,9 +84,12 @@ export default function SellerDashboard() {
                     setProducts(data.products);
                     setOrders(data.orders);
                     if (data.quotaExceeded) setQuotaExceeded(true);
+                } else {
+                    setError(data.message || "Failed to load dashboard data");
                 }
             } catch (error) {
                 console.error("Error fetching seller data:", error);
+                setError("Unable to connect to the server. Please check your connection.");
             } finally {
                 setLoading(false);
             }
@@ -146,6 +161,22 @@ export default function SellerDashboard() {
             <div className="flex flex-col justify-center items-center h-screen gap-4" style={{ background: 'var(--background)' }}>
                 <Loader className="animate-spin" size={40} color="var(--primary)" />
                 <p style={{ fontWeight: 600, color: 'var(--text-muted)', letterSpacing: '0.02em' }}>Initializing your dashboard...</p>
+            </div>
+        );
+    }
+
+    if (error) {
+        return (
+            <div className="flex flex-col justify-center items-center h-screen gap-6 p-8 text-center" style={{ background: 'var(--background)' }}>
+                <div style={{ padding: '2rem', background: 'var(--error)15', borderRadius: '50%', color: 'var(--error)' }}><AlertCircle size={64} /></div>
+                <div>
+                    <h2 style={{ fontSize: '2rem', fontWeight: 800, marginBottom: '1rem', color: '#1e293b' }}>Error Loading Dashboard</h2>
+                    <p style={{ fontSize: '1.1rem', color: '#64748b', maxWidth: '600px', lineHeight: 1.6 }}>{error}</p>
+                </div>
+                <div className="flex gap-4">
+                    <button onClick={() => window.location.reload()} className="btn btn-secondary">Retry</button>
+                    <Link to="/" className="btn btn-primary">Return Home</Link>
+                </div>
             </div>
         );
     }

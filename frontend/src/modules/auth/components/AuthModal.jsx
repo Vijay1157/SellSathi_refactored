@@ -60,11 +60,14 @@ export default function AuthModal({ isOpen, onClose, onSuccess, hideRegister }) 
     const [showPassword, setShowPassword] = useState(false);
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
     const [dobFocused, setDobFocused] = useState(false);
+    const [isGoogleRegistration, setIsGoogleRegistration] = useState(false);
+    const [googleIdToken, setGoogleIdToken] = useState(null);
     const navigate = useNavigate();
+
 
     const cleanupRecaptcha = () => {
         if (window.recaptchaVerifier) {
-            try { window.recaptchaVerifier.clear(); } catch (_) {}
+            try { window.recaptchaVerifier.clear(); } catch (_) { }
             window.recaptchaVerifier = null;
         }
         const container = document.getElementById('recaptcha-container');
@@ -82,9 +85,9 @@ export default function AuthModal({ isOpen, onClose, onSuccess, hideRegister }) 
     };
 
     useEffect(() => { return () => cleanupRecaptcha(); }, []);
-    useEffect(() => { 
-        if (!isOpen) handleClose(); 
-        
+    useEffect(() => {
+        if (!isOpen) handleClose();
+
         // Lock body scroll when modal is open
         if (isOpen) {
             document.body.style.overflow = 'hidden';
@@ -108,7 +111,7 @@ export default function AuthModal({ isOpen, onClose, onSuccess, hideRegister }) 
                 if (!document.getElementById('recaptcha-container')) return;
                 window.recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
                     size: 'invisible',
-                    callback: () => {},
+                    callback: () => { },
                     'expired-callback': () => cleanupRecaptcha(),
                 });
             } catch (e) { console.error('Recaptcha error:', e); cleanupRecaptcha(); }
@@ -117,20 +120,53 @@ export default function AuthModal({ isOpen, onClose, onSuccess, hideRegister }) 
 
     const handleSendOTP = async (e) => {
         if (e) e.preventDefault();
+
+        // 1. Basic phone validation
         if (phone.length < 10) { setError('Please enter a valid 10-digit phone number'); return; }
+
+        // 2. Registration fields validation (if on regular phone registration flow)
+        if (isRegistering && !isEmailSignup && !isGoogleRegistration) {
+            if (!formData.fullName.trim() || !formData.dob || !formData.email.trim() || !formData.password.trim()) {
+                setError('Please fill in all registration details');
+                return;
+            }
+            if (formData.password.length < 6) {
+                setError('Password must be at least 6 characters');
+                return;
+            }
+            if (formData.password !== formData.confirmPassword) {
+                setError('Passwords do not match');
+                return;
+            }
+        }
+
         const phoneNumber = `+91${phone}`;
         setError('');
+
+        // 3. Test Numbers Check
         if (TEST_CREDENTIALS[phoneNumber]) {
-            setIsTestNumber(true); setStep('otp'); setConfirmationResult({ isTestMode: true }); return;
+            setIsTestNumber(true);
+            setStep('otp');
+            setConfirmationResult({ isTestMode: true });
+            return;
         }
-        setIsTestNumber(false); setLoading(true);
+
+        setIsTestNumber(false);
+        setLoading(true);
         try {
             await new Promise(r => { setupRecaptcha(); setTimeout(r, 200); });
             if (!window.recaptchaVerifier) throw new Error('reCAPTCHA initialization failed');
             const confirmation = await signInWithPhoneNumber(auth, phoneNumber, window.recaptchaVerifier);
-            setConfirmationResult(confirmation); setStep('otp');
+            setConfirmationResult(confirmation);
+            setStep('otp');
         } catch (err) {
-            setError(err.code === 'auth/too-many-requests' ? 'Too many attempts. Please try later.' : 'Failed to send OTP. Check your connection.');
+            console.error('OTP Send Error:', err);
+            const msg = err.code === 'auth/too-many-requests'
+                ? 'Too many attempts. Please try later.'
+                : err.code === 'auth/invalid-phone-number'
+                    ? 'The phone number provided is invalid.'
+                    : 'Failed to send OTP. Please check your connection or try again later.';
+            setError(msg);
             cleanupRecaptcha();
         } finally { setLoading(false); }
     };
@@ -175,7 +211,9 @@ export default function AuthModal({ isOpen, onClose, onSuccess, hideRegister }) 
             if (data.success) {
                 if (data.requiresRegistration) {
                     // Google authenticated successfully, but user doesn't exist
-                    setFormData({ ...formData, email: data.email, fullName: data.fullName || '' });
+                    setFormData({ ...formData, email: data.email, fullName: data.fullName || '', isGoogleRegistration: true });
+                    setGoogleIdToken(idToken);
+                    setIsGoogleRegistration(true);
                     setIsEmailSignup(true);
                     setIsRegistering(true);
                     setError('Please complete your profile to finish registration.');
@@ -196,11 +234,11 @@ export default function AuthModal({ isOpen, onClose, onSuccess, hideRegister }) 
     const handleEmailLogin = async (e) => {
         if (e) e.preventDefault();
         setError('');
-        
+
         // Only require email/password for login; registration fields are handled in handleRegisterDirectly
-        if (!formData.email.trim() || !formData.password.trim()) { 
-            setError('Please enter both email and password'); 
-            return; 
+        if (!formData.email.trim() || !formData.password.trim()) {
+            setError('Please enter both email and password');
+            return;
         }
         setLoading(true);
         try {
@@ -232,38 +270,85 @@ export default function AuthModal({ isOpen, onClose, onSuccess, hideRegister }) 
     const handleRegisterDirectly = async (e) => {
         if (e) e.preventDefault();
         setError('');
-        if (!formData.fullName.trim() || !formData.dob || !formData.email.trim() || !formData.password.trim()) { setError('Please fill in all details'); return; }
+
+        // Basic field validation
+        if (!formData.fullName.trim() || !formData.dob || !formData.email.trim()) {
+            setError('Please fill in Name and Date of Birth');
+            return;
+        }
+
+        // Only require password for standard email registration (not Google)
+        if (!isGoogleRegistration) {
+            if (!formData.password.trim()) { setError('Please enter a password'); return; }
+            if (formData.password.length < 6) { setError('Password must be at least 6 characters'); return; }
+            if (formData.password !== formData.confirmPassword) { setError('Passwords do not match'); return; }
+        }
+
         if (new Date(formData.dob) > new Date()) { setError('Date of Birth cannot be in the future'); return; }
         if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) { setError('Please enter a valid email address'); return; }
-        if (formData.password.length < 6) { setError('Password must be at least 6 characters'); return; }
-        if (formData.password !== formData.confirmPassword) { setError('Passwords do not match'); return; }
-        
+
         setLoading(true);
         try {
-            let idToken = null, isTestMode = false;
-            try {
-                const { createUserWithEmailAndPassword, updateProfile } = await import('firebase/auth');
-                const cred = await createUserWithEmailAndPassword(auth, formData.email, formData.password);
-                await updateProfile(cred.user, { displayName: formData.email.split('@')[0] });
-                idToken = await cred.user.getIdToken();
-            } catch (fbErr) { 
-                if (fbErr.code === 'auth/operation-not-allowed') isTestMode = true; 
-                else if (fbErr.code === 'auth/email-already-in-use') {
-                    // Try to sign in instead to get the idToken for backend linking
-                    const cred = await signInWithEmailAndPassword(auth, formData.email, formData.password);
+            let idToken = isGoogleRegistration ? googleIdToken : null;
+            let isTestMode = false;
+
+            if (!isGoogleRegistration) {
+                try {
+                    const { createUserWithEmailAndPassword, updateProfile } = await import('firebase/auth');
+                    const cred = await createUserWithEmailAndPassword(auth, formData.email, formData.password);
+                    await updateProfile(cred.user, { displayName: formData.fullName });
                     idToken = await cred.user.getIdToken();
+                } catch (fbErr) {
+                    if (fbErr.code === 'auth/operation-not-allowed') isTestMode = true;
+                    else if (fbErr.code === 'auth/email-already-in-use') {
+                        const { signInWithEmailAndPassword } = await import('firebase/auth');
+                        const cred = await signInWithEmailAndPassword(auth, formData.email, formData.password);
+                        idToken = await cred.user.getIdToken();
+                    }
+                    else throw fbErr;
                 }
-                else throw fbErr; 
             }
-            const response = await authFetch('/auth/register', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ idToken, isTest: isTestMode, email: formData.email, phone: isEmailSignup ? null : `+91${phone}`, password: formData.password, fullName: formData.fullName, dob: formData.dob }) });
+
+            const response = await authFetch('/auth/register', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    idToken,
+                    isTest: isTestMode,
+                    email: formData.email,
+                    phone: isEmailSignup && !isGoogleRegistration ? null : (phone ? `+91${phone}` : null),
+                    password: formData.password || null,
+                    fullName: formData.fullName,
+                    dob: formData.dob
+                })
+            });
+
             const data = await response.json();
             if (data.success) {
-                persistUser(data, { phone: `+91${phone}`, email: formData.email, isDevMode: isTestMode, fullName: formData.fullName, dob: formData.dob });
+                persistUser(data, {
+                    phone: phone ? `+91${phone}` : null,
+                    email: formData.email,
+                    isDevMode: isTestMode,
+                    fullName: formData.fullName,
+                    dob: formData.dob
+                });
                 navigate('/');
                 if (onSuccess) onSuccess(data);
                 handleClose();
             } else setError(data.message || 'Registration failed');
-        } catch (err) { setError(err.message || 'Registration failed.'); }
+        } catch (err) {
+            console.error('Registration Error:', err);
+            const msg = err.code === 'auth/email-already-in-use'
+                ? 'This email is already registered. If you forgot your password, please use Forgot Password or login with other methods.'
+                : err.code === 'auth/weak-password'
+                    ? 'The password is too weak. Please use at least 6 characters.'
+                    : err.code === 'auth/invalid-email'
+                        ? 'The email address is not valid.'
+                        : err.code === 'auth/operation-not-allowed'
+                            ? 'Email registration is currently unavailable. Please try Phone login.'
+                            : err.message || 'Registration failed. Please try again.';
+            setError(msg);
+        }
         finally { setLoading(false); }
     };
 
