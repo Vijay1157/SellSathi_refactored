@@ -1,4 +1,4 @@
-import { BrowserRouter as Router, Routes, Route, Link, useLocation } from 'react-router-dom';
+import { HashRouter as Router, Routes, Route, Link, useLocation } from 'react-router-dom';
 import MarketplaceHome from '@/modules/marketplace/pages/Home';
 import ProductListing from '@/modules/marketplace/pages/ProductListing';
 import ProductDetail from '@/modules/marketplace/pages/ProductDetail';

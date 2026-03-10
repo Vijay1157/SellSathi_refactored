@@ -254,7 +254,7 @@ export default function Navbar() {
         // If ALREADY marked as SELLER in localStorage, go directly. Don't wait for API.
         if (user.role === 'SELLER') {
             console.log("[Navbar] Role is SELLER, navigating to DASHBOARD in new tab...");
-            window.open('/seller/dashboard', '_blank');
+            window.open('/#/seller/dashboard', '_blank');
             return;
         }
 
@@ -273,7 +273,7 @@ export default function Navbar() {
                     localStorage.setItem('user', JSON.stringify(localUser));
                     window.dispatchEvent(new CustomEvent('userDataChanged'));
 
-                    window.open('/seller/dashboard', '_blank');
+                    window.open('/#/seller/dashboard', '_blank');
                     return;
                 } else if (data.sellerStatus === 'PENDING') {
                     alert('You have already applied to become a seller. Your application is currently under review. Please wait for admin approval.');
@@ -284,7 +284,7 @@ export default function Navbar() {
             console.error('[Navbar] Error checking seller status:', err);
         }
 
-        window.open('/seller', '_blank');
+        window.open('/#/seller', '_blank');
     };
 
     return (

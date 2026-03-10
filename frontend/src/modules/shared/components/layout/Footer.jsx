@@ -30,7 +30,7 @@ export default function Footer() {
             if (data.success && data.hasApplied) {
                 if (data.sellerStatus === 'APPROVED') {
                     alert('You are already an approved seller! Redirecting to your dashboard.');
-                    window.open('/seller/dashboard', '_blank');
+                    window.open('/#/seller/dashboard', '_blank');
                     return;
                 } else if (data.sellerStatus === 'PENDING') {
                     alert('You have already applied to become a seller. Your application is currently under review. Please wait for admin approval.');
@@ -42,7 +42,7 @@ export default function Footer() {
             console.error('Error checking seller status:', err);
         }
 
-        window.open('/seller', '_blank');
+        window.open('/#/seller', '_blank');
     };
 
     return (
@@ -108,7 +108,7 @@ export default function Footer() {
                                                 alert('Please login as a customer first to access the Seller Portal.');
                                                 return;
                                             }
-                                            window.open('/seller', '_blank');
+                                            window.open('/#/seller', '_blank');
                                         }}
                                         className="text-muted"
                                         style={{
