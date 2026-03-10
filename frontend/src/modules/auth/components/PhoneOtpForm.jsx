@@ -102,7 +102,7 @@ export default function PhoneOtpForm({
     return (
         <>
             <form
-                onSubmit={step === 'phone' ? onSendOTP : onVerify}
+                onSubmit={step === 'phone' ? (isRegistering ? onRegisterDirect : onSendOTP) : onVerify}
                 className="auth-form"
             >
                 {step === 'phone' ? (
