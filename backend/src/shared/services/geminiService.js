@@ -27,10 +27,10 @@ const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
 // Models prioritized by verified stability for this specific API key
 const GEMINI_MODELS = [
-    'gemini-flash-latest',
-    'gemini-2.0-flash',
     'gemini-1.5-flash',
-    'gemini-2.5-flash',
+    'gemini-1.5-flash-latest',
+    'gemini-2.0-flash-exp',
+    'gemini-1.5-pro'
 ];
 
 // Safety settings - Crucial for ID docs which contain sensitive strings that trigger filters
@@ -46,24 +46,23 @@ const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 async function extractAadhaarData(imageBuffer, mimeType, retries = 2) {
     logDebug(`--- START NEW EXTRACTION (MIME: ${mimeType}) ---`);
 
-    const prompt = `You are a high-precision OCR engine for Indian Identity Cards. 
-    Analyze the image and find:
-    - name: Full Legal Name
-    - aadhaar_no: 12-digit Aadhaar number (Find the FULL number. If masked with X, find the unmasked number elsewhere on the card).
-    - dob: Date of birth (DD/MM/YYYY)
-    - gender: MALE or FEMALE
-    - address: Full postal address
-    - pincode: 6-digit PIN code
-    - phone: 10-digit mobile number found anywhere (usually at back or near address).
-
-    Return ONLY a JSON object. No Markdown. No code blocks.`;
+    const prompt = `You are a professional Indian Identity Document OCR system. Analyze this Aadhaar Card image:
+    1. EXTRACT "name": The person's full name in English.
+    2. EXTRACT "aadhaar_no": The 12-digit number (format: XXXX XXXX XXXX or similar). Search all parts of the image.
+    3. EXTRACT "dob": Date of Birth. If full date (DD/MM/YYYY) is missing, find "Year of Birth" (YYYY) and return it.
+    4. EXTRACT "gender": MALE or FEMALE.
+    5. EXTRACT "address": Full address including Pincode.
+    6. EXTRACT "phone": Any 10-digit mobile number.
+    
+    IMPORTANT: If the front side is uploaded, name and Aadhaar number are easy. If the back side is uploaded, address and phone are available.
+    Return valid JSON.`;
 
     const ocrSchema = {
         type: SchemaType.OBJECT,
         properties: {
-            name: { type: SchemaType.STRING },
-            aadhaar_no: { type: SchemaType.STRING },
-            dob: { type: SchemaType.STRING },
+            name: { type: SchemaType.STRING, description: "Full name on the card" },
+            aadhaar_no: { type: SchemaType.STRING, description: "12 digit number" },
+            dob: { type: SchemaType.STRING, description: "DD/MM/YYYY or YYYY" },
             gender: { type: SchemaType.STRING },
             address: { type: SchemaType.STRING },
             pincode: { type: SchemaType.STRING },
@@ -94,20 +93,63 @@ async function extractAadhaarData(imageBuffer, mimeType, retries = 2) {
                 });
 
                 const rawText = result.response.text();
-                logDebug(`RAW AI RESPONSE (TRUNCATED): ${rawText.substring(0, 300)}`);
+                logDebug(`RAW AI RESPONSE: ${rawText.substring(0, 500)}`);
 
                 const cleanJson = rawText.replace(/```json/g, '').replace(/```/g, '').trim();
-                const data = JSON.parse(cleanJson);
+                const aiData = JSON.parse(cleanJson);
 
-                // --- ADVANCED PATTERN SEARCH ---
-                // If AI missed standard IDs, pull them manually from the raw text
-                if (!data.aadhaar_no || data.aadhaar_no.replace(/\D/g, '').length < 12) {
+                // --- POST-PROCESSING & MAPPING ---
+                const data = {
+                    name: aiData.name || '',
+                    aadharNumber: (aiData.aadhaar_no || '').replace(/\D/g, ''),
+                    phone: (aiData.phone || '').replace(/\D/g, ''),
+                    phoneNumber: (aiData.phone || '').replace(/\D/g, ''),
+                    dob: aiData.dob || '',
+                    gender: aiData.gender || '',
+                    address: aiData.address || '',
+                    pincode: aiData.pincode || '',
+                    age: ''
+                };
+
+                // Fallback for Aadhaar number if pattern found in raw text but not in JSON
+                if (!data.aadharNumber || data.aadharNumber.length < 12) {
                     const match = rawText.match(/\d{4}[\s-]?\d{4}[\s-]?\d{4}/);
-                    if (match) data.aadhaar_no = match[0].replace(/\D/g, '');
+                    if (match) data.aadharNumber = match[0].replace(/\D/g, '');
                 }
-                if (!data.phone || data.phone.replace(/\D/g, '').length < 10) {
+
+                // Fallback for Phone
+                if (!data.phone || data.phone.length < 10) {
                     const match = rawText.match(/[6-9]\d{9}/) || rawText.match(/[6-9]\d{4}\s?\d{5}/);
                     if (match) data.phone = match[0].replace(/\D/g, '');
+                }
+
+                // --- AGE CALCULATION ---
+                if (data.dob) {
+                    try {
+                        let birthYear = null;
+                        if (data.dob.includes('/')) {
+                            const parts = data.dob.split('/');
+                            birthYear = parseInt(parts[2] || parts[0]); // Handles DD/MM/YYYY or YYYY/MM/DD
+                        } else if (data.dob.length === 4 && /^\d{4}$/.test(data.dob)) {
+                            birthYear = parseInt(data.dob);
+                        } else {
+                            const date = new Date(data.dob);
+                            if (!isNaN(date.getTime())) birthYear = date.getFullYear();
+                        }
+
+                        if (birthYear && birthYear > 1900 && birthYear <= new Date().getFullYear()) {
+                            data.age = (new Date().getFullYear() - birthYear).toString();
+                        }
+                    } catch (e) { logDebug(`Age calc error: ${e.message}`); }
+                }
+
+                // Final fallback for age: look for a year in the text if age is missing
+                if (!data.age) {
+                    const yearMatch = rawText.match(/\b(19|20)\d{2}\b/);
+                    if (yearMatch) {
+                        const year = parseInt(yearMatch[0]);
+                        data.age = (new Date().getFullYear() - year).toString();
+                    }
                 }
 
                 logDebug(`FINAL PARSED: ${JSON.stringify(data)}`);
