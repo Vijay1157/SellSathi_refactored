@@ -12,6 +12,8 @@ import SellerProfileTab from '@/modules/seller/components/dashboard/SellerProfil
 import ProductViewModal from '@/modules/seller/components/dashboard/ProductViewModal';
 import TrackOrderModal from '@/modules/seller/components/dashboard/TrackOrderModal';
 
+console.log("[SellerDashboard] Component Loading...");
+
 // Helper to get current user UID (works for both Firebase and test login)
 const getUserUid = () => {
     if (auth.currentUser) return auth.currentUser.uid;
@@ -49,8 +51,10 @@ export default function SellerDashboard() {
     useEffect(() => {
         const loadDashboard = async () => {
             const uid = getUserUid();
+            console.log(`[SellerDashboard] Loading UID: ${uid}`);
             setSellerUid(uid);
             if (!uid) {
+                console.warn("[SellerDashboard] No UID found in session.");
                 setLoading(false);
                 setError("Session expired. Please login again.");
                 return;
@@ -59,39 +63,34 @@ export default function SellerDashboard() {
             try {
                 setLoading(true);
                 setError(null);
+                console.log(`[SellerDashboard] Calling API: /seller/${uid}/dashboard-data`);
                 const response = await authFetch(`/seller/${uid}/dashboard-data`);
+                console.log(`[SellerDashboard] API Response Status: ${response.status}`);
 
                 if (response.status === 404) {
                     setError("Seller profile not found. Have you completed onboarding?");
+                    setLoading(false);
                     return;
                 }
 
                 const data = await response.json();
+                console.log("[SellerDashboard] API Response Body:", data);
                 if (data.success) {
-                    setProfile(data.profile);
-
-                    // Sync with Navbar and LocalStorage
-                    if (data.profile.fullName || data.profile.name) {
-                        const name = data.profile.fullName || data.profile.name;
-                        localStorage.setItem('userName', name);
-                        const localUser = JSON.parse(localStorage.getItem('user') || '{}');
-                        localUser.fullName = name;
-                        localStorage.setItem('user', JSON.stringify(localUser));
-                        window.dispatchEvent(new CustomEvent('userDataChanged'));
-                    }
-
-                    setStats(data.stats);
-                    setProducts(data.products);
-                    setOrders(data.orders);
+                    setProfile(data.profile || {});
+                    setStats(data.stats || { totalSales: 0, totalProducts: 0, newOrders: 0, pendingOrders: 0 });
+                    setProducts(data.products || []);
+                    setOrders(data.orders || []);
                     if (data.quotaExceeded) setQuotaExceeded(true);
+                    console.log("[SellerDashboard] State Update Complete.");
                 } else {
                     setError(data.message || "Failed to load dashboard data");
                 }
             } catch (error) {
-                console.error("Error fetching seller data:", error);
+                console.error("[SellerDashboard] ERROR:", error);
                 setError("Unable to connect to the server. Please check your connection.");
             } finally {
                 setLoading(false);
+                console.log("[SellerDashboard] Loading State: false");
             }
         };
         loadDashboard();
@@ -156,160 +155,173 @@ export default function SellerDashboard() {
         { label: 'Pending', value: stats?.pendingOrders || 0, icon: <Truck />, color: 'var(--warning)' },
     ];
 
-    if (loading) {
-        return (
-            <div className="flex flex-col justify-center items-center h-screen gap-4" style={{ background: 'var(--background)' }}>
-                <Loader className="animate-spin" size={40} color="var(--primary)" />
-                <p style={{ fontWeight: 600, color: 'var(--text-muted)', letterSpacing: '0.02em' }}>Initializing your dashboard...</p>
-            </div>
-        );
-    }
-
-    if (error) {
-        return (
-            <div className="flex flex-col justify-center items-center h-screen gap-6 p-8 text-center" style={{ background: 'var(--background)' }}>
-                <div style={{ padding: '2rem', background: 'var(--error)15', borderRadius: '50%', color: 'var(--error)' }}><AlertCircle size={64} /></div>
-                <div>
-                    <h2 style={{ fontSize: '2rem', fontWeight: 800, marginBottom: '1rem', color: '#1e293b' }}>Error Loading Dashboard</h2>
-                    <p style={{ fontSize: '1.1rem', color: '#64748b', maxWidth: '600px', lineHeight: 1.6 }}>{error}</p>
-                </div>
-                <div className="flex gap-4">
-                    <button onClick={() => window.location.reload()} className="btn btn-secondary">Retry</button>
-                    <Link to="/" className="btn btn-primary">Return Home</Link>
-                </div>
-            </div>
-        );
-    }
-
-    if (profile?.status === 'PENDING') {
-        return (
-            <div className="flex flex-col justify-center items-center h-screen gap-6 p-8 text-center" style={{ background: 'var(--background)' }}>
-                <div style={{ padding: '2rem', background: 'var(--warning)15', borderRadius: '50%', color: 'var(--warning)' }}><Truck size={64} /></div>
-                <div>
-                    <h2 style={{ fontSize: '2rem', fontWeight: 800, marginBottom: '1rem', color: '#1e293b' }}>Application Pending</h2>
-                    <p style={{ fontSize: '1.1rem', color: '#64748b', maxWidth: '600px', lineHeight: 1.6 }}>
-                        Thanks for applying to be a seller! Your application is currently under review by our admin team.<br />You will be notified once it is approved.
-                    </p>
-                </div>
-                <button onClick={() => window.location.reload()} className="btn btn-secondary" style={{ marginTop: '1rem' }}>Check Status</button>
-            </div>
-        );
-    }
-
-    if (profile?.status === 'REJECTED') {
-        return (
-            <div className="flex flex-col justify-center items-center h-screen gap-6 p-8 text-center" style={{ background: 'var(--background)' }}>
-                <div style={{ padding: '2rem', background: 'var(--error)15', borderRadius: '50%', color: 'var(--error)' }}><X size={64} /></div>
-                <div>
-                    <h2 style={{ fontSize: '2rem', fontWeight: 800, marginBottom: '1rem', color: '#1e293b' }}>Application Rejected</h2>
-                    <p style={{ fontSize: '1.1rem', color: '#64748b', maxWidth: '600px', lineHeight: 1.6 }}>We're sorry, but your seller application was not approved at this time.</p>
-                </div>
-                <Link to="/" className="btn btn-primary" style={{ marginTop: '1rem' }}>Return to Home</Link>
-            </div>
-        );
-    }
-
-    return (
-        <div className="flex" style={{ minHeight: '100vh', width: '100%' }}>
-            {/* Sidebar — Dark Obsidian */}
-            <aside style={{
-                width: '280px', minHeight: '100vh',
-                background: 'linear-gradient(180deg, #0f172a 0%, #1e293b 100%)',
-                padding: '2rem 1.5rem', display: 'flex', flexDirection: 'column',
-                position: 'sticky', top: 0, flexShrink: 0
-            }}>
-                <div>
-                    <div className="flex items-center gap-3" style={{ marginBottom: '2.5rem', paddingBottom: '1.5rem', borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
-                        <div style={{ width: '42px', height: '42px', borderRadius: '12px', background: 'var(--primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white' }}>
-                            <LayoutDashboard size={22} />
-                        </div>
-                        <h3 style={{ color: 'white', fontSize: '1.2rem', fontWeight: 700, letterSpacing: '-0.5px', margin: 0 }}>
-                            SELLER CENTER
-                        </h3>
+    try {
+        if (loading) {
+            return (
+                <div className="flex flex-col justify-center items-center h-screen gap-4" style={{ background: 'var(--background)' }}>
+                    <div style={{ position: 'relative', width: '60px', height: '600x', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                        <Loader className="animate-spin" size={40} color="var(--primary)" />
+                        <span style={{ marginTop: '1rem', fontWeight: 700, color: 'var(--primary)' }}>LOADING...</span>
                     </div>
-
-                    <nav className="flex flex-col gap-3">
-                        <Link to="/" className="btn" style={{
-                            width: '100%', justifyContent: 'flex-start', padding: '1rem', fontSize: '0.95rem',
-                            display: 'flex', alignItems: 'center', gap: '12px',
-                            background: 'rgba(255,255,255,0.05)', color: 'rgba(255,255,255,0.8)',
-                            border: 'none', borderRadius: '12px'
-                        }}>
-                            <Home size={18} /> Storefront
-                        </Link>
-                        {['overview', 'products', 'orders', 'personal'].map(tab => (
-                            <button key={tab} onClick={() => setActiveTab(tab)} style={{
-                                width: '100%', display: 'flex', alignItems: 'center', gap: '12px',
-                                padding: '1rem', fontSize: '0.95rem', borderRadius: '12px', textTransform: 'capitalize',
-                                transition: 'all 0.2s ease',
-                                background: activeTab === tab ? 'var(--primary)' : 'transparent',
-                                color: activeTab === tab ? 'white' : 'rgba(255,255,255,0.7)',
-                                fontWeight: activeTab === tab ? 600 : 400, border: 'none', cursor: 'pointer'
-                            }}>
-                                {tab === 'overview' && <LayoutDashboard size={18} />}
-                                {tab === 'products' && <Package size={18} />}
-                                {tab === 'orders' && <ShoppingBag size={18} />}
-                                {tab === 'personal' && <User size={18} />}
-                                {tab === 'personal' ? 'Personal Details' : tab}
-                            </button>
-                        ))}
-                    </nav>
+                    <p style={{ fontWeight: 600, color: 'var(--text-muted)', letterSpacing: '0.02em' }}>Initializing your dashboard...</p>
                 </div>
-            </aside>
+            );
+        }
 
-            {/* Main Content Area */}
-            <div className="flex-1 flex flex-col" style={{ padding: '2.5rem 3rem', background: '#f8fafc', gap: '2rem', height: 'calc(100vh - 80px)', overflowY: 'auto' }}>
-
-                {quotaExceeded && (
-                    <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}
-                        style={{ background: '#fff3cd', color: '#856404', padding: '1rem 1.5rem', borderRadius: '12px', border: '1px solid #ffeeba', display: 'flex', alignItems: 'center', gap: '12px', fontSize: '0.9rem' }}>
-                        <AlertCircle size={20} />
-                        <div><strong>Cloud Database Quota Exceeded.</strong> You are currently seeing limited/cached demo data. Real-time updates may be restricted until the quota resets.</div>
-                    </motion.div>
-                )}
-
-                <div className="flex justify-between items-center">
+        if (error) {
+            return (
+                <div className="flex flex-col justify-center items-center h-screen gap-6 p-8 text-center" style={{ background: 'var(--background)' }}>
+                    <div style={{ padding: '2rem', background: 'var(--error)15', borderRadius: '50%', color: 'var(--error)' }}><AlertCircle size={64} /></div>
                     <div>
-                        <h2 style={{ fontSize: '2rem', fontWeight: 800, color: '#1e293b', marginBottom: '0.25rem' }}>Dashboard</h2>
-                        <p style={{ color: '#64748b' }}>Welcome back, <span style={{ fontWeight: 600, color: 'var(--primary)' }}>{profile.name}</span></p>
+                        <h2 style={{ fontSize: '2rem', fontWeight: 800, marginBottom: '1rem', color: '#1e293b' }}>Error Loading Dashboard</h2>
+                        <p style={{ fontSize: '1.1rem', color: '#64748b', maxWidth: '600px', lineHeight: 1.6 }}>{error}</p>
                     </div>
-                    <button className="btn btn-primary shadow-lg hover:shadow-xl transition-all" onClick={() => navigate('/seller/add-product')} style={{ padding: '0.75rem 1.5rem', borderRadius: '50px' }}>
-                        <Plus size={20} /> New Product
-                    </button>
+                    <div className="flex gap-4">
+                        <button onClick={() => window.location.reload()} className="btn btn-secondary">Retry</button>
+                        <Link to="/" className="btn btn-primary">Return Home</Link>
+                    </div>
+                </div>
+            );
+        }
+
+        if (profile?.status === 'PENDING') {
+            return (
+                <div className="flex flex-col justify-center items-center h-screen gap-6 p-8 text-center" style={{ background: 'var(--background)' }}>
+                    <div style={{ padding: '2rem', background: 'var(--warning)15', borderRadius: '50%', color: 'var(--warning)' }}><Truck size={64} /></div>
+                    <div>
+                        <h2 style={{ fontSize: '2rem', fontWeight: 800, marginBottom: '1rem', color: '#1e293b' }}>Application Pending</h2>
+                        <p style={{ fontSize: '1.1rem', color: '#64748b', maxWidth: '600px', lineHeight: 1.6 }}>
+                            Thanks for applying to be a seller! Your application is currently under review by our admin team.<br />You will be notified once it is approved.
+                        </p>
+                    </div>
+                    <button onClick={() => window.location.reload()} className="btn btn-secondary" style={{ marginTop: '1rem' }}>Check Status</button>
+                </div>
+            );
+        }
+
+        if (profile?.status === 'REJECTED') {
+            return (
+                <div className="flex flex-col justify-center items-center h-screen gap-6 p-8 text-center" style={{ background: 'var(--background)' }}>
+                    <div style={{ padding: '2rem', background: 'var(--error)15', borderRadius: '50%', color: 'var(--error)' }}><X size={64} /></div>
+                    <div>
+                        <h2 style={{ fontSize: '2rem', fontWeight: 800, marginBottom: '1rem', color: '#1e293b' }}>Application Rejected</h2>
+                        <p style={{ fontSize: '1.1rem', color: '#64748b', maxWidth: '600px', lineHeight: 1.6 }}>We're sorry, but your seller application was not approved at this time.</p>
+                    </div>
+                    <Link to="/" className="btn btn-primary" style={{ marginTop: '1rem' }}>Return to Home</Link>
+                </div>
+            );
+        }
+
+        return (
+            <div className="flex" style={{ minHeight: '100vh', width: '100%', background: '#f8fafc' }}>
+                {/* Sidebar — Dark Obsidian */}
+                <aside style={{
+                    width: '280px', minHeight: '100vh',
+                    background: 'linear-gradient(180deg, #0f172a 0%, #1e293b 100%)',
+                    padding: '2rem 1.5rem', display: 'flex', flexDirection: 'column',
+                    position: 'sticky', top: 0, flexShrink: 0
+                }}>
+                    <div>
+                        <div className="flex items-center gap-3" style={{ marginBottom: '2.5rem', paddingBottom: '1.5rem', borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
+                            <div style={{ width: '42px', height: '42px', borderRadius: '12px', background: 'var(--primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white' }}>
+                                <LayoutDashboard size={22} />
+                            </div>
+                            <h3 style={{ color: 'white', fontSize: '1.2rem', fontWeight: 700, letterSpacing: '-0.5px', margin: 0 }}>
+                                SELLER CENTER
+                            </h3>
+                        </div>
+
+                        <nav className="flex flex-col gap-3">
+                            <Link to="/" className="btn" style={{
+                                width: '100%', justifyContent: 'flex-start', padding: '1rem', fontSize: '0.95rem',
+                                display: 'flex', alignItems: 'center', gap: '12px',
+                                background: 'rgba(255,255,255,0.05)', color: 'rgba(255,255,255,0.8)',
+                                border: 'none', borderRadius: '12px'
+                            }}>
+                                <Home size={18} /> Storefront
+                            </Link>
+                            {['overview', 'products', 'orders', 'personal'].map(tab => (
+                                <button key={tab} onClick={() => setActiveTab(tab)} style={{
+                                    width: '100%', display: 'flex', alignItems: 'center', gap: '12px',
+                                    padding: '1rem', fontSize: '0.95rem', borderRadius: '12px', textTransform: 'capitalize',
+                                    transition: 'all 0.2s ease',
+                                    background: activeTab === tab ? 'var(--primary)' : 'transparent',
+                                    color: activeTab === tab ? 'white' : 'rgba(255,255,255,0.7)',
+                                    fontWeight: activeTab === tab ? 600 : 400, border: 'none', cursor: 'pointer'
+                                }}>
+                                    {tab === 'overview' && <LayoutDashboard size={18} />}
+                                    {tab === 'products' && <Package size={18} />}
+                                    {tab === 'orders' && <ShoppingBag size={18} />}
+                                    {tab === 'personal' && <User size={18} />}
+                                    {tab === 'personal' ? 'Personal Details' : tab}
+                                </button>
+                            ))}
+                        </nav>
+                    </div>
+                </aside>
+
+                {/* Main Content Area */}
+                <div className="flex-1 flex flex-col" style={{ padding: '2.5rem 3rem', background: '#f8fafc', gap: '2rem', minHeight: '100vh', overflowY: 'auto' }}>
+
+                    {quotaExceeded && (
+                        <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}
+                            style={{ background: '#fff3cd', color: '#856404', padding: '1rem 1.5rem', borderRadius: '12px', border: '1px solid #ffeeba', display: 'flex', alignItems: 'center', gap: '12px', fontSize: '0.9rem' }}>
+                            <AlertCircle size={20} />
+                            <div><strong>Cloud Database Quota Exceeded.</strong> You are currently seeing limited/cached demo data. Real-time updates may be restricted until the quota resets.</div>
+                        </motion.div>
+                    )}
+
+                    <div className="flex justify-between items-center">
+                        <div>
+                            <h2 style={{ fontSize: '2rem', fontWeight: 800, color: '#1e293b', marginBottom: '0.25rem' }}>Dashboard</h2>
+                            <p style={{ color: '#64748b' }}>Welcome back, <span style={{ fontWeight: 600, color: 'var(--primary)' }}>{profile.name || "Seller"}</span></p>
+                        </div>
+                        <button className="btn btn-primary shadow-lg hover:shadow-xl transition-all" onClick={() => navigate('/seller/add-product')} style={{ padding: '0.75rem 1.5rem', borderRadius: '50px' }}>
+                            <Plus size={20} /> New Product
+                        </button>
+                    </div>
+
+                    {activeTab === 'overview' && statCards && (
+                        <SellerOverviewTab statCards={statCards} orders={orders || []} performanceYear={performanceYear} setPerformanceYear={setPerformanceYear} />
+                    )}
+                    {activeTab === 'products' && (
+                        <SellerProductsTab products={products || []} onViewProduct={handleViewProduct} onDeleteProduct={handleDeleteProduct} />
+                    )}
+                    {activeTab === 'orders' && (
+                        <SellerOrdersTab orders={orders || []} onTrackOrder={(o) => { setTrackingOrder(o); setShowTrackModal(true); }} />
+                    )}
+                    {activeTab === 'personal' && profile && (
+                        <SellerProfileTab profile={profile} />
+                    )}
                 </div>
 
-                {activeTab === 'overview' && (
-                    <SellerOverviewTab statCards={statCards} orders={orders} performanceYear={performanceYear} setPerformanceYear={setPerformanceYear} />
-                )}
-                {activeTab === 'products' && (
-                    <SellerProductsTab products={products} onViewProduct={handleViewProduct} onDeleteProduct={handleDeleteProduct} />
-                )}
-                {activeTab === 'orders' && (
-                    <SellerOrdersTab orders={orders} onTrackOrder={(o) => { setTrackingOrder(o); setShowTrackModal(true); }} />
-                )}
-                {activeTab === 'personal' && (
-                    <SellerProfileTab profile={profile} />
-                )}
+                {/* Modals */}
+                <ProductViewModal
+                    show={showViewModal}
+                    selectedProduct={selectedProduct}
+                    onClose={() => { setShowViewModal(false); setSelectedProduct(null); }}
+                    onUpdateProduct={handleUpdateProduct}
+                    products={products}
+                    setProducts={setProducts}
+                    setSelectedProduct={setSelectedProduct}
+                />
+
+                <TrackOrderModal
+                    show={showTrackModal}
+                    trackingOrder={trackingOrder}
+                    onClose={() => setShowTrackModal(false)}
+                    onDownloadLabel={handleDownloadLabel}
+                />
             </div>
-
-            {/* Product View/Edit Modal */}
-            <ProductViewModal
-                show={showViewModal}
-                selectedProduct={selectedProduct}
-                onClose={() => { setShowViewModal(false); setSelectedProduct(null); }}
-                onUpdateProduct={handleUpdateProduct}
-                products={products}
-                setProducts={setProducts}
-                setSelectedProduct={setSelectedProduct}
-            />
-
-            {/* Track Order Modal */}
-            <TrackOrderModal
-                show={showTrackModal}
-                trackingOrder={trackingOrder}
-                onClose={() => setShowTrackModal(false)}
-                onDownloadLabel={handleDownloadLabel}
-            />
-        </div>
-    );
+        );
+    } catch (err) {
+        console.error("[SellerDashboard] FATAL RENDER ERROR:", err);
+        return (
+            <div className="p-20 text-center">
+                <h1 style={{ color: 'red' }}>Component Crash Detected</h1>
+                <pre style={{ background: '#eee', padding: '20px', textAlign: 'left' }}>{err.message}</pre>
+                <button onClick={() => window.location.reload()} className="btn btn-primary">Refresh App</button>
+            </div>
+        );
+    }
 }
