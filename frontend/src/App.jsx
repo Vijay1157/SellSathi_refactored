@@ -120,6 +120,15 @@ function AppContent() {
               </ProtectedRoute>
             }
           />
+
+          {/* Catch-All 404 */}
+          <Route path="*" element={
+            <div className="flex flex-col items-center justify-center p-20 text-center">
+              <h1 className="text-4xl font-bold text-gray-800">404 - Page Not Found</h1>
+              <p className="mt-4 text-gray-600">The path "{location.pathname}" was not found by the app's router.</p>
+              <Link to="/" className="mt-8 btn btn-primary">Go Home</Link>
+            </div>
+          } />
         </Routes>
       </main>
       {!hideFooterRoutes.includes(location.pathname) && <Footer />}

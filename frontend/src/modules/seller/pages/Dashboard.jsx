@@ -157,18 +157,20 @@ export default function SellerDashboard() {
 
     try {
         if (loading) {
+            console.log("[SellerDashboard] Rendering LOADING state...");
             return (
                 <div className="flex flex-col justify-center items-center h-screen gap-4" style={{ background: 'var(--background)' }}>
-                    <div style={{ position: 'relative', width: '60px', height: '600x', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                    <div style={{ position: 'relative', width: '60px', height: '60px', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
                         <Loader className="animate-spin" size={40} color="var(--primary)" />
-                        <span style={{ marginTop: '1rem', fontWeight: 700, color: 'var(--primary)' }}>LOADING...</span>
+                        <span style={{ marginTop: '1rem', fontWeight: 700, color: 'var(--primary)', letterSpacing: '0.1em' }}>LOADING...</span>
                     </div>
-                    <p style={{ fontWeight: 600, color: 'var(--text-muted)', letterSpacing: '0.02em' }}>Initializing your dashboard...</p>
+                    <p style={{ fontWeight: 600, color: 'var(--text-muted)', letterSpacing: '0.02em', marginTop: '2rem' }}>Initializing your dashboard...</p>
                 </div>
             );
         }
 
         if (error) {
+            console.log("[SellerDashboard] Rendering ERROR state...");
             return (
                 <div className="flex flex-col justify-center items-center h-screen gap-6 p-8 text-center" style={{ background: 'var(--background)' }}>
                     <div style={{ padding: '2rem', background: 'var(--error)15', borderRadius: '50%', color: 'var(--error)' }}><AlertCircle size={64} /></div>
