@@ -23,7 +23,8 @@ const getStats = async (req, res) => {
             totalOrdersCount,
             todayOrdersCount,
             ordersToDeliverCount,
-            totalReviewsCount
+            allReviewsSnap,
+            allProductsSnap
         ] = await Promise.all([
             db.collection("sellers").count().get(),
             db.collection("sellers").where("sellerStatus", "==", "PENDING").get(),
@@ -36,8 +37,29 @@ const getStats = async (req, res) => {
                 .count()
                 .get(),
             db.collection("orders").where("status", "in", ["Processing", "Shipped"]).count().get(),
-            db.collection("reviews").count().get()
+            db.collection("reviews").get(),
+            db.collection("products").get()
         ]);
+
+        // Create a set of existing product IDs for fast lookup
+        const existingProductIds = new Set();
+        allProductsSnap.forEach(doc => {
+            existingProductIds.add(doc.id);
+        });
+
+        // Count only reviews for existing products
+        let validReviewsCount = 0;
+        let skippedReviews = 0;
+        allReviewsSnap.forEach(doc => {
+            const reviewData = doc.data();
+            const productId = reviewData.productId;
+            
+            if (productId && existingProductIds.has(productId)) {
+                validReviewsCount++;
+            } else {
+                skippedReviews++;
+            }
+        });
 
         const nonBlockedPendingSellers = pendingSellersSnap.docs.filter(doc => {
             const data = doc.data();
@@ -46,7 +68,7 @@ const getStats = async (req, res) => {
 
         console.log(`[GetStats] Total PENDING sellers: ${pendingSellersSnap.docs.length}, Non-blocked: ${nonBlockedPendingSellers.length}`);
         console.log(`[GetStats] Today's orders: ${todayOrdersCount.data().count}`);
-        console.log(`[GetStats] Total reviews: ${totalReviewsCount.data().count}`);
+        console.log(`[GetStats] Total reviews: ${allReviewsSnap.size}, Valid reviews (with existing products): ${validReviewsCount}, Skipped: ${skippedReviews}`);
 
         const stats = {
             totalSellers: totalSellersCount.data().count,
@@ -56,7 +78,7 @@ const getStats = async (req, res) => {
             todayOrders: todayOrdersCount.data().count,
             pendingApprovals: nonBlockedPendingSellers.length,
             ordersToDeliver: ordersToDeliverCount.data().count,
-            totalFeedback: totalReviewsCount.data().count
+            totalFeedback: validReviewsCount  // Use valid reviews count instead of total
         };
 
         cache.set('adminStats', stats);
