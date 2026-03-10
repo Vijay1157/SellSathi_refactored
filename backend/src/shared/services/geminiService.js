@@ -124,33 +124,40 @@ async function extractAadhaarData(imageBuffer, mimeType, retries = 2) {
                 // --- AGE CALCULATION ---
                 if (data.dob) {
                     try {
-                        const dateOnly = data.dob.replace(/[^\d/-]/g, ''); // Keep only numbers, slash, or hyphen
+                        const dateOnly = data.dob.replace(/[^\d/.-]/g, ''); // Keep numbers, slash, hyphen, dot
                         let birthYear = null;
+                        logDebug(`Processing DOB for age: "${data.dob}" -> Cleaned: "${dateOnly}"`);
 
-                        // Scenario 1: DD/MM/YYYY or YYYY/MM/DD
-                        if (dateOnly.includes('/')) {
-                            const parts = dateOnly.split('/');
-                            const p1 = parseInt(parts[0]);
-                            const p3 = parseInt(parts[2]);
-                            birthYear = (p3 > 1900) ? p3 : (p1 > 1900 ? p1 : null);
+                        // Scenario 1: DD/MM/YYYY or YYYY/MM/DD (or with - or .)
+                        if (dateOnly.includes('/') || dateOnly.includes('-') || dateOnly.includes('.')) {
+                            const sep = dateOnly.includes('/') ? '/' : (dateOnly.includes('-') ? '-' : '.');
+                            const parts = dateOnly.split(sep);
+
+                            // Ensure there are at least 3 parts for a full date
+                            if (parts.length >= 3) {
+                                const p1 = parseInt(parts[0]);
+                                const p2 = parseInt(parts[1]);
+                                const p3 = parseInt(parts[2]);
+
+                                // Find which part is a year (assuming year is 4 digits and within a reasonable range)
+                                if (p1 > 1920 && p1 < 2026) birthYear = p1;
+                                else if (p3 > 1920 && p3 < 2026) birthYear = p3;
+                                else if (p2 > 1920 && p2 < 2026) birthYear = p2; // Less common, but possible for YYYY-DD-MM
+                            }
                         }
-                        // Scenario 2: DD-MM-YYYY or YYYY-MM-DD
-                        else if (dateOnly.includes('-')) {
-                            const parts = dateOnly.split('-');
-                            const p1 = parseInt(parts[0]);
-                            const p3 = parseInt(parts[2]);
-                            birthYear = (p3 > 1900) ? p3 : (p1 > 1900 ? p1 : null);
-                        }
-                        // Scenario 3: Only YYYY
+                        // Scenario 2: Just a 4 digit year (e.g., "1990")
                         else if (dateOnly.length === 4 && /^\d{4}$/.test(dateOnly)) {
                             birthYear = parseInt(dateOnly);
                         }
 
                         if (birthYear && birthYear > 1920 && birthYear <= new Date().getFullYear()) {
-                            data.age = (new Date().getFullYear() - birthYear).toString();
-                            logDebug(`Calculated Age: ${data.age} from Year: ${birthYear}`);
+                            const calcAge = new Date().getFullYear() - birthYear;
+                            data.age = calcAge.toString();
+                            logDebug(`SUCCESS: Calculated Age ${data.age} from year ${birthYear}`);
+                        } else {
+                            logDebug(`WARNING: Could not determine valid birth year from "${data.dob}" (birthYear: ${birthYear})`);
                         }
-                    } catch (e) { logDebug(`Age calc error: ${e.message}`); }
+                    } catch (e) { logDebug(`Age calculation failed: ${e.message}`); }
                 }
 
                 // Final fallback for age: scan REAL raw output (not just JSON) for a year
