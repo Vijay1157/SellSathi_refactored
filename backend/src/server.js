@@ -49,6 +49,16 @@ app.use('/webhook', shippingRoutes); // Unified webhook path
 // Health Check
 app.get('/health', (req, res) => res.status(200).json({ status: 'UP', timestamp: new Date().toISOString() }));
 
+// 404 Error Handler - Returns JSON instead of HTML
+app.use((req, res) => {
+    console.error(`[404] Route Not Found: ${req.method} ${req.originalUrl}`);
+    res.status(404).json({
+        success: false,
+        message: `API Route ${req.method} ${req.originalUrl} not found.`,
+        hint: "Check if the UID and endpoint path are correct."
+    });
+});
+
 // Error Handling
 app.use((err, req, res, next) => {
     console.error(`[SERVER ERROR] ${err.stack}`);
