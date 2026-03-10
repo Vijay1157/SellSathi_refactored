@@ -103,10 +103,10 @@ async function extractAadhaarData(imageBuffer, mimeType, retries = 2) {
                     fullName: aiData.fullName || aiData.name || '',
                     aadhaarNumber: (aiData.aadhaarNumber || aiData.aadhaar_no || '').replace(/\D/g, ''),
                     phoneNumber: (aiData.phoneNumber || aiData.phone || '').replace(/\D/g, ''),
-                    dob: aiData.dob || '',
+                    dob: (aiData.dob || '').trim(),
                     gender: aiData.gender || '',
                     address: aiData.address || '',
-                    age: aiData.age || ''
+                    age: (aiData.age || '').toString()
                 };
 
                 // Fallback for Aadhaar number if pattern found in raw text but not in JSON
@@ -116,39 +116,58 @@ async function extractAadhaarData(imageBuffer, mimeType, retries = 2) {
                 }
 
                 // Fallback for Phone
-                if (!data.phone || data.phone.length < 10) {
+                if (!data.phoneNumber || data.phoneNumber.length < 10) {
                     const match = rawText.match(/[6-9]\d{9}/) || rawText.match(/[6-9]\d{4}\s?\d{5}/);
-                    if (match) data.phone = match[0].replace(/\D/g, '');
+                    if (match) data.phoneNumber = match[0].replace(/\D/g, '');
                 }
 
                 // --- AGE CALCULATION ---
                 if (data.dob) {
                     try {
+                        const dateOnly = data.dob.replace(/[^\d/-]/g, ''); // Keep only numbers, slash, or hyphen
                         let birthYear = null;
-                        if (data.dob.includes('/')) {
-                            const parts = data.dob.split('/');
-                            birthYear = parseInt(parts[2] || parts[0]); // Handles DD/MM/YYYY or YYYY/MM/DD
-                        } else if (data.dob.length === 4 && /^\d{4}$/.test(data.dob)) {
-                            birthYear = parseInt(data.dob);
-                        } else {
-                            const date = new Date(data.dob);
-                            if (!isNaN(date.getTime())) birthYear = date.getFullYear();
+
+                        // Scenario 1: DD/MM/YYYY or YYYY/MM/DD
+                        if (dateOnly.includes('/')) {
+                            const parts = dateOnly.split('/');
+                            const p1 = parseInt(parts[0]);
+                            const p3 = parseInt(parts[2]);
+                            birthYear = (p3 > 1900) ? p3 : (p1 > 1900 ? p1 : null);
+                        }
+                        // Scenario 2: DD-MM-YYYY or YYYY-MM-DD
+                        else if (dateOnly.includes('-')) {
+                            const parts = dateOnly.split('-');
+                            const p1 = parseInt(parts[0]);
+                            const p3 = parseInt(parts[2]);
+                            birthYear = (p3 > 1900) ? p3 : (p1 > 1900 ? p1 : null);
+                        }
+                        // Scenario 3: Only YYYY
+                        else if (dateOnly.length === 4 && /^\d{4}$/.test(dateOnly)) {
+                            birthYear = parseInt(dateOnly);
                         }
 
-                        if (birthYear && birthYear > 1900 && birthYear <= new Date().getFullYear()) {
+                        if (birthYear && birthYear > 1920 && birthYear <= new Date().getFullYear()) {
                             data.age = (new Date().getFullYear() - birthYear).toString();
+                            logDebug(`Calculated Age: ${data.age} from Year: ${birthYear}`);
                         }
                     } catch (e) { logDebug(`Age calc error: ${e.message}`); }
                 }
 
-                // Final fallback for age: look for a year in the text if age is missing
+                // Final fallback for age: scan REAL raw output (not just JSON) for a year
                 if (!data.age) {
-                    const yearMatch = rawText.match(/\b(19|20)\d{2}\b/);
-                    if (yearMatch) {
-                        const year = parseInt(yearMatch[0]);
-                        data.age = (new Date().getFullYear() - year).toString();
+                    const years = rawText.match(/\b(19|20)\d{2}\b/g) || [];
+                    for (const yearStr of years) {
+                        const year = parseInt(yearStr);
+                        if (year > 1940 && year < 2012) { // 12+ years old
+                            data.age = (new Date().getFullYear() - year).toString();
+                            logDebug(`Fallback Age: ${data.age} from matched string: ${yearStr}`);
+                            break;
+                        }
                     }
                 }
+
+                // Ensure age is always a string and not "0" or "NaN"
+                if (!data.age || data.age === "NaN") data.age = (aiData.age || "").toString();
 
                 logDebug(`FINAL PARSED: ${JSON.stringify(data)}`);
                 return data;
