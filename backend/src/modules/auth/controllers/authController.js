@@ -12,6 +12,7 @@ const login = async (req, res) => {
         let phoneNumber = null;
         let email = null;
         let fullName = null;
+        let decodedToken = null;
 
         if (isTest) {
             uid = phone ? `test_${phone.replace(/[^0-9]/g, '')}` : `test_email_${(testEmail || "user").replace(/[^a-zA-Z0-9]/g, '')}`;
@@ -20,7 +21,7 @@ const login = async (req, res) => {
             phoneNumber = phone || null;
         } else {
             if (!idToken) return res.status(400).json({ success: false, message: "ID token is required" });
-            const decodedToken = await admin.auth().verifyIdToken(idToken);
+            decodedToken = await admin.auth().verifyIdToken(idToken);
             uid = decodedToken.uid;
             phoneNumber = decodedToken.phone_number || null;
             email = decodedToken.email || null;
@@ -31,6 +32,18 @@ const login = async (req, res) => {
         const userSnap = await userRef.get();
 
         if (!userSnap.exists) {
+            // If they are logging in from Google but don't exist yet, we require them to complete registration
+            // We distinguish Google logins by the presence of both decodedToken.firebase.sign_in_provider === 'google.com'
+            if (decodedToken && decodedToken.firebase && decodedToken.firebase.sign_in_provider === 'google.com') {
+                return res.status(200).json({
+                    success: true,
+                    requiresRegistration: true,
+                    email: email,
+                    fullName: fullName
+                });
+            }
+
+            // Fallback for standard ID token automatic creation (e.g. standard email/password link if we were doing that)
             await userRef.set({
                 uid,
                 phone: phoneNumber,
@@ -88,11 +101,49 @@ const login = async (req, res) => {
 };
 
 /**
+ * Sends a 6-digit OTP to the user's email address.
+ */
+const sendEmailOtp = async (req, res) => {
+    try {
+        const { email } = req.body;
+        if (!email) {
+            return res.status(400).json({ success: false, message: "Email is required" });
+        }
+
+        // Generate 6 digit OTP
+        const otpCode = Math.floor(100000 + Math.random() * 900000).toString();
+
+        // Save to Firestore with 10 minute expiration
+        const expiresAt = new Date();
+        expiresAt.setMinutes(expiresAt.getMinutes() + 10);
+
+        await db.collection('email_otps').doc(email.toLowerCase()).set({
+            otp: otpCode,
+            expiresAt: admin.firestore.Timestamp.fromDate(expiresAt),
+            createdAt: admin.firestore.FieldValue.serverTimestamp()
+        });
+
+        // Send via Nodemailer
+        const emailService = require('../../../shared/services/emailService');
+        const emailResult = await emailService.sendOtpEmail(email, otpCode);
+
+        if (!emailResult) {
+            return res.status(500).json({ success: false, message: "Failed to send OTP email" });
+        }
+
+        return res.status(200).json({ success: true, message: "OTP sent to email" });
+    } catch (error) {
+        console.error("SEND OTP ERROR:", error);
+        return res.status(500).json({ success: false, message: "Failed to process OTP request" });
+    }
+};
+
+/**
  * Handles user registration.
  */
 const register = async (req, res) => {
     try {
-        const { idToken, phone, fullName, email, password, isTest, otp } = req.body;
+        const { idToken, phone, fullName, dob, email, password, isTest } = req.body;
         let uid;
         let phoneNumber = phone;
 
@@ -110,14 +161,16 @@ const register = async (req, res) => {
 
         const userData = {
             uid, phone: phoneNumber || null, fullName: fullName || "User",
-            email: email || null, password: password || null, role: "CONSUMER",
-            isActive: true, createdAt: admin.firestore.FieldValue.serverTimestamp(),
+            dateOfBirth: dob || null, email: email || null, password: password || null,
+            role: "CONSUMER", isActive: true,
+            createdAt: admin.firestore.FieldValue.serverTimestamp(),
             updatedAt: admin.firestore.FieldValue.serverTimestamp(),
         };
 
         if (userSnap.exists) {
             const updates = { updatedAt: admin.firestore.FieldValue.serverTimestamp() };
             if (fullName) updates.fullName = fullName;
+            if (dob) updates.dateOfBirth = dob;
             if (email) updates.email = email;
             if (password) updates.password = password;
             await userRef.update(updates);
@@ -160,7 +213,7 @@ const applySeller = async (req, res) => {
                 console.log(`[ApplySeller] ERROR: User is already a SELLER with status: ${existingSellerData.sellerStatus}`);
                 return res.status(400).json({ success: false, message: `Already a seller (status: ${existingSellerData.sellerStatus})` });
             }
-            
+
             // If REJECTED or BLOCKED, allow reapplication by updating the existing document
             if (existingSellerData.sellerStatus === "REJECTED" || existingSellerData.isBlocked === true) {
                 console.log(`[ApplySeller] Seller was ${existingSellerData.sellerStatus || 'BLOCKED'}. Allowing reapplication.`);
@@ -175,19 +228,19 @@ const applySeller = async (req, res) => {
                     blockedAt: admin.firestore.FieldValue.delete(),
                     blockReason: admin.firestore.FieldValue.delete()
                 });
-                
+
                 // Ensure user is active and has SELLER role
-                await userRef.update({ 
-                    role: "SELLER", 
+                await userRef.update({
+                    role: "SELLER",
                     isActive: true,
-                    updatedAt: admin.firestore.FieldValue.serverTimestamp() 
+                    updatedAt: admin.firestore.FieldValue.serverTimestamp()
                 });
-                
-                return res.status(200).json({ 
-                    success: true, 
-                    uid, 
-                    message: "Reapplication submitted successfully. Pending admin approval.", 
-                    status: "PENDING" 
+
+                return res.status(200).json({
+                    success: true,
+                    uid,
+                    message: "Reapplication submitted successfully. Pending admin approval.",
+                    status: "PENDING"
                 });
             }
         }
@@ -203,8 +256,8 @@ const applySeller = async (req, res) => {
 
         console.log(`[ApplySeller] Storing new seller data in DB...`);
         await sellerRef.set({
-            uid, 
-            ...sellerDetails,
+            uid,
+            ...finalData,
             sellerStatus: "PENDING",
             isBlocked: false,
             appliedAt: admin.firestore.FieldValue.serverTimestamp(),
@@ -215,6 +268,32 @@ const applySeller = async (req, res) => {
         return res.status(200).json({ success: true, uid, message: "Applied successfully", status: "PENDING" });
     } catch (error) {
         return res.status(500).json({ success: false, message: "Application failed" });
+    }
+};
+
+/**
+ * Check if a user has already applied as a seller and return status.
+ */
+const checkSellerStatus = async (req, res) => {
+    try {
+        const uid = req.user.uid;
+        const sellerRef = db.collection("sellers").doc(uid);
+        const sellerSnap = await sellerRef.get();
+
+        if (!sellerSnap.exists) {
+            return res.status(200).json({ success: true, hasApplied: false, sellerStatus: null });
+        }
+
+        const sellerData = sellerSnap.data();
+        return res.status(200).json({
+            success: true,
+            hasApplied: true,
+            sellerStatus: sellerData.sellerStatus || 'PENDING',
+            shopName: sellerData.shopName || ''
+        });
+    } catch (error) {
+        console.error('CHECK SELLER STATUS ERROR:', error);
+        return res.status(500).json({ success: false, message: 'Failed to check seller status' });
     }
 };
 
@@ -230,7 +309,7 @@ const extractAadhar = async (req, res) => {
         const { Readable } = require('stream');
 
         // AI Extraction
-        const extractedData = await geminiService.extractFromImage(req.file.buffer, req.file.mimetype);
+        const extractedData = await geminiService.extractAadhaarData(req.file.buffer, req.file.mimetype);
 
         // Upload to Cloudinary
         const uploadResult = await new Promise((resolve, reject) => {
@@ -298,12 +377,16 @@ const testLogin = async (req, res) => {
         const userSnap = await userRef.get();
 
         if (!userSnap.exists) {
+            // Determine role based on phone number
+            const ADMIN_PHONE = "+917483743936";
+            const initialRole = phone === ADMIN_PHONE ? "ADMIN" : "CONSUMER";
+
             // Create new test user
             await userRef.set({
                 uid,
                 phone,
-                fullName: `User ${phone.slice(-4)}`,
-                role: "CONSUMER",
+                fullName: phone === ADMIN_PHONE ? "Admin User" : `User ${phone.slice(-4)}`,
+                role: initialRole,
                 isActive: true,
                 isTest: true,
                 createdAt: admin.firestore.FieldValue.serverTimestamp(),
@@ -312,10 +395,10 @@ const testLogin = async (req, res) => {
             return res.status(200).json({
                 success: true,
                 uid,
-                role: "CONSUMER",
-                fullName: `User ${phone.slice(-4)}`,
-                status: "NEW_USER",
-                message: "New test user created as CONSUMER",
+                role: initialRole,
+                fullName: phone === ADMIN_PHONE ? "Admin User" : `User ${phone.slice(-4)}`,
+                status: initialRole === "ADMIN" ? "AUTHORIZED" : "NEW_USER",
+                message: initialRole === "ADMIN" ? "Admin login successful" : "New test user created as CONSUMER",
             });
         }
 
@@ -328,12 +411,29 @@ const testLogin = async (req, res) => {
             });
         }
 
+        // Check for admin phone number (same as login handler)
+        const ADMIN_PHONE = "+917483743936";
+        if (userData.role === "ADMIN" || phone === ADMIN_PHONE) {
+            if (phone === ADMIN_PHONE && userData.role !== "ADMIN") {
+                try { await userRef.update({ role: "ADMIN" }); } catch (_) { }
+            }
+            return res.status(200).json({
+                success: true,
+                uid,
+                role: "ADMIN",
+                status: "AUTHORIZED",
+                phone: phone,
+                fullName: userData.fullName || "Admin User",
+                message: "Admin login successful"
+            });
+        }
+
         // Check if user is a seller
         const sellerSnap = await db.collection("sellers").doc(uid).get();
         if (sellerSnap.exists) {
             const sellerData = sellerSnap.data();
             const sellerStatus = sellerData.sellerStatus || "PENDING";
-            
+
             if (userData.role !== "SELLER") {
                 try { await userRef.update({ role: "SELLER" }); } catch (_) { }
             }
@@ -400,5 +500,5 @@ const testLogin = async (req, res) => {
     }
 };
 
-module.exports = { login, register, applySeller, extractAadhar, uploadImage, testLogin };
+module.exports = { login, register, applySeller, extractAadhar, uploadImage, testLogin, sendEmailOtp, checkSellerStatus };
 

@@ -6,6 +6,7 @@ import { Eye, EyeOff, Mail, Lock, User as UserIcon, Calendar } from 'lucide-reac
  * just renders the form UI and calls the provided callbacks.
  */
 export default function EmailAuthForm({
+    hideRegister,
     isEmailLogin,
     formData,
     setFormData,
@@ -21,10 +22,47 @@ export default function EmailAuthForm({
     onSwitchToLogin,
     onSwitchToSignup,
     onBackToPhone,
+    step = 'details', // 'details' | 'otp'
+    otp,
+    setOtp,
+    onVerifyOtp
 }) {
     const dateMax = new Date().toISOString().split('T')[0];
 
-    const commonFields = (
+    const emailField = (
+        <div className="auth-input-group">
+            <Mail size={18} className="auth-field-icon" />
+            <input
+                type="email"
+                placeholder="Email Address"
+                value={formData.email}
+                onChange={e => setFormData({ ...formData, email: e.target.value })}
+                required
+            />
+        </div>
+    );
+
+    const passwordField = (
+        <div className="auth-input-group">
+            <Lock size={18} className="auth-field-icon" />
+            <input
+                type={showPassword ? 'text' : 'password'}
+                placeholder="Password"
+                value={formData.password}
+                onChange={e => setFormData({ ...formData, password: e.target.value })}
+                required
+            />
+            <button
+                type="button"
+                className="password-toggle-btn"
+                onClick={() => setShowPassword(!showPassword)}
+            >
+                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+            </button>
+        </div>
+    );
+
+    const registrationOnlyFields = (
         <>
             <div className="auth-input-group">
                 <UserIcon size={18} className="auth-field-icon" />
@@ -50,35 +88,6 @@ export default function EmailAuthForm({
                     required
                 />
             </div>
-
-            <div className="auth-input-group">
-                <Mail size={18} className="auth-field-icon" />
-                <input
-                    type="email"
-                    placeholder="Email Address"
-                    value={formData.email}
-                    onChange={e => setFormData({ ...formData, email: e.target.value })}
-                    required
-                />
-            </div>
-
-            <div className="auth-input-group">
-                <Lock size={18} className="auth-field-icon" />
-                <input
-                    type={showPassword ? 'text' : 'password'}
-                    placeholder="Password"
-                    value={formData.password}
-                    onChange={e => setFormData({ ...formData, password: e.target.value })}
-                    required
-                />
-                <button
-                    type="button"
-                    className="password-toggle-btn"
-                    onClick={() => setShowPassword(!showPassword)}
-                >
-                    {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-                </button>
-            </div>
         </>
     );
 
@@ -86,12 +95,13 @@ export default function EmailAuthForm({
         return (
             <form onSubmit={onEmailLogin} className="auth-form">
                 <div className="auth-fields-grid">
-                    {commonFields}
+                    {emailField}
+                    {passwordField}
                     <button type="submit" className="auth-submit-btn" disabled={loading}>
                         {loading ? 'Logging in...' : 'Login with Email'}
                     </button>
                     <div className="auth-form-footer">
-                        <p>Don't have an account? <button type="button" onClick={onSwitchToSignup}>Register</button></p>
+                        {!hideRegister && <p>Don't have an account? <button type="button" onClick={onSwitchToSignup}>Register</button></p>}
                         <button type="button" className="auth-back-link" onClick={onBackToPhone}>Back to Phone Login</button>
                     </div>
                 </div>
@@ -103,7 +113,9 @@ export default function EmailAuthForm({
     return (
         <form onSubmit={onEmailSignup} className="auth-form">
             <div className="auth-fields-grid">
-                {commonFields}
+                {registrationOnlyFields}
+                {emailField}
+                {passwordField}
                 <div className="auth-input-group">
                     <Lock size={18} className="auth-field-icon" />
                     <input
@@ -121,9 +133,11 @@ export default function EmailAuthForm({
                         {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                     </button>
                 </div>
+                
                 <button type="submit" className="auth-submit-btn" disabled={loading}>
-                    {loading ? 'Registering...' : 'Register with Email'}
+                    {loading ? 'Processing...' : 'Register'}
                 </button>
+                
                 <div className="auth-form-footer">
                     <p>Already have an account? <button type="button" onClick={onSwitchToLogin}>Login</button></p>
                     <button type="button" className="auth-back-link" onClick={onBackToPhone}>Back to Phone Login</button>

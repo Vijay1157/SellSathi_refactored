@@ -96,6 +96,7 @@ export default function AdminDashboard() {
     const fetchStats = async () => {
         setLoading(true);
         try {
+            setLoading(true);
             const res = await safeFetch('/admin/stats');
             if (res.ok) {
                 const d = await res.json();
@@ -105,6 +106,12 @@ export default function AdminDashboard() {
                         allSellers: d.stats.totalSellers,
                         ordersToDeliver: d.stats.ordersToDeliver || prev.ordersToDeliver
                     }));
+                }
+            } else {
+                const d = await res.json().catch(() => ({}));
+                console.warn('[fetchStats] non-ok response:', res.status, d.message);
+                if (res.status === 401 || res.status === 403) {
+                    setError(d.message || 'Access denied. Please login again as admin.');
                 }
             }
         } catch (err) {

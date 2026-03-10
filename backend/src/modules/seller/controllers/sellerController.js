@@ -21,12 +21,11 @@ const getDashboardData = async (req, res) => {
             return res.status(200).json({ success: true, ...cached });
         }
 
-        const [sellerSnap, userSnap, productsSnap, subProductsSnap, allOrdersSnap] = await Promise.all([
+        const [sellerSnap, userSnap, productsSnap, subProductsSnap] = await Promise.all([
             db.collection("sellers").doc(uid).get(),
             db.collection("users").doc(uid).get(),
             db.collection("products").where("sellerId", "==", uid).limit(50).get(),
-            db.collection("sellers").doc(uid).collection("listedproducts").limit(50).get(),
-            db.collection("orders").where("sellerId", "==", uid).limit(50).get()
+            db.collection("sellers").doc(uid).collection("listedproducts").limit(50).get()
         ]);
 
         if (!sellerSnap.exists) return res.status(404).json({ success: false, message: "Seller not found" });
@@ -45,6 +44,14 @@ const getDashboardData = async (req, res) => {
         const products = Array.from(productsMap.values());
 
         console.log(`[SellerDashboard] UID: ${uid} | Merged Total: ${products.length}`);
+
+        // Fetch orders - need to get ALL orders and filter by seller items
+        // Since Firestore doesn't support array-contains-any with multiple fields,
+        // we fetch orders where sellerId matches OR fetch all recent orders and filter
+        const allOrdersSnap = await db.collection("orders")
+            .orderBy("createdAt", "desc")
+            .limit(200)  // Increased limit to catch orders from multiple sellers
+            .get();
 
         let totalSales = 0, newOrdersCount = 0, pendingOrdersCount = 0;
         const sellerOrders = [];
@@ -68,7 +75,15 @@ const getDashboardData = async (req, res) => {
                     customer: order.customerName || "Customer",
                     total: orderSales,
                     status: order.status,
-                    date: formatDateDDMMYYYY(order.createdAt)
+                    date: formatDateDDMMYYYY(order.createdAt),
+                    cancellationReason: order.cancellationReason || null,
+                    awbNumber: order.awbNumber || null,
+                    courierName: order.courierName || null,
+                    shippingStatus: order.shippingStatus || null,
+                    estimatedDeliveryDays: order.estimatedDeliveryDays || null,
+                    labelUrl: order.labelUrl || null,
+                    paymentMethod: order.paymentMethod || null,
+                    items: sellerItems
                 });
             }
         });
@@ -76,7 +91,8 @@ const getDashboardData = async (req, res) => {
         const responseData = {
             profile: {
                 ...sellerData,
-                name: userData?.fullName || sellerData.fullName || "Seller",
+                fullName: userData?.fullName || sellerData.fullName || sellerData.name || "Seller",
+                name: userData?.fullName || sellerData.fullName || sellerData.name || "Seller",
                 status: sellerData.sellerStatus // Standardize status key for frontend
             },
             stats: {

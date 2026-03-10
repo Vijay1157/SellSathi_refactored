@@ -99,7 +99,7 @@ export default function Wishlist() {
                                     </div>
                                     <div className="rating">
                                         <Star size={14} fill="#FFB800" color="#FFB800" />
-                                        <span>{item.rating || 4.5}</span>
+                                        <span>{item.rating !== undefined ? item.rating : 0}</span>
                                     </div>
                                     <div className="price-row">
                                         <PriceDisplay product={item} size="sm" />

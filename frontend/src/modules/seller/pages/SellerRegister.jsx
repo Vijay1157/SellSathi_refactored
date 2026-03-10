@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Link, useNavigate } from 'react-router-dom';
-import { ArrowLeft, CheckCircle2, Upload, Camera, Store, User, Phone, CreditCard, Loader } from 'lucide-react';
+import { ArrowLeft, CheckCircle2, Upload, Camera, Store, User, Phone, CreditCard, Loader, ImagePlus, X } from 'lucide-react';
 import { authFetch } from '@/modules/shared/utils/api';
 
 export const SellerRegister = () => {
@@ -17,6 +17,11 @@ export const SellerRegister = () => {
     aadhaarNumber: '',
     age: ''
   });
+
+  // Aadhaar image upload state for manual entry
+  const [aadhaarImageFile, setAadhaarImageFile] = useState(null);
+  const [aadhaarImagePreview, setAadhaarImagePreview] = useState(null);
+  const [uploadingImage, setUploadingImage] = useState(false);
 
   const handleAadhaarUpload = async (e) => {
     const file = e.target.files?.[0];
@@ -45,7 +50,8 @@ export const SellerRegister = () => {
               aadhaarNumber: result.data.aadharNumber || '',
               phoneNumber: result.data.phone || '',
               age: result.data.age || '',
-              shopAddress: result.data.address || '' // Optionally pre-fill address if available
+              shopAddress: result.data.address || '', // Optionally pre-fill address if available
+              aadhaarImageUrl: result.data.imageUrl || '' // Cloudinary URL from extraction
             }
           }
         });
@@ -65,7 +71,54 @@ export const SellerRegister = () => {
     setError('');
   };
 
-  const handleManualSubmit = (e) => {
+  const handleAadhaarImageSelect = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      setError('Please select an image file (JPG, PNG, etc.)');
+      return;
+    }
+
+    // Validate file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      setError('Image size must be less than 5MB');
+      return;
+    }
+
+    setAadhaarImageFile(file);
+    setAadhaarImagePreview(URL.createObjectURL(file));
+    setError('');
+  };
+
+  const removeAadhaarImage = () => {
+    setAadhaarImageFile(null);
+    if (aadhaarImagePreview) {
+      URL.revokeObjectURL(aadhaarImagePreview);
+      setAadhaarImagePreview(null);
+    }
+  };
+
+  const uploadAadhaarImage = async () => {
+    if (!aadhaarImageFile) return null;
+
+    const data = new FormData();
+    data.append('image', aadhaarImageFile);
+
+    const response = await authFetch('/auth/upload-image', {
+      method: 'POST',
+      body: data
+    });
+
+    const result = await response.json();
+    if (result.success && result.url) {
+      return result.url;
+    }
+    throw new Error(result.message || 'Failed to upload Aadhaar image');
+  };
+
+  const handleManualSubmit = async (e) => {
     e.preventDefault();
     setError('');
 
@@ -85,12 +138,33 @@ export const SellerRegister = () => {
       return;
     }
 
-    // Navigate to onboarding page with manually entered data
-    navigate('/seller/onboarding', {
-      state: {
-        extractedData: formData
+    setLoading(true);
+    try {
+      let aadhaarImageUrl = '';
+
+      // Upload Aadhaar image to Cloudinary if selected
+      if (aadhaarImageFile) {
+        setUploadingImage(true);
+        aadhaarImageUrl = await uploadAadhaarImage();
+        setUploadingImage(false);
       }
-    });
+
+      // Navigate to onboarding page with manually entered data + image URL
+      navigate('/seller/onboarding', {
+        state: {
+          extractedData: {
+            ...formData,
+            aadhaarImageUrl
+          }
+        }
+      });
+    } catch (err) {
+      console.error('Upload Error:', err);
+      setError(err.message || 'Failed to upload Aadhaar image. Please try again.');
+      setUploadingImage(false);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -274,11 +348,62 @@ export const SellerRegister = () => {
                   </div>
                 </div>
 
+                {/* Aadhaar Image Upload */}
+                <div className="space-y-2">
+                  <label className="text-sm font-bold text-gray-700 flex items-center gap-2">
+                    <ImagePlus size={16} /> Aadhaar Card Image <span className="text-xs font-normal text-gray-400">(Optional)</span>
+                  </label>
+                  {!aadhaarImagePreview ? (
+                    <label className="block cursor-pointer">
+                      <div className="w-full h-36 rounded-2xl border-2 border-dashed border-purple-200 bg-purple-50/30 flex flex-col items-center justify-center transition-all hover:bg-purple-50 hover:border-purple-300 group">
+                        <div className="w-12 h-12 rounded-full bg-white flex items-center justify-center text-brand mb-3 shadow-sm group-hover:scale-110 transition-transform">
+                          <Camera size={22} />
+                        </div>
+                        <p className="text-sm font-semibold text-brand">Upload Aadhaar Image</p>
+                        <p className="text-xs text-gray-400 mt-1">JPG, PNG • Max 5MB</p>
+                      </div>
+                      <input
+                        type="file"
+                        className="hidden"
+                        onChange={handleAadhaarImageSelect}
+                        accept="image/jpeg,image/png,image/jpg,image/webp"
+                      />
+                    </label>
+                  ) : (
+                    <div className="relative rounded-2xl overflow-hidden border-2 border-purple-200 bg-purple-50/30">
+                      <img
+                        src={aadhaarImagePreview}
+                        alt="Aadhaar Preview"
+                        className="w-full h-40 object-contain bg-gray-50 p-2"
+                      />
+                      <button
+                        type="button"
+                        onClick={removeAadhaarImage}
+                        className="absolute top-2 right-2 w-8 h-8 rounded-full bg-red-500 text-white flex items-center justify-center hover:bg-red-600 transition-colors shadow-lg"
+                      >
+                        <X size={16} />
+                      </button>
+                      <div className="px-4 py-2 bg-green-50 border-t border-green-100 flex items-center gap-2 text-green-700 text-sm">
+                        <CheckCircle2 size={14} />
+                        <span className="font-medium">Image selected — will be uploaded on submit</span>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
                 <button
                   type="submit"
-                  className="w-full rounded-full bg-brand py-4 font-bold text-white shadow-xl shadow-brand/20 hover:bg-brand-hover transition-all active:scale-[0.98] mt-4"
+                  disabled={loading}
+                  className="w-full rounded-full bg-brand py-4 font-bold text-white shadow-xl shadow-brand/20 hover:bg-brand-hover transition-all active:scale-[0.98] mt-4 disabled:opacity-60 flex items-center justify-center gap-2"
                 >
-                  Continue to Onboarding
+                  {loading ? (
+                    <>
+                      <Loader className="animate-spin" size={20} />
+                      {uploadingImage ? 'Uploading Image...' : 'Processing...'}
+                    </>
+                  ) : (
+                    'Continue to Onboarding'
+                  )}
                 </button>
               </form>
             </div>

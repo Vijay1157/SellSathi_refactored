@@ -41,11 +41,11 @@ export default function ConsumerSettingsTab({
                 <div className="space-y-6">
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-2">Display Name</label>
-                        <input type="text" value={profileData.displayName}
-                            onChange={(e) => setProfileData(prev => ({ ...prev, displayName: e.target.value }))}
+                        <input type="text" value={profileData.fullName}
+                            onChange={(e) => setProfileData(prev => ({ ...prev, fullName: e.target.value }))}
                             readOnly={!editingProfile}
                             className={`w-full px-4 py-2 border border-gray-300 rounded-lg ${editingProfile ? 'bg-white' : 'bg-gray-50 text-gray-600'} focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all`}
-                            placeholder="Enter your display name" />
+                            placeholder="Enter your full name" />
                     </div>
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-2">Email Address</label>

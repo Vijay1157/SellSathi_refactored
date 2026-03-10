@@ -10,6 +10,10 @@ export default {
         primary: 'hsl(230, 85%, 60%)',
         secondary: 'hsl(280, 80%, 65%)',
         accent: 'hsl(190, 90%, 50%)',
+        brand: {
+          DEFAULT: '#7B4DDB',
+          hover: '#6A3FD8',
+        }
       },
     },
   },

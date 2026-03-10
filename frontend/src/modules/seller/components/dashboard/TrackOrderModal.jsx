@@ -105,9 +105,24 @@ export default function TrackOrderModal({ show, trackingOrder, onClose, onDownlo
                             <Truck size={16} className="text-primary" /> Shipping Details
                         </h4>
                         {trackingOrder.status === 'Cancelled' ? (
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', color: 'var(--error)' }}>
-                                <X size={18} />
-                                <p style={{ margin: 0, fontSize: '0.9rem', fontWeight: 600 }}>Order cancelled.</p>
+                            <div>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', color: 'var(--error)', marginBottom: '1rem' }}>
+                                    <X size={18} />
+                                    <p style={{ margin: 0, fontSize: '0.9rem', fontWeight: 600 }}>Order cancelled.</p>
+                                </div>
+                                {trackingOrder.cancellationReason && (
+                                    <div style={{ 
+                                        padding: '0.75rem 1rem', 
+                                        background: 'rgba(239, 68, 68, 0.08)', 
+                                        borderRadius: '10px', 
+                                        border: '1px solid rgba(239, 68, 68, 0.2)' 
+                                    }}>
+                                        <p className="text-muted" style={{ fontSize: '0.75rem', margin: '0 0 0.3rem 0', fontWeight: 600 }}>Cancellation Reason:</p>
+                                        <p style={{ margin: 0, fontSize: '0.9rem', color: 'var(--text)', lineHeight: 1.5 }}>
+                                            {trackingOrder.cancellationReason}
+                                        </p>
+                                    </div>
+                                )}
                             </div>
                         ) : trackingOrder.awbNumber ? (
                             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>

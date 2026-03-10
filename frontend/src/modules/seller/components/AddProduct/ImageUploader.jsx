@@ -62,7 +62,7 @@ export default function ImageUploader({
                                         const formData = new FormData();
                                         formData.append('image', file);
                                         try {
-                                            const response = await authFetch('/seller/upload-image', { method: 'POST', body: formData });
+                                            const response = await authFetch('/auth/upload-image', { method: 'POST', body: formData });
                                             const data = await response.json();
                                             if (data.success) { setProduct(p => ({ ...p, image: data.url })); }
                                             else { alert('Upload failed: ' + data.message); }
@@ -110,7 +110,7 @@ export default function ImageUploader({
                                                     const formData = new FormData();
                                                     formData.append('image', file);
                                                     try {
-                                                        const response = await authFetch('/seller/upload-image', { method: 'POST', body: formData });
+                                                        const response = await authFetch('/auth/upload-image', { method: 'POST', body: formData });
                                                         const data = await response.json();
                                                         if (data.success) { setVariantImages(prev => ({ ...prev, [label]: data.url })); }
                                                         else { alert('Upload failed: ' + data.message); }

@@ -56,11 +56,10 @@ export default function ProductReviews({
         }
 
         try {
-            const token = await user.getIdToken();
-            const res = await fetch(`${import.meta.env.VITE_API_URL || ''}/reviews/${productId}`, {
+            const res = await authFetch(`/reviews`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
                 body: JSON.stringify({
+                    productId: productId,
                     rating: newReview.rating,
                     title: newReview.title,
                     body: newReview.body,
@@ -77,12 +76,30 @@ export default function ProductReviews({
                 setEligibleOrder(null);
 
                 clearProductReviewCache(productId);
+                
+                // Clear all product caches to show updated ratings everywhere
+                try {
+                    const keys = Object.keys(localStorage);
+                    keys.forEach(key => {
+                        if (key.startsWith('fs_cache_')) {
+                            localStorage.removeItem(key);
+                        }
+                    });
+                } catch (e) {
+                    console.error('Error clearing caches:', e);
+                }
 
+                // Dispatch event to update reviews
                 window.dispatchEvent(new CustomEvent('reviewsUpdate', {
                     detail: { productId, review: data.review }
                 }));
 
-                alert('✅ Review submitted successfully! It will be visible after a short processing time.');
+                alert('✅ Review submitted successfully! The page will refresh to show your review.');
+                
+                // Reload page to show updated reviews
+                setTimeout(() => {
+                    window.location.reload();
+                }, 1000);
             } else {
                 alert('❌ Failed to submit review: ' + data.message);
             }
@@ -104,7 +121,7 @@ export default function ProductReviews({
         formData.append('image', file);
 
         try {
-            const res = await authFetch('/seller/upload-image', {
+            const res = await authFetch('/auth/upload-image', {
                 method: 'POST',
                 body: formData
             });
@@ -228,10 +245,10 @@ export default function ProductReviews({
                                 <div key={rev.id || i} className="rev-card-vertical">
                                     <div className="rev-top">
                                         <div className="rev-user-id">
-                                            <div className="u-circ">{rev.author?.charAt(0)}</div>
+                                            <div className="u-circ">{(rev.customerName || rev.author || 'A')?.charAt(0)}</div>
                                             <div className="u-meta">
                                                 <div className="flex items-center gap-2">
-                                                    <span className="un">{rev.author}</span>
+                                                    <span className="un">{rev.customerName || rev.author || 'Anonymous'}</span>
                                                     {rev.verified && (
                                                         <span className="verified-badge" title="Verified Purchase">
                                                             <Check size={12} /> Verified

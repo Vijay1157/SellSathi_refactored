@@ -3,12 +3,13 @@ import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { ShoppingCart, User, Search, LogOut, ChevronDown, Heart, ShoppingBag } from 'lucide-react';
 import AuthModal from '@/modules/auth/components/AuthModal';
 import { collection, getDocs, query, limit } from 'firebase/firestore';
-import { db } from '@/modules/shared/config/firebase';
+import { db, auth } from '@/modules/shared/config/firebase';
 import { listenToCart } from '@/modules/shared/utils/cartUtils';
 import { listenToWishlist } from '@/modules/shared/utils/wishlistUtils';
 import { MAIN_CATEGORIES, SPECIAL_CATEGORIES, SUBCATEGORIES } from '@/modules/shared/config/categories';
 import { fetchWithCache } from '@/modules/shared/utils/firestoreCache';
 import NavbarMegaMenu from './NavbarMegaMenu';
+import { authFetch } from '@/modules/shared/utils/api';
 import './Navbar.css';
 
 export default function Navbar() {
@@ -112,7 +113,7 @@ export default function Navbar() {
                         );
                     } else {
                         // For other categories, try exact match first, then fuzzy match
-                        catProducts = products.filter(p => 
+                        catProducts = products.filter(p =>
                             p.category === cat ||
                             p.category?.toLowerCase().includes(cat.toLowerCase()) ||
                             p.subCategory?.toLowerCase().includes(cat.toLowerCase())
@@ -203,7 +204,12 @@ export default function Navbar() {
         };
     }, []);
 
-    const handleSignOut = () => {
+    const handleSignOut = async () => {
+        try {
+            await auth.signOut();
+        } catch (error) {
+            console.error('Error signing out from Firebase:', error);
+        }
         localStorage.removeItem('user');
         localStorage.removeItem('userName');
         localStorage.removeItem('dob');
@@ -235,6 +241,37 @@ export default function Navbar() {
     const handleItemClick = (category, subCategory, item) => {
         setActiveMegaMenu(null);
         navigate(`/products?category=${category}&sub=${subCategory}&item=${item}`);
+    };
+
+    const handleBecomeSellerClick = async () => {
+        if (!user) {
+            setIsLoginModalOpen(true);
+            return;
+        }
+
+        if (user.role === 'ADMIN') {
+            return; // Admin button is already hidden, but safety check
+        }
+
+        // Check seller status via backend
+        try {
+            const response = await authFetch('/auth/check-seller-status');
+            const data = await response.json();
+            if (data.success && data.hasApplied) {
+                if (data.sellerStatus === 'APPROVED') {
+                    window.open('/seller/dashboard', '_blank');
+                    return;
+                } else if (data.sellerStatus === 'PENDING') {
+                    alert('You have already applied to become a seller. Your application is currently under review. Please wait for admin approval.');
+                    return;
+                }
+                // REJECTED — allow re-application
+            }
+        } catch (err) {
+            console.error('Error checking seller status:', err);
+        }
+
+        window.open('/seller', '_blank');
     };
 
     return (
@@ -270,12 +307,21 @@ export default function Navbar() {
                                     />
                                 </div>
 
-                                <Link 
-                                    to="/seller/register" 
-                                    className="btn btn-seller"
-                                >
-                                    Become a Seller
-                                </Link>
+                                {user && user.role !== 'ADMIN' ? (
+                                    <button
+                                        onClick={handleBecomeSellerClick}
+                                        className="btn btn-seller"
+                                    >
+                                        {user.role === 'SELLER' ? 'Dashboard' : 'Become a Seller'}
+                                    </button>
+                                ) : !user ? (
+                                    <button
+                                        onClick={() => setIsLoginModalOpen(true)}
+                                        className="btn btn-seller"
+                                    >
+                                        Become a Seller
+                                    </button>
+                                ) : null}
                             </>
                         )}
 
@@ -352,9 +398,9 @@ export default function Navbar() {
                     </div>
                 </div>
 
-                {/* Categories section - Always visible (static) */}
-                {!location.pathname.startsWith('/checkout') && (
-                    <div 
+                {/* Categories section - Only visible on Home page */}
+                {location.pathname === '/' && (
+                    <div
                         className="sub-nav-wrapper"
                         style={{ display: 'block' }}
                     >

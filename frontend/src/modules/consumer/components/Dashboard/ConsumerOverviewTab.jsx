@@ -21,7 +21,7 @@ const formatDate = (timestamp) => {
 export default function ConsumerOverviewTab({
     stats, orders, selectedOrder, setSelectedOrder,
     recentlyViewed, recommendedProducts,
-    onDownloadInvoice, onSwitchTab
+    onDownloadInvoice, onSwitchTab, onCancelOrder
 }) {
     const navigate = useNavigate();
 
@@ -260,6 +260,12 @@ export default function ConsumerOverviewTab({
                                     className="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-sm font-medium hover:bg-gray-50 transition-colors flex items-center justify-center gap-2">
                                     <Download size={16} /> Download Invoice
                                 </button>
+                                {['Placed', 'Pending', 'Processing'].includes(selectedOrder.status) && (
+                                    <button onClick={() => onCancelOrder(selectedOrder.id)}
+                                        className="w-full px-4 py-2.5 border border-red-200 text-red-600 rounded-lg text-sm font-medium hover:bg-red-50 transition-colors">
+                                        Cancel Order
+                                    </button>
+                                )}
                             </div>
                         </div>
                     )}

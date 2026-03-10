@@ -2,6 +2,7 @@ import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Star, ShoppingCart, Heart, Clock } from 'lucide-react';
 import { addToCart } from '@/modules/shared/utils/cartUtils';
+import { addToWishlist, removeFromWishlist } from '@/modules/shared/utils/wishlistUtils';
 import { getProductPricing } from '@/modules/shared/utils/priceUtils';
 import PriceDisplay from './PriceDisplay';
 import Rating from './Rating';
@@ -21,9 +22,8 @@ export default function QuickViewModal({ isOpen, onClose, product, navigate }) {
     const [reviewStats, setReviewStats] = React.useState({ averageRating: 0, totalReviews: 0 });
 
     React.useEffect(() => {
-        const saved = JSON.parse(localStorage.getItem('wishlist') || '[]');
-        setWishlist(saved);
-        setIsSaved(saved.some(item => item.id === product.id));
+        setWishlist([]);
+        setIsSaved(false);
 
         if (product.storage && product.storage.length > 0) setSelectedStorage(product.storage[0]);
         if (product.memory && product.memory.length > 0) setSelectedMemory(product.memory[0]);
@@ -47,23 +47,19 @@ export default function QuickViewModal({ isOpen, onClose, product, navigate }) {
         });
     }, [product, selectedSize, selectedStorage, selectedMemory, purchaseOption]);
 
-    const toggleWishlist = (e) => {
+    const toggleWishlist = async (e) => {
         if (e) e.stopPropagation();
-        if (!auth.currentUser) {
-            window.dispatchEvent(new Event('openLoginModal'));
-            return;
+        try {
+            if (isSaved) {
+                await removeFromWishlist(product.id);
+                setIsSaved(false);
+            } else {
+                const res = await addToWishlist(product);
+                if (res.success) setIsSaved(true);
+            }
+        } catch (error) {
+            console.error('Wishlist toggle failed:', error);
         }
-        const saved = JSON.parse(localStorage.getItem('wishlist') || '[]');
-        const alreadySaved = saved.some(item => item.id === product.id);
-        let updated;
-        if (alreadySaved) {
-            updated = saved.filter(item => item.id !== product.id);
-        } else {
-            updated = [...saved, product];
-        }
-        localStorage.setItem('wishlist', JSON.stringify(updated));
-        setWishlist(updated);
-        setIsSaved(!alreadySaved);
     };
 
     const handleViewProduct = (e) => {

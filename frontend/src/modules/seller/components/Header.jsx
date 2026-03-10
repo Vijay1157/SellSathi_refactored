@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { LoginModal } from './LoginModal';
+import AuthModal from '@/modules/auth/components/AuthModal';
 
 export const Header = () => {
   const [isLoginOpen, setIsLoginOpen] = useState(false);
@@ -37,7 +37,7 @@ export const Header = () => {
           </div>
         </div>
       </header>
-      <LoginModal isOpen={isLoginOpen} onClose={() => setIsLoginOpen(false)} role="user" />
+      <AuthModal isOpen={isLoginOpen} onClose={() => setIsLoginOpen(false)} hideRegister={true} />
     </>
   );
 };

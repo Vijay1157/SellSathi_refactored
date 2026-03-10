@@ -41,7 +41,9 @@ export default function ProtectedRoute({ children, requiredRole = null }) {
 
                 // Check for consumer access
                 if (requiredRole === 'CONSUMER') {
-                    if (userData.role !== 'CONSUMER') {
+                    // SELLER and ADMIN roles are allowed to access consumer routes (shopping, etc.)
+                    const allowedRoles = ['CONSUMER', 'SELLER', 'ADMIN'];
+                    if (!allowedRoles.includes(userData.role)) {
                         console.warn(`Unauthorized consumer access - Role: ${userData.role}`);
                         setIsAuthorized(false);
                         return;

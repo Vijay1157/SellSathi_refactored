@@ -12,6 +12,7 @@ router.get('/:uid/addresses', consumerController.getAddresses);
 router.post('/:uid/address', consumerController.saveAddress);
 router.delete('/:uid/address/:addressId', consumerController.deleteAddress);
 
+router.get('/:uid/profile', consumerController.getProfile);
 router.post('/:uid/profile', consumerController.updateProfile);
 router.delete('/:uid/account', consumerController.deleteAccount);
 

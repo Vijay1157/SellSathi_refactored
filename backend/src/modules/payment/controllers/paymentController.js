@@ -5,6 +5,7 @@ const crypto = require('crypto');
 const invoiceService = require('../../../shared/services/invoiceService');
 const emailService = require('../../../shared/services/emailService');
 const shiprocketService = require('../../../shared/services/shiprocketService');
+const { reduceStock } = require('../../../utils/stockUtils');
 
 /**
  * Handle Razorpay order creation.
@@ -54,6 +55,8 @@ const verifyPayment = async (req, res) => {
             const invPath = await invoiceService.generateInvoice({ ...orderData, documentId: orderRef.id });
             await orderRef.update({ invoiceGenerated: true, invoicePath: invPath });
             if (orderData.email) emailService.sendOrderConfirmation(orderData.email, { ...orderData, documentId: orderRef.id }, invPath).catch(err => console.error(err));
+            // Notify sellers about the new order
+            emailService.notifySellers({ ...orderData, documentId: orderRef.id }).catch(err => console.error('[VerifyPayment] Seller notification error:', err));
         } catch (e) {
             console.error("Invoice generation error:", e.message);
         }
@@ -66,6 +69,11 @@ const verifyPayment = async (req, res) => {
             }
         } catch (e) {
             console.error("Shiprocket shipment logic error:", e.message);
+        }
+
+        // Reduce stock atomically
+        if (orderData.items) {
+            reduceStock(orderData.items).catch(err => console.error("Stock reduction error:", err));
         }
 
         return res.status(200).json({ success: true, orderId: orderData.orderId, documentId: orderRef.id });
@@ -104,6 +112,8 @@ const codOrder = async (req, res) => {
             const invPath = await invoiceService.generateInvoice({ ...orderData, documentId: orderRef.id });
             await orderRef.update({ invoiceGenerated: true, invoicePath: invPath });
             if (orderData.email) emailService.sendOrderConfirmation(orderData.email, { ...orderData, documentId: orderRef.id }, invPath).catch(err => console.error(err));
+            // Notify sellers about the new order
+            emailService.notifySellers({ ...orderData, documentId: orderRef.id }).catch(err => console.error('[CODOrder] Seller notification error:', err));
         } catch (e) {
             console.error("Invoice generation error:", e.message);
         }
@@ -122,6 +132,11 @@ const codOrder = async (req, res) => {
             }
         } catch (e) {
             console.error("Shiprocket shipment logic error:", e.message);
+        }
+
+        // Reduce stock atomically
+        if (orderData.items) {
+            reduceStock(orderData.items).catch(err => console.error("Stock reduction error:", err));
         }
 
         return res.status(200).json({ success: true, orderId: orderData.orderId, documentId: orderRef.id });

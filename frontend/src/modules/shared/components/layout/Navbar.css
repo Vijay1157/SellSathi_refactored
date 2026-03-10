@@ -26,6 +26,11 @@
     box-sizing: border-box;
 }
 
+/* Checkout page specific - adjust spacing when search is hidden */
+.main-nav:has(.brand-logo) {
+    justify-content: space-between;
+}
+
 .brand-logo { 
     font-size: 28px; 
     font-weight: 900; 

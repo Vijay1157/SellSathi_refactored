@@ -4,13 +4,22 @@ import { authFetch } from './api';
 import { getProductPricing } from './priceUtils';
 
 // Helper to get current user UID (consistent with wishlist)
+// Helper to get current user UID (syncs with Navbar state and prevents ghost sessions)
 const getUID = () => {
+    const localUserStr = localStorage.getItem('user');
+    if (!localUserStr) {
+        // Local storage says logged out. Clean up any orphaned Firebase session.
+        if (auth.currentUser) {
+            auth.signOut().catch(console.error);
+        }
+        return null;
+    }
+
     try {
-        const localUser = JSON.parse(localStorage.getItem('user') || '{}');
-        if (localUser?.uid?.startsWith('test_')) return localUser.uid;
-        return auth.currentUser?.uid || localUser?.uid;
+        const localUser = JSON.parse(localUserStr);
+        return auth.currentUser?.uid || localUser.uid;
     } catch (e) {
-        return auth.currentUser?.uid;
+        return null;
     }
 };
 
@@ -42,17 +51,8 @@ export const addToCart = async (product, selections = {}) => {
         };
 
         if (!uid) {
-            // Guest mode: localStorage
-            const localCart = JSON.parse(localStorage.getItem('tempCart') || '[]');
-            const existingItemIndex = localCart.findIndex(item => item.id === cartItemId);
-            if (existingItemIndex > -1) {
-                localCart[existingItemIndex].quantity += 1;
-            } else {
-                localCart.push(cartItemData);
-            }
-            localStorage.setItem('tempCart', JSON.stringify(localCart));
-            window.dispatchEvent(new Event('cartUpdate'));
-            return { success: true, message: "Added to guest cart" };
+            window.dispatchEvent(new Event('openLoginModal'));
+            return { success: false, message: "Please login to add items to cart", triggerLogin: true };
         } else {
             // Logged in: Backend API — POST /consumer/:uid/cart with action:'add'
             const response = await authFetch(`/consumer/${uid}/cart`, {
@@ -76,8 +76,7 @@ export const listenToCart = (callback) => {
         try {
             const uid = getUID();
             if (!uid) {
-                const localCart = JSON.parse(localStorage.getItem('tempCart') || '[]');
-                callback(localCart);
+                callback([]);
             } else {
                 // GET /consumer/:uid/cart
                 const response = await authFetch(`/consumer/${uid}/cart`);
@@ -94,11 +93,15 @@ export const listenToCart = (callback) => {
         }
     };
 
-    window.addEventListener('cartUpdate', handleUpdate);
+    // Initial load
     handleUpdate();
+
+    window.addEventListener('cartUpdate', handleUpdate);
+    window.addEventListener('userDataChanged', handleUpdate);
 
     return () => {
         window.removeEventListener('cartUpdate', handleUpdate);
+        window.removeEventListener('userDataChanged', handleUpdate);
     };
 };
 
@@ -106,11 +109,7 @@ export const removeFromCart = async (cartItemId) => {
     try {
         const uid = getUID();
         if (!uid) {
-            const localCart = JSON.parse(localStorage.getItem('tempCart') || '[]');
-            const updated = localCart.filter(item => item.id !== cartItemId);
-            localStorage.setItem('tempCart', JSON.stringify(updated));
-            window.dispatchEvent(new Event('cartUpdate'));
-            return { success: true };
+            return { success: false, message: "Authentication required" };
         } else {
             // POST /consumer/:uid/cart with action:'remove'
             const response = await authFetch(`/consumer/${uid}/cart`, {
@@ -133,9 +132,7 @@ export const clearCart = async () => {
     try {
         const uid = getUID();
         if (!uid) {
-            localStorage.setItem('tempCart', '[]');
-            window.dispatchEvent(new Event('cartUpdate'));
-            return { success: true };
+            return { success: false };
         } else {
             // POST /consumer/:uid/cart with action:'clear'
             const response = await authFetch(`/consumer/${uid}/cart`, {
@@ -158,16 +155,7 @@ export const updateCartItemQuantity = async (cartItemId, newQuantity) => {
     try {
         const uid = getUID();
         if (!uid) {
-            // Guest mode: localStorage
-            const localCart = JSON.parse(localStorage.getItem('tempCart') || '[]');
-            const itemIndex = localCart.findIndex(item => item.id === cartItemId);
-            if (itemIndex > -1) {
-                localCart[itemIndex].quantity = newQuantity;
-                localStorage.setItem('tempCart', JSON.stringify(localCart));
-                window.dispatchEvent(new Event('cartUpdate'));
-                return { success: true };
-            }
-            return { success: false, message: 'Item not found' };
+            return { success: false, message: 'Authentication required' };
         } else {
             // Fetch current cart, update quantity, overwrite
             const getRes = await authFetch(`/consumer/${uid}/cart`);

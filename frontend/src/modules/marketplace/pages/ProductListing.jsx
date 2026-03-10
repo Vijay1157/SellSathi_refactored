@@ -77,9 +77,6 @@ export default function ProductListing() {
             }
         };
         fetchProducts();
-
-        const saved = JSON.parse(localStorage.getItem('wishlist') || '[]');
-        setWishlist(saved);
     }, []);
 
     const fetchReviewsForProducts = async (productsToFetch) => {
@@ -172,10 +169,6 @@ export default function ProductListing() {
 
     const toggleWishlist = async (e, p) => {
         if (e) { e.stopPropagation(); e.preventDefault(); }
-        if (!auth.currentUser) {
-            window.dispatchEvent(new Event('openLoginModal'));
-            return;
-        }
         const isSaved = wishlist.some(item => item.id === p.id);
         try {
             if (isSaved) { await removeFromWishlist(p.id); }
@@ -186,10 +179,6 @@ export default function ProductListing() {
     };
 
     const handleAddToCart = async (p) => {
-        if (!auth.currentUser) {
-            window.dispatchEvent(new Event('openLoginModal'));
-            return;
-        }
         const res = await addToCart(p);
         if (res.success) {
             alert('✅ Product added to cart successfully!');

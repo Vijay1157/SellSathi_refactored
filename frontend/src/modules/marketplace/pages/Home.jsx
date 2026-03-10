@@ -126,10 +126,6 @@ export default function Home() {
 
     const handleAddToCart = async (e, product) => {
         if (e) e.stopPropagation();
-        if (!auth.currentUser) {
-            window.dispatchEvent(new Event('openLoginModal'));
-            return;
-        }
         const res = await addToCart(product);
         if (res.success) {
             alert('✅ Product added to cart successfully!');
@@ -151,14 +147,7 @@ export default function Home() {
             e.stopPropagation();
             e.preventDefault();
         }
-
-        if (!auth.currentUser) {
-            window.dispatchEvent(new Event('openLoginModal'));
-            return;
-        }
-
         const alreadySaved = wishlist.some(item => item.id === product.id);
-
         try {
             if (alreadySaved) {
                 await removeFromWishlist(product.id);
@@ -166,7 +155,7 @@ export default function Home() {
                 await addToWishlist(product);
             }
         } catch (error) {
-            console.error('Wishlist error:', error);
+            console.error('Wishlist toggle failed:', error);
         }
     };
 

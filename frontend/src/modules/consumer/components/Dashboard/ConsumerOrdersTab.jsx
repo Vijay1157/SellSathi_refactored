@@ -15,7 +15,7 @@ const formatDate = (timestamp) => {
     } catch { return 'Invalid Date'; }
 };
 
-export default function ConsumerOrdersTab({ orders, onSelectOrder, onDownloadInvoice }) {
+export default function ConsumerOrdersTab({ orders, onSelectOrder, onDownloadInvoice, onCancelOrder }) {
     const navigate = useNavigate();
 
     return (
@@ -70,6 +70,13 @@ export default function ConsumerOrdersTab({ orders, onSelectOrder, onDownloadInv
                                         <span className="text-gray-300">|</span>
                                         <button onClick={(e) => { e.stopPropagation(); onDownloadInvoice(order.orderId || order.id); }}
                                             className="text-sm text-gray-600 hover:underline font-medium">Invoice</button>
+                                        {['Placed', 'Pending', 'Processing'].includes(order.status) && (
+                                            <>
+                                                <span className="text-gray-300">|</span>
+                                                <button onClick={(e) => { e.stopPropagation(); onCancelOrder(order.id); }}
+                                                    className="text-sm text-red-600 hover:underline font-medium">Cancel</button>
+                                            </>
+                                        )}
                                     </div>
                                 </td>
                             </tr>
