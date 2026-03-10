@@ -91,7 +91,12 @@ export default function ProtectedRoute({ children, requiredRole = null }) {
     }, [isAuthorized, navigate, requiredRole]);
 
     if (isAuthorized === null) {
-        return null; // Loading state
+        return (
+            <div className="flex flex-col items-center justify-center h-screen bg-white">
+                <div className="w-12 h-12 border-4 border-indigo-200 border-t-indigo-600 rounded-full animate-spin"></div>
+                <p className="mt-4 text-gray-600 font-semibold">Verifying access...</p>
+            </div>
+        );
     }
 
     if (isAuthorized === false) {
