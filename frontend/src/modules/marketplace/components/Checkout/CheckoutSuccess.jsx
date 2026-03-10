@@ -47,7 +47,7 @@ export default function CheckoutSuccess({ orderId, shippingAddress, paymentMetho
                 </div>
                 <div className="flex flex-col sm:flex-row gap-4 pt-4">
                     <button
-                        onClick={() => window.location.href = `/track?orderId=${orderId}`}
+                        onClick={() => window.location.href = `/#/track?orderId=${orderId}`}
                         className="flex-1 py-5 bg-primary text-white rounded-2xl font-black shadow-xl shadow-primary/20 hover:scale-[1.02] active:scale-95 transition-all"
                     >
                         Track Detailed Status
