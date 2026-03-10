@@ -24,3 +24,17 @@
 [2026-03-10T10:32:08.271Z] ERROR with gemini-2.0-flash-exp: [GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent: [404 Not Found] models/gemini-2.0-flash-exp is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.
 [2026-03-10T10:32:08.272Z] Attempt with: gemini-1.5-pro | Attempt: 1
 [2026-03-10T10:32:10.218Z] ERROR with gemini-1.5-pro: [GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro:generateContent: [404 Not Found] models/gemini-1.5-pro is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.
+[2026-03-10T10:36:14.063Z] --- START NEW EXTRACTION (MIME: image/jpeg) ---
+[2026-03-10T10:36:14.064Z] Attempt with: gemini-flash-latest | Attempt: 1
+[2026-03-10T10:36:26.451Z] RAW AI RESPONSE: {
+  "fullName": "Rahul Kulkarni",
+  "aadhaarNumber": "312956581737",
+  "phoneNumber": "7483743936",
+  "age": "19",
+  "dob": "29/11/2004",
+  "gender": "MALE",
+  "address": "Rahul Kulkarni, Prashanth Kulkarni, 07, Malasakant Nivas, Shubham Layout, Vijayapur, Athani Road, VTC: Bijapur, PO: Bijapur Chanda Bavadi, District: Vijayapura, State: Karnataka, PIN Code: 586101"
+}
+[2026-03-10T10:36:26.452Z] Processing DOB for age: "29/11/2004" -> Cleaned: "29/11/2004"
+[2026-03-10T10:36:26.453Z] SUCCESS: Calculated Age 22 from year 2004
+[2026-03-10T10:36:26.454Z] FINAL PARSED: {"fullName":"Rahul Kulkarni","aadhaarNumber":"312956581737","phoneNumber":"7483743936","dob":"29/11/2004","gender":"MALE","address":"Rahul Kulkarni, Prashanth Kulkarni, 07, Malasakant Nivas, Shubham Layout, Vijayapur, Athani Road, VTC: Bijapur, PO: Bijapur Chanda Bavadi, District: Vijayapura, State: Karnataka, PIN Code: 586101","age":"22"}
