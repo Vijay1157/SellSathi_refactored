@@ -6,6 +6,7 @@ export default function ProfileTab({ adminData, fetchAdminProfile }) {
     const [isEditing, setIsEditing] = useState(false);
     const [isSaving, setIsSaving] = useState(false);
     const [isUploadingImage, setIsUploadingImage] = useState(false);
+    const [showImageModal, setShowImageModal] = useState(false);
     
     const [formData, setFormData] = useState({
         name: '',
@@ -184,7 +185,14 @@ export default function ProfileTab({ adminData, fetchAdminProfile }) {
                                     <img 
                                         src={adminData.profileImage} 
                                         alt="Admin Profile" 
-                                        style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                                        style={{ 
+                                            width: '100%', 
+                                            height: '100%', 
+                                            objectFit: 'cover',
+                                            cursor: 'pointer'
+                                        }}
+                                        onClick={() => setShowImageModal(true)}
+                                        title="Click to view full size"
                                     />
                                 ) : (
                                     <User size={80} style={{ color: 'var(--text-muted)' }} />
@@ -411,6 +419,99 @@ export default function ProfileTab({ adminData, fetchAdminProfile }) {
                     </div>
                 </div>
             </div>
+
+            {/* Image Preview Modal */}
+            {showImageModal && adminData.profileImage && (
+                <div 
+                    style={{
+                        position: 'fixed',
+                        top: 0,
+                        left: 0,
+                        right: 0,
+                        bottom: 0,
+                        backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        zIndex: 1000,
+                        padding: '2rem'
+                    }}
+                    onClick={() => setShowImageModal(false)}
+                >
+                    <div 
+                        style={{
+                            position: 'relative',
+                            maxWidth: '90vw',
+                            maxHeight: '90vh',
+                            backgroundColor: 'white',
+                            borderRadius: '12px',
+                            overflow: 'hidden',
+                            boxShadow: '0 20px 60px rgba(0, 0, 0, 0.3)'
+                        }}
+                        onClick={(e) => e.stopPropagation()}
+                    >
+                        {/* Close Button */}
+                        <button
+                            onClick={() => setShowImageModal(false)}
+                            style={{
+                                position: 'absolute',
+                                top: '15px',
+                                right: '15px',
+                                background: 'rgba(0, 0, 0, 0.7)',
+                                color: 'white',
+                                border: 'none',
+                                borderRadius: '50%',
+                                width: '40px',
+                                height: '40px',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                cursor: 'pointer',
+                                zIndex: 1001,
+                                transition: 'all 0.2s'
+                            }}
+                            onMouseOver={(e) => e.currentTarget.style.background = 'rgba(0, 0, 0, 0.9)'}
+                            onMouseOut={(e) => e.currentTarget.style.background = 'rgba(0, 0, 0, 0.7)'}
+                        >
+                            <X size={20} />
+                        </button>
+
+                        {/* Image */}
+                        <img 
+                            src={adminData.profileImage}
+                            alt="Admin Profile - Full Size"
+                            style={{
+                                width: '100%',
+                                height: '100%',
+                                objectFit: 'contain',
+                                maxWidth: '80vw',
+                                maxHeight: '80vh'
+                            }}
+                        />
+
+                        {/* Image Info */}
+                        <div 
+                            style={{
+                                position: 'absolute',
+                                bottom: 0,
+                                left: 0,
+                                right: 0,
+                                background: 'linear-gradient(transparent, rgba(0, 0, 0, 0.8))',
+                                color: 'white',
+                                padding: '2rem 1.5rem 1.5rem',
+                                textAlign: 'center'
+                            }}
+                        >
+                            <h4 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 600 }}>
+                                Admin Profile Picture
+                            </h4>
+                            <p style={{ margin: '0.5rem 0 0', fontSize: '0.9rem', opacity: 0.8 }}>
+                                Click outside to close
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }
