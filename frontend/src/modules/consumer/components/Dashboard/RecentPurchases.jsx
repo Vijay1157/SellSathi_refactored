@@ -19,7 +19,7 @@ export default function RecentPurchases({ orders, loading, onOrderClick, activeO
                 </div>
                 <h3 className="text-lg font-bold text-gray-900 mb-2">No purchases yet</h3>
                 <p className="text-gray-500 max-w-xs mx-auto">When you buy things from the marketplace, they will appear here.</p>
-                <button className="mt-6 btn btn-primary px-6" onClick={() => window.location.href = '/products'}>
+                <button className="mt-6 btn btn-primary px-6" onClick={() => window.location.href = '/#/products'}>
                     Browse Products
                 </button>
             </div>

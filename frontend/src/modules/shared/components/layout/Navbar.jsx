@@ -249,29 +249,42 @@ export default function Navbar() {
             return;
         }
 
-        if (user.role === 'ADMIN') {
-            return; // Admin button is already hidden, but safety check
+        if (user.role === 'ADMIN') return;
+
+        // If ALREADY marked as SELLER in localStorage, go directly. Don't wait for API.
+        if (user.role === 'SELLER') {
+            console.log("[Navbar] Role is SELLER, navigating to DASHBOARD...");
+            navigate('/seller/dashboard');
+            return;
         }
 
         // Check seller status via backend
         try {
+            console.log("[Navbar] Checking seller status via API...");
             const response = await authFetch('/auth/check-seller-status');
             const data = await response.json();
+            console.log("[Navbar] API Seller Status:", data);
+
             if (data.success && data.hasApplied) {
                 if (data.sellerStatus === 'APPROVED') {
-                    window.open('/seller/dashboard', '_blank');
+                    // Update localStorage to avoid future API checks
+                    const localUser = JSON.parse(localStorage.getItem('user') || '{}');
+                    localUser.role = 'SELLER';
+                    localStorage.setItem('user', JSON.stringify(localUser));
+                    window.dispatchEvent(new CustomEvent('userDataChanged'));
+
+                    navigate('/seller/dashboard');
                     return;
                 } else if (data.sellerStatus === 'PENDING') {
                     alert('You have already applied to become a seller. Your application is currently under review. Please wait for admin approval.');
                     return;
                 }
-                // REJECTED — allow re-application
             }
         } catch (err) {
-            console.error('Error checking seller status:', err);
+            console.error('[Navbar] Error checking seller status:', err);
         }
 
-        window.open('/seller', '_blank');
+        navigate('/seller');
     };
 
     return (

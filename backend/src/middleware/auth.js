@@ -55,7 +55,9 @@ const verifyAuth = async (req, res, next) => {
     try {
         const testUid = req.headers['x-test-uid'];
         if (ALLOW_TEST_UID && testUid) {
+            console.log(`[verifyAuth] Using Test UID: ${testUid}`);
             const userData = await _resolveTestUser(testUid);
+            console.log(`[verifyAuth] Resolved Test User to Role: ${userData.role}`);
             req.user = { uid: testUid, phone_number: userData.phone || null, role: userData.role, isTestMode: true };
             return next();
         }

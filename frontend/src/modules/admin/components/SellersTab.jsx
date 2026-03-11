@@ -1,4 +1,4 @@
-﻿import { useState } from 'react';
+import { useState } from 'react';
 import { Box, Check, X } from 'lucide-react';
 import { authFetch } from '@/modules/shared/utils/api';
 import SellerDetailModal from '@/modules/admin/components/SellerDetailModal';
@@ -41,15 +41,15 @@ export default function SellersTab({
             const response = await authFetch(`/admin/seller/${uid}/approve`, { method: 'POST' });
             const data = await response.json();
             if (data.success) {
-                alert('✅ Seller approved successfully! The seller has been notified via email.');
+                alert('? Seller approved successfully! The seller has been notified via email.');
                 setSelectedSeller(null);
                 fetchAllData();
             } else {
-                alert('❌ Failed to approve seller: ' + data.message);
+                alert('? Failed to approve seller: ' + data.message);
             }
         } catch (err) {
             console.error('Error approving seller:', err);
-            alert('❌ Error approving seller. Please try again.');
+            alert('? Error approving seller. Please try again.');
         }
     };
 
@@ -60,15 +60,15 @@ export default function SellersTab({
             const response = await authFetch(`/admin/seller/${uid}/reject`, { method: 'POST' });
             const data = await response.json();
             if (data.success) {
-                alert('✅ Seller rejected. The seller has been notified via email.');
+                alert('? Seller rejected. The seller has been notified via email.');
                 setSelectedSeller(null);
                 fetchAllData();
             } else {
-                alert('❌ Failed to reject seller: ' + data.message);
+                alert('? Failed to reject seller: ' + data.message);
             }
         } catch (err) {
             console.error('Error rejecting seller:', err);
-            alert('❌ Error rejecting seller. Please try again.');
+            alert('? Error rejecting seller. Please try again.');
         }
     };
 
@@ -80,13 +80,13 @@ export default function SellersTab({
             });
             const data = await response.json();
             if (data.success) {
-                alert('✅ Seller blocked successfully! The seller has been notified via email.');
+                alert('? Seller blocked successfully! The seller has been notified via email.');
                 setSelectedSeller(null);
                 fetchAllData();
-            } else alert('❌ Failed to block seller: ' + data.message);
+            } else alert('? Failed to block seller: ' + data.message);
         } catch (err) {
             console.error('Error blocking seller:', err);
-            alert('❌ Error blocking seller. Please try again.');
+            alert('? Error blocking seller. Please try again.');
         }
     };
 
@@ -96,73 +96,73 @@ export default function SellersTab({
             const response = await authFetch(`/admin/seller/${uid}/unblock`, { method: 'POST' });
             const data = await response.json();
             if (data.success) {
-                alert(`✅ Seller unblocked successfully! The seller has been moved to Pending Approvals.`);
+                alert(`? Seller unblocked successfully! The seller has been moved to Pending Approvals.`);
                 fetchAllData();
             } else {
-                alert('❌ Failed to unblock seller: ' + data.message);
+                alert('? Failed to unblock seller: ' + data.message);
             }
         } catch (err) {
             console.error('Error unblocking seller:', err);
-            alert('❌ Error unblocking seller. Please try again.');
+            alert('? Error unblocking seller. Please try again.');
         }
     };
 
     const handleDeleteSeller = async (uid, shopName) => {
-        if (!confirm(`⚠️ WARNING: This will permanently delete the seller "${shopName}" and ALL their data including:\n\n• All products\n• All reviews\n• Seller account\n\nThis action CANNOT be undone!\n\nAre you sure you want to continue?`)) return;
+        if (!confirm(`?? WARNING: This will permanently delete the seller "${shopName}" and ALL their data including:\n\n� All products\n� All reviews\n� Seller account\n\nThis action CANNOT be undone!\n\nAre you sure you want to continue?`)) return;
         try {
             const response = await authFetch(`/admin/seller/${uid}`, { method: 'DELETE' });
             const data = await response.json();
             if (data.success) {
-                alert(`✅ Seller deleted successfully!\n\nDeleted:\n• 1 seller account\n• ${data.deletedProducts} products\n• Related reviews`);
+                alert(`? Seller deleted successfully!\n\nDeleted:\n� 1 seller account\n� ${data.deletedProducts} products\n� Related reviews`);
                 fetchAllData();
             } else {
-                alert('❌ Failed to delete seller: ' + data.message);
+                alert('? Failed to delete seller: ' + data.message);
             }
         } catch (err) {
             console.error('Error deleting seller:', err);
-            alert('❌ Error deleting seller. Please try again.');
+            alert('? Error deleting seller. Please try again.');
         }
     };
 
     const handleDeleteAllBlockedSellers = async () => {
         const blockedCount = allSellers.filter(s => s.isBlocked).length;
-        if (blockedCount === 0) { alert('ℹ️ No blocked sellers to delete.'); return; }
-        if (!confirm(`⚠️ CRITICAL WARNING: This will permanently delete ALL ${blockedCount} blocked sellers and ALL their data including:\n\n• All products from all blocked sellers\n• All reviews\n• All seller accounts\n\nThis action CANNOT be undone!\n\nType "DELETE ALL" in the next prompt to confirm.`)) return;
+        if (blockedCount === 0) { alert('?? No blocked sellers to delete.'); return; }
+        if (!confirm(`?? CRITICAL WARNING: This will permanently delete ALL ${blockedCount} blocked sellers and ALL their data including:\n\n� All products from all blocked sellers\n� All reviews\n� All seller accounts\n\nThis action CANNOT be undone!\n\nType "DELETE ALL" in the next prompt to confirm.`)) return;
         const confirmation = prompt('Type "DELETE ALL" to confirm permanent deletion:');
-        if (confirmation !== 'DELETE ALL') { alert('❌ Deletion cancelled. Confirmation text did not match.'); return; }
+        if (confirmation !== 'DELETE ALL') { alert('? Deletion cancelled. Confirmation text did not match.'); return; }
         try {
             const response = await authFetch('/admin/blocked-sellers/all', { method: 'DELETE' });
             const data = await response.json();
             if (data.success) {
-                alert(`✅ All blocked sellers deleted successfully!\n\nDeleted:\n• ${data.deletedSellers} seller accounts\n• ${data.deletedProducts} products\n• Related reviews`);
+                alert(`? All blocked sellers deleted successfully!\n\nDeleted:\n� ${data.deletedSellers} seller accounts\n� ${data.deletedProducts} products\n� Related reviews`);
                 fetchAllData();
             } else {
-                alert('❌ Failed to delete blocked sellers: ' + data.message);
+                alert('? Failed to delete blocked sellers: ' + data.message);
             }
         } catch (err) {
             console.error('Error deleting all blocked sellers:', err);
-            alert('❌ Error deleting blocked sellers. Please try again.');
+            alert('? Error deleting blocked sellers. Please try again.');
         }
     };
 
     const handleDeleteAllRejectedSellers = async () => {
         const rejectedCount = allSellers.filter(s => s.status === 'REJECTED' && !s.isBlocked).length;
-        if (rejectedCount === 0) { alert('ℹ️ No rejected sellers to delete.'); return; }
-        if (!confirm(`⚠️ CRITICAL WARNING: This will permanently delete ALL ${rejectedCount} rejected sellers and ALL their data including:\n\n• All products from all rejected sellers\n• All reviews\n• All seller accounts\n\nThis action CANNOT be undone!\n\nType "DELETE ALL" in the next prompt to confirm.`)) return;
+        if (rejectedCount === 0) { alert('?? No rejected sellers to delete.'); return; }
+        if (!confirm(`?? CRITICAL WARNING: This will permanently delete ALL ${rejectedCount} rejected sellers and ALL their data including:\n\n� All products from all rejected sellers\n� All reviews\n� All seller accounts\n\nThis action CANNOT be undone!\n\nType "DELETE ALL" in the next prompt to confirm.`)) return;
         const confirmation = prompt('Type "DELETE ALL" to confirm permanent deletion:');
-        if (confirmation !== 'DELETE ALL') { alert('❌ Deletion cancelled. Confirmation text did not match.'); return; }
+        if (confirmation !== 'DELETE ALL') { alert('? Deletion cancelled. Confirmation text did not match.'); return; }
         try {
             const response = await authFetch('/admin/rejected-sellers/all', { method: 'DELETE' });
             const data = await response.json();
             if (data.success) {
-                alert(`✅ All rejected sellers deleted successfully!\n\nDeleted:\n• ${data.deletedSellers} seller accounts\n• ${data.deletedProducts} products\n• Related reviews`);
+                alert(`? All rejected sellers deleted successfully!\n\nDeleted:\n� ${data.deletedSellers} seller accounts\n� ${data.deletedProducts} products\n� Related reviews`);
                 fetchAllData();
             } else {
-                alert('❌ Failed to delete rejected sellers: ' + data.message);
+                alert('? Failed to delete rejected sellers: ' + data.message);
             }
         } catch (err) {
             console.error('Error deleting all rejected sellers:', err);
-            alert('❌ Error deleting rejected sellers. Please try again.');
+            alert('? Error deleting rejected sellers. Please try again.');
         }
     };
 
@@ -172,14 +172,14 @@ export default function SellersTab({
             const response = await authFetch(`/admin/seller/${uid}/accept-rejected`, { method: 'POST' });
             const data = await response.json();
             if (data.success) {
-                alert(`✅ Seller accepted successfully! The seller has been moved to Pending Approvals.`);
+                alert(`? Seller accepted successfully! The seller has been moved to Pending Approvals.`);
                 fetchAllData();
             } else {
-                alert('❌ Failed to accept seller: ' + data.message);
+                alert('? Failed to accept seller: ' + data.message);
             }
         } catch (err) {
             console.error('Error accepting rejected seller:', err);
-            alert('❌ Error accepting seller. Please try again.');
+            alert('? Error accepting seller. Please try again.');
         }
     };
 
@@ -384,7 +384,7 @@ export default function SellersTab({
                                                     <span style={{ fontSize: '0.75rem', color: 'var(--primary)' }}>UID: {s.uid?.substring(0, 8)}</span>
                                                 </div>
                                             </td>
-                                            <td style={{ padding: '1.25rem 1.5rem' }}><span style={{ padding: '6px 12px', background: 'rgba(239, 68, 68, 0.1)', color: '#ef4444', borderRadius: '8px', fontSize: '0.8rem', fontWeight: 700 }}>❌ REJECTED</span></td>
+                                            <td style={{ padding: '1.25rem 1.5rem' }}><span style={{ padding: '6px 12px', background: 'rgba(239, 68, 68, 0.1)', color: '#ef4444', borderRadius: '8px', fontSize: '0.8rem', fontWeight: 700 }}>? REJECTED</span></td>
                                             <td style={{ padding: '1.25rem 1.5rem' }}><span className="text-muted" style={{ fontSize: '0.85rem' }}>{s.joined}</span></td>
                                             <td style={{ padding: '1.25rem 1.5rem', textAlign: 'center' }}>
                                                 <button className="btn btn-secondary shadow-sm" onClick={() => setSelectedSeller(s)} style={{ padding: '6px 14px', fontSize: '0.8rem', fontWeight: 700, borderRadius: '8px', gap: '6px' }}><Box size={14} /> Review Data</button>
@@ -456,7 +456,7 @@ export default function SellersTab({
                                                     <span style={{ fontSize: '0.75rem', color: 'var(--primary)' }}>UID: {s.uid?.substring(0, 8)}</span>
                                                 </div>
                                             </td>
-                                            <td style={{ padding: '1.25rem 1.5rem' }}><span style={{ padding: '6px 12px', background: 'rgba(255, 152, 0, 0.1)', color: '#ff9800', borderRadius: '8px', fontSize: '0.8rem', fontWeight: 700 }}>🚫 BLOCKED</span></td>
+                                            <td style={{ padding: '1.25rem 1.5rem' }}><span style={{ padding: '6px 12px', background: 'rgba(255, 152, 0, 0.1)', color: '#ff9800', borderRadius: '8px', fontSize: '0.8rem', fontWeight: 700 }}>?? BLOCKED</span></td>
                                             <td style={{ padding: '1.25rem 1.5rem' }}><span className="text-muted" style={{ fontSize: '0.85rem' }}>{s.joined}</span></td>
                                             <td style={{ padding: '1.25rem 1.5rem', textAlign: 'center' }}>
                                                 <button className="btn btn-secondary shadow-sm" onClick={() => setSelectedSeller(s)} style={{ padding: '6px 14px', fontSize: '0.8rem', fontWeight: 700, borderRadius: '8px', gap: '6px' }}><Box size={14} /> Review Data</button>

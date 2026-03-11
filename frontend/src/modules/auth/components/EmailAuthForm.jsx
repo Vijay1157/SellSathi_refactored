@@ -114,30 +114,34 @@ export default function EmailAuthForm({
         <form onSubmit={onEmailSignup} className="auth-form">
             <div className="auth-fields-grid">
                 {registrationOnlyFields}
-                {emailField}
-                {passwordField}
-                <div className="auth-input-group">
-                    <Lock size={18} className="auth-field-icon" />
-                    <input
-                        type={showConfirmPassword ? 'text' : 'password'}
-                        placeholder="Confirm Password"
-                        value={formData.confirmPassword}
-                        onChange={e => setFormData({ ...formData, confirmPassword: e.target.value })}
-                        required
-                    />
-                    <button
-                        type="button"
-                        className="password-toggle-btn"
-                        onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                    >
-                        {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-                    </button>
-                </div>
-                
+                {!formData.isGoogleRegistration && emailField}
+                {!formData.isGoogleRegistration && (
+                    <>
+                        {passwordField}
+                        <div className="auth-input-group">
+                            <Lock size={18} className="auth-field-icon" />
+                            <input
+                                type={showConfirmPassword ? 'text' : 'password'}
+                                placeholder="Confirm Password"
+                                value={formData.confirmPassword}
+                                onChange={e => setFormData({ ...formData, confirmPassword: e.target.value })}
+                                required
+                            />
+                            <button
+                                type="button"
+                                className="password-toggle-btn"
+                                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                            >
+                                {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                            </button>
+                        </div>
+                    </>
+                )}
+
                 <button type="submit" className="auth-submit-btn" disabled={loading}>
                     {loading ? 'Processing...' : 'Register'}
                 </button>
-                
+
                 <div className="auth-form-footer">
                     <p>Already have an account? <button type="button" onClick={onSwitchToLogin}>Login</button></p>
                     <button type="button" className="auth-back-link" onClick={onBackToPhone}>Back to Phone Login</button>

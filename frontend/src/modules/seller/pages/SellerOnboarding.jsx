@@ -69,15 +69,28 @@ const SellerOnboarding = () => {
 
   // Handle Aadhaar extracted data
   useEffect(() => {
-    const extractedData = location.state?.extractedData ||
-      JSON.parse(localStorage.getItem('sellerAadhaarData') || '{}');
+    let extractedData = location.state?.extractedData;
 
-    if (extractedData.fullName || extractedData.aadhaarNumber) {
+    // Fallback: If nothing in state, check localStorage
+    if (!extractedData) {
+      try {
+        const stored = localStorage.getItem('sellerAadhaarData');
+        if (stored) {
+          extractedData = JSON.parse(stored);
+          console.log("[SellerOnboarding] Loaded fallback from localStorage:", extractedData);
+        }
+      } catch (err) { /* ignore parse error */ }
+    } else {
+      console.log("[SellerOnboarding] Received data from navigate state:", extractedData);
+    }
+
+    if (extractedData && (extractedData.fullName || extractedData.aadhaarNumber || extractedData.name || extractedData.aadhaar_no)) {
+      console.log("[SellerOnboarding] Applying extracted data to state...");
       setSellerData(prev => ({
         ...prev,
-        fullName: extractedData.fullName || prev.fullName,
-        aadhaarNumber: extractedData.aadhaarNumber || prev.aadhaarNumber,
-        phoneNumber: extractedData.phoneNumber || prev.phoneNumber,
+        fullName: extractedData.fullName || extractedData.name || prev.fullName,
+        aadhaarNumber: extractedData.aadhaarNumber || extractedData.aadhaar_no || prev.aadhaarNumber,
+        phoneNumber: extractedData.phoneNumber || extractedData.phone || prev.phoneNumber,
         age: extractedData.age || prev.age,
         shopAddress: extractedData.shopAddress || prev.shopAddress,
         pincode: extractedData.pincode || prev.pincode,
