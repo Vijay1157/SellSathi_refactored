@@ -166,10 +166,10 @@ export default function PhoneOtpForm({
                     </button>
 
                     {!isRegistering && (
-                        <button 
-                            type="button" 
-                            className="auth-email-btn" 
-                            onClick={onSwitchToEmailLogin} 
+                        <button
+                            type="button"
+                            className="auth-email-btn"
+                            onClick={onSwitchToEmailLogin}
                             disabled={loading}
                             style={{
                                 width: '100%',

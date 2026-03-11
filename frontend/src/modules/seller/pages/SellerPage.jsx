@@ -11,8 +11,8 @@ import AuthModal from '@/modules/auth/components/AuthModal';
 import { ArrowRight, BookOpen, Truck, Rocket, BarChart3, Mail, Zap, Play } from 'lucide-react';
 
 const categories = [
-  "Sell Sarees Online", "Sell Jewellery Online", "Sell Tshirts Online", 
-  "Sell Shirts Online", "Sell Watches Online", "Sell Electronics Online", 
+  "Sell Sarees Online", "Sell Jewellery Online", "Sell Tshirts Online",
+  "Sell Shirts Online", "Sell Watches Online", "Sell Electronics Online",
   "Sell Clothes Online", "Sell Socks Online"
 ];
 
@@ -22,12 +22,12 @@ export const SellerPage = () => {
   return (
     <div className="min-h-screen bg-white">
       <SellerHeader onLoginClick={() => setIsLoginOpen(true)} />
-      
+
       {/* Hero Section */}
       <section id="sell-online" className="relative pt-16 pb-24 lg:pt-24 lg:pb-32 overflow-hidden bg-gradient-to-b from-brand/5 to-white">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex flex-col lg:flex-row items-center gap-12 lg:gap-20">
-            <motion.div 
+            <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               className="flex-1 text-center lg:text-left"
@@ -39,8 +39,9 @@ export const SellerPage = () => {
                 Become a SellSathi seller and grow your business across India.
               </p>
               <div className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-4 mb-6">
-                <Link 
+                <Link
                   to="/seller/register"
+                  target="_blank"
                   className="w-full sm:w-auto px-10 py-4 rounded-2xl bg-brand text-white font-bold text-lg shadow-xl shadow-brand/20 hover:bg-brand-hover hover:-translate-y-1 transition-all"
                 >
                   Start Selling
@@ -52,17 +53,17 @@ export const SellerPage = () => {
                 <Link to="#" className="text-brand font-semibold hover:underline">Know more</Link>
               </p>
             </motion.div>
-            
-            <motion.div 
+
+            <motion.div
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ delay: 0.2 }}
               className="flex-1 w-full max-w-xl"
             >
               <div className="relative rounded-[2rem] overflow-hidden shadow-2xl aspect-square lg:aspect-video">
-                <img 
-                  src="https://picsum.photos/seed/seller-hero/1200/800" 
-                  alt="Seller Success" 
+                <img
+                  src="https://picsum.photos/seed/seller-hero/1200/800"
+                  alt="Seller Success"
                   className="w-full h-full object-cover"
                   referrerPolicy="no-referrer"
                 />

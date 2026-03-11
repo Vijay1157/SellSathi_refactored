@@ -1,4 +1,4 @@
-import { BrowserRouter as Router, Routes, Route, Link, useLocation } from 'react-router-dom';
+import { HashRouter as Router, Routes, Route, Link, useLocation } from 'react-router-dom';
 import MarketplaceHome from '@/modules/marketplace/pages/Home';
 import ProductListing from '@/modules/marketplace/pages/ProductListing';
 import ProductDetail from '@/modules/marketplace/pages/ProductDetail';
@@ -23,6 +23,7 @@ import Navbar from '@/modules/shared/components/layout/Navbar';
 import Footer from '@/modules/shared/components/layout/Footer';
 import ProtectedRoute from '@/modules/shared/components/common/ProtectedRoute';
 import ScrollToTop from '@/modules/shared/components/common/ScrollToTop';
+import ErrorBoundary from '@/modules/shared/components/common/ErrorBoundary';
 
 function AppContent() {
   const location = useLocation();
@@ -120,6 +121,15 @@ function AppContent() {
               </ProtectedRoute>
             }
           />
+
+          {/* Catch-All 404 */}
+          <Route path="*" element={
+            <div className="flex flex-col items-center justify-center p-20 text-center">
+              <h1 className="text-4xl font-bold text-gray-800">404 - Page Not Found</h1>
+              <p className="mt-4 text-gray-600">The path "{location.pathname}" was not found by the app's router.</p>
+              <Link to="/" className="mt-8 btn btn-primary">Go Home</Link>
+            </div>
+          } />
         </Routes>
       </main>
       {!hideFooterRoutes.includes(location.pathname) && <Footer />}
@@ -130,7 +140,9 @@ function AppContent() {
 function App() {
   return (
     <Router>
-      <AppContent />
+      <ErrorBoundary>
+        <AppContent />
+      </ErrorBoundary>
     </Router>
   );
 }

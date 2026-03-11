@@ -2,6 +2,8 @@ const nodemailer = require('nodemailer');
 const path = require('path');
 const { getAdminConfig } = require('./adminConfigService');
 const { db } = require('../../config/firebase');
+const FRONTEND_URL = process.env.FRONTEND_URL || 'https://sellsathifrontend.onrender.com';
+
 
 // Configure credentials via env variables
 const MAILER_CONFIG = {
@@ -73,7 +75,7 @@ exports.sendOrderConfirmation = async (email, order, invoicePath) => {
                         </p>
 
                         <div style="text-align: center;">
-                            <a href="http://localhost:5173/dashboard" style="background: #2563eb; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: 600; display: inline-block;">Go to Dashboard</a>
+                            <a href="${FRONTEND_URL}/dashboard" style="background: #2563eb; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: 600; display: inline-block;">Go to Dashboard</a>
                         </div>
                     </div>
                     <div style="text-align: center; margin-top: 24px; color: #94a3b8; font-size: 12px;">
@@ -109,13 +111,13 @@ exports.sendSellerNotification = async (sellerEmail, order, sellerItems) => {
 
         const itemsHtml = sellerItems.map(item => {
             const hasDiscount = item.originalPrice && item.originalPrice > item.price;
-            const priceDisplay = hasDiscount 
+            const priceDisplay = hasDiscount
                 ? `<div style="display: flex; align-items: center; gap: 8px; justify-content: flex-end;">
                      <span style="text-decoration: line-through; color: #94a3b8; font-size: 14px;">₹${(item.originalPrice * item.quantity).toFixed(2)}</span>
                      <span style="font-weight: 600; color: #16a34a;">₹${(item.price * item.quantity).toFixed(2)}</span>
                    </div>`
                 : `₹${(item.price * item.quantity).toFixed(2)}`;
-            
+
             return `
             <tr style="border-bottom: 1px solid #e2e8f0;">
                 <td style="padding: 12px 8px;">
@@ -216,7 +218,7 @@ exports.sendSellerNotification = async (sellerEmail, order, sellerItems) => {
                         </div>
 
                         <div style="text-align: center; margin: 24px 0;">
-                            <a href="http://localhost:5173/seller/dashboard" style="background: #2563eb; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: 600; display: inline-block;">Go to Seller Dashboard</a>
+                            <a href="${FRONTEND_URL}/seller/dashboard" style="background: #2563eb; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: 600; display: inline-block;">Go to Seller Dashboard</a>
                         </div>
 
                         <div style="background: #f1f5f9; padding: 16px; border-radius: 8px; margin: 24px 0;">
@@ -285,7 +287,7 @@ exports.sendSellerBlockedEmail = async (sellerEmail, sellerName, shopName, block
 
                         <h3 style="color: #1e293b; font-size: 18px; margin-top: 24px;">Next Steps:</h3>
                         <ol style="color: #475569; line-height: 1.8;">
-                            <li>Review our <a href="http://localhost:5173/terms" style="color: #2563eb;">Terms of Service</a> and <a href="http://localhost:5173/seller-policies" style="color: #2563eb;">Seller Policies</a></li>
+                            <li>Review our <a href="${FRONTEND_URL}/terms" style="color: #2563eb;">Terms of Service</a> and <a href="${FRONTEND_URL}/seller-policies" style="color: #2563eb;">Seller Policies</a></li>
                             <li>Contact our support team to discuss the block</li>
                             <li>Provide any necessary documentation or clarification</li>
                             <li>Wait for admin review and potential unblock</li>
@@ -362,7 +364,7 @@ exports.sendSellerUnblockedEmail = async (sellerEmail, sellerName, shopName) => 
 
                         <h3 style="color: #1e293b; font-size: 18px; margin-top: 24px;">Important Reminders:</h3>
                         <ul style="color: #475569; line-height: 1.8;">
-                            <li>Please ensure compliance with all <a href="http://localhost:5173/seller-policies" style="color: #2563eb;">Seller Policies</a></li>
+                            <li>Please ensure compliance with all <a href="${FRONTEND_URL}/seller-policies" style="color: #2563eb;">Seller Policies</a></li>
                             <li>Maintain high-quality product listings</li>
                             <li>Provide excellent customer service</li>
                             <li>Respond promptly to customer inquiries</li>
@@ -376,7 +378,7 @@ exports.sendSellerUnblockedEmail = async (sellerEmail, sellerName, shopName) => 
                         </div>
 
                         <div style="text-align: center; margin: 24px 0;">
-                            <a href="http://localhost:5173/seller/dashboard" style="background: #2563eb; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: 600; display: inline-block;">Go to Seller Dashboard</a>
+                            <a href="${FRONTEND_URL}/seller/dashboard" style="background: #2563eb; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: 600; display: inline-block;">Go to Seller Dashboard</a>
                         </div>
 
                         <div style="background: #f1f5f9; padding: 16px; border-radius: 8px; margin: 24px 0;">
@@ -459,12 +461,12 @@ exports.sendSellerApprovalEmail = async (sellerEmail, sellerName, shopName) => {
                         </ol>
 
                         <div style="text-align: center; margin: 24px 0;">
-                            <a href="http://localhost:5173/seller/dashboard" style="background: #2563eb; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: 600; display: inline-block;">Go to Seller Dashboard</a>
+                            <a href="${FRONTEND_URL}/seller/dashboard" style="background: #2563eb; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: 600; display: inline-block;">Go to Seller Dashboard</a>
                         </div>
 
                         <div style="background: #fef3c7; border-left: 4px solid #f59e0b; padding: 16px; margin: 20px 0; border-radius: 4px;">
                             <p style="margin: 0; color: #92400e;">
-                                <strong>📋 Important:</strong> Please review our <a href="http://localhost:5173/seller-policies" style="color: #2563eb;">Seller Policies</a> and <a href="http://localhost:5173/terms" style="color: #2563eb;">Terms of Service</a> to ensure compliance.
+                                <strong>📋 Important:</strong> Please review our <a href="${FRONTEND_URL}/seller-policies" style="color: #2563eb;">Seller Policies</a> and <a href="${FRONTEND_URL}/terms" style="color: #2563eb;">Terms of Service</a> to ensure compliance.
                             </p>
                         </div>
 
@@ -541,7 +543,7 @@ exports.sendSellerRejectionEmail = async (sellerEmail, sellerName, shopName, rej
                         <h3 style="color: #1e293b; font-size: 18px; margin-top: 24px;">Next Steps:</h3>
                         <p style="color: #475569;">If you believe this decision was made in error or if you would like to reapply in the future, please:</p>
                         <ol style="color: #475569; line-height: 1.8;">
-                            <li>Review our <a href="http://localhost:5173/seller-requirements" style="color: #2563eb;">Seller Requirements</a></li>
+                            <li>Review our <a href="${FRONTEND_URL}/seller-requirements" style="color: #2563eb;">Seller Requirements</a></li>
                             <li>Ensure all documentation is complete and accurate</li>
                             <li>Contact our support team for clarification</li>
                             <li>Consider reapplying after addressing the concerns</li>
@@ -600,7 +602,7 @@ exports.notifySellers = async (orderData) => {
         items.forEach(item => {
             const sellerId = item.sellerId;
             if (!sellerId || sellerId === 'system_generated' || sellerId === 'official') return;
-            
+
             if (!sellerItemsMap[sellerId]) {
                 sellerItemsMap[sellerId] = [];
             }
@@ -617,11 +619,11 @@ exports.notifySellers = async (orderData) => {
 
         // Batch fetch seller emails (Firestore 'in' query supports up to 10 items)
         const sellerEmails = {};
-        
+
         // Process in batches of 10
         for (let i = 0; i < sellerIds.length; i += 10) {
             const batch = sellerIds.slice(i, i + 10);
-            
+
             try {
                 const sellersSnap = await db.collection('sellers')
                     .where('__name__', 'in', batch)
@@ -632,7 +634,7 @@ exports.notifySellers = async (orderData) => {
                     if (sellerData.sellerStatus === 'APPROVED') {
                         // Try to get email from seller document first
                         let email = sellerData.email || sellerData.contactEmail;
-                        
+
                         // If not found, fetch from users collection
                         if (!email) {
                             const userDoc = await db.collection('users').doc(doc.id).get();
@@ -640,7 +642,7 @@ exports.notifySellers = async (orderData) => {
                                 email = userDoc.data().email;
                             }
                         }
-                        
+
                         if (email) {
                             sellerEmails[doc.id] = email;
                         }
@@ -667,7 +669,7 @@ exports.notifySellers = async (orderData) => {
 
         await Promise.all(emailPromises);
         console.log(`[NotifySellers] Sent ${emailPromises.length} seller notification(s)`);
-        
+
     } catch (error) {
         console.error('[NotifySellers] Error:', error);
     }
@@ -715,7 +717,7 @@ exports.sendOrderCancellation = async (email, order) => {
                         </p>
 
                         <div style="text-align: center;">
-                            <a href="http://localhost:5173/dashboard" style="background: #2563eb; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: 600; display: inline-block;">Go to Dashboard</a>
+                            <a href="${FRONTEND_URL}/dashboard" style="background: #2563eb; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: 600; display: inline-block;">Go to Dashboard</a>
                         </div>
                     </div>
                     <div style="text-align: center; margin-top: 24px; color: #94a3b8; font-size: 12px;">

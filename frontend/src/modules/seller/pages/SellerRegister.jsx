@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Link, useNavigate } from 'react-router-dom';
 import { ArrowLeft, CheckCircle2, Upload, Camera, Store, User, Phone, CreditCard, Loader, ImagePlus, X } from 'lucide-react';
@@ -9,6 +9,10 @@ export const SellerRegister = () => {
   const [step, setStep] = useState('upload'); // 'upload' or 'manual'
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+
+  useEffect(() => {
+    localStorage.removeItem('sellerAadhaarData');
+  }, []);
 
   // Only personal details handled in this step
   const [formData, setFormData] = useState({
@@ -40,20 +44,23 @@ export const SellerRegister = () => {
       });
 
       const result = await response.json();
+      console.log("[SellerRegister] Aadhaar Extraction FULL Result Object:", JSON.stringify(result, null, 2));
 
       if (result.success && result.data) {
+        // Save to localStorage as a primary backup for the next page
+        const extracted = {
+          fullName: result.data.fullName || result.data.name || '',
+          aadhaarNumber: (result.data.aadhaarNumber || result.data.aadharNumber || result.data.aadhaar_no || '').replace(/\D/g, ''),
+          phoneNumber: (result.data.phoneNumber || result.data.phone || result.data.phoneNumber || '').replace(/\D/g, ''),
+          age: result.data.age || '',
+          shopAddress: result.data.address || '',
+          aadhaarImageUrl: result.data.imageUrl || ''
+        };
+        localStorage.setItem('sellerAadhaarData', JSON.stringify(extracted));
+
         // Navigate immediately to onboarding page with extracted data
         navigate('/seller/onboarding', {
-          state: {
-            extractedData: {
-              fullName: result.data.name || '',
-              aadhaarNumber: result.data.aadharNumber || '',
-              phoneNumber: result.data.phone || '',
-              age: result.data.age || '',
-              shopAddress: result.data.address || '', // Optionally pre-fill address if available
-              aadhaarImageUrl: result.data.imageUrl || '' // Cloudinary URL from extraction
-            }
-          }
+          state: { extractedData: extracted }
         });
       } else {
         setError(result.message || 'Failed to extract Aadhaar details. Please try again or enter manually.');

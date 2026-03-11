@@ -61,11 +61,10 @@ const SellerHeader = ({ onLoginClick }) => {
               <button
                 key={item.id}
                 onClick={() => scrollToSection(item.id)}
-                className={`text-sm font-medium transition-colors relative ${
-                  activeSection === item.id 
-                    ? 'text-brand' 
+                className={`text-sm font-medium transition-colors relative ${activeSection === item.id
+                    ? 'text-brand'
                     : 'text-gray-600 hover:text-brand'
-                }`}
+                  }`}
               >
                 {item.label}
                 {activeSection === item.id && (
@@ -102,6 +101,7 @@ const SellerHeader = ({ onLoginClick }) => {
           </button>
           <Link
             to="/seller/register"
+            target="_blank"
             style={{
               backgroundColor: '#6C63FF',
               color: 'white',
