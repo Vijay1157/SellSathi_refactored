@@ -1,7 +1,8 @@
-import { useState } from 'react';
-import { Box, Check, X } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Box, Check, X, Edit } from 'lucide-react';
 import { authFetch } from '@/modules/shared/utils/api';
 import SellerDetailModal from '@/modules/admin/components/SellerDetailModal';
+import SellerEditModal from '@/modules/admin/components/SellerEditModal';
 
 export default function SellersTab({
     sellers,
@@ -14,13 +15,49 @@ export default function SellersTab({
     const [searchCategory, setSearchCategory] = useState('');
     const [selectedJoinDate, setSelectedJoinDate] = useState('');
     const [selectedRejectDate, setSelectedRejectDate] = useState('');
+    const [selectedRejectCategory, setSelectedRejectCategory] = useState('');
     const [selectedBlockDate, setSelectedBlockDate] = useState('');
+    const [selectedBlockCategory, setSelectedBlockCategory] = useState('');
+    const [editSearchTerm, setEditSearchTerm] = useState('');
+    const [editSearchCategory, setEditSearchCategory] = useState('');
     const [selectedSeller, setSelectedSeller] = useState(null);
+    const [editingSeller, setEditingSeller] = useState(null);
+    const [sellersWithEditRequests, setSellersWithEditRequests] = useState([]);
+    const [editRequestsLoading, setEditRequestsLoading] = useState(false);
 
     const approvedSellers = allSellers.filter(s => s.status === 'APPROVED' && !s.isBlocked);
     const pendingSellers = sellers;
     const rejectedSellers = allSellers.filter(s => s.status === 'REJECTED' && !s.isBlocked);
     const blockedSellers = allSellers.filter(s => s.isBlocked);
+
+    // Fetch sellers with edit requests
+    useEffect(() => {
+        fetchSellersWithEditRequests();
+    }, []);
+
+    const fetchSellersWithEditRequests = async () => {
+        setEditRequestsLoading(true);
+        try {
+            const response = await authFetch('/admin/sellers-edit-requests');
+            if (!response.ok) {
+                console.error('Edit requests fetch failed with status:', response.status);
+                setSellersWithEditRequests([]);
+                return;
+            }
+            const data = await response.json();
+            if (data.success) {
+                setSellersWithEditRequests(data.sellers || []);
+            } else {
+                console.warn('Failed to fetch sellers with edit requests:', data.message);
+                setSellersWithEditRequests([]);
+            }
+        } catch (error) {
+            console.error('Error fetching sellers with edit requests:', error);
+            setSellersWithEditRequests([]);
+        } finally {
+            setEditRequestsLoading(false);
+        }
+    };
 
     const calculateWeeklySales = (sellerUid) => {
         const oneWeekAgo = new Date();
@@ -145,24 +182,49 @@ export default function SellersTab({
         }
     };
 
+    const handleClearAllEditRequests = async () => {
+        const editRequestCount = sellersWithEditRequests.length;
+        if (editRequestCount === 0) { 
+            alert('ℹ️ No edit requests to clear.'); 
+            return; 
+        }
+        
+        if (!confirm(`⚠️ WARNING: This will clear ALL ${editRequestCount} pending edit requests.\n\nThis action CANNOT be undone!\n\nAre you sure you want to continue?`)) return;
+        
+        try {
+            const response = await authFetch('/admin/clear-all-edit-requests', { method: 'POST' });
+            const data = await response.json();
+            if (data.success) {
+                alert(`✅ All edit requests cleared successfully!\n\nCleared: ${data.clearedCount} edit requests`);
+                fetchSellersWithEditRequests();
+                fetchAllData();
+            } else {
+                alert('❌ Failed to clear edit requests: ' + data.message);
+            }
+        } catch (err) {
+            console.error('Error clearing edit requests:', err);
+            alert('❌ Error clearing edit requests. Please try again.');
+        }
+    };
+
     const handleDeleteAllRejectedSellers = async () => {
         const rejectedCount = allSellers.filter(s => s.status === 'REJECTED' && !s.isBlocked).length;
-        if (rejectedCount === 0) { alert('?? No rejected sellers to delete.'); return; }
-        if (!confirm(`?? CRITICAL WARNING: This will permanently delete ALL ${rejectedCount} rejected sellers and ALL their data including:\n\n� All products from all rejected sellers\n� All reviews\n� All seller accounts\n\nThis action CANNOT be undone!\n\nType "DELETE ALL" in the next prompt to confirm.`)) return;
+        if (rejectedCount === 0) { alert('ℹ️ No rejected sellers to delete.'); return; }
+        if (!confirm(`⚠️ CRITICAL WARNING: This will permanently delete ALL ${rejectedCount} rejected sellers and ALL their data including:\n\n• All products from all rejected sellers\n• All reviews\n• All seller accounts\n\nThis action CANNOT be undone!\n\nType "DELETE ALL" in the next prompt to confirm.`)) return;
         const confirmation = prompt('Type "DELETE ALL" to confirm permanent deletion:');
-        if (confirmation !== 'DELETE ALL') { alert('? Deletion cancelled. Confirmation text did not match.'); return; }
+        if (confirmation !== 'DELETE ALL') { alert('❌ Deletion cancelled. Confirmation text did not match.'); return; }
         try {
             const response = await authFetch('/admin/rejected-sellers/all', { method: 'DELETE' });
             const data = await response.json();
             if (data.success) {
-                alert(`? All rejected sellers deleted successfully!\n\nDeleted:\n� ${data.deletedSellers} seller accounts\n� ${data.deletedProducts} products\n� Related reviews`);
+                alert(`✅ All rejected sellers deleted successfully!\n\nDeleted:\n• ${data.deletedSellers} seller accounts\n• ${data.deletedProducts} products\n• Related reviews`);
                 fetchAllData();
             } else {
-                alert('? Failed to delete rejected sellers: ' + data.message);
+                alert('❌ Failed to delete rejected sellers: ' + data.message);
             }
         } catch (err) {
             console.error('Error deleting all rejected sellers:', err);
-            alert('? Error deleting rejected sellers. Please try again.');
+            alert('❌ Error deleting rejected sellers. Please try again.');
         }
     };
 
@@ -240,6 +302,24 @@ export default function SellersTab({
                                             </td>
                                             <td style={{ padding: '1.25rem 1.5rem', textAlign: 'right' }}>
                                                 <div className="flex gap-3 justify-end">
+                                                    <button 
+                                                        className="btn btn-secondary" 
+                                                        onClick={() => setEditingSeller(s)} 
+                                                        title="Edit Seller Details" 
+                                                        style={{ 
+                                                            padding: '8px 16px', 
+                                                            fontSize: '0.85rem', 
+                                                            fontWeight: 700, 
+                                                            display: 'flex', 
+                                                            alignItems: 'center', 
+                                                            gap: '6px',
+                                                            background: 'var(--warning)',
+                                                            borderColor: 'var(--warning)',
+                                                            color: 'white'
+                                                        }}
+                                                    >
+                                                        <Edit size={16} /> Edit
+                                                    </button>
                                                     <button className="btn btn-primary" onClick={() => handleApproveSeller(s.uid)} title="Approve Seller" style={{ padding: '8px 16px', fontSize: '0.85rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '6px' }}>
                                                         <Check size={16} /> Accept
                                                     </button>
@@ -322,7 +402,27 @@ export default function SellersTab({
                                             <td style={{ padding: '1.25rem 1.5rem', textAlign: 'center' }}>
                                                 <button className="btn btn-secondary shadow-sm" onClick={() => setSelectedSeller(s)} style={{ padding: '6px 14px', fontSize: '0.8rem', fontWeight: 700, borderRadius: '8px', gap: '6px' }}><Box size={14} /> Review Data</button>
                                             </td>
-                                            <td style={{ padding: '1.25rem 1.5rem', textAlign: 'right' }}><span className="text-muted" style={{ fontSize: '0.85rem', fontWeight: 600 }}>Approved</span></td>
+                                            <td style={{ padding: '1.25rem 1.5rem', textAlign: 'right' }}>
+                                                <button 
+                                                    className="btn btn-secondary" 
+                                                    onClick={() => setEditingSeller(s)} 
+                                                    title="Edit Seller Details" 
+                                                    style={{ 
+                                                        padding: '6px 14px', 
+                                                        fontSize: '0.8rem', 
+                                                        fontWeight: 700, 
+                                                        borderRadius: '8px', 
+                                                        gap: '6px',
+                                                        background: 'var(--warning)',
+                                                        borderColor: 'var(--warning)',
+                                                        color: 'white',
+                                                        display: 'flex',
+                                                        alignItems: 'center'
+                                                    }}
+                                                >
+                                                    <Edit size={14} /> Edit
+                                                </button>
+                                            </td>
                                         </tr>
                                     ))}
                                 </tbody>
@@ -339,15 +439,23 @@ export default function SellersTab({
                         <h3 style={{ fontSize: '1.5rem', fontWeight: 700 }}>Rejected Applications ({rejectedSellers.length})</h3>
                         <div className="flex gap-2">
                             <input type="text" placeholder="Search rejected sellers..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} style={{ padding: '0.5rem', borderRadius: '4px', border: '1px solid var(--border)', width: '200px' }} />
+                            <select value={selectedRejectCategory} onChange={(e) => setSelectedRejectCategory(e.target.value)} style={{ padding: '0.5rem', borderRadius: '4px', border: '1px solid var(--border)', minWidth: '150px' }}>
+                                <option value="">All Categories</option>
+                                {[...new Set(rejectedSellers.map(s => s.category).filter(Boolean))].sort().map(category => (
+                                    <option key={category} value={category}>{category}</option>
+                                ))}
+                            </select>
                             <input type="date" value={selectedRejectDate} onChange={(e) => setSelectedRejectDate(e.target.value)} style={{ padding: '0.5rem', borderRadius: '4px', border: '1px solid var(--border)' }} title="Filter by date" />
-                            <button className="btn btn-secondary" onClick={() => { setSearchTerm(''); setSelectedRejectDate(''); }} style={{ padding: '0.5rem 1rem', fontSize: '0.85rem' }}>Clear</button>
+                            <button className="btn btn-secondary" onClick={() => { setSearchTerm(''); setSelectedRejectCategory(''); setSelectedRejectDate(''); }} style={{ padding: '0.5rem 1rem', fontSize: '0.85rem' }}>Clear</button>
                             <button className="btn" onClick={handleDeleteAllRejectedSellers} style={{ padding: '0.5rem 1rem', fontSize: '0.85rem', background: '#ef4444', borderColor: '#ef4444', color: 'white', fontWeight: 700 }} title="Permanently delete all rejected sellers">Delete All Rejected</button>
+                            <button className="btn btn-secondary" onClick={fetchAllData} style={{ padding: '0.5rem 1rem', fontSize: '0.85rem' }}>Refresh</button>
                         </div>
                     </div>
                     {rejectedSellers.filter(s => {
                         const matchesName = searchTerm === '' || s.shopName.toLowerCase().includes(searchTerm.toLowerCase()) || s.email.toLowerCase().includes(searchTerm.toLowerCase());
+                        const matchesCategory = selectedRejectCategory === '' || s.category === selectedRejectCategory;
                         const matchesDate = dateMatchesFilter(s.joined, selectedRejectDate);
-                        return matchesName && matchesDate;
+                        return matchesName && matchesCategory && matchesDate;
                     }).length === 0 ? (
                         <div className="glass-card text-center p-8 text-muted">No rejected sellers.</div>
                     ) : (
@@ -367,8 +475,9 @@ export default function SellersTab({
                                 <tbody>
                                     {rejectedSellers.filter(s => {
                                         const matchesName = searchTerm === '' || s.shopName.toLowerCase().includes(searchTerm.toLowerCase()) || s.email.toLowerCase().includes(searchTerm.toLowerCase());
+                                        const matchesCategory = selectedRejectCategory === '' || s.category === selectedRejectCategory;
                                         const matchesDate = dateMatchesFilter(s.joined, selectedRejectDate);
-                                        return matchesName && matchesDate;
+                                        return matchesName && matchesCategory && matchesDate;
                                     }).map(s => (
                                         <tr key={s.uid} style={{ borderBottom: '1px solid var(--border)', transition: 'background 0.2s' }} onMouseOver={(e) => e.currentTarget.style.background = 'var(--surface)'} onMouseOut={(e) => e.currentTarget.style.background = 'transparent'}>
                                             <td style={{ padding: '1.25rem 1.5rem' }}>
@@ -384,13 +493,32 @@ export default function SellersTab({
                                                     <span style={{ fontSize: '0.75rem', color: 'var(--primary)' }}>UID: {s.uid?.substring(0, 8)}</span>
                                                 </div>
                                             </td>
-                                            <td style={{ padding: '1.25rem 1.5rem' }}><span style={{ padding: '6px 12px', background: 'rgba(239, 68, 68, 0.1)', color: '#ef4444', borderRadius: '8px', fontSize: '0.8rem', fontWeight: 700 }}>? REJECTED</span></td>
+                                            <td style={{ padding: '1.25rem 1.5rem' }}><span style={{ padding: '6px 12px', background: 'rgba(239, 68, 68, 0.1)', color: '#ef4444', borderRadius: '8px', fontSize: '0.8rem', fontWeight: 700 }}>REJECTED</span></td>
                                             <td style={{ padding: '1.25rem 1.5rem' }}><span className="text-muted" style={{ fontSize: '0.85rem' }}>{s.joined}</span></td>
                                             <td style={{ padding: '1.25rem 1.5rem', textAlign: 'center' }}>
                                                 <button className="btn btn-secondary shadow-sm" onClick={() => setSelectedSeller(s)} style={{ padding: '6px 14px', fontSize: '0.8rem', fontWeight: 700, borderRadius: '8px', gap: '6px' }}><Box size={14} /> Review Data</button>
                                             </td>
                                             <td style={{ padding: '1.25rem 1.5rem', textAlign: 'right' }}>
                                                 <div className="flex gap-2 justify-end">
+                                                    <button 
+                                                        className="btn btn-secondary" 
+                                                        onClick={() => setEditingSeller(s)} 
+                                                        title="Edit Seller Details" 
+                                                        style={{ 
+                                                            padding: '6px 14px', 
+                                                            fontSize: '0.8rem', 
+                                                            fontWeight: 700, 
+                                                            borderRadius: '8px', 
+                                                            gap: '6px',
+                                                            background: 'var(--warning)',
+                                                            borderColor: 'var(--warning)',
+                                                            color: 'white',
+                                                            display: 'flex',
+                                                            alignItems: 'center'
+                                                        }}
+                                                    >
+                                                        <Edit size={14} /> Edit
+                                                    </button>
                                                     <button className="btn btn-primary" onClick={() => handleAcceptRejectedSeller(s.uid)} style={{ padding: '6px 14px', fontSize: '0.8rem', fontWeight: 700, borderRadius: '8px', gap: '6px', background: 'var(--success)', borderColor: 'var(--success)' }}><Check size={14} /> Accept</button>
                                                     <button className="btn" onClick={() => handleDeleteSeller(s.uid, s.shopName)} style={{ padding: '6px 14px', fontSize: '0.8rem', fontWeight: 700, borderRadius: '8px', gap: '6px', background: '#ef4444', borderColor: '#ef4444', color: 'white' }} title="Permanently delete seller and all their data"><X size={14} /> Delete</button>
                                                 </div>
@@ -411,15 +539,23 @@ export default function SellersTab({
                         <h3 style={{ fontSize: '1.5rem', fontWeight: 700 }}>Blocked Sellers ({blockedSellers.length})</h3>
                         <div className="flex gap-2">
                             <input type="text" placeholder="Search blocked sellers..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} style={{ padding: '0.5rem', borderRadius: '4px', border: '1px solid var(--border)', width: '200px' }} />
+                            <select value={selectedBlockCategory} onChange={(e) => setSelectedBlockCategory(e.target.value)} style={{ padding: '0.5rem', borderRadius: '4px', border: '1px solid var(--border)', minWidth: '150px' }}>
+                                <option value="">All Categories</option>
+                                {[...new Set(blockedSellers.map(s => s.category).filter(Boolean))].sort().map(category => (
+                                    <option key={category} value={category}>{category}</option>
+                                ))}
+                            </select>
                             <input type="date" value={selectedBlockDate} onChange={(e) => setSelectedBlockDate(e.target.value)} style={{ padding: '0.5rem', borderRadius: '4px', border: '1px solid var(--border)' }} title="Filter by date" />
-                            <button className="btn btn-secondary" onClick={() => { setSearchTerm(''); setSelectedBlockDate(''); }} style={{ padding: '0.5rem 1rem', fontSize: '0.85rem' }}>Clear</button>
+                            <button className="btn btn-secondary" onClick={() => { setSearchTerm(''); setSelectedBlockCategory(''); setSelectedBlockDate(''); }} style={{ padding: '0.5rem 1rem', fontSize: '0.85rem' }}>Clear</button>
                             <button className="btn" onClick={handleDeleteAllBlockedSellers} style={{ padding: '0.5rem 1rem', fontSize: '0.85rem', background: '#ef4444', borderColor: '#ef4444', color: 'white', fontWeight: 700 }} title="Permanently delete all blocked sellers">Delete All Blocked</button>
+                            <button className="btn btn-secondary" onClick={fetchAllData} style={{ padding: '0.5rem 1rem', fontSize: '0.85rem' }}>Refresh</button>
                         </div>
                     </div>
                     {blockedSellers.filter(s => {
                         const matchesName = searchTerm === '' || s.shopName.toLowerCase().includes(searchTerm.toLowerCase()) || s.email.toLowerCase().includes(searchTerm.toLowerCase());
+                        const matchesCategory = selectedBlockCategory === '' || s.category === selectedBlockCategory;
                         const matchesDate = dateMatchesFilter(s.joined, selectedBlockDate);
-                        return matchesName && matchesDate;
+                        return matchesName && matchesCategory && matchesDate;
                     }).length === 0 ? (
                         <div className="glass-card text-center p-8 text-muted">No blocked sellers.</div>
                     ) : (
@@ -439,8 +575,9 @@ export default function SellersTab({
                                 <tbody>
                                     {blockedSellers.filter(s => {
                                         const matchesName = searchTerm === '' || s.shopName.toLowerCase().includes(searchTerm.toLowerCase()) || s.email.toLowerCase().includes(searchTerm.toLowerCase());
+                                        const matchesCategory = selectedBlockCategory === '' || s.category === selectedBlockCategory;
                                         const matchesDate = dateMatchesFilter(s.joined, selectedBlockDate);
-                                        return matchesName && matchesDate;
+                                        return matchesName && matchesCategory && matchesDate;
                                     }).map(s => (
                                         <tr key={s.uid} style={{ borderBottom: '1px solid var(--border)', transition: 'background 0.2s' }} onMouseOver={(e) => e.currentTarget.style.background = 'var(--surface)'} onMouseOut={(e) => e.currentTarget.style.background = 'transparent'}>
                                             <td style={{ padding: '1.25rem 1.5rem' }}>
@@ -456,16 +593,213 @@ export default function SellersTab({
                                                     <span style={{ fontSize: '0.75rem', color: 'var(--primary)' }}>UID: {s.uid?.substring(0, 8)}</span>
                                                 </div>
                                             </td>
-                                            <td style={{ padding: '1.25rem 1.5rem' }}><span style={{ padding: '6px 12px', background: 'rgba(255, 152, 0, 0.1)', color: '#ff9800', borderRadius: '8px', fontSize: '0.8rem', fontWeight: 700 }}>?? BLOCKED</span></td>
+                                            <td style={{ padding: '1.25rem 1.5rem' }}><span style={{ padding: '6px 12px', background: 'rgba(255, 152, 0, 0.1)', color: '#ff9800', borderRadius: '8px', fontSize: '0.8rem', fontWeight: 700 }}>BLOCKED</span></td>
                                             <td style={{ padding: '1.25rem 1.5rem' }}><span className="text-muted" style={{ fontSize: '0.85rem' }}>{s.joined}</span></td>
                                             <td style={{ padding: '1.25rem 1.5rem', textAlign: 'center' }}>
                                                 <button className="btn btn-secondary shadow-sm" onClick={() => setSelectedSeller(s)} style={{ padding: '6px 14px', fontSize: '0.8rem', fontWeight: 700, borderRadius: '8px', gap: '6px' }}><Box size={14} /> Review Data</button>
                                             </td>
                                             <td style={{ padding: '1.25rem 1.5rem', textAlign: 'right' }}>
                                                 <div className="flex gap-2 justify-end">
+                                                    <button 
+                                                        className="btn btn-secondary" 
+                                                        onClick={() => setEditingSeller(s)} 
+                                                        title="Edit Seller Details" 
+                                                        style={{ 
+                                                            padding: '6px 14px', 
+                                                            fontSize: '0.8rem', 
+                                                            fontWeight: 700, 
+                                                            borderRadius: '8px', 
+                                                            gap: '6px',
+                                                            background: 'var(--warning)',
+                                                            borderColor: 'var(--warning)',
+                                                            color: 'white',
+                                                            display: 'flex',
+                                                            alignItems: 'center'
+                                                        }}
+                                                    >
+                                                        <Edit size={14} /> Edit
+                                                    </button>
                                                     <button className="btn btn-primary" onClick={() => handleUnblockSeller(s.uid)} style={{ padding: '6px 14px', fontSize: '0.8rem', fontWeight: 700, borderRadius: '8px', gap: '6px', background: 'var(--success)', borderColor: 'var(--success)' }}><Check size={14} /> Unblock</button>
                                                     <button className="btn" onClick={() => handleDeleteSeller(s.uid, s.shopName)} style={{ padding: '6px 14px', fontSize: '0.8rem', fontWeight: 700, borderRadius: '8px', gap: '6px', background: '#ef4444', borderColor: '#ef4444', color: 'white' }} title="Permanently delete seller and all their data"><X size={14} /> Delete</button>
                                                 </div>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    )}
+                </div>
+
+                {/* Divider */}
+                <div style={{ height: '3rem', borderBottom: '2px solid var(--border)' }}></div>
+
+                {/* Edit Seller Section */}
+                <div className="flex flex-col gap-4">
+                    <div className="flex justify-between items-center">
+                        <h3 style={{ fontSize: '1.5rem', fontWeight: 700 }}>Edit Seller ({sellersWithEditRequests.length})</h3>
+                        <div className="flex gap-2">
+                            <input 
+                                type="text" 
+                                placeholder="Search by shop name..." 
+                                value={editSearchTerm} 
+                                onChange={(e) => setEditSearchTerm(e.target.value)} 
+                                style={{ padding: '0.5rem', borderRadius: '4px', border: '1px solid var(--border)', width: '200px' }} 
+                            />
+                            <select 
+                                value={editSearchCategory} 
+                                onChange={(e) => setEditSearchCategory(e.target.value)} 
+                                style={{ padding: '0.5rem', borderRadius: '4px', border: '1px solid var(--border)', minWidth: '150px' }}
+                            >
+                                <option value="">All Categories</option>
+                                {[...new Set(sellersWithEditRequests.map(s => s.category || 'Uncategorized'))].sort().map(category => (
+                                    <option key={category} value={category}>{category}</option>
+                                ))}
+                            </select>
+                            <button 
+                                className="btn btn-secondary" 
+                                onClick={() => { setEditSearchTerm(''); setEditSearchCategory(''); }} 
+                                style={{ padding: '0.5rem 1rem', fontSize: '0.85rem' }}
+                            >
+                                Clear
+                            </button>
+                            <button 
+                                className="btn" 
+                                onClick={handleClearAllEditRequests} 
+                                style={{ padding: '0.5rem 1rem', fontSize: '0.85rem', background: '#ef4444', borderColor: '#ef4444', color: 'white', fontWeight: 700 }} 
+                                title="Clear all edit requests"
+                            >
+                                Clear All
+                            </button>
+                            <button 
+                                className="btn btn-secondary" 
+                                onClick={fetchSellersWithEditRequests}
+                                disabled={editRequestsLoading}
+                                style={{ padding: '0.5rem 1rem', fontSize: '0.85rem', opacity: editRequestsLoading ? 0.6 : 1 }}
+                            >
+                                {editRequestsLoading ? 'Loading...' : 'Refresh'}
+                            </button>
+                        </div>
+                    </div>
+                    {editRequestsLoading ? (
+                        <div className="glass-card text-center p-8 text-muted">Loading edit requests...</div>
+                    ) : sellersWithEditRequests.filter(s => {
+                        const matchesCategory = editSearchCategory === '' || (s.category || 'Uncategorized') === editSearchCategory;
+                        const matchesName = editSearchTerm === '' || 
+                            s.shopName.toLowerCase().includes(editSearchTerm.toLowerCase()) || 
+                            s.email.toLowerCase().includes(editSearchTerm.toLowerCase());
+                        return matchesCategory && matchesName;
+                    }).length === 0 ? (
+                        <div className="glass-card text-center p-8 text-muted">
+                            No sellers with edit requests.
+                        </div>
+                    ) : (
+                        <div className="glass-card" style={{ 
+                            padding: 0, 
+                            overflowX: 'auto', 
+                            overflowY: 'scroll', 
+                            maxHeight: '400px', 
+                            border: '1px solid var(--border)' 
+                        }}>
+                            <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: '800px' }}>
+                                <thead style={{ background: 'var(--surface)', textAlign: 'left', position: 'sticky', top: 0, zIndex: 1 }}>
+                                    <tr style={{ borderBottom: '2px solid var(--border)' }}>
+                                        <th style={thStyle}>Shop Identity</th>
+                                        <th style={thStyle}>Category</th>
+                                        <th style={thStyle}>Contact Info</th>
+                                        <th style={thStyle}>Status</th>
+                                        <th style={thStyle}>Joined</th>
+                                        <th style={{ ...thStyle, textAlign: 'center' }}>Verification</th>
+                                        <th style={{ ...thStyle, textAlign: 'right' }}>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {sellersWithEditRequests.filter(s => {
+                                        const matchesCategory = editSearchCategory === '' || (s.category || 'Uncategorized') === editSearchCategory;
+                                        const matchesName = editSearchTerm === '' || 
+                                            s.shopName.toLowerCase().includes(editSearchTerm.toLowerCase()) || 
+                                            s.email.toLowerCase().includes(editSearchTerm.toLowerCase());
+                                        return matchesCategory && matchesName;
+                                    }).map(s => (
+                                        <tr key={s.requestId || s.uid} style={{ borderBottom: '1px solid var(--border)', transition: 'background 0.2s' }} onMouseOver={(e) => e.currentTarget.style.background = 'var(--surface)'} onMouseOut={(e) => e.currentTarget.style.background = 'transparent'}>
+                                            <td style={{ padding: '1.25rem 1.5rem' }}>
+                                                <div className="flex flex-col">
+                                                    <span style={{ fontWeight: 700, fontSize: '1rem', color: 'var(--text)' }}>{s.shopName}</span>
+                                                    <span className="text-muted" style={{ fontSize: '0.75rem', marginTop: '2px' }}>UID: {s.uid?.substring(0, 8)}</span>
+                                                </div>
+                                            </td>
+                                            <td style={{ padding: '1.25rem 1.5rem' }}>
+                                                <span style={{ 
+                                                    padding: '4px 10px', 
+                                                    background: 'var(--glass)', 
+                                                    border: '1px solid var(--border)', 
+                                                    borderRadius: '6px', 
+                                                    fontSize: '0.8rem', 
+                                                    fontWeight: 600 
+                                                }}>
+                                                    {s.category || 'Uncategorized'}
+                                                </span>
+                                            </td>
+                                            <td style={{ padding: '1.25rem 1.5rem' }}>
+                                                <div className="flex flex-col">
+                                                    <span style={{ fontWeight: 500, fontSize: '0.9rem' }}>{s.email}</span>
+                                                    <span style={{ fontSize: '0.75rem', color: 'var(--primary)' }}>{s.phone}</span>
+                                                </div>
+                                            </td>
+                                            <td style={{ padding: '1.25rem 1.5rem' }}>
+                                                <span style={{ 
+                                                    padding: '6px 12px', 
+                                                    borderRadius: '8px', 
+                                                    fontSize: '0.8rem', 
+                                                    fontWeight: 700,
+                                                    background: s.status === 'APPROVED' ? 'rgba(var(--success-rgb), 0.1)' : 
+                                                               s.status === 'REJECTED' ? 'rgba(239, 68, 68, 0.1)' : 
+                                                               s.status === 'PENDING' ? 'rgba(255, 152, 0, 0.1)' : 'var(--glass)',
+                                                    color: s.status === 'APPROVED' ? 'var(--success)' : 
+                                                           s.status === 'REJECTED' ? '#ef4444' : 
+                                                           s.status === 'PENDING' ? '#ff9800' : 'var(--text-muted)'
+                                                }}>
+                                                    {s.status}
+                                                    {s.isBlocked && ' 🚫'}
+                                                </span>
+                                            </td>
+                                            <td style={{ padding: '1.25rem 1.5rem' }}>
+                                                <span className="text-muted" style={{ fontSize: '0.85rem' }}>{s.joined}</span>
+                                            </td>
+                                            <td style={{ padding: '1.25rem 1.5rem', textAlign: 'center' }}>
+                                                <button 
+                                                    className="btn btn-secondary shadow-sm" 
+                                                    onClick={() => setSelectedSeller(s)} 
+                                                    style={{ 
+                                                        padding: '6px 14px', 
+                                                        fontSize: '0.8rem', 
+                                                        fontWeight: 700, 
+                                                        borderRadius: '8px', 
+                                                        gap: '6px' 
+                                                    }}
+                                                >
+                                                    <Box size={14} /> Review Data
+                                                </button>
+                                            </td>
+                                            <td style={{ padding: '1.25rem 1.5rem', textAlign: 'right' }}>
+                                                <span style={{ 
+                                                    padding: '6px 12px', 
+                                                    background: 'rgba(255, 152, 0, 0.1)', 
+                                                    color: '#ff9800', 
+                                                    borderRadius: '8px', 
+                                                    fontSize: '0.8rem', 
+                                                    fontWeight: 700,
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    gap: '6px',
+                                                    justifyContent: 'center',
+                                                    cursor: 'pointer'
+                                                }}
+                                                onClick={() => setEditingSeller(s)}
+                                                title="Click to edit seller details"
+                                                >
+                                                    <Edit size={14} /> Edit Pending
+                                                </span>
                                             </td>
                                         </tr>
                                     ))}
@@ -484,6 +818,19 @@ export default function SellersTab({
                     onApprove={handleApproveSeller}
                     onReject={handleRejectSeller}
                     onBlock={handleBlockSeller}
+                />
+            )}
+
+            {/* Seller Edit Modal */}
+            {editingSeller && (
+                <SellerEditModal
+                    seller={editingSeller}
+                    onClose={() => setEditingSeller(null)}
+                    onSave={() => {
+                        fetchAllData();
+                        fetchSellersWithEditRequests();
+                        setEditingSeller(null);
+                    }}
                 />
             )}
         </>

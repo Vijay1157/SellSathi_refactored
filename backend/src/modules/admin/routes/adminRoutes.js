@@ -26,12 +26,17 @@ router.post('/profile/image', upload.single('profileImage'), adminProfileControl
 // Seller management — queries
 router.get('/sellers', sellerController.getPendingSellers);
 router.get('/all-sellers', sellerController.getAllSellers);
+router.get('/sellers-edit-requests', sellerController.getSellersWithEditRequests);
+router.get('/seller/:uid/edit', sellerController.getSellerForEdit);
+router.post('/clear-all-edit-requests', sellerController.clearAllEditRequests);
+router.post('/correction-request/:requestId/resolve', sellerController.resolveEditRequest);
 // Seller management — actions
 router.post('/seller/:uid/approve', sellerActionController.approveSeller);
 router.post('/seller/:uid/reject', sellerActionController.rejectSeller);
 router.post('/seller/:uid/accept-rejected', sellerActionController.acceptRejectedSeller);
 router.post('/seller/:uid/block', sellerActionController.blockSeller);
 router.post('/seller/:uid/unblock', sellerActionController.unblockSeller);
+router.put('/seller/:uid/update', sellerController.updateSellerDetails);
 router.delete('/seller/:uid', sellerActionController.deleteSeller);
 router.delete('/blocked-sellers/all', sellerActionController.deleteAllBlockedSellers);
 router.delete('/rejected-sellers/all', sellerActionController.deleteAllRejectedSellers);

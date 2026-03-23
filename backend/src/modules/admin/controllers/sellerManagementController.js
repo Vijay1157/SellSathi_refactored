@@ -550,9 +550,330 @@ const deleteAllRejectedSellers = async (req, res) => {
     }
 };
 
+/**
+ * Get sellers with pending edit requests (from correction_requests collection)
+ */
+const getSellersWithEditRequests = async (req, res) => {
+    try {
+        // Fetch all PENDING correction requests
+        const requestsSnap = await db.collection('correction_requests')
+            .where('status', '==', 'PENDING')
+            .get();
+
+        console.log(`[GetSellersWithEditRequests] Found ${requestsSnap.size} pending correction requests`);
+
+        if (requestsSnap.empty) {
+            return res.json({ success: true, sellers: [] });
+        }
+
+        // Sort by createdAt descending in memory (avoids needing a composite index)
+        const sortedDocs = requestsSnap.docs.sort((a, b) => {
+            const aTime = a.data().createdAt?.toMillis?.() || 0;
+            const bTime = b.data().createdAt?.toMillis?.() || 0;
+            return bTime - aTime;
+        });
+
+        // Get unique seller UIDs
+        const sellerUids = [...new Set(sortedDocs.map(d => d.data().sellerUid).filter(Boolean))];
+
+        // Fetch seller and user data in batches
+        const sellerMap = {};
+        const userMap = {};
+        for (let i = 0; i < sellerUids.length; i += 10) {
+            const batch = sellerUids.slice(i, i + 10);
+            if (!batch.length) continue;
+            const [sellersSnap, usersSnap] = await Promise.all([
+                db.collection('sellers').where(admin.firestore.FieldPath.documentId(), 'in', batch).get(),
+                db.collection('users').where(admin.firestore.FieldPath.documentId(), 'in', batch).get()
+            ]);
+            sellersSnap.forEach(d => { sellerMap[d.id] = d.data(); });
+            usersSnap.forEach(d => { userMap[d.id] = d.data(); });
+        }
+
+        // Build response — one entry per correction request (not per seller)
+        const sellers = sortedDocs.map(doc => {
+            const reqData = doc.data();
+            const uid = reqData.sellerUid;
+            const sellerData = sellerMap[uid] || {};
+            const userData = userMap[uid] || {};
+
+            let requestDate = 'N/A';
+            if (reqData.createdAt) {
+                try { requestDate = formatDateDDMMYYYY(reqData.createdAt); } catch (e) { /* ignore */ }
+            }
+
+            let joinedDate = 'N/A';
+            const dateField = sellerData.createdAt || sellerData.appliedAt;
+            if (dateField) {
+                try { joinedDate = formatDateDDMMYYYY(dateField); } catch (e) { /* ignore */ }
+            }
+
+            return {
+                requestId: doc.id,
+                uid,
+                shopName: reqData.shopName || sellerData.shopName || 'Unknown Shop',
+                sellerName: reqData.sellerName || sellerData.name || 'Unknown Seller',
+                email: userData.email || userData.phone || 'N/A',
+                phone: userData.phone || 'N/A',
+                category: sellerData.category || 'Uncategorized',
+                status: sellerData.sellerStatus || 'UNKNOWN',
+                isBlocked: sellerData.isBlocked || false,
+                joined: joinedDate,
+                requestDate,
+                message: reqData.message || '',
+                adminNote: reqData.adminNote || ''
+            };
+        });
+
+        res.json({ success: true, sellers });
+    } catch (error) {
+        console.error('[GetSellersWithEditRequests] Error:', error);
+        res.status(500).json({ success: false, message: 'Failed to fetch edit requests' });
+    }
+};
+
+/**
+ * Update seller details (admin edit)
+ */
+const updateSellerDetails = async (req, res) => {
+    try {
+        const { uid } = req.params;
+        const { personalInfo, businessInfo, bankDetails, adminNotes } = req.body;
+
+        console.log(`[UpdateSellerDetails] Updating seller ${uid}`);
+
+        // Update seller document
+        const sellerRef = db.collection("sellers").doc(uid);
+        const sellerDoc = await sellerRef.get();
+        
+        if (!sellerDoc.exists) {
+            return res.status(404).json({ success: false, message: 'Seller not found' });
+        }
+
+        // Update user document for personal info
+        const userRef = db.collection("users").doc(uid);
+        const userDoc = await userRef.get();
+        
+        if (!userDoc.exists) {
+            return res.status(404).json({ success: false, message: 'User not found' });
+        }
+
+        const { pickupInfo } = req.body;
+        const sellerData = sellerDoc.data();
+
+        // Prepare updates — all registration fields
+        const sellerUpdates = {
+            // Personal info
+            name: personalInfo.name || '',
+            address: personalInfo.address || '',
+            city: personalInfo.city || '',
+            state: personalInfo.state || '',
+            pincode: personalInfo.pincode || '',
+            age: personalInfo.age || '',
+            gender: personalInfo.gender || '',
+            emailId: personalInfo.emailId || personalInfo.email || '',
+            phoneNumber: personalInfo.phoneNumber || personalInfo.phone || '',
+
+            // Business info
+            shopName: businessInfo.shopName || '',
+            supplierName: businessInfo.supplierName || '',
+            businessType: businessInfo.businessType || '',
+            gstNumber: businessInfo.gstNumber || '',
+            panNumber: businessInfo.panNumber || '',
+            category: businessInfo.category || businessInfo.productCategory || sellerData.category || 'Uncategorized',
+            productCategory: businessInfo.productCategory || businessInfo.category || '',
+            shopCategory: businessInfo.productCategory || businessInfo.category || '',
+            contactEmail: businessInfo.contactEmail || '',
+
+            // Pickup address
+            pickupAddress: (pickupInfo || {}).pickupAddress || '',
+            pickupCity: (pickupInfo || {}).pickupCity || '',
+            pickupState: (pickupInfo || {}).pickupState || '',
+            pickupPincode: (pickupInfo || {}).pickupPincode || '',
+
+            // Bank details
+            accountNumber: bankDetails.accountNumber || '',
+            ifscCode: bankDetails.ifscCode || '',
+            bankName: bankDetails.bankName || '',
+            accountHolderName: bankDetails.accountHolderName || bankDetails.bankAccountName || '',
+            bankAccountName: bankDetails.bankAccountName || bankDetails.accountHolderName || '',
+            upiId: bankDetails.upiId || '',
+
+            // Clear edit request
+            hasEditRequest: false,
+            editRequest: admin.firestore.FieldValue.delete(),
+            editRequestDate: admin.firestore.FieldValue.delete(),
+
+            // Metadata
+            lastUpdatedBy: 'admin',
+            lastUpdatedAt: admin.firestore.FieldValue.serverTimestamp(),
+            adminNotes: adminNotes || '',
+
+            // Notification for seller
+            adminUpdateNotification: {
+                message: 'Admin has updated your profile details.',
+                updatedAt: new Date().toISOString(),
+                seen: false
+            }
+        };
+
+        const userUpdates = {
+            email: personalInfo.email || personalInfo.emailId || '',
+            phone: personalInfo.phone || personalInfo.phoneNumber || ''
+        };
+
+        // Perform updates
+        await sellerRef.update(sellerUpdates);
+        await userRef.update(userUpdates);
+
+        // Clear all relevant caches
+        cache.invalidate('allSellers', 'pendingSellers', `sellerDash_${uid}`);
+
+        console.log(`[UpdateSellerDetails] Successfully updated seller ${uid}`);
+        res.json({ success: true, message: 'Seller details updated successfully' });
+
+    } catch (error) {
+        console.error('[UpdateSellerDetails] Error:', error);
+        res.status(500).json({ success: false, message: 'Failed to update seller details' });
+    }
+};
+
+/**
+ * Get seller details for editing
+ */
+const getSellerForEdit = async (req, res) => {
+    try {
+        const { uid } = req.params;
+
+        const sellerDoc = await db.collection("sellers").doc(uid).get();
+        const userDoc = await db.collection("users").doc(uid).get();
+
+        if (!sellerDoc.exists || !userDoc.exists) {
+            return res.status(404).json({ success: false, message: 'Seller not found' });
+        }
+
+        const sellerData = sellerDoc.data();
+        const userData = userDoc.data();
+
+        const seller = {
+            uid: uid,
+            personalInfo: {
+                name: userData.fullName || sellerData.name || '',
+                email: userData.email || sellerData.emailId || sellerData.contactEmail || '',
+                phone: userData.phone || sellerData.phoneNumber || '',
+                address: sellerData.address || sellerData.shopAddress || '',
+                city: sellerData.city || '',
+                state: sellerData.state || '',
+                pincode: sellerData.pincode || '',
+                aadhaarNumber: sellerData.aadhaarNumber || '',
+                extractedName: sellerData.extractedName || '',
+                age: sellerData.age || '',
+                gender: sellerData.gender || '',
+                emailId: sellerData.emailId || userData.email || '',
+                phoneNumber: sellerData.phoneNumber || userData.phone || ''
+            },
+            businessInfo: {
+                shopName: sellerData.shopName || '',
+                supplierName: sellerData.supplierName || '',
+                businessType: sellerData.businessType || '',
+                gstNumber: sellerData.gstNumber || '',
+                panNumber: sellerData.panNumber || '',
+                category: sellerData.category || sellerData.productCategory || sellerData.shopCategory || '',
+                productCategory: sellerData.productCategory || sellerData.shopCategory || sellerData.category || '',
+                contactEmail: sellerData.contactEmail || userData.email || ''
+            },
+            pickupInfo: {
+                pickupAddress: sellerData.pickupAddress || sellerData.address || '',
+                pickupCity: sellerData.pickupCity || sellerData.city || '',
+                pickupState: sellerData.pickupState || sellerData.state || '',
+                pickupPincode: sellerData.pickupPincode || sellerData.pincode || ''
+            },
+            bankDetails: {
+                accountNumber: sellerData.accountNumber || '',
+                ifscCode: sellerData.ifscCode || '',
+                bankName: sellerData.bankName || '',
+                accountHolderName: sellerData.accountHolderName || sellerData.bankAccountName || '',
+                bankAccountName: sellerData.bankAccountName || sellerData.accountHolderName || '',
+                upiId: sellerData.upiId || ''
+            },
+            status: sellerData.sellerStatus || 'UNKNOWN',
+            isBlocked: sellerData.isBlocked || false,
+            hasEditRequest: sellerData.hasEditRequest || false,
+            editRequest: sellerData.editRequest || {},
+            adminNotes: sellerData.adminNotes || ''
+        };
+
+        res.json({ success: true, seller });
+    } catch (error) {
+        console.error('[GetSellerForEdit] Error:', error);
+        res.status(500).json({ success: false, message: 'Failed to fetch seller details' });
+    }
+};
+
+
+/**
+ * Clear all edit requests (mark as resolved in correction_requests)
+ */
+const clearAllEditRequests = async (req, res) => {
+    try {
+        const requestsSnap = await db.collection('correction_requests')
+            .where('status', '==', 'PENDING')
+            .get();
+
+        if (requestsSnap.empty) {
+            return res.status(200).json({ success: true, message: 'No edit requests to clear', clearedCount: 0 });
+        }
+
+        const batch = db.batch();
+        requestsSnap.docs.forEach(doc => {
+            batch.update(doc.ref, {
+                status: 'DISMISSED',
+                resolvedAt: admin.firestore.FieldValue.serverTimestamp()
+            });
+        });
+        await batch.commit();
+
+        cache.invalidate('allSellers');
+        console.log(`[ClearAllEditRequests] Dismissed ${requestsSnap.size} correction requests`);
+
+        return res.status(200).json({ success: true, message: `Cleared ${requestsSnap.size} edit requests`, clearedCount: requestsSnap.size });
+    } catch (error) {
+        console.error('[ClearAllEditRequests] Error:', error);
+        res.status(500).json({ success: false, message: 'Failed to clear edit requests' });
+    }
+};
+
+
+/**
+ * Resolve a single correction request (called after admin edits the seller)
+ */
+const resolveEditRequest = async (req, res) => {
+    try {
+        const { requestId } = req.params;
+        const { adminNote } = req.body;
+
+        await db.collection('correction_requests').doc(requestId).update({
+            status: 'RESOLVED',
+            adminNote: adminNote || '',
+            resolvedAt: admin.firestore.FieldValue.serverTimestamp()
+        });
+
+        console.log(`[ResolveEditRequest] Resolved request ${requestId}`);
+        res.json({ success: true, message: 'Request resolved' });
+    } catch (error) {
+        console.error('[ResolveEditRequest] Error:', error);
+        res.status(500).json({ success: false, message: 'Failed to resolve request' });
+    }
+};
+
 
 module.exports = {
     getPendingSellers,
     getAllSellers,
+    getSellersWithEditRequests,
+    updateSellerDetails,
+    getSellerForEdit,
+    clearAllEditRequests,
+    resolveEditRequest
 };
 
