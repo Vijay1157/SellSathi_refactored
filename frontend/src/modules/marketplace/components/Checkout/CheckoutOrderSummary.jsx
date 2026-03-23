@@ -1,7 +1,11 @@
 import React from 'react';
 import { Shield, Package, TrendingUp } from 'lucide-react';
 
-export default function CheckoutOrderSummary({ subtotal }) {
+export default function CheckoutOrderSummary({ 
+    subtotal, 
+    couponDiscount, 
+    finalTotal
+}) {
     return (
         <div className="xl:col-span-4 lg:sticky lg:top-10">
             <section className="bg-white rounded-[2.5rem] border border-gray-100 shadow-xl overflow-hidden">
@@ -22,13 +26,19 @@ export default function CheckoutOrderSummary({ subtotal }) {
                             <span className="text-gray-400 font-bold text-sm">Platform Tax</span>
                             <span className="text-gray-900 font-black">₹0.00</span>
                         </div>
+                        {couponDiscount > 0 && (
+                            <div className="flex justify-between items-center group bg-green-50 -mx-2 px-2 py-2 rounded-xl">
+                                <span className="text-green-600 font-bold text-sm">Coupon Discount</span>
+                                <span className="text-green-600 font-black">-₹{couponDiscount.toLocaleString()}</span>
+                            </div>
+                        )}
                     </div>
                     <div className="h-px bg-gray-50 w-full" />
                     <div className="space-y-2">
                         <div className="flex justify-between items-end">
                             <span className="text-gray-900 font-black text-lg">Total Amount</span>
                             <div className="text-right">
-                                <span className="text-3xl font-black text-primary">₹{subtotal.toLocaleString()}</span>
+                                <span className="text-3xl font-black text-primary">₹{finalTotal.toLocaleString()}</span>
                             </div>
                         </div>
                         <p className="text-[10px] text-green-600 font-bold text-right uppercase tracking-widest">
