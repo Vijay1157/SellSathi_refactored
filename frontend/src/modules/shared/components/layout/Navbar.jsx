@@ -243,49 +243,11 @@ export default function Navbar() {
         navigate(`/products?category=${category}&sub=${subCategory}&item=${item}`);
     };
 
-    const handleBecomeSellerClick = async () => {
-        if (!user) {
-            // Open seller page in new tab even if not logged in
-            window.open(`${window.location.origin}${window.location.pathname}#/seller`, '_blank');
-            return;
-        }
-
-        if (user.role === 'ADMIN') return;
-
-        // If ALREADY marked as SELLER in localStorage, go directly. Don't wait for API.
-        if (user.role === 'SELLER') {
-            console.log("[Navbar] Role is SELLER, navigating to DASHBOARD...");
-            navigate('/seller/dashboard');
-            return;
-        }
-
-        // Check seller status via backend
-        try {
-            console.log("[Navbar] Checking seller status via API...");
-            const response = await authFetch('/auth/check-seller-status');
-            const data = await response.json();
-            console.log("[Navbar] API Seller Status:", data);
-
-            if (data.success && data.hasApplied) {
-                if (data.sellerStatus === 'APPROVED') {
-                    // Update localStorage to avoid future API checks
-                    const localUser = JSON.parse(localStorage.getItem('user') || '{}');
-                    localUser.role = 'SELLER';
-                    localStorage.setItem('user', JSON.stringify(localUser));
-                    window.dispatchEvent(new CustomEvent('userDataChanged'));
-
-                    navigate('/seller/dashboard');
-                    return;
-                } else if (data.sellerStatus === 'PENDING') {
-                    alert('You have already applied to become a seller. Your application is currently under review. Please wait for admin approval.');
-                    return;
-                }
-            }
-        } catch (err) {
-            console.error('[Navbar] Error checking seller status:', err);
-        }
-
-        // Open seller page in new tab
+    const handleBecomeSellerClick = () => {
+        // ALWAYS open seller page in new tab on Home Page Navbar,
+        // even if user is a SELLER in the database.
+        // They must login from /#/seller to access the Seller Dashboard.
+        console.log("[Navbar] Opening /seller in new tab...");
         window.open(`${window.location.origin}${window.location.pathname}#/seller`, '_blank');
     };
 
@@ -327,7 +289,7 @@ export default function Navbar() {
                                         onClick={handleBecomeSellerClick}
                                         className="btn btn-seller"
                                     >
-                                        {user.role === 'SELLER' ? 'Dashboard' : 'Seller'}
+                                        Seller
                                     </button>
                                 ) : !user ? (
                                     <button
@@ -388,8 +350,15 @@ export default function Navbar() {
                                             </div>
                                             <div className="menu-items">
                                                 <button onClick={() => {
-                                                    const path = user.role === 'ADMIN' ? '/admin' : (user.role === 'SELLER' ? '/seller/dashboard' : '/dashboard');
-                                                    navigate(path);
+                                                    // If loginContext is SELLER (meaning they logged in from /#/seller), go to Seller dashboard
+                                                    // Otherwise, ALWAYS go to Customer dashboard (even for sellers/admins logged in from home)
+                                                    const context = localStorage.getItem('loginContext');
+                                                    if (context === 'SELLER') {
+                                                        const path = user.role === 'ADMIN' ? '/admin' : '/seller/dashboard';
+                                                        navigate(path);
+                                                    } else {
+                                                        navigate('/dashboard');
+                                                    }
                                                     setIsProfileOpen(false);
                                                 }}>
                                                     <ShoppingBag size={16} /> My Dashboard

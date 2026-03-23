@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import SellerHeader from '../components/SellerHeader';
 import Footer from '../components/Footer';
 import StatsSection from '../components/StatsSection';
@@ -18,10 +18,25 @@ const categories = [
 
 export const SellerPage = () => {
   const [isLoginOpen, setIsLoginOpen] = useState(false);
+  const navigate = useNavigate();
+
+  const handleNewSellerClick = (e) => {
+    try {
+      const user = JSON.parse(localStorage.getItem('user'));
+      if (user && user.role === 'SELLER') {
+        e.preventDefault();
+        alert('You are already registered as a seller. Please login to access your dashboard.');
+        return;
+      }
+    } catch (err) { /* ignore */ }
+    
+    // Normal flow continues
+    navigate('/seller/register');
+  };
 
   return (
     <div className="min-h-screen bg-white">
-      <SellerHeader onLoginClick={() => setIsLoginOpen(true)} />
+      <SellerHeader onLoginClick={() => setIsLoginOpen(true)} onNewSellerClick={handleNewSellerClick} />
 
       {/* Hero Section */}
       <section id="sell-online" className="relative pt-16 pb-24 lg:pt-24 lg:pb-32 overflow-hidden bg-gradient-to-b from-brand/5 to-white">
@@ -39,12 +54,12 @@ export const SellerPage = () => {
                 Become a SellSathi seller and grow your business across India.
               </p>
               <div className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-4 mb-6">
-                <Link
-                  to="/seller/register"
+                <button
+                  onClick={handleNewSellerClick}
                   className="w-full sm:w-auto px-10 py-4 rounded-2xl bg-brand text-white font-bold text-lg shadow-xl shadow-brand/20 hover:bg-brand-hover hover:-translate-y-1 transition-all"
                 >
                   New Seller
-                </Link>
+                </button>
               </div>
               <p className="text-sm text-gray-500">
                 <span className="bg-brand text-white text-[10px] font-bold px-2 py-0.5 rounded mr-2">NEW</span>

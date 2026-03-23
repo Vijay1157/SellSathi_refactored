@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 
-const SellerHeader = ({ onLoginClick }) => {
+const SellerHeader = ({ onLoginClick, onNewSellerClick }) => {
   const [activeSection, setActiveSection] = useState('sell-online');
 
   const scrollToSection = (sectionId) => {
@@ -99,8 +99,8 @@ const SellerHeader = ({ onLoginClick }) => {
           >
             Login
           </button>
-          <Link
-            to="/seller/register"
+          <button
+            onClick={onNewSellerClick}
             style={{
               backgroundColor: '#6C63FF',
               color: 'white',
@@ -109,11 +109,12 @@ const SellerHeader = ({ onLoginClick }) => {
               border: 'none',
               fontWeight: '500',
               display: 'inline-block',
-              textDecoration: 'none'
+              textDecoration: 'none',
+              cursor: 'pointer'
             }}
           >
             New Seller
-          </Link>
+          </button>
         </div>
       </div>
     </header>
