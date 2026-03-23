@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Link, useNavigate } from 'react-router-dom';
 import { ArrowLeft, CheckCircle2, Upload, Camera, Store, User, Phone, CreditCard, Loader, ImagePlus, X } from 'lucide-react';
-import { authFetch } from '@/modules/shared/utils/api';
+import { API_BASE } from '@/modules/shared/utils/api';
 
 export const SellerRegister = () => {
   const navigate = useNavigate();
@@ -38,9 +38,9 @@ export const SellerRegister = () => {
       const data = new FormData();
       data.append('aadharImage', file);
 
-      const response = await authFetch('/auth/extract-aadhar', {
+      const response = await fetch(`${API_BASE}/auth/extract-aadhar`, {
         method: 'POST',
-        body: data // authFetch will automatically omit Content-Type for FormData
+        body: data // FormData — browser sets Content-Type automatically
       });
 
       const result = await response.json();
@@ -113,7 +113,7 @@ export const SellerRegister = () => {
     const data = new FormData();
     data.append('image', aadhaarImageFile);
 
-    const response = await authFetch('/auth/upload-image', {
+    const response = await fetch(`${API_BASE}/auth/upload-image`, {
       method: 'POST',
       body: data
     });
