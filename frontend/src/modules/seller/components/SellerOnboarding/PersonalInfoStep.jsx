@@ -1,31 +1,101 @@
-import React from 'react';
-import { CheckCircle2 } from 'lucide-react';
+import React, { useState } from 'react';
+import { CheckCircle2, ArrowLeft, AlertCircle } from 'lucide-react';
 import { INDIAN_STATES, CITY_DATA } from './onboardingConfig';
+import { useNavigate } from 'react-router-dom';
+
+// Validation helpers
+const PAN_REGEX = /^[A-Z]{5}[0-9]{4}[A-Z]{1}$/;
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export default function PersonalInfoStep({ sellerData, updateSellerData, nextStep }) {
+  const navigate = useNavigate();
   const availableCities = CITY_DATA[sellerData.state] || [];
+  const [validationErrors, setValidationErrors] = useState({});
+
+  const validateField = (field, value) => {
+    const errors = { ...validationErrors };
+    switch (field) {
+      case 'panNumber':
+        if (value && value.length === 10 && !PAN_REGEX.test(value)) {
+          errors.panNumber = 'PAN must follow format: ABCDE1234F (5 letters, 4 digits, 1 letter)';
+        } else {
+          delete errors.panNumber;
+        }
+        break;
+      case 'emailId':
+        if (value && !EMAIL_REGEX.test(value)) {
+          errors.emailId = 'Please enter a valid email address';
+        } else {
+          delete errors.emailId;
+        }
+        break;
+      case 'aadhaarNumber':
+        if (value && value.length === 12 && !/^\d{12}$/.test(value)) {
+          errors.aadhaarNumber = 'Aadhaar must be exactly 12 digits';
+        } else {
+          delete errors.aadhaarNumber;
+        }
+        break;
+      case 'phoneNumber':
+        if (value && value.length === 10 && !/^\d{10}$/.test(value)) {
+          errors.phoneNumber = 'Phone number must be exactly 10 digits';
+        } else {
+          delete errors.phoneNumber;
+        }
+        break;
+      case 'pincode':
+        if (value && value.length === 6 && !/^\d{6}$/.test(value)) {
+          errors.pincode = 'Pincode must be exactly 6 digits';
+        } else {
+          delete errors.pincode;
+        }
+        break;
+      default:
+        break;
+    }
+    setValidationErrors(errors);
+  };
+
+  const handleFieldChange = (field, value) => {
+    updateSellerData(field, value);
+    validateField(field, value);
+  };
 
   const isFormValid = sellerData.fullName &&
     sellerData.aadhaarNumber?.length === 12 &&
     sellerData.phoneNumber?.length === 10 &&
     sellerData.age &&
     sellerData.panNumber?.length === 10 &&
+    PAN_REGEX.test(sellerData.panNumber) &&
     sellerData.nameAsPerPAN &&
     sellerData.emailId &&
+    EMAIL_REGEX.test(sellerData.emailId) &&
     sellerData.state &&
     sellerData.pincode?.length === 6 &&
     sellerData.district &&
     sellerData.city &&
     sellerData.buildingNumber &&
-    sellerData.streetLocality;
+    sellerData.streetLocality &&
+    Object.keys(validationErrors).length === 0;
 
   const inp = "w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#7B4DDB] focus:border-[#7B4DDB] text-sm";
 
   return (
     <div className="bg-white">
       <div className="mb-6">
-        <h2 className="text-2xl font-bold text-gray-900 mb-1">Personal Details</h2>
-        <p className="text-gray-500 text-sm">Provide your legal information carefully</p>
+        <div className="flex items-center gap-3 mb-2">
+          <button
+            onClick={() => navigate('/seller/register')}
+            className="flex items-center gap-1.5 text-gray-500 hover:text-gray-900 transition-colors text-sm font-medium"
+            style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '4px 8px', borderRadius: '8px' }}
+            onMouseEnter={(e) => e.target.style.background = '#f3f4f6'}
+            onMouseLeave={(e) => e.target.style.background = 'none'}
+          >
+            <ArrowLeft size={16} /> Back
+          </button>
+          <h2 className="text-2xl font-bold text-gray-900">Personal Details</h2>
+        </div>
+        <p className="text-gray-500 text-sm ml-[68px]">Provide your legal information carefully</p>
       </div>
 
       <div className="space-y-5">
@@ -34,7 +104,7 @@ export default function PersonalInfoStep({ sellerData, updateSellerData, nextSte
           <div>
             <label className="block text-xs font-semibold text-gray-600 mb-1.5">Full Name *</label>
             <input type="text" value={sellerData.fullName}
-              onChange={(e) => updateSellerData('fullName', e.target.value)}
+              onChange={(e) => handleFieldChange('fullName', e.target.value)}
               className={inp} placeholder="Enter your full name" />
           </div>
           <div>
@@ -50,8 +120,11 @@ export default function PersonalInfoStep({ sellerData, updateSellerData, nextSte
           <div>
             <label className="block text-xs font-semibold text-gray-600 mb-1.5">Phone Number *</label>
             <input type="tel" maxLength={10} value={sellerData.phoneNumber}
-              onChange={(e) => updateSellerData('phoneNumber', e.target.value.replace(/\D/g, ''))}
+              onChange={(e) => handleFieldChange('phoneNumber', e.target.value.replace(/\D/g, ''))}
               className={inp} placeholder="10-digit phone number" />
+            {validationErrors.phoneNumber && (
+              <p className="text-xs text-red-500 mt-1 flex items-center gap-1"><AlertCircle size={12} />{validationErrors.phoneNumber}</p>
+            )}
           </div>
           <div>
             <label className="block text-xs font-semibold text-gray-600 mb-1.5">Age (Locked) *</label>
@@ -72,8 +145,18 @@ export default function PersonalInfoStep({ sellerData, updateSellerData, nextSte
             <div>
               <label className="block text-xs font-semibold text-gray-600 mb-1.5">PAN Number *</label>
               <input type="text" maxLength={10} value={sellerData.panNumber}
-                onChange={(e) => updateSellerData('panNumber', e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, ''))}
-                className={inp} placeholder="e.g. ABCDE1234F" />
+                onChange={(e) => {
+                  const val = e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '');
+                  handleFieldChange('panNumber', val);
+                }}
+                className={`${inp} ${validationErrors.panNumber ? 'border-red-400 focus:ring-red-400' : ''}`}
+                placeholder="e.g. ABCDE1234F" />
+              {validationErrors.panNumber && (
+                <p className="text-xs text-red-500 mt-1 flex items-center gap-1"><AlertCircle size={12} />{validationErrors.panNumber}</p>
+              )}
+              {sellerData.panNumber?.length === 10 && PAN_REGEX.test(sellerData.panNumber) && (
+                <p className="text-xs text-green-600 mt-1 flex items-center gap-1"><CheckCircle2 size={12} />Valid PAN format</p>
+              )}
             </div>
             <div>
               <label className="block text-xs font-semibold text-gray-600 mb-1.5">Name as per PAN *</label>
@@ -88,8 +171,15 @@ export default function PersonalInfoStep({ sellerData, updateSellerData, nextSte
         <div>
           <label className="block text-xs font-semibold text-gray-600 mb-1.5">Business Email ID *</label>
           <input type="email" value={sellerData.emailId}
-            onChange={(e) => updateSellerData('emailId', e.target.value)}
-            className={inp} placeholder="your@business.com" />
+            onChange={(e) => handleFieldChange('emailId', e.target.value)}
+            className={`${inp} ${validationErrors.emailId ? 'border-red-400 focus:ring-red-400' : ''}`}
+            placeholder="your@business.com" />
+          {validationErrors.emailId && (
+            <p className="text-xs text-red-500 mt-1 flex items-center gap-1"><AlertCircle size={12} />{validationErrors.emailId}</p>
+          )}
+          {sellerData.emailId && EMAIL_REGEX.test(sellerData.emailId) && (
+            <p className="text-xs text-green-600 mt-1 flex items-center gap-1"><CheckCircle2 size={12} />Valid email format</p>
+          )}
         </div>
 
         {/* Address Section */}
@@ -120,53 +210,60 @@ export default function PersonalInfoStep({ sellerData, updateSellerData, nextSte
                 className={inp} placeholder="e.g. Near City Mall, Opp. Bus Stand" />
             </div>
 
-            {/* State & City Dropdowns */}
+            {/* State & District Dropdowns (SWAPPED: City first, District after) */}
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="block text-xs font-semibold text-gray-600 mb-1.5">State *</label>
                 <select value={sellerData.state}
-                  onChange={(e) => { updateSellerData('state', e.target.value); updateSellerData('city', ''); }}
+                  onChange={(e) => { updateSellerData('state', e.target.value); updateSellerData('city', ''); updateSellerData('district', ''); }}
                   className={inp + " bg-white"}>
                   <option value="">Select State</option>
                   {INDIAN_STATES.map(s => <option key={s} value={s}>{s}</option>)}
                 </select>
               </div>
               <div>
-                <label className="block text-xs font-semibold text-gray-600 mb-1.5">City *</label>
+                <label className="block text-xs font-semibold text-gray-600 mb-1.5">District *</label>
                 {availableCities.length > 0 ? (
-                  <select value={sellerData.city}
-                    onChange={(e) => updateSellerData('city', e.target.value)}
+                  <select value={sellerData.district}
+                    onChange={(e) => updateSellerData('district', e.target.value)}
                     className={inp + " bg-white"}>
-                    <option value="">Select City</option>
+                    <option value="">Select District</option>
                     {availableCities.map(c => <option key={c} value={c}>{c}</option>)}
                   </select>
                 ) : (
-                  <input type="text" value={sellerData.city}
-                    onChange={(e) => updateSellerData('city', e.target.value)}
-                    className={inp} placeholder="Enter city name" />
+                  <input type="text" value={sellerData.district}
+                    onChange={(e) => updateSellerData('district', e.target.value)}
+                    className={inp} placeholder="Enter district name" />
                 )}
               </div>
             </div>
 
-            {/* District & Pincode */}
+            {/* City & Pincode */}
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-xs font-semibold text-gray-600 mb-1.5">District *</label>
-                <input type="text" value={sellerData.district}
-                  onChange={(e) => updateSellerData('district', e.target.value)}
-                  className={inp} placeholder="e.g. Central Delhi" />
+                <label className="block text-xs font-semibold text-gray-600 mb-1.5">City *</label>
+                <input type="text" value={sellerData.city}
+                  onChange={(e) => updateSellerData('city', e.target.value)}
+                  className={inp} placeholder="e.g. Mumbai, Bengaluru" />
               </div>
               <div>
                 <label className="block text-xs font-semibold text-gray-600 mb-1.5">Pincode *</label>
                 <input type="text" maxLength={6} value={sellerData.pincode}
-                  onChange={(e) => updateSellerData('pincode', e.target.value.replace(/\D/g, ''))}
+                  onChange={(e) => handleFieldChange('pincode', e.target.value.replace(/\D/g, ''))}
                   className={inp} placeholder="6-digit pincode" />
+                {validationErrors.pincode && (
+                  <p className="text-xs text-red-500 mt-1 flex items-center gap-1"><AlertCircle size={12} />{validationErrors.pincode}</p>
+                )}
               </div>
             </div>
           </div>
         </div>
 
-        <div className="flex justify-end pt-6 border-t">
+        <div className="flex justify-between pt-6 border-t">
+          <button onClick={() => navigate('/seller/register')}
+            className="px-6 py-3 border border-gray-200 text-gray-500 font-bold rounded-xl hover:bg-gray-50 transition-colors text-sm flex items-center gap-2">
+            <ArrowLeft size={16} /> Back
+          </button>
           <button onClick={nextStep} disabled={!isFormValid}
             style={{ backgroundColor: '#7B4DDB' }}
             className="px-8 py-3 text-white font-bold rounded-xl shadow-md hover:brightness-110 transition-all active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed text-sm">

@@ -1,7 +1,7 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowLeft, Info, Tag, AlertCircle } from 'lucide-react';
+import { ArrowLeft, Info, Tag, AlertCircle, Percent } from 'lucide-react';
 import { auth } from '@/modules/shared/config/firebase';
 import { authFetch } from '@/modules/shared/utils/api';
 import { VARIANT_CONFIGS } from '@/modules/shared/config/productVariants';
@@ -32,8 +32,16 @@ export default function AddProduct() {
 
     // Core state
     const [product, setProduct] = useState({
-        name: '', price: '', discountPrice: '', category: '', stock: '', description: '', image: ''
+        name: '', price: '', discountPrice: '', category: '', stock: '', description: '', image: '', gstPercent: ''
     });
+
+    // Fee constants
+    const PLATFORM_FEE_PERCENT = 7;
+    const USER_FEE_PERCENT = 3;
+
+    // Seller GST status
+    const [sellerHasGST, setSellerHasGST] = useState(false);
+    const [sellerProfileLoaded, setSellerProfileLoaded] = useState(false);
 
     // Sub-component state
     const [selectedSizes, setSelectedSizes] = useState([]);
@@ -56,6 +64,32 @@ export default function AddProduct() {
     const [variantImages, setVariantImages] = useState({});
 
     const config = CATEGORY_CONFIG[product.category] || null;
+
+    // Load seller profile to check GST status
+    useEffect(() => {
+        const loadSellerProfile = async () => {
+            try {
+                const user = auth.currentUser;
+                let uid = user?.uid;
+                if (!uid) {
+                    try { uid = JSON.parse(localStorage.getItem('user'))?.uid; } catch { uid = null; }
+                }
+                if (uid) {
+                    const res = await authFetch(`/seller/${uid}/dashboard-data`);
+                    const data = await res.json();
+                    if (data.success && data.seller) {
+                        const hasGST = data.seller.hasGST === 'yes' && data.seller.gstNumber;
+                        setSellerHasGST(!!hasGST);
+                    }
+                }
+            } catch (err) {
+                console.error('Failed to load seller profile for GST check:', err);
+            } finally {
+                setSellerProfileLoaded(true);
+            }
+        };
+        loadSellerProfile();
+    }, []);
 
     // Handlers
     const toggleSize = (size) => {
@@ -152,7 +186,14 @@ export default function AddProduct() {
             stock: parseInt(product.stock),
             description: product.description,
             image: product.image,
+            platformFeePercent: PLATFORM_FEE_PERCENT,
+            userFeePercent: USER_FEE_PERCENT,
         };
+
+        // Only include GST if seller has GST
+        if (sellerHasGST && product.gstPercent) {
+            fullProduct.gstPercent = parseFloat(product.gstPercent);
+        }
 
         if (Object.keys(variantImages).length > 0) fullProduct.variantImages = variantImages;
 
@@ -284,6 +325,55 @@ export default function AddProduct() {
                                             value={product.stock} onChange={e => setProduct({ ...product, stock: e.target.value })} />
                                     </div>
                                 </div>
+
+                                {/* GST, Platform, User Fee Row */}
+                                <div style={{ display: 'grid', gridTemplateColumns: sellerHasGST ? '1fr 1fr 1fr' : '1fr 1fr', gap: '1rem', marginTop: '1.5rem' }}>
+                                    {sellerHasGST && (
+                                        <div>
+                                            <label style={sty.label}>
+                                                <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                                    <Percent size={14} /> GST Percent (%)
+                                                </span>
+                                            </label>
+                                            <div style={{ position: 'relative' }}>
+                                                <input type="number" placeholder="e.g. 18" min="0" max="28" style={sty.priceInput}
+                                                    value={product.gstPercent} onChange={e => setProduct({ ...product, gstPercent: e.target.value })} />
+                                                <span style={{ position: 'absolute', right: '0.75rem', top: '50%', transform: 'translateY(-50%)', fontWeight: 'bold', color: '#94a3b8', fontSize: '0.85rem' }}>%</span>
+                                            </div>
+                                            <p style={{ fontSize: '0.72rem', color: '#94a3b8', marginTop: '0.25rem' }}>Applied as GST on selling price</p>
+                                        </div>
+                                    )}
+                                    <div>
+                                        <label style={sty.label}>
+                                            <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                                Platform Fee
+                                            </span>
+                                        </label>
+                                        <div style={{
+                                            padding: '0.7rem 1rem', border: '1.5px solid #e2e8f0',
+                                            borderRadius: '10px', background: '#f8fafc', color: '#475569',
+                                            fontWeight: 600, fontSize: '0.9rem'
+                                        }}>
+                                            {PLATFORM_FEE_PERCENT}% <span style={{ fontSize: '0.75rem', color: '#94a3b8', fontWeight: 400 }}>(fixed)</span>
+                                        </div>
+                                        <p style={{ fontSize: '0.72rem', color: '#94a3b8', marginTop: '0.25rem' }}>SellSathi platform charges</p>
+                                    </div>
+                                    <div>
+                                        <label style={sty.label}>
+                                            <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                                User Fee
+                                            </span>
+                                        </label>
+                                        <div style={{
+                                            padding: '0.7rem 1rem', border: '1.5px solid #e2e8f0',
+                                            borderRadius: '10px', background: '#f8fafc', color: '#475569',
+                                            fontWeight: 600, fontSize: '0.9rem'
+                                        }}>
+                                            {USER_FEE_PERCENT}% <span style={{ fontSize: '0.75rem', color: '#94a3b8', fontWeight: 400 }}>(fixed)</span>
+                                        </div>
+                                        <p style={{ fontSize: '0.72rem', color: '#94a3b8', marginTop: '0.25rem' }}>Transaction processing fee</p>
+                                    </div>
+                                </div>
                             </div>
 
                             <AnimatePresence>
@@ -332,6 +422,11 @@ export default function AddProduct() {
                                         )}
                                         {specifications.filter(s => s.value).length > 0 && (
                                             <div><strong>Specs:</strong> {specifications.filter(s => s.value).length} defined</div>
+                                        )}
+                                        <div><strong>Platform Fee:</strong> {PLATFORM_FEE_PERCENT}%</div>
+                                        <div><strong>User Fee:</strong> {USER_FEE_PERCENT}%</div>
+                                        {sellerHasGST && product.gstPercent && (
+                                            <div><strong>GST:</strong> {product.gstPercent}%</div>
                                         )}
                                     </div>
                                 </motion.div>
