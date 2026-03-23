@@ -245,7 +245,8 @@ export default function Navbar() {
 
     const handleBecomeSellerClick = async () => {
         if (!user) {
-            setIsLoginModalOpen(true);
+            // Open seller page in new tab even if not logged in
+            window.open(`${window.location.origin}${window.location.pathname}#/seller`, '_blank');
             return;
         }
 
@@ -284,7 +285,8 @@ export default function Navbar() {
             console.error('[Navbar] Error checking seller status:', err);
         }
 
-        navigate('/seller');
+        // Open seller page in new tab
+        window.open(`${window.location.origin}${window.location.pathname}#/seller`, '_blank');
     };
 
     return (
@@ -325,14 +327,14 @@ export default function Navbar() {
                                         onClick={handleBecomeSellerClick}
                                         className="btn btn-seller"
                                     >
-                                        {user.role === 'SELLER' ? 'Dashboard' : 'Become a Seller'}
+                                        {user.role === 'SELLER' ? 'Dashboard' : 'Seller'}
                                     </button>
                                 ) : !user ? (
                                     <button
-                                        onClick={() => setIsLoginModalOpen(true)}
+                                        onClick={handleBecomeSellerClick}
                                         className="btn btn-seller"
                                     >
-                                        Become a Seller
+                                        Seller
                                     </button>
                                 ) : null}
                             </>

@@ -135,6 +135,11 @@ export const SellerRegister = () => {
       return;
     }
 
+    if (!aadhaarImageFile) {
+      setError('Aadhaar card image is mandatory. Please upload your Aadhaar card image.');
+      return;
+    }
+
     if (!/^\d{12}$/.test(formData.aadhaarNumber)) {
       setError('Aadhaar number must be exactly 12 digits.');
       return;
@@ -358,7 +363,7 @@ export const SellerRegister = () => {
                 {/* Aadhaar Image Upload */}
                 <div className="space-y-2">
                   <label className="text-sm font-bold text-gray-700 flex items-center gap-2">
-                    <ImagePlus size={16} /> Aadhaar Card Image <span className="text-xs font-normal text-gray-400">(Optional)</span>
+                    <ImagePlus size={16} /> Aadhaar Card Image <span className="text-xs font-normal text-red-500">(Required *)</span>
                   </label>
                   {!aadhaarImagePreview ? (
                     <label className="block cursor-pointer">

@@ -273,4 +273,37 @@ const updateOrderStatus = async (req, res) => {
     }
 };
 
-module.exports = { getDashboardData, addProduct, createPickupAddress, getPublicProfile, updateOrderStatus };
+/**
+ * Submit a correction request from a seller to admin.
+ */
+const submitCorrectionRequest = async (req, res) => {
+    try {
+        const { sellerUid, sellerName, shopName, message } = req.body;
+
+        if (!sellerUid || !message) {
+            return res.status(400).json({ success: false, message: 'Seller UID and message are required' });
+        }
+
+        const correctionData = {
+            sellerUid,
+            sellerName: sellerName || 'Unknown Seller',
+            shopName: shopName || 'Unknown Shop',
+            message: message.trim(),
+            status: 'PENDING',
+            createdAt: admin.firestore.FieldValue.serverTimestamp(),
+            resolvedAt: null,
+            adminNote: null
+        };
+
+        await db.collection('correction_requests').add(correctionData);
+
+        console.log(`[CorrectionRequest] New request from seller ${sellerUid}: ${message.substring(0, 100)}...`);
+
+        return res.status(200).json({ success: true, message: 'Correction request submitted successfully' });
+    } catch (error) {
+        console.error('[CorrectionRequest] ERROR:', error);
+        return res.status(500).json({ success: false, message: 'Failed to submit correction request' });
+    }
+};
+
+module.exports = { getDashboardData, addProduct, createPickupAddress, getPublicProfile, updateOrderStatus, submitCorrectionRequest };
