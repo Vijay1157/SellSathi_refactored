@@ -18,26 +18,26 @@ const TEST_CREDENTIALS = {
 
 /** Redirects user based on role/status after a successful auth response */
 function redirectByRole(data, navigate, isSellerLogin = false) {
-    if (data.role === 'ADMIN') navigate('/admin');
-    else if (data.role === 'SELLER' && (data.status === 'APPROVED' || data.sellerStatus === 'APPROVED')) {
-        // If logging in from seller page, set login context
-        if (isSellerLogin) {
-            localStorage.setItem('loginContext', 'SELLER');
-        }
-        navigate('/seller/dashboard');
-    }
-    else if (data.role === 'SELLER' && (data.status === 'PENDING' || data.sellerStatus === 'PENDING')) {
-        alert(`⏳ Your seller application for "${data.shopName || 'your shop'}" is pending admin approval.`);
-        navigate('/');
-    } else {
-        // If logging in from main page, set consumer context
-        if (!isSellerLogin) {
-            localStorage.setItem('loginContext', 'CONSUMER');
+    if (isSellerLogin) {
+        // Seller Page LOGIN flow
+        localStorage.setItem('loginContext', 'SELLER');
+        if (data.role === 'ADMIN') {
+            navigate('/admin');
+        } else if (data.role === 'SELLER' && (data.status === 'APPROVED' || data.sellerStatus === 'APPROVED')) {
+            navigate('/seller/dashboard');
+        } else if (data.role === 'SELLER' && (data.status === 'PENDING' || data.sellerStatus === 'PENDING')) {
+            alert(`⏳ Your seller application for "${data.shopName || 'your shop'}" is pending admin approval.`);
+            navigate('/');
         } else {
-            localStorage.setItem('loginContext', 'SELLER');
+            // Not a seller or pending, but logged in from seller page
+            navigate('/');
         }
-        navigate('/');
+        return;
     }
+
+    // HOME PAGE login flow: All users (even admin/seller) stay on Home Page
+    localStorage.setItem('loginContext', 'CONSUMER');
+    navigate('/');
 }
 
 /** Stores user data to localStorage and dispatches userDataChanged event */

@@ -13,7 +13,9 @@ router.post('/register', authController.register);
 router.post('/send-email-otp', authController.sendEmailOtp);
 router.post('/apply-seller', verifyAuth, authController.applySeller);
 router.get('/check-seller-status', verifyAuth, authController.checkSellerStatus);
-router.post('/extract-aadhar', verifyAuth, upload.single('aadharImage'), authController.extractAadhar);
-router.post('/upload-image', verifyAuth, upload.single('image'), authController.uploadImage);
+
+// These routes are used during seller registration (before login) — no auth required
+router.post('/extract-aadhar', upload.single('aadharImage'), authController.extractAadhar);
+router.post('/upload-image', upload.single('image'), authController.uploadImage);
 
 module.exports = router;
