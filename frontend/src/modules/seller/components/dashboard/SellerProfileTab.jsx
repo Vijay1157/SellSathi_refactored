@@ -1,8 +1,52 @@
 import { useState } from 'react';
-import { User, Store, MapPin, CreditCard, Package, CheckCircle, AlertCircle, ImageIcon } from 'lucide-react';
+import { User, Store, MapPin, CreditCard, Package, CheckCircle, AlertCircle, ImageIcon, Edit3, Send, Loader, X } from 'lucide-react';
+import { authFetch } from '@/modules/shared/utils/api';
 
 export default function SellerProfileTab({ profile }) {
     const [personalTab, setPersonalTab] = useState('personal');
+    const [showEditModal, setShowEditModal] = useState(false);
+    const [correctionMessage, setCorrectionMessage] = useState('');
+    const [sendingRequest, setSendingRequest] = useState(false);
+    const [requestSent, setRequestSent] = useState(false);
+    const [requestError, setRequestError] = useState('');
+
+    const handleSendCorrectionRequest = async () => {
+        if (!correctionMessage.trim()) {
+            setRequestError('Please describe the changes you need.');
+            return;
+        }
+        setSendingRequest(true);
+        setRequestError('');
+        try {
+            const userData = JSON.parse(localStorage.getItem('user') || '{}');
+            const response = await authFetch('/seller/correction-request', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    sellerUid: userData.uid,
+                    sellerName: profile.fullName || profile.name || 'Unknown Seller',
+                    shopName: profile.shopName || profile.supplierName || 'Unknown Shop',
+                    message: correctionMessage.trim()
+                })
+            });
+            const data = await response.json();
+            if (data.success) {
+                setRequestSent(true);
+                setCorrectionMessage('');
+                setTimeout(() => {
+                    setShowEditModal(false);
+                    setRequestSent(false);
+                }, 3000);
+            } else {
+                setRequestError(data.message || 'Failed to send request. Please try again.');
+            }
+        } catch (err) {
+            console.error('Correction request error:', err);
+            setRequestError('Server connection failed. Please try again later.');
+        } finally {
+            setSendingRequest(false);
+        }
+    };
 
     return (
         <div className="animate-fade-in flex flex-col gap-6">
@@ -11,6 +55,22 @@ export default function SellerProfileTab({ profile }) {
                     <h2 style={{ fontSize: '1.75rem', fontWeight: 800, color: '#1e293b' }}>Personal & Business Details</h2>
                     <p style={{ color: '#64748b' }}>Manage your verified account information</p>
                 </div>
+                <button
+                    onClick={() => setShowEditModal(true)}
+                    style={{
+                        display: 'flex', alignItems: 'center', gap: '8px',
+                        padding: '0.75rem 1.5rem', borderRadius: '12px',
+                        background: 'linear-gradient(135deg, #7B4DDB, #5A32C8)',
+                        color: 'white', fontWeight: 600, fontSize: '0.9rem',
+                        border: 'none', cursor: 'pointer',
+                        boxShadow: '0 4px 12px rgba(123, 77, 219, 0.3)',
+                        transition: 'all 0.2s'
+                    }}
+                    onMouseEnter={(e) => { e.target.style.transform = 'translateY(-1px)'; e.target.style.boxShadow = '0 6px 16px rgba(123, 77, 219, 0.4)'; }}
+                    onMouseLeave={(e) => { e.target.style.transform = 'translateY(0)'; e.target.style.boxShadow = '0 4px 12px rgba(123, 77, 219, 0.3)'; }}
+                >
+                    <Edit3 size={16} /> Request Edit
+                </button>
             </div>
 
             {/* Sub-navigation Tabs */}
@@ -158,11 +218,172 @@ export default function SellerProfileTab({ profile }) {
                             <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center text-indigo-600 shadow-sm shrink-0">
                                 <AlertCircle size={20} />
                             </div>
-                            <p className="text-sm text-indigo-900 font-medium">To change your primary bank account, please contact the SellSathi verification desk with valid proof of ownership.</p>
+                            <p className="text-sm text-indigo-900 font-medium">To change your primary bank account, please use the "Request Edit" button above to submit a correction request to admin.</p>
                         </div>
                     </div>
                 )}
             </div>
+
+            {/* Edit Correction Request Modal */}
+            {showEditModal && (
+                <div style={{
+                    position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+                    background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    zIndex: 9999
+                }}
+                    onClick={() => { if (!sendingRequest) { setShowEditModal(false); setRequestSent(false); setRequestError(''); } }}
+                >
+                    <div style={{
+                        background: 'white', borderRadius: '24px', padding: '2.5rem',
+                        maxWidth: '560px', width: '90%', position: 'relative',
+                        boxShadow: '0 25px 50px -12px rgba(0,0,0,0.25)',
+                        animation: 'fadeInUp 0.3s ease-out'
+                    }}
+                        onClick={(e) => e.stopPropagation()}
+                    >
+                        <button
+                            onClick={() => { if (!sendingRequest) { setShowEditModal(false); setRequestSent(false); setRequestError(''); } }}
+                            style={{
+                                position: 'absolute', top: '1rem', right: '1rem',
+                                background: '#f1f5f9', border: 'none', borderRadius: '50%',
+                                width: '36px', height: '36px', display: 'flex', alignItems: 'center',
+                                justifyContent: 'center', cursor: 'pointer'
+                            }}
+                        >
+                            <X size={18} color="#64748b" />
+                        </button>
+
+                        {requestSent ? (
+                            <div style={{ textAlign: 'center', padding: '2rem 0' }}>
+                                <div style={{
+                                    width: '64px', height: '64px', borderRadius: '50%',
+                                    background: '#ecfdf5', display: 'flex', alignItems: 'center',
+                                    justifyContent: 'center', margin: '0 auto 1.5rem'
+                                }}>
+                                    <CheckCircle size={32} color="#10b981" />
+                                </div>
+                                <h3 style={{ fontSize: '1.5rem', fontWeight: 700, color: '#1e293b', marginBottom: '0.5rem' }}>
+                                    Request Sent Successfully!
+                                </h3>
+                                <p style={{ color: '#64748b', fontSize: '0.95rem' }}>
+                                    Your correction request has been sent to the admin team. They will review and update your details shortly.
+                                </p>
+                            </div>
+                        ) : (
+                            <>
+                                <div style={{ marginBottom: '1.5rem' }}>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '0.5rem' }}>
+                                        <div style={{
+                                            width: '44px', height: '44px', borderRadius: '12px',
+                                            background: 'linear-gradient(135deg, #7B4DDB, #5A32C8)',
+                                            display: 'flex', alignItems: 'center', justifyContent: 'center'
+                                        }}>
+                                            <Edit3 size={20} color="white" />
+                                        </div>
+                                        <div>
+                                            <h3 style={{ fontSize: '1.3rem', fontWeight: 700, color: '#1e293b', margin: 0 }}>
+                                                Request Data Correction
+                                            </h3>
+                                            <p style={{ color: '#64748b', fontSize: '0.85rem', margin: 0 }}>
+                                                Admin will review and update your details
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div style={{
+                                    background: '#fef3c7', border: '1px solid #fde68a',
+                                    borderRadius: '12px', padding: '0.75rem 1rem',
+                                    marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '8px'
+                                }}>
+                                    <AlertCircle size={16} color="#d97706" />
+                                    <p style={{ fontSize: '0.8rem', color: '#92400e', margin: 0, fontWeight: 500 }}>
+                                        You cannot edit your details directly. Please describe the changes needed below, and admin will update them after verification.
+                                    </p>
+                                </div>
+
+                                {requestError && (
+                                    <div style={{
+                                        background: '#fef2f2', border: '1px solid #fecaca',
+                                        borderRadius: '12px', padding: '0.75rem 1rem',
+                                        marginBottom: '1rem', color: '#b91c1c', fontSize: '0.85rem'
+                                    }}>
+                                        {requestError}
+                                    </div>
+                                )}
+
+                                <div style={{ marginBottom: '1.5rem' }}>
+                                    <label style={{
+                                        display: 'block', fontSize: '0.85rem', fontWeight: 600,
+                                        color: '#374151', marginBottom: '0.5rem'
+                                    }}>
+                                        Describe the changes you need *
+                                    </label>
+                                    <textarea
+                                        value={correctionMessage}
+                                        onChange={(e) => setCorrectionMessage(e.target.value)}
+                                        placeholder="e.g. Please update my phone number from 9876543210 to 9876543211. Also update my shop name from 'Old Name' to 'New Name'..."
+                                        rows={5}
+                                        style={{
+                                            width: '100%', padding: '0.875rem 1rem',
+                                            border: '1.5px solid #e2e8f0', borderRadius: '12px',
+                                            fontSize: '0.9rem', resize: 'vertical',
+                                            outline: 'none', transition: 'border-color 0.2s',
+                                            fontFamily: 'inherit'
+                                        }}
+                                        onFocus={(e) => e.target.style.borderColor = '#7B4DDB'}
+                                        onBlur={(e) => e.target.style.borderColor = '#e2e8f0'}
+                                    />
+                                    <p style={{ fontSize: '0.75rem', color: '#94a3b8', marginTop: '0.25rem' }}>
+                                        Be specific about what fields need to change and their new values
+                                    </p>
+                                </div>
+
+                                <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'flex-end' }}>
+                                    <button
+                                        onClick={() => { setShowEditModal(false); setRequestError(''); }}
+                                        disabled={sendingRequest}
+                                        style={{
+                                            padding: '0.75rem 1.5rem', borderRadius: '12px',
+                                            border: '1px solid #e2e8f0', background: 'white',
+                                            color: '#64748b', fontWeight: 600, cursor: 'pointer',
+                                            fontSize: '0.9rem'
+                                        }}
+                                    >
+                                        Cancel
+                                    </button>
+                                    <button
+                                        onClick={handleSendCorrectionRequest}
+                                        disabled={sendingRequest || !correctionMessage.trim()}
+                                        style={{
+                                            padding: '0.75rem 1.5rem', borderRadius: '12px',
+                                            border: 'none', background: sendingRequest ? '#94a3b8' : 'linear-gradient(135deg, #7B4DDB, #5A32C8)',
+                                            color: 'white', fontWeight: 600, cursor: sendingRequest ? 'not-allowed' : 'pointer',
+                                            fontSize: '0.9rem', display: 'flex', alignItems: 'center', gap: '8px',
+                                            opacity: !correctionMessage.trim() ? 0.5 : 1,
+                                            boxShadow: '0 4px 12px rgba(123, 77, 219, 0.3)'
+                                        }}
+                                    >
+                                        {sendingRequest ? (
+                                            <><Loader size={16} className="animate-spin" /> Sending...</>
+                                        ) : (
+                                            <><Send size={16} /> Send to Admin</>
+                                        )}
+                                    </button>
+                                </div>
+                            </>
+                        )}
+                    </div>
+                </div>
+            )}
+
+            <style>{`
+                @keyframes fadeInUp {
+                    from { opacity: 0; transform: translateY(20px); }
+                    to { opacity: 1; transform: translateY(0); }
+                }
+            `}</style>
         </div>
     );
 }
