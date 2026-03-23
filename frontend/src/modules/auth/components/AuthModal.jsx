@@ -17,15 +17,27 @@ const TEST_CREDENTIALS = {
 };
 
 /** Redirects user based on role/status after a successful auth response */
-function redirectByRole(data, navigate) {
+function redirectByRole(data, navigate, isSellerLogin = false) {
     if (data.role === 'ADMIN') navigate('/admin');
     else if (data.role === 'SELLER' && (data.status === 'APPROVED' || data.sellerStatus === 'APPROVED')) {
+        // If logging in from seller page, set login context
+        if (isSellerLogin) {
+            localStorage.setItem('loginContext', 'SELLER');
+        }
         navigate('/seller/dashboard');
     }
     else if (data.role === 'SELLER' && (data.status === 'PENDING' || data.sellerStatus === 'PENDING')) {
         alert(`⏳ Your seller application for "${data.shopName || 'your shop'}" is pending admin approval.`);
         navigate('/');
-    } else navigate('/');
+    } else {
+        // If logging in from main page, set consumer context
+        if (!isSellerLogin) {
+            localStorage.setItem('loginContext', 'CONSUMER');
+        } else {
+            localStorage.setItem('loginContext', 'SELLER');
+        }
+        navigate('/');
+    }
 }
 
 /** Stores user data to localStorage and dispatches userDataChanged event */
@@ -37,7 +49,7 @@ function persistUser(data, extras = {}) {
     window.dispatchEvent(new CustomEvent('userDataChanged', { detail: userData }));
 }
 
-export default function AuthModal({ isOpen, onClose, onSuccess, hideRegister }) {
+export default function AuthModal({ isOpen, onClose, onSuccess, hideRegister, sellerLogin = false }) {
     const [step, setStep] = useState('phone');
     const [isRegistering, setIsRegistering] = useState(false);
     const [isEmailSignup, setIsEmailSignup] = useState(false);
@@ -187,7 +199,7 @@ export default function AuthModal({ isOpen, onClose, onSuccess, hideRegister }) 
             const data = await response.json();
             if (data.success) {
                 persistUser(data, { phone: phoneNumber, status: data.status, sellerStatus: data.sellerStatus, shopName: data.shopName, fullName: formData.fullName || data.fullName, dob: formData.dob });
-                if (isRegistering) navigate('/'); else redirectByRole(data, navigate);
+                if (isRegistering) navigate('/'); else redirectByRole(data, navigate, sellerLogin);
                 if (onSuccess) onSuccess(data);
                 handleClose();
             } else setError(data.message || 'Verification failed');
@@ -215,7 +227,7 @@ export default function AuthModal({ isOpen, onClose, onSuccess, hideRegister }) 
                 }
                 persistUser(data, { email: data.email, fullName: data.fullName, status: data.status, sellerStatus: data.sellerStatus, shopName: data.shopName });
                 localStorage.setItem('userName', data.fullName || '');
-                redirectByRole(data, navigate);
+                redirectByRole(data, navigate, sellerLogin);
                 if (onSuccess) onSuccess(data);
                 handleClose();
             } else setError(data.message || 'Google authentication failed');
@@ -251,7 +263,7 @@ export default function AuthModal({ isOpen, onClose, onSuccess, hideRegister }) 
             const data = await response.json();
             if (data.success) {
                 persistUser(data, { email: formData.email, fullName: data.fullName || formData.fullName, dob: formData.dob });
-                redirectByRole(data, navigate);
+                redirectByRole(data, navigate, sellerLogin);
                 if (onSuccess) onSuccess(data);
                 handleClose();
             } else setError(data.message || 'Login failed');

@@ -12,6 +12,7 @@ router.use(verifyAuth);
 router.get('/:uid/dashboard-data', sellerController.getDashboardData);
 router.post('/product/add', sellerController.addProduct);
 router.post('/pickup-address', sellerController.createPickupAddress);
+router.post('/correction-request', sellerController.submitCorrectionRequest);
 router.put('/order/:id/status', sellerController.updateOrderStatus);
 
 module.exports = router;

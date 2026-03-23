@@ -41,10 +41,9 @@ export const SellerPage = () => {
               <div className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-4 mb-6">
                 <Link
                   to="/seller/register"
-                  target="_blank"
                   className="w-full sm:w-auto px-10 py-4 rounded-2xl bg-brand text-white font-bold text-lg shadow-xl shadow-brand/20 hover:bg-brand-hover hover:-translate-y-1 transition-all"
                 >
-                  Start Selling
+                  New Seller
                 </Link>
               </div>
               <p className="text-sm text-gray-500">
@@ -178,7 +177,7 @@ export const SellerPage = () => {
       </section>
 
       <Footer />
-      <AuthModal isOpen={isLoginOpen} onClose={() => setIsLoginOpen(false)} hideRegister={true} />
+      <AuthModal isOpen={isLoginOpen} onClose={() => setIsLoginOpen(false)} hideRegister={true} sellerLogin={true} />
     </div>
   );
 };

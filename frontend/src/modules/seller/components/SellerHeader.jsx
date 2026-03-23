@@ -101,7 +101,6 @@ const SellerHeader = ({ onLoginClick }) => {
           </button>
           <Link
             to="/seller/register"
-            target="_blank"
             style={{
               backgroundColor: '#6C63FF',
               color: 'white',
@@ -113,7 +112,7 @@ const SellerHeader = ({ onLoginClick }) => {
               textDecoration: 'none'
             }}
           >
-            Start Selling
+            New Seller
           </Link>
         </div>
       </div>
