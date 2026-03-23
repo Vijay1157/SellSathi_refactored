@@ -72,9 +72,10 @@ export default function AdminDashboard() {
         }
     }, [analytics]);
 
-    // Fetch only stats on mount
+    // Fetch stats and admin profile on mount
     useEffect(() => {
         fetchStats();
+        fetchAdminProfile();
     }, []);
 
     // Lazy-load tab data when active tab changes
@@ -343,7 +344,7 @@ export default function AdminDashboard() {
                         ) : (
                             <div className="glass-card flex-1" style={{ padding: activeTab === 'home' ? '2rem' : '0', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
                                 <div style={{ padding: activeTab === 'home' ? '0' : '1.5rem', borderBottom: activeTab === 'home' ? 'none' : '1px solid var(--border)' }}>
-                                    {activeTab === 'home' && <OverviewTab stats={stats} loading={loading} setActiveTab={setActiveTab} setSearchTerm={setSearchTerm} setSelectedProductDate={setSelectedProductDate} />}
+                                    {activeTab === 'home' && <OverviewTab stats={stats} loading={loading} setActiveTab={setActiveTab} setSearchTerm={setSearchTerm} setSelectedProductDate={setSelectedProductDate} adminProfile={adminProfile} />}
                                     {activeTab === 'sellers' && <SellersTab sellers={sellers} allSellers={allSellers} orders={orders} loading={loading} fetchAllData={fetchAllData} />}
                                     {activeTab === 'products' && <ProductsTab products={products} fetchAllData={fetchAllData} />}
                                     {activeTab === 'orders' && <OrdersTab orders={orders} fetchAllData={fetchAllData} />}
