@@ -18,7 +18,9 @@ export default function AddressStep({
     setAsDefault,
     setSetAsDefault,
     fetchingSavedAddress,
-    handleContinue
+    handleContinue,
+    sameAsBilling,
+    setSameAsBilling
 }) {
     return (
         <section className={`bg-white rounded-[2.5rem] border border-gray-100 shadow-sm overflow-hidden transition-all ${step > 1 ? 'opacity-80' : ''}`}>
@@ -81,7 +83,7 @@ export default function AddressStep({
                 {addressMode === 'saved' && savedAddresses.length > 0 && step === 1 ? (
                     <div className="space-y-4">
                         <div className="space-y-1">
-                            <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest px-1">Select Delivery Address</label>
+                            <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest px-1">Choose Delivery Address</label>
                             <select
                                 value={selectedAddressIndex !== null ? selectedAddressIndex : ''}
                                 onChange={(e) => {
@@ -105,7 +107,6 @@ export default function AddressStep({
                                 }}
                                 className="w-full px-6 py-4 bg-gray-50 border-none rounded-2xl font-bold focus:ring-4 ring-primary/10 transition-all outline-none"
                             >
-                                <option value="">Choose an address</option>
                                 {savedAddresses.map((addr, index) => (
                                     <option key={index} value={index}>
                                         {addr.label} - {addr.firstName} {addr.lastName}, {addr.addressLine}, {addr.city}
@@ -195,6 +196,17 @@ export default function AddressStep({
 
                 {step === 1 && (
                     <div className="mt-10 pt-8 border-t border-gray-50 flex flex-col items-center gap-6">
+                        {/* Billing Address Checkbox */}
+                        <div className="w-full">
+                            <label className="flex items-center gap-3 cursor-pointer group">
+                                <div className={`w-6 h-6 rounded-lg border-2 flex items-center justify-center transition-all ${sameAsBilling ? 'bg-primary border-primary shadow-lg shadow-primary/20 scale-110' : 'border-gray-200 group-hover:border-gray-300'}`}>
+                                    <input type="checkbox" checked={sameAsBilling} onChange={(e) => setSameAsBilling(e.target.checked)} className="hidden" />
+                                    {sameAsBilling && <CheckCircle2 size={16} className="text-white" />}
+                                </div>
+                                <span className="text-sm font-bold text-gray-700">Shipping address is same as billing address</span>
+                            </label>
+                        </div>
+                        
                         {addressMode === 'new' && (
                             <div className="w-full space-y-3">
                                 <label className="flex items-center gap-3 cursor-pointer group">
