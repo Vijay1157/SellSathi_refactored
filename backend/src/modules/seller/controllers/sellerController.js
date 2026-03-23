@@ -306,4 +306,60 @@ const submitCorrectionRequest = async (req, res) => {
     }
 };
 
-module.exports = { getDashboardData, addProduct, createPickupAddress, getPublicProfile, updateOrderStatus, submitCorrectionRequest };
+/**
+ * Submit seller edit request (for profile/bank details changes)
+ */
+const submitEditRequest = async (req, res) => {
+    try {
+        const { personalInfo, businessInfo, bankDetails, reason } = req.body;
+        const sellerUid = req.user.uid;
+
+        if (!sellerUid) {
+            return res.status(400).json({ success: false, message: 'Seller UID is required' });
+        }
+
+        // Get current seller data
+        const sellerDoc = await db.collection("sellers").doc(sellerUid).get();
+        if (!sellerDoc.exists) {
+            return res.status(404).json({ success: false, message: 'Seller not found' });
+        }
+
+        // Update seller document with edit request
+        await db.collection("sellers").doc(sellerUid).update({
+            hasEditRequest: true,
+            editRequest: {
+                personalInfo: personalInfo || {},
+                businessInfo: businessInfo || {},
+                bankDetails: bankDetails || {},
+                reason: reason || 'Profile update request',
+                requestedAt: admin.firestore.FieldValue.serverTimestamp()
+            },
+            editRequestDate: admin.firestore.FieldValue.serverTimestamp()
+        });
+
+        console.log(`[EditRequest] New edit request from seller ${sellerUid}`);
+
+        return res.status(200).json({ success: true, message: 'Edit request submitted successfully. Admin will review and update your details.' });
+    } catch (error) {
+        console.error('[EditRequest] ERROR:', error);
+        return res.status(500).json({ success: false, message: 'Failed to submit edit request' });
+    }
+};
+
+/**
+ * Mark admin update notification as seen.
+ */
+const markNotificationSeen = async (req, res) => {
+    try {
+        const { uid } = req.params;
+        await db.collection('sellers').doc(uid).update({
+            'adminUpdateNotification.seen': true
+        });
+        return res.status(200).json({ success: true });
+    } catch (error) {
+        console.error('[MarkNotificationSeen] ERROR:', error);
+        return res.status(500).json({ success: false, message: 'Failed to mark notification seen' });
+    }
+};
+
+module.exports = { getDashboardData, addProduct, createPickupAddress, getPublicProfile, updateOrderStatus, submitCorrectionRequest, submitEditRequest, markNotificationSeen };

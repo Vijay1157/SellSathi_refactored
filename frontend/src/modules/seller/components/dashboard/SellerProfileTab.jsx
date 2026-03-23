@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { User, Store, MapPin, CreditCard, Package, CheckCircle, AlertCircle, ImageIcon, Edit3, Send, Loader, X } from 'lucide-react';
 import { authFetch } from '@/modules/shared/utils/api';
 
@@ -9,6 +9,26 @@ export default function SellerProfileTab({ profile }) {
     const [sendingRequest, setSendingRequest] = useState(false);
     const [requestSent, setRequestSent] = useState(false);
     const [requestError, setRequestError] = useState('');
+    const [adminNotification, setAdminNotification] = useState(null);
+
+    useEffect(() => {
+        // Check for unseen admin update notification
+        if (profile?.adminUpdateNotification?.seen === false) {
+            setAdminNotification(profile.adminUpdateNotification);
+        }
+    }, [profile]);
+
+    const dismissNotification = async () => {
+        setAdminNotification(null);
+        try {
+            const userData = JSON.parse(localStorage.getItem('user') || '{}');
+            if (userData.uid) {
+                await authFetch(`/seller/${userData.uid}/notification-seen`, { method: 'PUT' });
+            }
+        } catch (e) {
+            console.error('Failed to mark notification seen:', e);
+        }
+    };
 
     const handleSendCorrectionRequest = async () => {
         if (!correctionMessage.trim()) {
@@ -375,6 +395,49 @@ export default function SellerProfileTab({ profile }) {
                             </>
                         )}
                     </div>
+                </div>
+            )}
+
+            {/* Admin Update Notification Popup */}
+            {adminNotification && (
+                <div style={{
+                    position: 'fixed', top: '1.5rem', right: '1.5rem', zIndex: 9999,
+                    background: 'white', borderRadius: '16px', padding: '1.25rem 1.5rem',
+                    boxShadow: '0 10px 40px rgba(0,0,0,0.15)', maxWidth: '380px',
+                    border: '1.5px solid #e0f2fe', animation: 'fadeInUp 0.3s ease-out',
+                    display: 'flex', gap: '12px', alignItems: 'flex-start'
+                }}>
+                    <div style={{
+                        width: '40px', height: '40px', borderRadius: '50%',
+                        background: '#ecfdf5', display: 'flex', alignItems: 'center',
+                        justifyContent: 'center', flexShrink: 0
+                    }}>
+                        <CheckCircle size={22} color="#10b981" />
+                    </div>
+                    <div style={{ flex: 1 }}>
+                        <p style={{ margin: 0, fontWeight: 700, color: '#1e293b', fontSize: '0.95rem' }}>
+                            Profile Updated by Admin
+                        </p>
+                        <p style={{ margin: '0.25rem 0 0', color: '#64748b', fontSize: '0.85rem' }}>
+                            {adminNotification.message || 'Admin has updated your profile details.'}
+                        </p>
+                        <button
+                            onClick={dismissNotification}
+                            style={{
+                                marginTop: '0.75rem', padding: '0.4rem 1rem',
+                                background: 'linear-gradient(135deg, #7B4DDB, #5A32C8)',
+                                color: 'white', border: 'none', borderRadius: '8px',
+                                fontSize: '0.8rem', fontWeight: 600, cursor: 'pointer'
+                            }}
+                        >
+                            Got it
+                        </button>
+                    </div>
+                    <button onClick={dismissNotification} style={{
+                        background: 'none', border: 'none', cursor: 'pointer', padding: '2px'
+                    }}>
+                        <X size={16} color="#94a3b8" />
+                    </button>
                 </div>
             )}
 
