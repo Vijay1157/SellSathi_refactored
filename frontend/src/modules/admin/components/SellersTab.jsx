@@ -108,12 +108,12 @@ export default function SellersTab({
     };
 
     const handleDeleteSeller = async (uid, shopName) => {
-        if (!confirm(`?? WARNING: This will permanently delete the seller "${shopName}" and ALL their data including:\n\n• All products\n• All reviews\n• Seller account\n\nThis action CANNOT be undone!\n\nAre you sure you want to continue?`)) return;
+        if (!confirm(`?? WARNING: This will permanently delete the seller "${shopName}" and ALL their data including:\n\nï¿½ All products\nï¿½ All reviews\nï¿½ Seller account\n\nThis action CANNOT be undone!\n\nAre you sure you want to continue?`)) return;
         try {
             const response = await authFetch(`/admin/seller/${uid}`, { method: 'DELETE' });
             const data = await response.json();
             if (data.success) {
-                alert(`? Seller deleted successfully!\n\nDeleted:\n• 1 seller account\n• ${data.deletedProducts} products\n• Related reviews`);
+                alert(`? Seller deleted successfully!\n\nDeleted:\nï¿½ 1 seller account\nï¿½ ${data.deletedProducts} products\nï¿½ Related reviews`);
                 fetchAllData();
             } else {
                 alert('? Failed to delete seller: ' + data.message);
@@ -127,14 +127,14 @@ export default function SellersTab({
     const handleDeleteAllBlockedSellers = async () => {
         const blockedCount = allSellers.filter(s => s.isBlocked).length;
         if (blockedCount === 0) { alert('?? No blocked sellers to delete.'); return; }
-        if (!confirm(`?? CRITICAL WARNING: This will permanently delete ALL ${blockedCount} blocked sellers and ALL their data including:\n\n• All products from all blocked sellers\n• All reviews\n• All seller accounts\n\nThis action CANNOT be undone!\n\nType "DELETE ALL" in the next prompt to confirm.`)) return;
+        if (!confirm(`?? CRITICAL WARNING: This will permanently delete ALL ${blockedCount} blocked sellers and ALL their data including:\n\nï¿½ All products from all blocked sellers\nï¿½ All reviews\nï¿½ All seller accounts\n\nThis action CANNOT be undone!\n\nType "DELETE ALL" in the next prompt to confirm.`)) return;
         const confirmation = prompt('Type "DELETE ALL" to confirm permanent deletion:');
         if (confirmation !== 'DELETE ALL') { alert('? Deletion cancelled. Confirmation text did not match.'); return; }
         try {
             const response = await authFetch('/admin/blocked-sellers/all', { method: 'DELETE' });
             const data = await response.json();
             if (data.success) {
-                alert(`? All blocked sellers deleted successfully!\n\nDeleted:\n• ${data.deletedSellers} seller accounts\n• ${data.deletedProducts} products\n• Related reviews`);
+                alert(`? All blocked sellers deleted successfully!\n\nDeleted:\nï¿½ ${data.deletedSellers} seller accounts\nï¿½ ${data.deletedProducts} products\nï¿½ Related reviews`);
                 fetchAllData();
             } else {
                 alert('? Failed to delete blocked sellers: ' + data.message);
@@ -148,14 +148,14 @@ export default function SellersTab({
     const handleDeleteAllRejectedSellers = async () => {
         const rejectedCount = allSellers.filter(s => s.status === 'REJECTED' && !s.isBlocked).length;
         if (rejectedCount === 0) { alert('?? No rejected sellers to delete.'); return; }
-        if (!confirm(`?? CRITICAL WARNING: This will permanently delete ALL ${rejectedCount} rejected sellers and ALL their data including:\n\n• All products from all rejected sellers\n• All reviews\n• All seller accounts\n\nThis action CANNOT be undone!\n\nType "DELETE ALL" in the next prompt to confirm.`)) return;
+        if (!confirm(`?? CRITICAL WARNING: This will permanently delete ALL ${rejectedCount} rejected sellers and ALL their data including:\n\nï¿½ All products from all rejected sellers\nï¿½ All reviews\nï¿½ All seller accounts\n\nThis action CANNOT be undone!\n\nType "DELETE ALL" in the next prompt to confirm.`)) return;
         const confirmation = prompt('Type "DELETE ALL" to confirm permanent deletion:');
         if (confirmation !== 'DELETE ALL') { alert('? Deletion cancelled. Confirmation text did not match.'); return; }
         try {
             const response = await authFetch('/admin/rejected-sellers/all', { method: 'DELETE' });
             const data = await response.json();
             if (data.success) {
-                alert(`? All rejected sellers deleted successfully!\n\nDeleted:\n• ${data.deletedSellers} seller accounts\n• ${data.deletedProducts} products\n• Related reviews`);
+                alert(`? All rejected sellers deleted successfully!\n\nDeleted:\nï¿½ ${data.deletedSellers} seller accounts\nï¿½ ${data.deletedProducts} products\nï¿½ Related reviews`);
                 fetchAllData();
             } else {
                 alert('? Failed to delete rejected sellers: ' + data.message);
