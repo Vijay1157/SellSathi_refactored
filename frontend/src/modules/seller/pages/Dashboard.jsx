@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { LayoutDashboard, Package, ShoppingBag, DollarSign, Plus, Truck, Loader, Home, AlertCircle, X, User } from 'lucide-react';
+import { LayoutDashboard, Package, ShoppingBag, DollarSign, Plus, Truck, Loader, AlertCircle, X, User } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { auth } from '@/modules/shared/config/firebase';
@@ -234,14 +234,7 @@ export default function SellerDashboard() {
                         </div>
 
                         <nav className="flex flex-col gap-3">
-                            <Link to="/" className="btn" style={{
-                                width: '100%', justifyContent: 'flex-start', padding: '1rem', fontSize: '0.95rem',
-                                display: 'flex', alignItems: 'center', gap: '12px',
-                                background: 'rgba(255,255,255,0.05)', color: 'rgba(255,255,255,0.8)',
-                                border: 'none', borderRadius: '12px'
-                            }}>
-                                <Home size={18} /> Storefront
-                            </Link>
+
                             {['overview', 'products', 'orders', 'personal'].map(tab => (
                                 <button key={tab} onClick={() => setActiveTab(tab)} style={{
                                     width: '100%', display: 'flex', alignItems: 'center', gap: '12px',
