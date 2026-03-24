@@ -4,6 +4,16 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { authFetch } from '@/modules/shared/utils/api';
 import { VARIANT_CONFIGS } from '@/modules/shared/config/productVariants';
 import { SELLER_CATEGORIES } from '@/modules/shared/config/categories';
+
+const CATEGORY_GST_RATES = {
+    "Fashion (Men)": 5, "Fashion (Women)": 5, "Kids & Baby": 12, "Electronics": 18, 
+    "Home & Living": 18, "Handicrafts": 5, "Artworks": 12, "Beauty & Personal Care": 18,
+    "Sports & Fitness": 18, "Books & Stationery": 12, "Food & Beverages": 5,
+    "Gifts & Customization": 18, "Jewelry & Accessories": 5, "Fabrics & Tailoring Materials": 5,
+    "Local Sellers / Homepreneurs": 5, "Services": 18, "Pet Supplies": 12,
+    "Automotive & Accessories": 18, "Travel & Utility": 18, "Sustainability & Eco-Friendly": 12
+};
+
 import ImageUploader from '../AddProduct/ImageUploader';
 import VariantsEditor from '../AddProduct/VariantsEditor';
 
@@ -163,6 +173,10 @@ export default function ProductViewModal({
             alert('Main Product Image is compulsory. Please upload or provide a URL.');
             return;
         }
+        if (!editData.gstPercent && editData.gstPercent !== 0) {
+            alert('Please provide a GST Percent value.');
+            return;
+        }
 
         const fullProduct = {
             id: editData.id,
@@ -296,7 +310,9 @@ export default function ProductViewModal({
                                                         <select required style={{ width: '100%', padding: '0.875rem 1rem', border: '1.5px solid #e2e8f0', borderRadius: '12px', background: '#f8fafc' }} 
                                                             value={editData.category}
                                                             onChange={e => {
-                                                                setEditData({ ...editData, category: e.target.value });
+                                                                const newCat = e.target.value;
+                                                                const newGst = CATEGORY_GST_RATES[newCat] || 18;
+                                                                setEditData({ ...editData, category: newCat, gstPercent: newGst });
                                                                 setSelectedSizes([]); setSelectedColors([]); setVariants({});
                                                                 setSpecifications([]); setPricingType('same'); setSizePrices({});
                                                             }}>
@@ -320,6 +336,11 @@ export default function ProductViewModal({
                                                         <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem', fontWeight: 600 }}>Stock Qty</label>
                                                         <input type="number" required style={{ width: '100%', padding: '0.875rem 1rem', border: '1.5px solid #e2e8f0', borderRadius: '12px' }}
                                                             value={editData.stock} onChange={e => setEditData({ ...editData, stock: e.target.value })} />
+                                                    </div>
+                                                    <div>
+                                                        <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem', fontWeight: 600 }}>GST Percent (%) <span style={{color: 'red'}}>*</span></label>
+                                                        <input type="number" required min="0" max="100" style={{ width: '100%', padding: '0.875rem 1rem', border: '1.5px solid #e2e8f0', borderRadius: '12px' }}
+                                                            value={editData.gstPercent} onChange={e => setEditData({ ...editData, gstPercent: e.target.value })} />
                                                     </div>
                                                     {editData.category === 'Other' && (
                                                         <div>
