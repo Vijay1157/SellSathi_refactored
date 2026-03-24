@@ -82,8 +82,10 @@ export default function ProductInfo({
                                     onClick={() => {
                                         setSelectedColor(c);
                                         if (product.variantImages && product.variantImages[colorKey]) {
-                                            const variantImageUrl = product.variantImages[colorKey];
-                                            const variantImageIndex = images.indexOf(variantImageUrl);
+                                            const variantImg = product.variantImages[colorKey];
+                                            // Handle both array and string formats
+                                            const firstUrl = Array.isArray(variantImg) ? variantImg[0] : variantImg;
+                                            const variantImageIndex = images.indexOf(firstUrl);
                                             if (variantImageIndex !== -1) {
                                                 setActiveImageIndex(variantImageIndex);
                                             }
@@ -136,7 +138,9 @@ export default function ProductInfo({
                                     onClick={() => {
                                         setSelectedStorage(s);
                                         if (product.variantImages && product.variantImages[s.label || s]) {
-                                            const variantImageIndex = images.indexOf(product.variantImages[s.label || s]);
+                                            const variantImg = product.variantImages[s.label || s];
+                                            const firstUrl = Array.isArray(variantImg) ? variantImg[0] : variantImg;
+                                            const variantImageIndex = images.indexOf(firstUrl);
                                             if (variantImageIndex !== -1) {
                                                 setActiveImageIndex(variantImageIndex);
                                             }
@@ -169,7 +173,9 @@ export default function ProductInfo({
                                     onClick={() => {
                                         setSelectedMemory(m);
                                         if (product.variantImages && product.variantImages[m.label || m]) {
-                                            const variantImageIndex = images.indexOf(product.variantImages[m.label || m]);
+                                            const variantImg = product.variantImages[m.label || m];
+                                            const firstUrl = Array.isArray(variantImg) ? variantImg[0] : variantImg;
+                                            const variantImageIndex = images.indexOf(firstUrl);
                                             if (variantImageIndex !== -1) {
                                                 setActiveImageIndex(variantImageIndex);
                                             }

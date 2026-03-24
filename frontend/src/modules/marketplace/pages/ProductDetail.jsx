@@ -73,7 +73,11 @@ export default function ProductDetail() {
 
         if (product.variantImages && typeof product.variantImages === 'object') {
             Object.values(product.variantImages).forEach(img => {
-                if (img && typeof img === 'string') imageSet.add(img);
+                if (Array.isArray(img)) {
+                    img.forEach(url => { if (url && typeof url === 'string') imageSet.add(url); });
+                } else if (img && typeof img === 'string') {
+                    imageSet.add(img);
+                }
             });
         }
 
