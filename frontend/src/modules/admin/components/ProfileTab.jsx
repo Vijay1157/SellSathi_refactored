@@ -14,7 +14,8 @@ export default function ProfileTab({ adminData, fetchAdminProfile }) {
         address: '',
         websiteName: '',
         websiteInfo: '',
-        adminEmail: ''
+        adminEmail: '',
+        phone: ''
     });
 
     useEffect(() => {
@@ -25,7 +26,8 @@ export default function ProfileTab({ adminData, fetchAdminProfile }) {
                 address: adminData.address || '',
                 websiteName: adminData.websiteName || 'SellSathi',
                 websiteInfo: adminData.websiteInfo || 'Your Trusted E-Commerce Platform',
-                adminEmail: adminData.adminEmail || adminData.email || ''
+                adminEmail: adminData.adminEmail || adminData.email || '',
+                phone: adminData.phone || ''
             });
         }
     }, [adminData]);
@@ -137,7 +139,8 @@ export default function ProfileTab({ adminData, fetchAdminProfile }) {
                                         address: adminData.address || '',
                                         websiteName: adminData.websiteName || 'SellSathi',
                                         websiteInfo: adminData.websiteInfo || 'Your Trusted E-Commerce Platform',
-                                        adminEmail: adminData.adminEmail || adminData.email || ''
+                                        adminEmail: adminData.adminEmail || adminData.email || '',
+                                        phone: adminData.phone || ''
                                     });
                                 }}
                                 style={{ padding: '0.5rem 1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}
@@ -293,14 +296,30 @@ export default function ProfileTab({ adminData, fetchAdminProfile }) {
                                 )}
                             </div>
 
-                            {/* Contact Number (Read-only) */}
+                            {/* Contact Number */}
                             <div className="flex flex-col gap-2">
                                 <label style={{ fontSize: '0.9rem', fontWeight: 600, color: 'var(--text-muted)' }}>
                                     Contact Number
                                 </label>
-                                <p style={{ fontSize: '1rem', padding: '0.75rem 0', color: 'var(--text-muted)' }}>
-                                    {adminData.phone || 'Not provided'}
-                                </p>
+                                {isEditing ? (
+                                    <input
+                                        type="tel"
+                                        name="phone"
+                                        value={formData.phone}
+                                        onChange={handleInputChange}
+                                        style={{
+                                            padding: '0.75rem',
+                                            borderRadius: '8px',
+                                            border: '2px solid var(--border)',
+                                            fontSize: '1rem'
+                                        }}
+                                        placeholder="Enter phone number"
+                                    />
+                                ) : (
+                                    <p style={{ fontSize: '1rem', padding: '0.75rem 0' }}>
+                                        {adminData.phone || 'Not provided'}
+                                    </p>
+                                )}
                             </div>
 
                             {/* Email ID (Editable) */}
