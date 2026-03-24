@@ -16,7 +16,24 @@ async function _resolveTestUser(testUid) {
     const cached = _testUserCache.get(testUid);
     if (cached && cached.expiresAt > Date.now()) return cached.userData;
 
-    const snap = await db.collection('users').doc(testUid).get();
+    let snap = await db.collection('users').doc(testUid).get();
+
+    // Fallback: try alternate UID format (with/without country code prefix)
+    // e.g. test_7483743936 <-> test_917483743936
+    if (!snap.exists && testUid.startsWith('test_')) {
+        const digits = testUid.slice(5); // strip "test_"
+        let altUid = null;
+        if (digits.startsWith('91') && digits.length > 10) {
+            altUid = `test_${digits.slice(2)}`; // remove 91 prefix
+        } else if (digits.length === 10) {
+            altUid = `test_91${digits}`; // add 91 prefix
+        }
+        if (altUid) {
+            const altSnap = await db.collection('users').doc(altUid).get();
+            if (altSnap.exists) snap = altSnap;
+        }
+    }
+
     let userData;
     if (!snap.exists) {
         const fbUser = await admin.auth().getUser(testUid).catch(() => null);

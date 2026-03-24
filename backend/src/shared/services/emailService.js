@@ -736,3 +736,92 @@ exports.sendOrderCancellation = async (email, order) => {
         return null;
     }
 };
+
+exports.sendOutOfStockNotification = async (sellerEmail, sellerName, productName, productDetails) => {
+    try {
+        console.log(`📧 Sending out-of-stock notification to ${sellerEmail} for product "${productName}"`);
+
+        const adminConfig = await getAdminConfig();
+        const senderConfig = await getSenderConfig();
+
+        const mailOptions = {
+            ...senderConfig,
+            to: sellerEmail,
+            subject: `⚠️ Product Out of Stock: ${productName} - ${adminConfig.websiteName}`,
+            html: `
+                <div style="font-family: Arial, sans-serif; padding: 20px; color: #333; line-height: 1.6;">
+                    <div style="text-align: center; margin-bottom: 20px;">
+                        <h1 style="color: #2563eb; margin: 0;">${adminConfig.websiteName}</h1>
+                        <p style="color: #64748b; margin: 5px 0;">${adminConfig.websiteInfo}</p>
+                    </div>
+                    <div style="background: white; border: 2px solid #fde68a; border-radius: 12px; padding: 24px; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);">
+                        <div style="background: #fffbeb; padding: 16px; border-radius: 8px; margin-bottom: 20px; text-align: center;">
+                            <h2 style="color: #d97706; margin: 0; font-size: 24px;">⚠️ Product Out of Stock</h2>
+                        </div>
+
+                        <p>Dear <strong>${sellerName}</strong>,</p>
+
+                        <p>This is an important notification from the admin team. Your product listed on <strong>${adminConfig.websiteName}</strong> is currently <strong>out of stock</strong>.</p>
+
+                        <div style="background: #fef3c7; border-left: 4px solid #f59e0b; padding: 16px; margin: 20px 0; border-radius: 4px;">
+                            <h3 style="margin: 0 0 12px 0; color: #92400e; font-size: 16px;">Product Details</h3>
+                            <table style="width: 100%; border-collapse: collapse;">
+                                <tr>
+                                    <td style="padding: 6px 0; color: #92400e; font-weight: 600;">Product Name:</td>
+                                    <td style="padding: 6px 0; color: #78350f;">${productName}</td>
+                                </tr>
+                                <tr>
+                                    <td style="padding: 6px 0; color: #92400e; font-weight: 600;">Category:</td>
+                                    <td style="padding: 6px 0; color: #78350f;">${productDetails.category || 'N/A'}</td>
+                                </tr>
+                                <tr>
+                                    <td style="padding: 6px 0; color: #92400e; font-weight: 600;">Price:</td>
+                                    <td style="padding: 6px 0; color: #78350f;">₹${productDetails.price || 'N/A'}</td>
+                                </tr>
+                                <tr>
+                                    <td style="padding: 6px 0; color: #92400e; font-weight: 600;">Current Stock:</td>
+                                    <td style="padding: 6px 0; color: #dc2626; font-weight: 700;">0 units</td>
+                                </tr>
+                            </table>
+                        </div>
+
+                        <h3 style="color: #1e293b; font-size: 18px; margin-top: 24px;">Action Required:</h3>
+                        <ul style="color: #475569; line-height: 1.8;">
+                            <li>Please restock this product as soon as possible</li>
+                            <li>Update the stock quantity in your seller dashboard</li>
+                            <li>Customers are unable to purchase this product until it is restocked</li>
+                        </ul>
+
+                        <div style="background: #fee2e2; border-left: 4px solid #dc2626; padding: 16px; margin: 20px 0; border-radius: 4px;">
+                            <p style="margin: 0; color: #991b1b;">
+                                <strong>⚡ Urgent:</strong> Out-of-stock products affect your sales and customer satisfaction. Please update your inventory at the earliest.
+                            </p>
+                        </div>
+
+                        <div style="text-align: center; margin: 24px 0;">
+                            <a href="${FRONTEND_URL}/seller/dashboard" style="background: #2563eb; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: 600; display: inline-block;">Go to Seller Dashboard</a>
+                        </div>
+
+                        <div style="background: #f1f5f9; padding: 16px; border-radius: 8px; margin: 24px 0;">
+                            <p style="margin: 0; color: #334155; font-size: 14px;">
+                                <strong>Need Help?</strong><br>
+                                Contact support at <a href="mailto:${adminConfig.email}" style="color: #2563eb;">${adminConfig.email}</a><br>
+                                ${adminConfig.phone !== 'Not provided' ? `Phone: <strong>${adminConfig.phone}</strong>` : ''}
+                            </p>
+                        </div>
+                    </div>
+                    <div style="text-align: center; margin-top: 24px; color: #94a3b8; font-size: 12px;">
+                        <p>&copy; 2026 ${adminConfig.websiteName}. All rights reserved.</p>
+                    </div>
+                </div>
+            `
+        };
+
+        const result = await transporter.sendMail(mailOptions);
+        console.log('✅ Out-of-stock email sent successfully:', result.messageId);
+        return result;
+    } catch (error) {
+        console.error('❌ Out-of-Stock Email Error:', error);
+        return null;
+    }
+};

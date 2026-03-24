@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { SlidersHorizontal, ChevronDown, ChevronRight } from 'lucide-react';
 import { MAIN_CATEGORIES, getSubcategories } from '@/modules/shared/config/categories';
+import { useNavigate } from 'react-router-dom';
 
 export default function FilterSidebar({
     selectedCategory,
@@ -13,6 +14,7 @@ export default function FilterSidebar({
     setSortBy,
     clearAllFilters
 }) {
+    const navigate = useNavigate();
     const [expandedCategories, setExpandedCategories] = useState([]);
 
     // Auto-expand category if subcategory is selected
@@ -38,25 +40,30 @@ export default function FilterSidebar({
         const subcategories = getSubcategories(cat);
         
         if (subcategories.length > 0) {
-            // If category has subcategories, toggle expansion
             toggleCategoryExpansion(cat);
-            // Also select the category
             setSelectedCategory(cat);
             setSelectedSubcategories([]);
         } else {
-            // If no subcategories, just select the category
             setSelectedCategory(cat);
             setSelectedSubcategories([]);
         }
+        // Update URL to remove stale subcategory param
+        navigate(`/products?category=${encodeURIComponent(cat)}`);
     };
 
     const toggleSubcategory = (subcategory) => {
         setSelectedSubcategories(prev => {
-            if (prev.includes(subcategory)) {
-                return prev.filter(s => s !== subcategory);
-            } else {
-                return [...prev, subcategory];
+            const next = prev.includes(subcategory)
+                ? prev.filter(s => s !== subcategory)
+                : [...prev, subcategory];
+            // Sync URL so URL params don't override state
+            const params = new URLSearchParams();
+            if (selectedCategory && selectedCategory !== 'All') {
+                params.set('category', selectedCategory);
             }
+            next.forEach(s => params.append('subcategory', s));
+            navigate(`/products?${params.toString()}`);
+            return next;
         });
     };
 
