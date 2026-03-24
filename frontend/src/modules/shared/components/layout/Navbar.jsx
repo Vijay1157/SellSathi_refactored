@@ -354,15 +354,7 @@ export default function Navbar() {
                                             </div>
                                             <div className="menu-items">
                                                 <button onClick={() => {
-                                                    // If loginContext is SELLER (meaning they logged in from /#/seller), go to Seller dashboard
-                                                    // Otherwise, ALWAYS go to Customer dashboard (even for sellers/admins logged in from home)
-                                                    const context = localStorage.getItem('loginContext');
-                                                    if (context === 'SELLER') {
-                                                        const path = user.role === 'ADMIN' ? '/admin' : '/seller/dashboard';
-                                                        navigate(path);
-                                                    } else {
-                                                        navigate('/dashboard');
-                                                    }
+                                                    navigate('/dashboard');
                                                     setIsProfileOpen(false);
                                                 }}>
                                                     <ShoppingBag size={16} /> My Dashboard

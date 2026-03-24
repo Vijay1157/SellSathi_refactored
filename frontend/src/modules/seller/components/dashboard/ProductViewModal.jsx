@@ -66,13 +66,19 @@ export default function ProductViewModal({
             const specsArray = Object.entries(selectedProduct.specifications || {}).map(([key, value]) => ({ key, value }));
             setSpecifications(specsArray);
 
-            const standardKeys = ['id', 'title', 'price', 'discountPrice', 'category', 'stock', 'description', 'image', 'platformFeePercent', 'userFeePercent', 'gstPercent', 'sellerId', 'createdAt', 'status', 'customCategory', 'sizes', 'colors', 'pricingType', 'sizePrices', 'specifications', 'variantImages', 'views', 'name'];
             const parsedVariants = {};
-            Object.keys(selectedProduct).forEach(k => {
-                if (!standardKeys.includes(k) && Array.isArray(selectedProduct[k])) {
-                    parsedVariants[k] = selectedProduct[k];
-                }
-            });
+            if (selectedProduct.attributes) {
+                Object.keys(selectedProduct.attributes).forEach(k => {
+                    parsedVariants[k] = selectedProduct.attributes[k];
+                });
+            } else {
+                const standardKeys = ['id', 'title', 'price', 'discountPrice', 'category', 'stock', 'description', 'image', 'platformFeePercent', 'userFeePercent', 'gstPercent', 'sellerId', 'createdAt', 'status', 'customCategory', 'sizes', 'colors', 'pricingType', 'sizePrices', 'specifications', 'variantImages', 'views', 'name', 'attributes'];
+                Object.keys(selectedProduct).forEach(k => {
+                    if (!standardKeys.includes(k) && Array.isArray(selectedProduct[k])) {
+                        parsedVariants[k] = selectedProduct[k];
+                    }
+                });
+            }
             setVariants(parsedVariants);
             setIsEditing(false);
         }
@@ -185,7 +191,7 @@ export default function ProductViewModal({
         else fullProduct.colors = [];
 
         // Attach all variants
-        const standardKeys = ['id', 'title', 'price', 'discountPrice', 'category', 'stock', 'description', 'image', 'platformFeePercent', 'userFeePercent', 'gstPercent', 'sellerId', 'createdAt', 'status', 'customCategory', 'sizes', 'colors', 'pricingType', 'sizePrices', 'specifications', 'variantImages', 'views', 'name'];
+        const standardKeys = ['id', 'title', 'price', 'discountPrice', 'category', 'stock', 'description', 'image', 'platformFeePercent', 'userFeePercent', 'gstPercent', 'sellerId', 'createdAt', 'status', 'customCategory', 'sizes', 'colors', 'pricingType', 'sizePrices', 'specifications', 'variantImages', 'views', 'name', 'attributes'];
         // Clear old variants keys that might have been removed
         Object.keys(selectedProduct).forEach(k => {
             if (!standardKeys.includes(k) && Array.isArray(selectedProduct[k])) {
@@ -193,8 +199,12 @@ export default function ProductViewModal({
             }
         });
         
+        const attributesObj = {};
         for (const [key, items] of Object.entries(variants)) {
-            fullProduct[key] = items;
+            if (items.length > 0) attributesObj[key] = items;
+        }
+        if (Object.keys(attributesObj).length > 0) {
+            fullProduct.attributes = attributesObj;
         }
 
         if (specifications.length > 0) {

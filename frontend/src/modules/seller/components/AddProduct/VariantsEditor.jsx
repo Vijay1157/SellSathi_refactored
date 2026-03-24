@@ -49,7 +49,7 @@ export default function VariantsEditor({
 
                     {/* Size chips */}
                     <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', marginBottom: '1rem' }}>
-                        {config.defaultSizes.map(size => (
+                        {(config.defaultSizes || []).map(size => (
                             <button key={size} type="button" style={sty.chip(selectedSizes.includes(size))}
                                 onClick={() => toggleSize(size)}>
                                 {selectedSizes.includes(size) && <CheckCircle size={14} />} {size}
@@ -131,13 +131,13 @@ export default function VariantsEditor({
                         </div>
                     </div>
                     <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', marginBottom: '1rem' }}>
-                        {config.colorPresets.map(color => (
+                        {(config.colorPresets || []).map(color => (
                             <button key={color} type="button" style={sty.chip(selectedColors.includes(color))}
                                 onClick={() => toggleColor(color)}>
                                 {selectedColors.includes(color) && <CheckCircle size={14} />} {color}
                             </button>
                         ))}
-                        {selectedColors.filter(c => !config.colorPresets.includes(c)).map(color => (
+                        {selectedColors.filter(c => !(config.colorPresets || []).includes(c)).map(color => (
                             <button key={color} type="button" style={sty.chip(true)} onClick={() => toggleColor(color)}>
                                 <CheckCircle size={14} /> {color}
                             </button>
@@ -166,7 +166,7 @@ export default function VariantsEditor({
                     </div>
 
                     <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', marginBottom: '1rem' }}>
-                        {vType.presets.map(preset => {
+                        {(vType.presets || []).map(preset => {
                             const isActive = (variants[vType.key] || []).find(v => v.label === preset);
                             return (
                                 <button key={preset} type="button" style={sty.chip(!!isActive)}
@@ -175,7 +175,7 @@ export default function VariantsEditor({
                                 </button>
                             );
                         })}
-                        {(variants[vType.key] || []).filter(v => !vType.presets.includes(v.label)).map(v => (
+                        {(variants[vType.key] || []).filter(v => !(vType.presets || []).includes(v.label)).map(v => (
                             <button key={v.label} type="button" style={sty.chip(true)}
                                 onClick={() => toggleVariant(vType.key, v.label)}>
                                 <CheckCircle size={14} /> {v.label}
