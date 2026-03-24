@@ -131,12 +131,29 @@ export default function Navbar() {
 
                     // Create mega menu data only if products exist for this category
                     if (catProducts.length > 0) {
+                        // Get the predefined subcategory list for this category
+                        const predefinedSubs = SUBCATEGORIES[cat] || [];
+                        
+                        // Build categories array in the order of predefined subcategories
+                        const orderedCategories = predefinedSubs.map(subName => ({
+                            id: subName.toLowerCase().replace(/\s+/g, '-'),
+                            name: subName,
+                            items: (subGroups[subName] || []).slice(0, 4) // Use matching subcategory or empty array
+                        }));
+                        
+                        // Add any additional subcategories not in the predefined list
+                        Object.keys(subGroups).forEach(sub => {
+                            if (!predefinedSubs.includes(sub)) {
+                                orderedCategories.push({
+                                    id: sub.toLowerCase().replace(/\s+/g, '-'),
+                                    name: sub,
+                                    items: subGroups[sub].slice(0, 4)
+                                });
+                            }
+                        });
+
                         mega[cat] = {
-                            categories: Object.keys(subGroups).map(sub => ({
-                                id: sub.toLowerCase().replace(/\s+/g, '-'),
-                                name: sub,
-                                items: subGroups[sub].slice(0, 4) // Limit to 4 items per subcategory
-                            })),
+                            categories: orderedCategories,
                             popular: Array.from(new Set(catProducts.flatMap(p => p.tags || []))).slice(0, 4)
                         };
                     }
