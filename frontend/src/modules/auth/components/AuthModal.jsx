@@ -70,6 +70,24 @@ export default function AuthModal({ isOpen, onClose, onSuccess, hideRegister, se
     const [googleIdToken, setGoogleIdToken] = useState(null);
     const navigate = useNavigate();
 
+    const checkRoleAllowed = async (data) => {
+        if (!data || !data.success) return true;
+        // Block consumers and admins from seller login
+        if (sellerLogin && data.role !== 'SELLER') {
+            setError('Only sellers are allowed to login here.');
+            await auth.signOut();
+            return false;
+        }
+        // Block sellers and admins from consumer login
+        if (!sellerLogin && (data.role === 'SELLER' || data.role === 'ADMIN')) {
+            // But if it's a seller logging in during registration through 'new seller' flow, let them pass if isRegistering is true.
+            // Oh wait, isRegistering check is handled before calling checkRoleAllowed.
+            setError('Only users are allowed to login here.');
+            await auth.signOut();
+            return false;
+        }
+        return true;
+    };
 
     const cleanupRecaptcha = () => {
         if (window.recaptchaVerifier) {
@@ -198,6 +216,13 @@ export default function AuthModal({ isOpen, onClose, onSuccess, hideRegister, se
             });
             const data = await response.json();
             if (data.success) {
+                if (!isRegistering) {
+                    const allowed = await checkRoleAllowed(data);
+                    if (!allowed) {
+                        setLoading(false);
+                        return;
+                    }
+                }
                 persistUser(data, { phone: phoneNumber, status: data.status, sellerStatus: data.sellerStatus, shopName: data.shopName, fullName: formData.fullName || data.fullName, dob: formData.dob });
                 if (isRegistering) navigate('/'); else redirectByRole(data, navigate, sellerLogin);
                 if (onSuccess) onSuccess(data);
@@ -215,6 +240,11 @@ export default function AuthModal({ isOpen, onClose, onSuccess, hideRegister, se
             const response = await authFetch('/auth/google-login', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ idToken }) });
             const data = await response.json();
             if (data.success) {
+                const allowed = await checkRoleAllowed(data);
+                if (!allowed) {
+                    setLoading(false);
+                    return;
+                }
                 if (data.requiresRegistration) {
                     // Google authenticated successfully, but user doesn't exist
                     setFormData({ ...formData, email: data.email, fullName: data.fullName || '', isGoogleRegistration: true });
@@ -262,6 +292,11 @@ export default function AuthModal({ isOpen, onClose, onSuccess, hideRegister, se
             const response = await authFetch('/auth/login', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ idToken, isTest: isTestMode, email: formData.email, password: formData.password }) });
             const data = await response.json();
             if (data.success) {
+                const allowed = await checkRoleAllowed(data);
+                if (!allowed) {
+                    setLoading(false);
+                    return;
+                }
                 persistUser(data, { email: formData.email, fullName: data.fullName || formData.fullName, dob: formData.dob });
                 redirectByRole(data, navigate, sellerLogin);
                 if (onSuccess) onSuccess(data);

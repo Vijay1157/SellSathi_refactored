@@ -411,6 +411,14 @@ export default function ProductDetail() {
         const inStock = product.stock !== 0 && product.status !== 'Out of Stock';
         if (!inStock) return;
 
+        let localUser = null;
+        try { localUser = JSON.parse(localStorage.getItem('user')); } catch (e) {}
+
+        if (localUser && (localUser.role === 'SELLER' || localUser.role === 'ADMIN')) {
+            alert("Sellers and Admins cannot purchase products. Please create a user account to buy.");
+            return;
+        }
+
         const selections = {
             color: selectedColor,
             size: selectedSize,

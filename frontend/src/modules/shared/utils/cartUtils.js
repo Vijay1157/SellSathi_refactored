@@ -26,6 +26,14 @@ const getUID = () => {
 export const addToCart = async (product, selections = {}) => {
     try {
         const uid = getUID();
+        
+        let localUser = null;
+        try { localUser = JSON.parse(localStorage.getItem('user')); } catch(e){}
+
+        if (localUser && (localUser.role === 'SELLER' || localUser.role === 'ADMIN')) {
+            alert("Sellers and Admins cannot purchase products. Please create a user account to buy.");
+            return { success: false, message: "Sellers cannot purchase products. Please create a user account to buy.", triggerLogin: true };
+        }
 
         const { finalPrice, strikethroughPrice } = getProductPricing(product, selections);
 
