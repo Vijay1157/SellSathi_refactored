@@ -11,7 +11,7 @@ export default function Footer() {
     const handleBecomeSellerClick = async () => {
         const rawUser = localStorage.getItem('user');
         if (!rawUser) {
-            alert('Please login as a customer first before becoming a seller.');
+            alert('Please register first to become a seller.');
             return;
         }
 
@@ -42,7 +42,7 @@ export default function Footer() {
             console.error('Error checking seller status:', err);
         }
 
-        navigate('/seller');
+        window.open(window.location.origin + '/#/seller', '_blank');
     };
 
     return (

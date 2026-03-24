@@ -47,7 +47,7 @@ const getAdminProfile = async (req, res) => {
 const updateAdminProfile = async (req, res) => {
     try {
         const uid = req.user.uid;
-        const { name, dateOfBirth, address, websiteName, websiteInfo, adminEmail } = req.body;
+        const { name, dateOfBirth, address, websiteName, websiteInfo, adminEmail, phone } = req.body;
         
         // Validate required fields
         if (!name || !name.trim()) {
@@ -75,6 +75,11 @@ const updateAdminProfile = async (req, res) => {
         
         // Update or create admin profile
         await db.collection("adminProfiles").doc(uid).set(updateData, { merge: true });
+
+        // Update phone in users collection if provided
+        if (phone !== undefined) {
+            await db.collection("users").doc(uid).update({ phone: phone.trim() });
+        }
         
         // Invalidate admin config cache so changes reflect immediately
         invalidateAdminConfig();

@@ -205,8 +205,12 @@ export default function AddProduct() {
         }
         if (selectedColors.length > 0) fullProduct.colors = selectedColors;
 
+        const attributesObj = {};
         for (const [key, items] of Object.entries(variants)) {
-            if (items.length > 0) fullProduct[key] = items;
+            if (items.length > 0) attributesObj[key] = items;
+        }
+        if (Object.keys(attributesObj).length > 0) {
+            fullProduct.attributes = attributesObj;
         }
 
         if (specifications.length > 0) {
@@ -290,6 +294,13 @@ export default function AddProduct() {
                                             <option key={cat} value={cat}>{CATEGORY_CONFIG[cat]?.icon || '📦'} {cat}</option>
                                         ))}
                                     </select>
+                                    {product.category === 'Other' && (
+                                        <div style={{ marginTop: '1rem' }}>
+                                            <label style={sty.label}>Specify Category</label>
+                                            <input type="text" placeholder="Specify your custom category" required style={sty.input}
+                                                value={product.customCategory} onChange={e => setProduct({ ...product, customCategory: e.target.value })} />
+                                        </div>
+                                    )}
                                 </div>
 
                                 {product.category && getSubcategories(product.category).length > 0 && (
