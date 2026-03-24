@@ -25,6 +25,7 @@ export default function Navbar() {
 
     const navigate = useNavigate();
     const location = useLocation();
+    const isSellerDashboard = location.pathname.startsWith('/seller/dashboard');
     const menuRef = useRef(null);
     const profileRef = useRef(null);
 
@@ -368,12 +369,14 @@ export default function Navbar() {
                                                 </div>
                                             </div>
                                             <div className="menu-items">
-                                                <button onClick={() => {
-                                                    navigate('/dashboard');
-                                                    setIsProfileOpen(false);
-                                                }}>
-                                                    <ShoppingBag size={16} /> My Dashboard
-                                                </button>
+                                                {!isSellerDashboard && (
+                                                    <button onClick={() => {
+                                                        navigate('/dashboard');
+                                                        setIsProfileOpen(false);
+                                                    }}>
+                                                        <ShoppingBag size={16} /> My Dashboard
+                                                    </button>
+                                                )}
                                                 <button onClick={() => { setIsLoginModalOpen(true); setIsProfileOpen(false); }}>
                                                     <User size={16} /> Switch Account
                                                 </button>

@@ -100,9 +100,14 @@ export default function AddProduct() {
                 if (uid) {
                     const res = await authFetch(`/seller/${uid}/dashboard-data`);
                     const data = await res.json();
-                    if (data.success && data.seller) {
-                        const hasGST = data.seller.hasGST === 'yes' && data.seller.gstNumber;
+                    if (data.success && data.profile) {
+                        const hasGST = data.profile.hasGST === 'yes' && data.profile.gstNumber;
                         setSellerHasGST(!!hasGST);
+                        
+                        // If they don't have GST, strictly lock and pre-fill the static rate immediately
+                        if (!hasGST && product.category) {
+                            setProduct(prev => ({ ...prev, gstPercent: CATEGORY_GST_RATES[prev.category] || 18 }));
+                        }
                     }
                 }
             } catch (err) {
