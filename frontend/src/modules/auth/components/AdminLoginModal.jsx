@@ -140,7 +140,14 @@ export default function AdminLoginModal({ isOpen, onClose }) {
 
             if (data.success) {
                 if (data.role !== 'ADMIN') {
-                    setError('Access Denied: You do not have management privileges.');
+                    const linkStyle = { color: '#dc2626', textDecoration: 'underline', fontWeight: 600, display: 'inline-block', marginTop: '4px', cursor: 'pointer', background: 'none', border: 'none', padding: 0 };
+                    setError(
+                        <span>
+                            Access Denied: You do not have management privileges.<br/>
+                            <button style={linkStyle} onClick={() => { onClose(); navigate('/'); }}>To login as a user click here</button><br/>
+                            <button style={linkStyle} onClick={() => { onClose(); navigate('/seller'); }}>To register/login as seller click here</button>
+                        </span>
+                    );
                     setLoading(false);
                     return;
                 }
@@ -189,7 +196,14 @@ export default function AdminLoginModal({ isOpen, onClose }) {
 
             if (data.success) {
                 if (data.role !== 'ADMIN') {
-                    setError('Access Denied: This Google account is not authorized for management.');
+                    const linkStyle = { color: '#dc2626', textDecoration: 'underline', fontWeight: 600, display: 'inline-block', marginTop: '4px', cursor: 'pointer', background: 'none', border: 'none', padding: 0 };
+                    setError(
+                        <span>
+                            Access Denied: This Google account is not authorized for management.<br/>
+                            <button style={linkStyle} onClick={() => { onClose(); navigate('/'); }}>To login as a user click here</button><br/>
+                            <button style={linkStyle} onClick={() => { onClose(); navigate('/seller'); }}>To register/login as seller click here</button>
+                        </span>
+                    );
                     await auth.signOut();
                     setLoading(false);
                     return;
