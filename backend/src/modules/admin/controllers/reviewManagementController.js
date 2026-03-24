@@ -3,7 +3,7 @@ const { admin, db } = require('../../../config/firebase');
 const cache = require('../../../utils/cache');
 const { formatDateDDMMYYYY } = require('../../../utils/dateFormat');
 
-const ADMIN_REVIEWS_CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+const ADMIN_REVIEWS_CACHE_TTL = 0; // No cache — always fetch fresh for real-time status
 const ADMIN_ANALYTICS_CACHE_TTL = 10 * 60 * 1000; // 10 minutes
 
 /**
@@ -13,9 +13,7 @@ const ADMIN_ANALYTICS_CACHE_TTL = 10 * 60 * 1000; // 10 minutes
  */
 const getAllReviews = async (req, res) => {
     try {
-        const cached = cache.get('adminAllReviews');
-        if (cached) return res.status(200).json({ success: true, reviews: cached.reviews, count: cached.reviews.length });
-
+        // Always fetch fresh — no cache, so product status is always real-time
         const reviewsSnap = await db.collection("reviews").get();
         
         console.log(`[GetAllReviews] Total reviews in database: ${reviewsSnap.docs.length}`);
@@ -25,11 +23,11 @@ const getAllReviews = async (req, res) => {
         productsSnap.forEach(doc => {
             const productData = doc.data();
             productsMap[doc.id] = { 
-                id: doc.id, 
+                id: doc.id,
+                ...productData,
                 title: productData.title || productData.name || 'Unknown Product',
                 category: productData.category || 'Uncategorized',
                 brand: productData.brand || productData.brandName || 'No Brand',
-                ...productData
             };
         });
 
@@ -88,6 +86,26 @@ const getAllReviews = async (req, res) => {
                                 product.mainImage || 
                                 null;
 
+            // Determine product status based on actual Firestore fields
+            // Products use status: "Active" when live
+            // If status is missing/undefined, assume Active (newly added products may not have it yet)
+            const productStatusField = product.status;
+            let productStatus = 'ACTIVE';
+
+            if (productStatusField && productStatusField.toLowerCase() !== 'active') {
+                // Has a status value but it's not "Active" — removed/disabled
+                productStatus = 'INACTIVE';
+            } else {
+                // Active or no status field — check stock
+                const stockVal = product.stock ?? product.quantity ?? product.stockQuantity ?? product.availableStock ?? null;
+                if (stockVal !== null && stockVal !== undefined && Number(stockVal) <= 0) {
+                    productStatus = 'OUT_OF_STOCK';
+                }
+                // If stock field doesn't exist at all, keep as ACTIVE
+            }
+
+            console.log(`[GetAllReviews] Product "${product.title}" status="${productStatusField}" stock=${product.stock ?? product.quantity ?? 'N/A'} → ${productStatus}`);
+
             reviews.push({
                 id: doc.id,
                 ...data,
@@ -100,6 +118,7 @@ const getAllReviews = async (req, res) => {
                 productBrand: product.brand,
                 productAvgRating: parseFloat(productAvgRating.toFixed(1)),
                 productReviewCount: productReviewCount,
+                productStatus: productStatus,
                 rating: data.rating || 0,
                 title: data.title || '',
                 body: data.body || data.review || '',
@@ -115,7 +134,6 @@ const getAllReviews = async (req, res) => {
 
         console.log(`[GetAllReviews] Returning ${reviews.length} reviews (skipped ${skippedReviews} reviews for non-existent products)`);
 
-        cache.set('adminAllReviews', { reviews }, ADMIN_REVIEWS_CACHE_TTL);
         return res.status(200).json({
             success: true,
             reviews: reviews,

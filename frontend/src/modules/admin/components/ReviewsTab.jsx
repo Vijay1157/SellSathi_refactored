@@ -45,6 +45,12 @@ export default function ReviewsTab({ reviews, fetchAllData }) {
 
     const thStyle = { padding: '1.25rem 1.5rem', fontWeight: 600, fontSize: '0.85rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', background: 'var(--surface)' };
 
+    const getProductStatusBadge = (status) => {
+        if (status === 'INACTIVE') return { label: 'Inactive', bg: '#fef2f2', color: '#dc2626' };
+        if (status === 'OUT_OF_STOCK') return { label: 'Out of Stock', bg: '#fffbeb', color: '#d97706' };
+        return { label: 'Active', bg: '#f0fdf4', color: '#16a34a' };
+    };
+
     return (
         <div className="animate-fade-in flex flex-col gap-4">
             <div className="flex justify-between items-center">
@@ -56,21 +62,22 @@ export default function ReviewsTab({ reviews, fetchAllData }) {
                     <button className="btn btn-secondary" onClick={fetchAllData} style={{ padding: '0.5rem 1rem', fontSize: '0.85rem' }}>Refresh</button>
                 </div>
             </div>
-            <div id="feedback-table-container" className="glass-card" style={{ padding: 0, overflowX: 'auto', overflowY: 'auto', maxHeight: '600px', border: '1px solid var(--border)' }}>
-                <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: '1000px' }}>
+            <div id="feedback-table-container" className="glass-card" style={{ padding: 0, overflowX: 'auto', overflowY: 'scroll', maxHeight: '600px', border: '1px solid var(--border)' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: '1100px' }}>
                     <thead style={{ background: 'var(--surface)', textAlign: 'left', position: 'sticky', top: 0, zIndex: 1 }}>
                         <tr style={{ borderBottom: '2px solid var(--border)' }}>
                             <th style={thStyle}>Product Details</th>
                             <th style={thStyle}>Customer</th>
                             <th style={thStyle}>Rating</th>
                             <th style={thStyle}>Review</th>
+                            <th style={thStyle}>Status</th>
                             <th style={thStyle}>Date</th>
                             <th style={{ ...thStyle, textAlign: 'center' }}>Actions</th>
                         </tr>
                     </thead>
                     <tbody>
                         {filteredReviews.length === 0 ? (
-                            <tr><td colSpan="6" style={{ padding: '3rem', textAlign: 'center', color: 'var(--text-muted)' }}>{feedbackSearch || selectedFeedbackDate ? 'No reviews found matching your search criteria.' : 'No customer reviews yet.'}</td></tr>
+                            <tr><td colSpan="7" style={{ padding: '3rem', textAlign: 'center', color: 'var(--text-muted)' }}>{feedbackSearch || selectedFeedbackDate ? 'No reviews found matching your search criteria.' : 'No customer reviews yet.'}</td></tr>
                         ) : (
                             filteredReviews.map(r => (
                                 <tr key={r.id} style={{ borderBottom: '1px solid var(--border)', transition: 'background 0.2s' }} onMouseOver={(e) => e.currentTarget.style.background = 'var(--surface)'} onMouseOut={(e) => e.currentTarget.style.background = 'transparent'}>
@@ -155,6 +162,9 @@ export default function ReviewsTab({ reviews, fetchAllData }) {
                                             {r.title && (<span style={{ fontWeight: 600, fontSize: '0.95rem', color: 'var(--text)', marginBottom: '4px' }}>"{r.title}"</span>)}
                                             <span className="text-muted" style={{ fontSize: '0.9rem', lineHeight: 1.6 }}>{r.body ? (r.body.length > 150 ? r.body.substring(0, 150) + '...' : r.body) : 'No review text provided'}</span>
                                         </div>
+                                    </td>
+                                    <td style={{ padding: '1.25rem 1.5rem' }}>
+                                        {(() => { const s = getProductStatusBadge(r.productStatus); return <span style={{ padding: '5px 10px', background: s.bg, color: s.color, borderRadius: '8px', fontSize: '0.78rem', fontWeight: 700, whiteSpace: 'nowrap' }}>{s.label}</span>; })()}
                                     </td>
                                     <td style={{ padding: '1.25rem 1.5rem' }}><span className="text-muted" style={{ fontSize: '0.85rem' }}>{r.date}</span></td>
                                     <td style={{ padding: '1.25rem 1.5rem', textAlign: 'center' }}>
