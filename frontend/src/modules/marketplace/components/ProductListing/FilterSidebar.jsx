@@ -1,5 +1,5 @@
-import React from 'react';
-import { SlidersHorizontal } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { SlidersHorizontal, ChevronDown, ChevronRight } from 'lucide-react';
 import { MAIN_CATEGORIES, getSubcategories } from '@/modules/shared/config/categories';
 
 export default function FilterSidebar({
@@ -13,7 +13,42 @@ export default function FilterSidebar({
     setSortBy,
     clearAllFilters
 }) {
-    const availableSubcategories = selectedCategory !== 'All' ? getSubcategories(selectedCategory) : [];
+    const [expandedCategories, setExpandedCategories] = useState([]);
+
+    // Auto-expand category if subcategory is selected
+    useEffect(() => {
+        if (selectedCategory !== 'All' && selectedSubcategories.length > 0) {
+            if (!expandedCategories.includes(selectedCategory)) {
+                setExpandedCategories(prev => [...prev, selectedCategory]);
+            }
+        }
+    }, [selectedCategory, selectedSubcategories]);
+
+    const toggleCategoryExpansion = (category) => {
+        setExpandedCategories(prev => {
+            if (prev.includes(category)) {
+                return prev.filter(c => c !== category);
+            } else {
+                return [...prev, category];
+            }
+        });
+    };
+
+    const handleCategoryClick = (cat) => {
+        const subcategories = getSubcategories(cat);
+        
+        if (subcategories.length > 0) {
+            // If category has subcategories, toggle expansion
+            toggleCategoryExpansion(cat);
+            // Also select the category
+            setSelectedCategory(cat);
+            setSelectedSubcategories([]);
+        } else {
+            // If no subcategories, just select the category
+            setSelectedCategory(cat);
+            setSelectedSubcategories([]);
+        }
+    };
 
     const toggleSubcategory = (subcategory) => {
         setSelectedSubcategories(prev => {
@@ -39,7 +74,7 @@ export default function FilterSidebar({
                 )}
             </div>
 
-            {/* Categories Section */}
+            {/* Categories Section with Collapsible Subcategories */}
             <div className="filter-section">
                 <h4 className="filter-section-title">Categories</h4>
                 <div className="category-list-pro">
@@ -52,39 +87,42 @@ export default function FilterSidebar({
                     >
                         All Products
                     </button>
-                    {MAIN_CATEGORIES.map(cat => (
-                        <button
-                            key={cat}
-                            className={selectedCategory === cat ? 'active' : ''}
-                            onClick={() => {
-                                setSelectedCategory(cat);
-                                setSelectedSubcategories([]);
-                            }}
-                        >
-                            {cat}
-                        </button>
-                    ))}
+                    {MAIN_CATEGORIES.map(cat => {
+                        const subcategories = getSubcategories(cat);
+                        const isExpanded = expandedCategories.includes(cat);
+                        const hasSubcategories = subcategories.length > 0;
+
+                        return (
+                            <div key={cat} className="category-item-wrapper">
+                                <button
+                                    className={`category-btn ${selectedCategory === cat ? 'active' : ''}`}
+                                    onClick={() => handleCategoryClick(cat)}
+                                >
+                                    <span>{cat}</span>
+                                    {hasSubcategories && (
+                                        isExpanded ? <ChevronDown size={16} /> : <ChevronRight size={16} />
+                                    )}
+                                </button>
+                                
+                                {hasSubcategories && isExpanded && (
+                                    <div className="subcategory-dropdown">
+                                        {subcategories.map(sub => (
+                                            <label key={sub} className="subcategory-checkbox">
+                                                <input
+                                                    type="checkbox"
+                                                    checked={selectedSubcategories.includes(sub)}
+                                                    onChange={() => toggleSubcategory(sub)}
+                                                />
+                                                <span>{sub}</span>
+                                            </label>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+                        );
+                    })}
                 </div>
             </div>
-
-            {/* Subcategories Section */}
-            {selectedCategory !== 'All' && availableSubcategories.length > 0 && (
-                <div className="filter-section">
-                    <h4 className="filter-section-title">Subcategories</h4>
-                    <div className="subcategory-list-pro">
-                        {availableSubcategories.map(sub => (
-                            <label key={sub} className="checkbox-label">
-                                <input
-                                    type="checkbox"
-                                    checked={selectedSubcategories.includes(sub)}
-                                    onChange={() => toggleSubcategory(sub)}
-                                />
-                                <span>{sub}</span>
-                            </label>
-                        ))}
-                    </div>
-                </div>
-            )}
 
             {/* Price Range Section */}
             <div className="filter-section">

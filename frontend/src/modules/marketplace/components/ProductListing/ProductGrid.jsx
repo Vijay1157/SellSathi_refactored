@@ -27,22 +27,20 @@ export default function ProductGrid({
 
     return (
         <main className="product-main">
-            {/* Header with Breadcrumbs */}
+            {/* Header with Breadcrumbs and View Toggle */}
             <div className="listing-header-inline">
                 <div className="breadcrumb">
                     <Link to="/">Home</Link> / <span>Products</span>
                 </div>
                 <div className="listing-title-row">
                     <h1>{selectedCategory === 'All' ? 'All Products' : selectedCategory} <span className="count">({filteredProducts.length})</span></h1>
+                    <div className="view-toggle">
+                        <button className={viewMode === 'grid' ? 'active' : ''} onClick={() => setViewMode('grid')} title="Grid View"><LayoutGrid size={18} /></button>
+                        <button className={viewMode === 'list' ? 'active' : ''} onClick={() => setViewMode('list')} title="List View"><List size={18} /></button>
+                    </div>
                 </div>
             </div>
 
-            <div className="product-main-header">
-                <div className="view-toggle">
-                    <button className={viewMode === 'grid' ? 'active' : ''} onClick={() => setViewMode('grid')}><LayoutGrid size={18} /></button>
-                    <button className={viewMode === 'list' ? 'active' : ''} onClick={() => setViewMode('list')}><List size={18} /></button>
-                </div>
-            </div>
             <AnimatePresence mode="popLayout">
                 {loading ? (
                     <div className="loading-state">

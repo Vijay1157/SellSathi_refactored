@@ -29,7 +29,7 @@ const HERO_SLIDES = [
         badge: "Limited Edition",
         image: "https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=1600&auto=format&fit=crop&q=80",
         btnText: "View Collection",
-        link: "/products?category=Accessories"
+        link: "/products?category=Jewelry & Accessories"
     }
 ];
 
