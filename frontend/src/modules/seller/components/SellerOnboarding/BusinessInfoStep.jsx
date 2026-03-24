@@ -55,10 +55,10 @@ export default function BusinessInfoStep({ sellerData, updateSellerData, nextSte
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">Shop Category *</label>
             <select
-              value={sellerData.shopCategory?.startsWith('other:') ? 'other' : sellerData.shopCategory}
+              value={sellerData.shopCategory?.toLowerCase().startsWith('other:') ? 'Other' : sellerData.shopCategory}
               onChange={(e) => {
                 const val = e.target.value;
-                if (val === 'other') {
+                if (val === 'Other') {
                   setCustomShopCategory('');
                   updateSellerData('shopCategory', 'other:');
                 } else {
@@ -69,17 +69,29 @@ export default function BusinessInfoStep({ sellerData, updateSellerData, nextSte
               className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#7B4DDB] focus:border-[#7B4DDB]"
             >
               <option value="">Select Category</option>
-              <option value="electronics">Electronics</option>
-              <option value="fashion">Fashion</option>
-              <option value="home">Home & Kitchen</option>
-              <option value="beauty">Beauty & Health</option>
-              <option value="food">Food & Beverages</option>
-              <option value="books">Books & Media</option>
-              <option value="sports">Sports & Fitness</option>
-              <option value="toys">Toys & Games</option>
-              <option value="other">Other</option>
+              <option value="Fashion (Men)">Fashion (Men)</option>
+              <option value="Fashion (Women)">Fashion (Women)</option>
+              <option value="Kids & Baby">Kids & Baby</option>
+              <option value="Electronics">Electronics</option>
+              <option value="Home & Living">Home & Living</option>
+              <option value="Handicrafts">Handicrafts</option>
+              <option value="Artworks">Artworks</option>
+              <option value="Beauty & Personal Care">Beauty & Personal Care</option>
+              <option value="Sports & Fitness">Sports & Fitness</option>
+              <option value="Books & Stationery">Books & Stationery</option>
+              <option value="Food & Beverages">Food & Beverages</option>
+              <option value="Gifts & Customization">Gifts & Customization</option>
+              <option value="Jewelry & Accessories">Jewelry & Accessories</option>
+              <option value="Fabrics & Tailoring Materials">Fabrics & Tailoring Materials</option>
+              <option value="Local Sellers / Homepreneurs">Local Sellers / Homepreneurs</option>
+              <option value="Services">Services</option>
+              <option value="Pet Supplies">Pet Supplies</option>
+              <option value="Automotive & Accessories">Automotive & Accessories</option>
+              <option value="Travel & Utility">Travel & Utility</option>
+              <option value="Sustainability & Eco-Friendly">Sustainability & Eco-Friendly</option>
+              <option value="Other">Other</option>
             </select>
-            {(sellerData.shopCategory?.startsWith('other:') || sellerData.shopCategory === 'other') && (
+            {(sellerData.shopCategory?.toLowerCase().startsWith('other:') || sellerData.shopCategory === 'Other') && (
               <input
                 type="text"
                 value={customShopCategory}

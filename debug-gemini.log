@@ -38,3 +38,17 @@
 [2026-03-10T10:36:26.452Z] Processing DOB for age: "29/11/2004" -> Cleaned: "29/11/2004"
 [2026-03-10T10:36:26.453Z] SUCCESS: Calculated Age 22 from year 2004
 [2026-03-10T10:36:26.454Z] FINAL PARSED: {"fullName":"Rahul Kulkarni","aadhaarNumber":"312956581737","phoneNumber":"7483743936","dob":"29/11/2004","gender":"MALE","address":"Rahul Kulkarni, Prashanth Kulkarni, 07, Malasakant Nivas, Shubham Layout, Vijayapur, Athani Road, VTC: Bijapur, PO: Bijapur Chanda Bavadi, District: Vijayapura, State: Karnataka, PIN Code: 586101","age":"22"}
+[2026-03-24T04:10:02.693Z] --- START NEW EXTRACTION (MIME: image/jpeg) ---
+[2026-03-24T04:10:02.696Z] Attempt with: gemini-flash-latest | Attempt: 1
+[2026-03-24T04:10:20.276Z] RAW AI RESPONSE: {
+  "fullName": "Rahul Kulkarni",
+  "aadhaarNumber": "312956581737",
+  "phoneNumber": "7483743936",
+  "age": "19",
+  "dob": "29/11/2004",
+  "gender": "MALE",
+  "address": "Prashanth Kulkarni, 07, Malasakant Nivas, Shubham Layout, Vijayapur, Athani Road, VTC: Bijapur, PO: Bijapur Chanda Bavadi, District: Vijayapura, State: Karnataka, PIN Code: 586101"
+}
+[2026-03-24T04:10:20.279Z] Processing DOB for age: "29/11/2004" -> Cleaned: "29/11/2004"
+[2026-03-24T04:10:20.280Z] SUCCESS: Calculated Age 22 from year 2004
+[2026-03-24T04:10:20.282Z] FINAL PARSED: {"fullName":"Rahul Kulkarni","aadhaarNumber":"312956581737","phoneNumber":"7483743936","dob":"29/11/2004","gender":"MALE","address":"Prashanth Kulkarni, 07, Malasakant Nivas, Shubham Layout, Vijayapur, Athani Road, VTC: Bijapur, PO: Bijapur Chanda Bavadi, District: Vijayapura, State: Karnataka, PIN Code: 586101","age":"22"}

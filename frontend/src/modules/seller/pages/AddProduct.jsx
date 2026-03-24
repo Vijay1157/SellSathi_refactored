@@ -32,7 +32,7 @@ export default function AddProduct() {
 
     // Core state
     const [product, setProduct] = useState({
-        name: '', price: '', discountPrice: '', category: '', stock: '', description: '', image: '', gstPercent: ''
+        name: '', price: '', discountPrice: '', category: '', customCategory: '', stock: '', description: '', image: '', gstPercent: ''
     });
 
     // Fee constants
@@ -182,7 +182,7 @@ export default function AddProduct() {
             title: product.name,
             price: parseFloat(product.price),
             discountPrice: product.discountPrice ? parseFloat(product.discountPrice) : null,
-            category: product.category,
+            category: product.category === 'Other' ? `Other:${product.customCategory}` : product.category,
             stock: parseInt(product.stock),
             description: product.description,
             image: product.image,
@@ -286,9 +286,16 @@ export default function AddProduct() {
                                         }}>
                                         <option value="">Select Category</option>
                                         {categories.map(cat => (
-                                            <option key={cat} value={cat}>{CATEGORY_CONFIG[cat].icon} {cat}</option>
+                                            <option key={cat} value={cat}>{CATEGORY_CONFIG[cat]?.icon || '📦'} {cat}</option>
                                         ))}
                                     </select>
+                                    {product.category === 'Other' && (
+                                        <div style={{ marginTop: '1rem' }}>
+                                            <label style={sty.label}>Specify Category</label>
+                                            <input type="text" placeholder="Specify your custom category" required style={sty.input}
+                                                value={product.customCategory} onChange={e => setProduct({ ...product, customCategory: e.target.value })} />
+                                        </div>
+                                    )}
                                 </div>
 
                                 {config && (

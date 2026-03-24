@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { ImageIcon, Trash2, Upload, Loader } from 'lucide-react';
+import { ImageIcon, Trash2, Upload, Loader, Plus } from 'lucide-react';
 import { authFetch } from '@/modules/shared/utils/api';
 
 const sty = {
@@ -17,6 +17,7 @@ export default function ImageUploader({
     setVariantImages 
 }) {
     const [uploadingMain, setUploadingMain] = useState(false);
+    const [uploadingLabel, setUploadingLabel] = useState(null);
 
     const allVariantLabels = [
         ...selectedColors,
@@ -82,45 +83,69 @@ export default function ImageUploader({
                         <div style={sty.sectionIcon('#3b82f6')}><ImageIcon size={20} /></div>
                         <div>
                             <h3 style={{ margin: 0 }}>Variant Images</h3>
-                            <p style={{ margin: 0, fontSize: '0.8rem', color: '#64748b' }}>(Optional) Upload images for specific colors or variants.</p>
+                            <p style={{ margin: 0, fontSize: '0.8rem', color: '#64748b' }}>(Optional) Upload multiple images for specific colors or variants. One is mandatory if you choose to add images.</p>
                         </div>
                     </div>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-                        {allVariantLabels.map(label => (
-                            <div key={label} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0.75rem 1rem', border: '1px solid #e2e8f0', borderRadius: '12px', background: '#f8fafc' }}>
-                                <span style={{ fontWeight: 600, fontSize: '0.9rem', color: '#334155' }}>{label}</span>
-                                <div>
-                                    {variantImages[label] ? (
-                                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                            <img src={variantImages[label]} alt={label} style={{ width: '36px', height: '36px', borderRadius: '8px', objectFit: 'cover', border: '1px solid #e2e8f0' }} />
-                                            <button type="button" onClick={() => {
-                                                const updated = { ...variantImages };
-                                                delete updated[label];
-                                                setVariantImages(updated);
-                                            }} style={{ background: '#fee2e2', color: '#ef4444', border: 'none', borderRadius: '6px', padding: '0.35rem', cursor: 'pointer' }}><Trash2 size={14} /></button>
-                                        </div>
-                                    ) : (
-                                        <label style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', cursor: 'pointer', padding: '0.4rem 0.8rem', background: 'var(--primary)', color: 'white', borderRadius: '8px', fontSize: '0.8rem', fontWeight: 600 }}>
-                                            <Upload size={14} />
-                                            Upload
-                                            <input type="file" accept="image/*" hidden
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                        {allVariantLabels.map(label => {
+                            const images = Array.isArray(variantImages[label]) ? variantImages[label] : (variantImages[label] ? [variantImages[label]] : []);
+                            return (
+                                <div key={label} style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', padding: '1rem', border: '1px solid #e2e8f0', borderRadius: '12px', background: '#f8fafc' }}>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                        <span style={{ fontWeight: 600, fontSize: '0.95rem', color: '#334155' }}>{label}</span>
+                                        <label style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', cursor: uploadingLabel === label ? 'not-allowed' : 'pointer', padding: '0.4rem 0.8rem', background: 'var(--primary)', color: 'white', borderRadius: '8px', fontSize: '0.8rem', fontWeight: 600, opacity: uploadingLabel === label ? 0.7 : 1 }}>
+                                            {uploadingLabel === label ? <Loader size={14} className="animate-spin" /> : <Plus size={14} />}
+                                            {uploadingLabel === label ? 'Uploading...' : 'Add Images'}
+                                            <input type="file" accept="image/*" multiple hidden disabled={uploadingLabel === label}
                                                 onChange={async (e) => {
-                                                    const file = e.target.files[0];
-                                                    if (!file) return;
-                                                    const formData = new FormData();
-                                                    formData.append('image', file);
+                                                    const files = Array.from(e.target.files);
+                                                    if (files.length === 0) return;
+                                                    setUploadingLabel(label);
                                                     try {
-                                                        const response = await authFetch('/auth/upload-image', { method: 'POST', body: formData });
-                                                        const data = await response.json();
-                                                        if (data.success) { setVariantImages(prev => ({ ...prev, [label]: data.url })); }
-                                                        else { alert('Upload failed: ' + data.message); }
+                                                        const newUrls = [];
+                                                        for (let file of files) {
+                                                            const formData = new FormData();
+                                                            formData.append('image', file);
+                                                            const response = await authFetch('/auth/upload-image', { method: 'POST', body: formData });
+                                                            const data = await response.json();
+                                                            if (data.success) { newUrls.push(data.url); }
+                                                        }
+                                                        if (newUrls.length > 0) {
+                                                            setVariantImages(prev => {
+                                                                const existing = Array.isArray(prev[label]) ? prev[label] : (prev[label] ? [prev[label]] : []);
+                                                                return { ...prev, [label]: [...existing, ...newUrls] };
+                                                            });
+                                                        }
                                                     } catch (err) { console.error(err); alert('Upload error'); }
+                                                    finally { setUploadingLabel(null); }
                                                 }} />
                                         </label>
+                                    </div>
+                                    {images.length > 0 && (
+                                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', marginTop: '0.5rem' }}>
+                                            {images.map((imgSrc, idx) => (
+                                                <div key={idx} style={{ position: 'relative' }}>
+                                                    <img src={imgSrc} alt={`${label}-${idx}`} style={{ width: '60px', height: '60px', borderRadius: '8px', objectFit: 'cover', border: '1px solid #e2e8f0' }} />
+                                                    {idx === 0 && <span style={{ position: 'absolute', bottom: '2px', left: '2px', background: 'rgba(0,0,0,0.6)', color: 'white', fontSize: '10px', padding: '2px 4px', borderRadius: '4px' }}>Main</span>}
+                                                    <button type="button" onClick={() => {
+                                                        setVariantImages(prev => {
+                                                            const currentArr = Array.isArray(prev[label]) ? [...prev[label]] : [...[prev[label]]];
+                                                            currentArr.splice(idx, 1);
+                                                            const newState = { ...prev };
+                                                            if (currentArr.length === 0) delete newState[label];
+                                                            else newState[label] = currentArr;
+                                                            return newState;
+                                                        });
+                                                    }} style={{ position: 'absolute', top: '-5px', right: '-5px', background: '#fee2e2', color: '#ef4444', border: 'none', borderRadius: '50%', padding: '0.2rem', cursor: 'pointer', boxShadow: '0 2px 4px rgba(0,0,0,0.1)' }}>
+                                                        <Trash2 size={12} />
+                                                    </button>
+                                                </div>
+                                            ))}
+                                        </div>
                                     )}
                                 </div>
-                            </div>
-                        ))}
+                            );
+                        })}
                     </div>
                 </div>
             )}

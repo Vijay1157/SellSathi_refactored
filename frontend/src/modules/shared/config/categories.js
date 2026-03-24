@@ -60,17 +60,27 @@ export const ALL_SUBCATEGORIES = {
 
 // Seller-specific categories (for product publishing)
 export const SELLER_CATEGORIES = [
+  'Fashion (Men)',
+  'Fashion (Women)',
+  'Kids & Baby',
   'Electronics',
-  "Men's Fashion",
-  "Women's Fashion",
   'Home & Living',
-  'Beauty',
-  'Sports',
-  'Accessories',
+  'Handicrafts',
+  'Artworks',
+  'Beauty & Personal Care',
+  'Sports & Fitness',
   'Books & Stationery',
   'Food & Beverages',
-  'Handicrafts',
-  'Others'
+  'Gifts & Customization',
+  'Jewelry & Accessories',
+  'Fabrics & Tailoring Materials',
+  'Local Sellers / Homepreneurs',
+  'Services',
+  'Pet Supplies',
+  'Automotive & Accessories',
+  'Travel & Utility',
+  'Sustainability & Eco-Friendly',
+  'Other'
 ];
 
 // Get subcategories for a specific category

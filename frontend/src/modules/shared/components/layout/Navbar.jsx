@@ -244,6 +244,10 @@ export default function Navbar() {
     };
 
     const handleBecomeSellerClick = () => {
+        if (!user) {
+            alert('Please register first to become a seller.');
+            return;
+        }
         // ALWAYS open seller page in new tab on Home Page Navbar,
         // even if user is a SELLER in the database.
         // They must login from /#/seller to access the Seller Dashboard.
