@@ -2,7 +2,7 @@ import { auth } from '@/modules/shared/config/firebase';
 
 export const API_BASE = import.meta.env.PROD
     ? (import.meta.env.VITE_API_BASE_URL || 'https://sellsathi-refactored.onrender.com')
-    : 'http://localhost:5000';
+    : 'http://localhost:5001';
 
 /**
  * Authenticated fetch wrapper.
@@ -14,7 +14,7 @@ export const API_BASE = import.meta.env.PROD
  *      when the actual logged-in user is a test credential user.
  *
  * 2. If a real Firebase Auth session exists (auth.currentUser):
- *    → Force-refresh the ID token (prevents 401 from expired tokens)
+ *    → Force-refresh the ID token (prevents 401 from expired tokens)git 
  *    → Send Authorization: Bearer <token>
  *    → If refresh fails, fall back to X-Test-UID from localStorage
  *
