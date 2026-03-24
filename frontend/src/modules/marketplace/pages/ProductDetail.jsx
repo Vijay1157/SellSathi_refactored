@@ -177,6 +177,16 @@ export default function ProductDetail() {
                     data = { id: docSnap.id, ...docSnap.data() };
                 }
 
+                // Map new .attributes schema back to root properties without breaking UI
+                if (data.attributes) {
+                    Object.keys(data.attributes).forEach(k => {
+                        // Only map if it doesn't overwrite a core standard key
+                        if (!['id', 'title', 'name', 'price', 'category', 'description'].includes(k)) {
+                            data[k] = data.attributes[k];
+                        }
+                    });
+                }
+
                 // Normalize: seller products store `title` not `name`
                 if (!data.name && data.title) data.name = data.title;
                 if (!data.description) data.description = `Premium ${data.name || 'Product'} with cutting-edge features.`;

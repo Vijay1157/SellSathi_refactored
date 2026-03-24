@@ -204,8 +204,12 @@ export default function AddProduct() {
         }
         if (selectedColors.length > 0) fullProduct.colors = selectedColors;
 
+        const attributesObj = {};
         for (const [key, items] of Object.entries(variants)) {
-            if (items.length > 0) fullProduct[key] = items;
+            if (items.length > 0) attributesObj[key] = items;
+        }
+        if (Object.keys(attributesObj).length > 0) {
+            fullProduct.attributes = attributesObj;
         }
 
         if (specifications.length > 0) {
