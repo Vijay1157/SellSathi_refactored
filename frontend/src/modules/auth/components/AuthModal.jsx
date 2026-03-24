@@ -72,17 +72,30 @@ export default function AuthModal({ isOpen, onClose, onSuccess, hideRegister, se
 
     const checkRoleAllowed = async (data) => {
         if (!data || !data.success) return true;
+        
+        const linkStyle = { color: 'var(--primary)', textDecoration: 'underline', fontWeight: 600, display: 'inline-block', marginTop: '4px', cursor: 'pointer', background: 'none', border: 'none', padding: 0 };
+        
         // Block consumers and admins from seller login
         if (sellerLogin && data.role !== 'SELLER') {
-            setError('Only sellers are allowed to login here.');
+            setError(
+                <span>
+                    Only sellers are allowed to login here.<br />
+                    <button style={linkStyle} onClick={() => { handleClose(); navigate('/'); }}>To login as a user click here</button><br />
+                    <button style={linkStyle} onClick={() => { handleClose(); navigate('/admin/login'); }}>To login as an admin click here</button>
+                </span>
+            );
             await auth.signOut();
             return false;
         }
         // Block sellers and admins from consumer login
         if (!sellerLogin && (data.role === 'SELLER' || data.role === 'ADMIN')) {
-            // But if it's a seller logging in during registration through 'new seller' flow, let them pass if isRegistering is true.
-            // Oh wait, isRegistering check is handled before calling checkRoleAllowed.
-            setError('Only users are allowed to login here.');
+            setError(
+                <span>
+                    Only users are allowed to login here.<br />
+                    <button style={linkStyle} onClick={() => { handleClose(); navigate('/seller'); }}>To register/login as seller click here</button><br />
+                    <button style={linkStyle} onClick={() => { handleClose(); navigate('/admin/login'); }}>To login as an admin click here</button>
+                </span>
+            );
             await auth.signOut();
             return false;
         }
