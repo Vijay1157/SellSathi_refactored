@@ -25,6 +25,9 @@ import ProtectedRoute from '@/modules/shared/components/common/ProtectedRoute';
 import ScrollToTop from '@/modules/shared/components/common/ScrollToTop';
 import ErrorBoundary from '@/modules/shared/components/common/ErrorBoundary';
 
+// Auto-cleanup old localStorage data (runs once per version)
+import '@/modules/shared/utils/clearOldData';
+
 function AppContent() {
   const location = useLocation();
   // Hide navbar for seller landing, registration, and onboarding flows (they have their own SellerHeader)
