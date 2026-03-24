@@ -1,24 +1,11 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import AuthModal from '@/modules/auth/components/AuthModal';
+import AdminLoginModal from '@/modules/auth/components/AdminLoginModal';
 import { ShieldCheck } from 'lucide-react';
 
 export default function AdminLogin() {
     const [isModalOpen, setIsModalOpen] = useState(true);
     const navigate = useNavigate();
-
-    const handleSuccess = (data) => {
-        setIsModalOpen(false);
-
-        // Only redirect to admin dashboard if user is actually an admin
-        // with the correct phone number
-        if (data && data.role === 'ADMIN') {
-            navigate('/admin');
-        } else {
-            // Redirect non-admin users to home page
-            navigate('/');
-        }
-    };
 
     return (
         <div className="container" style={{
@@ -55,10 +42,12 @@ export default function AdminLogin() {
                 </button>
             </div>
 
-            <AuthModal
+            <AdminLoginModal
                 isOpen={isModalOpen}
-                onClose={() => setIsModalOpen(false)}
-                onSuccess={handleSuccess}
+                onClose={() => {
+                    setIsModalOpen(false);
+                    // Just close it, the page remains active
+                }}
             />
         </div>
     );

@@ -32,7 +32,8 @@ export const SellerPage = () => {
       }
       const user = JSON.parse(userStr);
       if (user.role === 'SELLER') {
-        alert('You are already registered as a seller. Please login to access your dashboard.');
+        alert('We found an existing Seller profile matching this account! Redirecting you straight to your Seller Dashboard.');
+        navigate('/seller/dashboard');
         return;
       }
       if (user.role === 'ADMIN') {
