@@ -30,14 +30,24 @@ export default function ProductListing() {
     const location = useLocation();
     const navigate = useNavigate();
 
-    // Parse query params
+    // Parse query params and handle subcategory selection
     useEffect(() => {
         const params = new URLSearchParams(location.search);
         const cat = params.get('category');
+        const subCat = params.get('subcategory') || params.get('sub');
+        
         if (cat) {
             setSelectedCategory(cat.trim());
+            
+            // If subcategory is provided, auto-select it
+            if (subCat) {
+                setSelectedSubcategories([subCat.trim()]);
+            } else {
+                setSelectedSubcategories([]);
+            }
         } else {
             setSelectedCategory('All');
+            setSelectedSubcategories([]);
         }
     }, [location.search]);
 
