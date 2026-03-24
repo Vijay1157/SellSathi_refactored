@@ -30,14 +30,19 @@ export default function ProductListing() {
     const location = useLocation();
     const navigate = useNavigate();
 
-    // Parse query params
+    // Parse query params and handle subcategory selection
     useEffect(() => {
         const params = new URLSearchParams(location.search);
         const cat = params.get('category');
+        const subCats = params.getAll('subcategory');
+        const subCat = subCats.length > 0 ? subCats : (params.get('sub') ? [params.get('sub')] : []);
+        
         if (cat) {
             setSelectedCategory(cat.trim());
+            setSelectedSubcategories(subCat.map(s => s.trim()));
         } else {
             setSelectedCategory('All');
+            setSelectedSubcategories([]);
         }
     }, [location.search]);
 
@@ -106,8 +111,6 @@ export default function ProductListing() {
         let result = [...products];
         const params = new URLSearchParams(location.search);
         const searchQuery = params.get('search')?.toLowerCase();
-        const subCategory = params.get('sub');
-        const subcategory = params.get('subcategory');
         const itemName = params.get('item');
 
         if (searchQuery) {
@@ -124,19 +127,8 @@ export default function ProductListing() {
             );
         }
 
-        if (subCategory) {
-            const normalizedSubCategory = subCategory.toLowerCase().trim();
-            result = result.filter(p =>
-                p.subCategory?.toLowerCase()?.trim() === normalizedSubCategory ||
-                p.category?.toLowerCase()?.trim() === normalizedSubCategory
-            );
-        } else if (subcategory) {
-            const normalizedSubcategory = subcategory.toLowerCase().trim();
-            result = result.filter(p =>
-                p.subCategory?.toLowerCase()?.trim() === normalizedSubcategory ||
-                p.category?.toLowerCase()?.trim() === normalizedSubcategory
-            );
-        } else if (selectedSubcategories.length > 0) {
+        // selectedSubcategories is always synced from URL params, so use it as single source of truth
+        if (selectedSubcategories.length > 0) {
             result = result.filter(p =>
                 selectedSubcategories.some(sub =>
                     p.subCategory?.toLowerCase()?.trim() === sub.toLowerCase().trim()

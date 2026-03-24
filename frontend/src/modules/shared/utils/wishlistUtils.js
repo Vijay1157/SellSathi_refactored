@@ -45,6 +45,15 @@ export const getWishlist = async () => {
 export const addToWishlist = async (product) => {
     try {
         const uid = getUID();
+        
+        let localUser = null;
+        try { localUser = JSON.parse(localStorage.getItem('user')); } catch(e){}
+
+        if (localUser && (localUser.role === 'SELLER' || localUser.role === 'ADMIN')) {
+            alert("Sellers and Admins cannot use the wishlist. Please create a user account to shop.");
+            return { success: false, message: "Sellers cannot purchase products.", triggerLogin: true };
+        }
+
         const productToAdd = {
             id: product.id,
             name: product.name,

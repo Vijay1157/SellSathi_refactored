@@ -7,12 +7,12 @@ import { db } from '@/modules/shared/config/firebase';
 
 const CATEGORY_DATA_FALLBACK = {
     'Electronics': { popular: ['Flagship Phones', 'Mid-range Phones', 'Budget Phones', 'Tablets'] },
-    'Men\'s Fashion': { popular: ['Formal Shirts', 'T-Shirts', 'Jeans', 'Sneakers'] },
-    'Women\'s Fashion': { popular: ['Dresses', 'Handbags', 'Kurtas', 'Heels'] },
+    'Fashion (Men)': { popular: ['Formal Shirts', 'T-Shirts', 'Jeans', 'Sneakers'] },
+    'Fashion (Women)': { popular: ['Dresses', 'Handbags', 'Kurtas', 'Heels'] },
     'Home & Living': { popular: ['Furniture', 'Decor', 'Kitchen'] },
-    'Beauty': { popular: ['Skincare', 'Fragrance', 'Makeup'] },
-    'Sports': { popular: ['Fitness', 'Apparel', 'Equipment'] },
-    'Accessories': { popular: ['Bags', 'Wallets', 'Watches'] }
+    'Beauty & Personal Care': { popular: ['Skincare', 'Fragrance', 'Makeup'] },
+    'Sports & Fitness': { popular: ['Fitness', 'Apparel', 'Equipment'] },
+    'Jewelry & Accessories': { popular: ['Bags', 'Wallets', 'Watches'] }
 };
 
 export default function CategoryPage() {

@@ -1,6 +1,7 @@
-import React from 'react';
-import { SlidersHorizontal } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { SlidersHorizontal, ChevronDown, ChevronRight } from 'lucide-react';
 import { MAIN_CATEGORIES, getSubcategories } from '@/modules/shared/config/categories';
+import { useNavigate } from 'react-router-dom';
 
 export default function FilterSidebar({
     selectedCategory,
@@ -13,15 +14,56 @@ export default function FilterSidebar({
     setSortBy,
     clearAllFilters
 }) {
-    const availableSubcategories = selectedCategory !== 'All' ? getSubcategories(selectedCategory) : [];
+    const navigate = useNavigate();
+    const [expandedCategories, setExpandedCategories] = useState([]);
+
+    // Auto-expand category if subcategory is selected
+    useEffect(() => {
+        if (selectedCategory !== 'All' && selectedSubcategories.length > 0) {
+            if (!expandedCategories.includes(selectedCategory)) {
+                setExpandedCategories(prev => [...prev, selectedCategory]);
+            }
+        }
+    }, [selectedCategory, selectedSubcategories]);
+
+    const toggleCategoryExpansion = (category) => {
+        setExpandedCategories(prev => {
+            if (prev.includes(category)) {
+                return prev.filter(c => c !== category);
+            } else {
+                return [...prev, category];
+            }
+        });
+    };
+
+    const handleCategoryClick = (cat) => {
+        const subcategories = getSubcategories(cat);
+        
+        if (subcategories.length > 0) {
+            toggleCategoryExpansion(cat);
+            setSelectedCategory(cat);
+            setSelectedSubcategories([]);
+        } else {
+            setSelectedCategory(cat);
+            setSelectedSubcategories([]);
+        }
+        // Update URL to remove stale subcategory param
+        navigate(`/products?category=${encodeURIComponent(cat)}`);
+    };
 
     const toggleSubcategory = (subcategory) => {
         setSelectedSubcategories(prev => {
-            if (prev.includes(subcategory)) {
-                return prev.filter(s => s !== subcategory);
-            } else {
-                return [...prev, subcategory];
+            const next = prev.includes(subcategory)
+                ? prev.filter(s => s !== subcategory)
+                : [...prev, subcategory];
+            // Sync URL so URL params don't override state
+            const params = new URLSearchParams();
+            if (selectedCategory && selectedCategory !== 'All') {
+                params.set('category', selectedCategory);
             }
+            next.forEach(s => params.append('subcategory', s));
+            navigate(`/products?${params.toString()}`);
+            return next;
         });
     };
 
@@ -39,7 +81,7 @@ export default function FilterSidebar({
                 )}
             </div>
 
-            {/* Categories Section */}
+            {/* Categories Section with Collapsible Subcategories */}
             <div className="filter-section">
                 <h4 className="filter-section-title">Categories</h4>
                 <div className="category-list-pro">
@@ -52,39 +94,42 @@ export default function FilterSidebar({
                     >
                         All Products
                     </button>
-                    {MAIN_CATEGORIES.map(cat => (
-                        <button
-                            key={cat}
-                            className={selectedCategory === cat ? 'active' : ''}
-                            onClick={() => {
-                                setSelectedCategory(cat);
-                                setSelectedSubcategories([]);
-                            }}
-                        >
-                            {cat}
-                        </button>
-                    ))}
+                    {MAIN_CATEGORIES.map(cat => {
+                        const subcategories = getSubcategories(cat);
+                        const isExpanded = expandedCategories.includes(cat);
+                        const hasSubcategories = subcategories.length > 0;
+
+                        return (
+                            <div key={cat} className="category-item-wrapper">
+                                <button
+                                    className={`category-btn ${selectedCategory === cat ? 'active' : ''}`}
+                                    onClick={() => handleCategoryClick(cat)}
+                                >
+                                    <span>{cat}</span>
+                                    {hasSubcategories && (
+                                        isExpanded ? <ChevronDown size={16} /> : <ChevronRight size={16} />
+                                    )}
+                                </button>
+                                
+                                {hasSubcategories && isExpanded && (
+                                    <div className="subcategory-dropdown">
+                                        {subcategories.map(sub => (
+                                            <label key={sub} className="subcategory-checkbox">
+                                                <input
+                                                    type="checkbox"
+                                                    checked={selectedSubcategories.includes(sub)}
+                                                    onChange={() => toggleSubcategory(sub)}
+                                                />
+                                                <span>{sub}</span>
+                                            </label>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+                        );
+                    })}
                 </div>
             </div>
-
-            {/* Subcategories Section */}
-            {selectedCategory !== 'All' && availableSubcategories.length > 0 && (
-                <div className="filter-section">
-                    <h4 className="filter-section-title">Subcategories</h4>
-                    <div className="subcategory-list-pro">
-                        {availableSubcategories.map(sub => (
-                            <label key={sub} className="checkbox-label">
-                                <input
-                                    type="checkbox"
-                                    checked={selectedSubcategories.includes(sub)}
-                                    onChange={() => toggleSubcategory(sub)}
-                                />
-                                <span>{sub}</span>
-                            </label>
-                        ))}
-                    </div>
-                </div>
-            )}
 
             {/* Price Range Section */}
             <div className="filter-section">

@@ -5,7 +5,7 @@ import { ArrowLeft, Info, Tag, AlertCircle, Percent } from 'lucide-react';
 import { auth } from '@/modules/shared/config/firebase';
 import { authFetch } from '@/modules/shared/utils/api';
 import { VARIANT_CONFIGS } from '@/modules/shared/config/productVariants';
-import { SELLER_CATEGORIES } from '@/modules/shared/config/categories';
+import { SELLER_CATEGORIES, getSubcategories } from '@/modules/shared/config/categories';
 
 // Extracted Components
 import ImageUploader from '../components/AddProduct/ImageUploader';
@@ -32,7 +32,7 @@ export default function AddProduct() {
 
     // Core state
     const [product, setProduct] = useState({
-        name: '', price: '', discountPrice: '', category: '', customCategory: '', stock: '', description: '', image: '', gstPercent: ''
+        name: '', price: '', discountPrice: '', category: '', subCategory: '', stock: '', description: '', image: '', gstPercent: ''
     });
 
     // Fee constants
@@ -182,7 +182,8 @@ export default function AddProduct() {
             title: product.name,
             price: parseFloat(product.price),
             discountPrice: product.discountPrice ? parseFloat(product.discountPrice) : null,
-            category: product.category === 'Other' ? `Other:${product.customCategory}` : product.category,
+            category: product.category,
+            subCategory: product.subCategory || null,
             stock: parseInt(product.stock),
             description: product.description,
             image: product.image,
@@ -284,7 +285,7 @@ export default function AddProduct() {
                                     <label style={sty.label}>Category</label>
                                     <select required style={sty.select} value={product.category}
                                         onChange={e => {
-                                            setProduct({ ...product, category: e.target.value });
+                                            setProduct({ ...product, category: e.target.value, subCategory: '' });
                                             setSelectedSizes([]); setSelectedColors([]); setVariants({});
                                             setSpecifications([]); setPricingType('same'); setSizePrices({});
                                         }}>
@@ -301,6 +302,19 @@ export default function AddProduct() {
                                         </div>
                                     )}
                                 </div>
+
+                                {product.category && getSubcategories(product.category).length > 0 && (
+                                    <div style={{ marginBottom: '1.5rem' }}>
+                                        <label style={sty.label}>Subcategory</label>
+                                        <select required style={sty.select} value={product.subCategory}
+                                            onChange={e => setProduct({ ...product, subCategory: e.target.value })}>
+                                            <option value="">Select Subcategory</option>
+                                            {getSubcategories(product.category).map(subCat => (
+                                                <option key={subCat} value={subCat}>{subCat}</option>
+                                            ))}
+                                        </select>
+                                    </div>
+                                )}
 
                                 {config && (
                                     <div style={{ marginBottom: '1.5rem', display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
@@ -421,6 +435,7 @@ export default function AddProduct() {
                                     <div style={{ fontSize: '0.85rem', color: '#475569', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
                                         {product.name && <div><strong>Title:</strong> {product.name}</div>}
                                         <div><strong>Category:</strong> {config?.icon} {product.category}</div>
+                                        {product.subCategory && <div><strong>Subcategory:</strong> {product.subCategory}</div>}
                                         {product.price && <div><strong>Base Price:</strong> ₹{Number(product.price).toLocaleString()}</div>}
                                         {product.stock && <div><strong>Stock:</strong> {product.stock} units</div>}
                                         {selectedSizes.length > 0 && <div><strong>Sizes:</strong> {selectedSizes.join(', ')}</div>}

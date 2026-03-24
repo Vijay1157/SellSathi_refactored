@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { CheckCircle2 } from 'lucide-react';
 import { INDIAN_STATES, CITY_DATA } from './onboardingConfig';
+import { SELLER_CATEGORIES } from '@/modules/shared/config/categories';
 
 export default function BusinessInfoStep({ sellerData, updateSellerData, nextStep, prevStep }) {
   const [customShopCategory, setCustomShopCategory] = useState(
@@ -69,27 +70,10 @@ export default function BusinessInfoStep({ sellerData, updateSellerData, nextSte
               className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#7B4DDB] focus:border-[#7B4DDB]"
             >
               <option value="">Select Category</option>
-              <option value="Fashion (Men)">Fashion (Men)</option>
-              <option value="Fashion (Women)">Fashion (Women)</option>
-              <option value="Kids & Baby">Kids & Baby</option>
-              <option value="Electronics">Electronics</option>
-              <option value="Home & Living">Home & Living</option>
-              <option value="Handicrafts">Handicrafts</option>
-              <option value="Artworks">Artworks</option>
-              <option value="Beauty & Personal Care">Beauty & Personal Care</option>
-              <option value="Sports & Fitness">Sports & Fitness</option>
-              <option value="Books & Stationery">Books & Stationery</option>
-              <option value="Food & Beverages">Food & Beverages</option>
-              <option value="Gifts & Customization">Gifts & Customization</option>
-              <option value="Jewelry & Accessories">Jewelry & Accessories</option>
-              <option value="Fabrics & Tailoring Materials">Fabrics & Tailoring Materials</option>
-              <option value="Local Sellers / Homepreneurs">Local Sellers / Homepreneurs</option>
-              <option value="Services">Services</option>
-              <option value="Pet Supplies">Pet Supplies</option>
-              <option value="Automotive & Accessories">Automotive & Accessories</option>
-              <option value="Travel & Utility">Travel & Utility</option>
-              <option value="Sustainability & Eco-Friendly">Sustainability & Eco-Friendly</option>
-              <option value="Other">Other</option>
+              {SELLER_CATEGORIES.filter(cat => cat !== 'Others').map(category => (
+                <option key={category} value={category}>{category}</option>
+              ))}
+              <option value="other">Other</option>
             </select>
             {(sellerData.shopCategory?.toLowerCase().startsWith('other:') || sellerData.shopCategory === 'Other') && (
               <input

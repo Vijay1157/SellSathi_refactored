@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom';
 import { ArrowLeft, CheckCircle2, Upload, Camera, Store, User, Phone, CreditCard, MapPin, Tag, Loader } from 'lucide-react';
 import { auth } from '@/modules/shared/config/firebase';
 import { authFetch } from '@/modules/shared/utils/api';
+import { SELLER_CATEGORIES } from '@/modules/shared/config/categories';
 
 export default function SellerRegistration() {
     const [step, setStep] = useState('upload');
@@ -374,10 +375,9 @@ export default function SellerRegistration() {
                                                 style={{ '--tw-ring-color': '#7B4DDB33' }}
                                             >
                                                 <option value="">Select Category</option>
-                                                <option value="electronics">Electronics</option>
-                                                <option value="fashion">Fashion</option>
-                                                <option value="home">Home & Kitchen</option>
-                                                <option value="beauty">Beauty & Health</option>
+                                                {SELLER_CATEGORIES.map(category => (
+                                                    <option key={category} value={category}>{category}</option>
+                                                ))}
                                             </select>
                                         </div>
                                     </div>
