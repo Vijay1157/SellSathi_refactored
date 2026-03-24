@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Loader } from 'lucide-react';
+import { SELLER_CATEGORIES } from '@/modules/shared/config/categories';
 
 export default function VerificationStep({ sellerData, updateSellerData, nextStep, prevStep, loading }) {
   const [customProductCategory, setCustomProductCategory] = useState(
@@ -136,14 +137,9 @@ export default function VerificationStep({ sellerData, updateSellerData, nextSte
               className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#7B4DDB] focus:border-[#7B4DDB]"
             >
               <option value="">Select Category</option>
-              <option value="electronics">Electronics</option>
-              <option value="fashion">Fashion</option>
-              <option value="home">Home & Kitchen</option>
-              <option value="beauty">Beauty & Health</option>
-              <option value="food">Food & Beverages</option>
-              <option value="books">Books & Media</option>
-              <option value="sports">Sports & Fitness</option>
-              <option value="toys">Toys & Games</option>
+              {SELLER_CATEGORIES.filter(cat => cat !== 'Others').map(category => (
+                <option key={category} value={category}>{category}</option>
+              ))}
               <option value="other">Other</option>
             </select>
             {(sellerData.productCategory?.startsWith('other:') || sellerData.productCategory === 'other') && (

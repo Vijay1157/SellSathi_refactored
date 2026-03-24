@@ -220,22 +220,41 @@
     padding: 0 3px;
 }
 
+/* Single Row - Horizontally Scrollable Categories */
 .sub-nav {
     display: flex;
-    justify-content: center;
+    justify-content: flex-start;
     align-items: center;
-    gap: 1.8rem;
+    gap: 1.2rem;
     width: 100%;
+    overflow-x: auto;
+    overflow-y: hidden;
+    scrollbar-width: thin;
+    scrollbar-color: #E5E7EB #F9FAFB;
+    scroll-behavior: smooth;
+    padding: 12px 0;
 }
 
-.sub-nav-primary {
-    padding: 10px 0 6px 0;
-    border-bottom: 1px solid #F3F4F6;
+.sub-nav::-webkit-scrollbar {
+    height: 6px;
 }
 
-.sub-nav-secondary {
-    padding: 6px 0 10px 0;
-    gap: 2.5rem;
+.sub-nav::-webkit-scrollbar-track {
+    background: #F9FAFB;
+    border-radius: 3px;
+}
+
+.sub-nav::-webkit-scrollbar-thumb {
+    background: #E5E7EB;
+    border-radius: 3px;
+}
+
+.sub-nav::-webkit-scrollbar-thumb:hover {
+    background: #D1D5DB;
+}
+
+.sub-nav-unified {
+    flex-wrap: nowrap;
 }
 
 .sub-nav-link {
@@ -249,13 +268,15 @@
     background: transparent;
     border: none;
     cursor: pointer;
-    padding: 6px 10px;
+    padding: 6px 12px;
     position: relative;
     white-space: nowrap;
     border-radius: 6px;
+    flex-shrink: 0;
 }
 
-.sub-nav-secondary .sub-nav-link {
+/* Special categories styling (Today's Deals, New Arrivals, Trending) */
+.sub-nav-link.special-category {
     font-size: 12px;
     padding: 5px 12px;
     background: #F9FAFB;
@@ -267,8 +288,8 @@
     background: #EFF6FF;
 }
 
-.sub-nav-secondary .sub-nav-link:hover,
-.sub-nav-secondary .sub-nav-link.active {
+.sub-nav-link.special-category:hover,
+.sub-nav-link.special-category.active {
     background: #DBEAFE;
     border-color: #93C5FD;
 }
@@ -276,16 +297,17 @@
 .sub-nav-link.active::after {
     content: '';
     position: absolute;
-    bottom: -6px;
+    bottom: -12px;
     left: 50%;
     transform: translateX(-50%);
-    width: 40%;
-    height: 2px;
-    background: #2563EB;
+    width: 60%;
+    height: 3px;
+    background: linear-gradient(90deg, transparent, #2563EB, transparent);
     border-radius: 2px;
+    box-shadow: 0 2px 8px rgba(37, 99, 235, 0.3);
 }
 
-.sub-nav-secondary .sub-nav-link.active::after {
+.sub-nav-link.special-category.active::after {
     display: none;
 }
 
@@ -300,41 +322,33 @@
 
 /* Responsive Category Navigation */
 @media (max-width: 1400px) {
-    .sub-nav { gap: 1.5rem; }
-    .sub-nav-secondary { gap: 2rem; }
-    .sub-nav-link { font-size: 12px; padding: 5px 8px; }
-    .sub-nav-secondary .sub-nav-link { font-size: 11px; padding: 4px 10px; }
+    .sub-nav { gap: 1rem; }
+    .sub-nav-link { font-size: 12px; padding: 5px 10px; }
+    .sub-nav-link.special-category { font-size: 11px; padding: 4px 10px; }
 }
 
 @media (max-width: 1200px) {
-    .sub-nav { gap: 1.2rem; }
-    .sub-nav-secondary { gap: 1.5rem; }
-    .sub-nav-link { font-size: 11.5px; padding: 4px 7px; }
-    .sub-nav-secondary .sub-nav-link { font-size: 10.5px; padding: 4px 8px; }
+    .sub-nav { gap: 0.9rem; }
+    .sub-nav-link { font-size: 11.5px; padding: 5px 9px; }
+    .sub-nav-link.special-category { font-size: 10.5px; padding: 4px 9px; }
 }
 
 @media (max-width: 1024px) {
-    .sub-nav { gap: 1rem; flex-wrap: wrap; }
-    .sub-nav-secondary { gap: 1.2rem; }
-    .sub-nav-link { font-size: 11px; padding: 4px 6px; }
-    .sub-nav-secondary .sub-nav-link { font-size: 10px; padding: 3px 7px; }
+    .sub-nav { gap: 0.8rem; }
+    .sub-nav-link { font-size: 11px; padding: 4px 8px; }
+    .sub-nav-link.special-category { font-size: 10px; padding: 3px 8px; }
 }
 
 @media (max-width: 768px) {
     .sub-nav {
-        gap: 0.8rem;
-        justify-content: flex-start;
-        overflow-x: auto;
-        flex-wrap: nowrap;
+        gap: 0.7rem;
+        padding: 10px 0;
         scrollbar-width: none;
         -ms-overflow-style: none;
-        padding: 8px 0;
     }
     .sub-nav::-webkit-scrollbar { display: none; }
-    .sub-nav-primary { padding: 8px 0 4px 0; }
-    .sub-nav-secondary { padding: 4px 0 8px 0; gap: 1rem; }
-    .sub-nav-link { font-size: 10px; padding: 4px 6px; flex-shrink: 0; }
-    .sub-nav-secondary .sub-nav-link { font-size: 9px; padding: 3px 6px; }
+    .sub-nav-link { font-size: 10px; padding: 4px 7px; }
+    .sub-nav-link.special-category { font-size: 9px; padding: 3px 7px; }
 }
 
 /* Mega Menu Content */

@@ -35,7 +35,9 @@ export default function NavbarMegaMenu({
     };
 
     const currentSubName = subList[activeSubCategory];
-    const currentItems = dynamicMegaData[activeMegaMenu]?.categories[activeSubCategory]?.items;
+    const currentItems = dynamicMegaData[activeMegaMenu]?.categories?.find(
+        c => c.name?.toLowerCase() === currentSubName?.toLowerCase()
+    )?.items;
 
     return (
         <div

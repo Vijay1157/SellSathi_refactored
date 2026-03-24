@@ -73,7 +73,11 @@ export default function ProductDetail() {
 
         if (product.variantImages && typeof product.variantImages === 'object') {
             Object.values(product.variantImages).forEach(img => {
-                if (img && typeof img === 'string') imageSet.add(img);
+                if (Array.isArray(img)) {
+                    img.forEach(url => { if (url && typeof url === 'string') imageSet.add(url); });
+                } else if (img && typeof img === 'string') {
+                    imageSet.add(img);
+                }
             });
         }
 
@@ -410,6 +414,14 @@ export default function ProductDetail() {
         if (!product) return;
         const inStock = product.stock !== 0 && product.status !== 'Out of Stock';
         if (!inStock) return;
+
+        let localUser = null;
+        try { localUser = JSON.parse(localStorage.getItem('user')); } catch (e) {}
+
+        if (localUser && (localUser.role === 'SELLER' || localUser.role === 'ADMIN')) {
+            alert("Sellers and Admins cannot purchase products. Please create a user account to buy.");
+            return;
+        }
 
         const selections = {
             color: selectedColor,
