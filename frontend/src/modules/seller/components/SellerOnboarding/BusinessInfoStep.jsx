@@ -56,10 +56,10 @@ export default function BusinessInfoStep({ sellerData, updateSellerData, nextSte
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">Shop Category *</label>
             <select
-              value={sellerData.shopCategory?.startsWith('other:') ? 'other' : sellerData.shopCategory}
+              value={sellerData.shopCategory?.toLowerCase().startsWith('other:') ? 'Other' : sellerData.shopCategory}
               onChange={(e) => {
                 const val = e.target.value;
-                if (val === 'other') {
+                if (val === 'Other') {
                   setCustomShopCategory('');
                   updateSellerData('shopCategory', 'other:');
                 } else {
@@ -75,7 +75,7 @@ export default function BusinessInfoStep({ sellerData, updateSellerData, nextSte
               ))}
               <option value="other">Other</option>
             </select>
-            {(sellerData.shopCategory?.startsWith('other:') || sellerData.shopCategory === 'other') && (
+            {(sellerData.shopCategory?.toLowerCase().startsWith('other:') || sellerData.shopCategory === 'Other') && (
               <input
                 type="text"
                 value={customShopCategory}

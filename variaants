@@ -1,0 +1,251 @@
+{
+    "categories": [
+        {
+            "name": "Fashion (Men)",
+            "variants": [
+                "size",
+                "color",
+                "fabric",
+                "fit",
+                "occasion",
+                "pattern",
+                "sleeve_type",
+                "price"
+            ]
+        },
+        {
+            "name": "Fashion (Women)",
+            "variants": [
+                "size",
+                "color",
+                "fabric",
+                "style",
+                "occasion",
+                "length",
+                "pattern",
+                "price"
+            ]
+        },
+        {
+            "name": "Kids & Baby",
+            "variants": [
+                "age_group",
+                "gender",
+                "size",
+                "material",
+                "brand",
+                "product_type",
+                "price"
+            ]
+        },
+        {
+            "name": "Electronics",
+            "variants": [
+                "brand",
+                "price",
+                "ram",
+                "storage",
+                "battery",
+                "screen_size",
+                "connectivity",
+                "warranty",
+                "condition"
+            ]
+        },
+        {
+            "name": "Home & Living",
+            "variants": [
+                "material",
+                "color",
+                "dimensions",
+                "weight",
+                "style",
+                "room_type",
+                "price"
+            ]
+        },
+        {
+            "name": "Handicrafts",
+            "variants": [
+                "material",
+                "handmade",
+                "region",
+                "artisan_type",
+                "customizable",
+                "price"
+            ]
+        },
+        {
+            "name": "Artworks",
+            "variants": [
+                "type",
+                "medium",
+                "size",
+                "frame_included",
+                "artist",
+                "customizable",
+                "price"
+            ]
+        },
+        {
+            "name": "Beauty & Personal Care",
+            "variants": [
+                "skin_type",
+                "hair_type",
+                "ingredients",
+                "gender",
+                "concern",
+                "brand",
+                "expiry_date",
+                "price"
+            ]
+        },
+        {
+            "name": "Sports & Fitness",
+            "variants": [
+                "type",
+                "weight",
+                "size",
+                "material",
+                "skill_level",
+                "indoor_outdoor",
+                "price"
+            ]
+        },
+        {
+            "name": "Books & Stationery",
+            "variants": [
+                "genre",
+                "author",
+                "language",
+                "binding",
+                "publication_year",
+                "pages",
+                "price"
+            ]
+        },
+        {
+            "name": "Food & Beverages",
+            "variants": [
+                "type",
+                "veg_nonveg",
+                "ingredients",
+                "shelf_life",
+                "fssai_certified",
+                "organic",
+                "weight",
+                "price"
+            ]
+        },
+        {
+            "name": "Gifts & Customization",
+            "variants": [
+                "occasion",
+                "personalization",
+                "material",
+                "packaging",
+                "delivery_time",
+                "price"
+            ]
+        },
+        {
+            "name": "Jewelry & Accessories",
+            "variants": [
+                "material",
+                "type",
+                "occasion",
+                "gender",
+                "weight",
+                "stone_type",
+                "price"
+            ]
+        },
+        {
+            "name": "Fabrics & Tailoring Materials",
+            "variants": [
+                "fabric_type",
+                "length",
+                "pattern",
+                "gsm",
+                "color",
+                "usage",
+                "price"
+            ]
+        },
+        {
+            "name": "Local Sellers / Homepreneurs",
+            "variants": [
+                "location",
+                "seller_type",
+                "handmade",
+                "custom_orders",
+                "delivery_radius",
+                "price"
+            ]
+        },
+        {
+            "name": "Services",
+            "variants": [
+                "service_type",
+                "location",
+                "experience_level",
+                "price_range",
+                "availability",
+                "customization"
+            ]
+        },
+        {
+            "name": "Pet Supplies",
+            "variants": [
+                "pet_type",
+                "breed_size",
+                "age",
+                "product_type",
+                "ingredients",
+                "price"
+            ]
+        },
+        {
+            "name": "Automotive & Accessories",
+            "variants": [
+                "vehicle_type",
+                "compatibility",
+                "brand",
+                "material",
+                "installation_type",
+                "price"
+            ]
+        },
+        {
+            "name": "Travel & Utility",
+            "variants": [
+                "capacity",
+                "material",
+                "weight",
+                "waterproof",
+                "usage",
+                "price"
+            ]
+        },
+        {
+            "name": "Sustainability & Eco-Friendly",
+            "variants": [
+                "material",
+                "eco_certification",
+                "reusable",
+                "biodegradable",
+                "category_type",
+                "price"
+            ]
+        }
+    ],
+    "common_variants": [
+        "price",
+        "brand",
+        "rating",
+        "availability",
+        "location",
+        "discount",
+        "delivery_time"
+    ]
+}
