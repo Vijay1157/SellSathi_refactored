@@ -43,6 +43,12 @@ router.delete('/rejected-sellers/all', sellerActionController.deleteAllRejectedS
 
 // Product management
 router.get('/products', productController.getAllProducts);
+router.get('/products/inactive', productController.getInactiveProducts);
+router.get('/products/out-of-stock', productController.getOutOfStockProducts);
+router.post('/products/notify-all-out-of-stock', productController.notifyAllSellersOutOfStock);
+router.post('/product/:id/notify-out-of-stock', productController.notifySellerOutOfStock);
+router.delete('/product/:id', productController.deleteProduct);
+router.delete('/products/inactive/all', productController.deleteAllInactiveProducts);
 
 // Order management
 router.get('/orders', orderController.getAllOrders);
