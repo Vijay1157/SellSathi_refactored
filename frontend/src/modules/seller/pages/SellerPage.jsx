@@ -20,18 +20,30 @@ export const SellerPage = () => {
   const [isLoginOpen, setIsLoginOpen] = useState(false);
   const navigate = useNavigate();
 
+  const [showNotRegisteredPopup, setShowNotRegisteredPopup] = useState(false);
+
   const handleNewSellerClick = (e) => {
+    e?.preventDefault();
     try {
-      const user = JSON.parse(localStorage.getItem('user'));
-      if (user && user.role === 'SELLER') {
-        e.preventDefault();
+      const userStr = localStorage.getItem('user');
+      if (!userStr || !JSON.parse(userStr)) {
+        setShowNotRegisteredPopup(true);
+        return;
+      }
+      const user = JSON.parse(userStr);
+      if (user.role === 'SELLER') {
         alert('You are already registered as a seller. Please login to access your dashboard.');
         return;
       }
-    } catch (err) { /* ignore */ }
-    
-    // Normal flow continues
-    navigate('/seller/register');
+      if (user.role === 'ADMIN') {
+        alert('Admins cannot register as sellers.');
+        return;
+      }
+      // If valid consumer role, proceed
+      navigate('/seller/register');
+    } catch (err) { 
+      setShowNotRegisteredPopup(true);
+    }
   };
 
   return (
@@ -193,6 +205,48 @@ export const SellerPage = () => {
 
       <Footer />
       <AuthModal isOpen={isLoginOpen} onClose={() => setIsLoginOpen(false)} hideRegister={true} sellerLogin={true} />
+
+      {/* Registration Restricted Popup for Guests */}
+      <AnimatePresence>
+        {showNotRegisteredPopup && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999 }}
+          >
+            <motion.div
+              initial={{ scale: 0.95 }}
+              animate={{ scale: 1 }}
+              exit={{ scale: 0.95 }}
+              style={{ backgroundColor: 'white', padding: '2.5rem', borderRadius: '1.25rem', maxWidth: '420px', width: '90%', textAlign: 'center', boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1)' }}
+            >
+              <h3 style={{ fontSize: '1.25rem', fontWeight: 'bold', marginBottom: '1rem', color: '#dc2626' }}>Login Required</h3>
+              <p style={{ marginBottom: '1rem', color: '#374151', fontSize: '1.05rem', lineHeight: '1.5' }}>
+                To become a new seller login first.
+              </p>
+              <a 
+                href="#/"
+                onClick={(e) => {
+                  setShowNotRegisteredPopup(false);
+                  setTimeout(() => window.dispatchEvent(new Event('openLoginModal')), 100);
+                }}
+                style={{ color: '#2563eb', textDecoration: 'underline', fontWeight: 600, fontSize: '1.1rem', display: 'inline-block', marginBottom: '1.5rem' }}
+              >
+                To login click here
+              </a>
+              <div>
+                <button 
+                  onClick={() => setShowNotRegisteredPopup(false)} 
+                  style={{ padding: '0.5rem 1.5rem', backgroundColor: '#f3f4f6', color: '#4b5563', borderRadius: '0.5rem', fontWeight: 600 }}
+                >
+                  Close
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };
