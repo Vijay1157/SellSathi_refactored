@@ -53,6 +53,10 @@ backend/src/invoices/
 *.temp
 CLEANUP_SUMMARY.md
 *.md
+category list
+variaants
+debug-gemini.log
+check-status.ps1
 
 # Test folder
 test/
