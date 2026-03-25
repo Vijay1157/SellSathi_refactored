@@ -280,7 +280,12 @@
 
     /* Category Groups */
     .category-group-wrapper { 
-        margin-bottom: var(--section-gap, 64px); 
+        margin-bottom: var(--section-gap, 64px);
+        padding: 24px;
+        background: #FFFFFF;
+        border-radius: 16px;
+        border: 2px solid #E5E7EB;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
     }
     .category-group-header { 
         display: flex; 
@@ -288,7 +293,7 @@
         align-items: center; 
         margin-bottom: var(--space-8, 32px); 
         padding-bottom: var(--space-4, 16px);
-        border-bottom: 1px solid var(--border-light);
+        border-bottom: 2px solid #E5E7EB;
     }
     .category-group-header h3 { 
         font-size: var(--text-2xl, 24px); 
@@ -317,12 +322,12 @@
     .container {
         max-width: var(--container-max, 1280px);
         margin: 0 auto;
-        padding: 0 12px;
+        padding: 0 3px;
     }
     
     @media (max-width: 768px) {
         .container {
-            padding: 0 8px;
+            padding: 0 3px;
         }
     }
     

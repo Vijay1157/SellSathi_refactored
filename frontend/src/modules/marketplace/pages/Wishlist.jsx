@@ -31,7 +31,8 @@ export default function Wishlist() {
     const handleAddToCart = async (product) => {
         const res = await addToCart(product);
         if (res.success) {
-            alert('✅ Product added to cart successfully!');
+            // Silently added - no popup
+            window.dispatchEvent(new Event('cartUpdate'));
         }
     };
 

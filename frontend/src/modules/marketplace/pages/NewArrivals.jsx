@@ -89,7 +89,8 @@ export default function NewArrivals() {
         if (e) e.stopPropagation();
         const res = await addToCart(p);
         if (res.success) {
-            alert('✅ Product added to cart successfully!');
+            // Silently added - no popup
+            window.dispatchEvent(new Event('cartUpdate'));
         }
     };
 

@@ -45,6 +45,10 @@ const getAdminConfig = async () => {
             websiteInfo: adminProfile.websiteInfo || 'Your Trusted E-Commerce Platform',
             profileImage: adminProfile.profileImage || null,
             platformChargeRate: adminProfile.platformChargeRate ?? 0.10,
+            // Default platform charges
+            defaultPlatformFeePercent: adminProfile.defaultPlatformFeePercent ?? 7,
+            defaultGstPercent: adminProfile.defaultGstPercent ?? 18,
+            defaultShippingHandlingPercent: adminProfile.defaultShippingHandlingPercent ?? 0,
             uid: adminUid
         };
 
@@ -70,6 +74,9 @@ const getDefaultConfig = () => {
         websiteName: 'SellSathi',
         websiteInfo: 'Your Trusted E-Commerce Platform',
         profileImage: null,
+        defaultPlatformFeePercent: 7,
+        defaultGstPercent: 18,
+        defaultShippingHandlingPercent: 0,
         uid: null
     };
 };

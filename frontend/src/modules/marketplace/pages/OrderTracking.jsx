@@ -373,11 +373,16 @@ export default function OrderTracking() {
                         </h3>
                         {order.shippingAddress ? (
                             <>
-                                <p style={{ fontWeight: '600', marginBottom: '0.5rem' }}>{order.shippingAddress.name || 'N/A'}</p>
+                                <p style={{ fontWeight: '600', marginBottom: '0.5rem' }}>
+                                    {order.shippingAddress.firstName && order.shippingAddress.lastName 
+                                        ? `${order.shippingAddress.firstName} ${order.shippingAddress.lastName}` 
+                                        : order.customerName || 'N/A'}
+                                </p>
                                 <p className="text-muted" style={{ fontSize: '0.9rem', lineHeight: '1.6', margin: 0 }}>
-                                    {order.shippingAddress.address || 'N/A'}<br />
+                                    {order.shippingAddress.addressLine || 'N/A'}<br />
                                     {order.shippingAddress.city || ''}, {order.shippingAddress.state || ''} {order.shippingAddress.pincode || ''}<br />
-                                    Phone: {order.shippingAddress.phone || 'N/A'}
+                                    {order.shippingAddress.country || 'India'}<br />
+                                    Phone: {order.shippingAddress.phone || order.phone || 'N/A'}
                                 </p>
                             </>
                         ) : (

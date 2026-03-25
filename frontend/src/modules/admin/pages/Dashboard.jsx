@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { ShieldCheck, Users, Box, Truck, AlertOctagon, Loader, Home, Mail, DollarSign, FileText } from 'lucide-react';
+import { ShieldCheck, Users, Box, Truck, AlertOctagon, Loader, Home, Mail, DollarSign, FileText, Settings } from 'lucide-react';
 import { authFetch } from '@/modules/shared/utils/api';
 import SellerAnalyticsModal from '@/modules/admin/components/SellerAnalyticsModal';
 import SellerInvoiceModal from '@/modules/admin/components/SellerInvoiceModal';
@@ -10,6 +10,7 @@ import OrdersTab from '@/modules/admin/components/OrdersTab';
 import ReviewsTab from '@/modules/admin/components/ReviewsTab';
 import PayoutsTab from '@/modules/admin/components/PayoutsTab';
 import InvoicesTab from '@/modules/admin/components/InvoicesTab';
+import PlatformSettingsTab from '@/modules/admin/components/PlatformSettingsTab';
 
 export default function AdminDashboard() {
     const [activeTab, setActiveTab] = useState('home');
@@ -263,6 +264,7 @@ export default function AdminDashboard() {
         { key: 'feedback', label: 'Customer Feedback', icon: <Mail size={20} /> },
         { key: 'payout', label: 'Payout', icon: <DollarSign size={20} /> },
         { key: 'invoice', label: 'Seller Invoice', icon: <FileText size={20} /> },
+        { key: 'settings', label: 'Platform Settings', icon: <Settings size={20} /> },
     ];
 
     return (
@@ -332,6 +334,7 @@ export default function AdminDashboard() {
                                     {activeTab === 'feedback' && <ReviewsTab reviews={reviews} fetchAllData={fetchAllData} />}
                                     {activeTab === 'payout' && <PayoutsTab analytics={analytics} setSelectedAnalyticsSeller={setSelectedAnalyticsSeller} fetchAllData={fetchAllData} />}
                                     {activeTab === 'invoice' && <InvoicesTab allSellers={allSellers} setSelectedInvoiceSeller={setSelectedInvoiceSeller} fetchAllData={fetchAllData} />}
+                                    {activeTab === 'settings' && <PlatformSettingsTab />}
                                 </div>
                             </div>
                         )}

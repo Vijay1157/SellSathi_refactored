@@ -9,9 +9,14 @@ const orderController = require('../controllers/orderManagementController');
 const reviewController = require('../controllers/reviewManagementController');
 const pdfController = require('../controllers/pdfController');
 const adminProfileController = require('../controllers/adminProfileController');
+const adminConfigController = require('../controllers/adminConfigController');
 const upload = require('../../../middleware/upload');
 const { verifyAuth, verifyAdmin } = require('../../../middleware/auth');
 
+// Public routes (no auth required)
+router.get('/config/public', adminConfigController.getPublicAdminConfig);
+
+// Protected routes
 router.use(verifyAuth);
 router.use(verifyAdmin);
 

@@ -1,110 +1,286 @@
 const PDFDocument = require('pdfkit');
 const fs = require('fs');
 const path = require('path');
+const QRCode = require('qrcode');
 
 const invoicesDir = path.join(__dirname, '..', 'invoices');
 if (!fs.existsSync(invoicesDir)) {
     fs.mkdirSync(invoicesDir);
 }
 
-exports.generateInvoice = (order) => {
-    return new Promise((resolve, reject) => {
+// Company Details - Sellsathi Private Limited
+const COMPANY_INFO = {
+    name: 'Sellsathi Private Limited',
+    addressLine1: 'No. 123, MG Road, Koramangala',
+    addressLine2: 'Bangalore, Karnataka',
+    addressLine3: 'India',
+    city: 'Bangalore',
+    pincode: '560034',
+    state: 'Karnataka',
+    country: 'IN-KA, IN',
+    gstin: '29AABCS1234M1ZX',
+    pan: 'AABCS1234M'
+};
+
+exports.generateInvoice = async (order) => {
+    return new Promise(async (resolve, reject) => {
         try {
-            const doc = new PDFDocument({ margin: 50 });
+            const doc = new PDFDocument({ margin: 30, size: 'A4' });
             const invoiceName = `Invoice-${order.orderId}.pdf`;
             const invoicePath = path.join(invoicesDir, invoiceName);
             const stream = fs.createWriteStream(invoicePath);
 
             doc.pipe(stream);
 
-            // Header Section
-            doc.fillColor('#000000')
-                .fontSize(25)
-                .font('Helvetica-Bold')
-                .text('INVOICE', 50, 50)
-                .fontSize(10)
-                .font('Helvetica')
-                .text('Sellsathi Marketplace', 200, 50, { align: 'right' })
-                .text('123 Commerce Lane', 200, 65, { align: 'right' })
-                .text('Bangalore, KA 560001', 200, 80, { align: 'right' })
-                .text('contact@sellsathi.com | +91 80 4567 8901', 200, 95, { align: 'right' });
+            // Helper function to get name from address
+            const getNameFromAddress = (addr) => {
+                if (!addr) return 'N/A';
+                return `${addr.firstName || ''} ${addr.lastName || ''}`.trim() || 'Customer';
+            };
 
-            doc.moveTo(50, 115).lineTo(550, 115).strokeColor('#eeeeee').stroke();
+            // Generate QR Code
+            let qrCodeDataUrl = null;
+            try {
+                const qrData = `Order: ${order.orderId}\nTotal: ₹${order.total}`;
+                qrCodeDataUrl = await QRCode.toDataURL(qrData, { width: 80, margin: 1 });
+            } catch (qrError) {
+                console.error('QR Code generation failed:', qrError);
+            }
 
-            // Info Section (Bill To / Ship To / Invoice Details)
-            const infoTop = 140;
+            // Title and QR Code
+            doc.fontSize(16).font('Helvetica-Bold').text('Bill of Supply', 50, 40, { align: 'center' });
+            
+            // Add QR Code if generated
+            if (qrCodeDataUrl) {
+                const qrBuffer = Buffer.from(qrCodeDataUrl.split(',')[1], 'base64');
+                doc.image(qrBuffer, 490, 35, { width: 70, height: 70 });
+            }
 
-            // Bill To
-            doc.fontSize(10).font('Helvetica-Bold').text('Bill To:', 50, infoTop);
-            doc.font('Helvetica').text(order.customerName || 'Valued Customer', 50, infoTop + 15);
-            doc.text(order.email || '', 50, infoTop + 30);
-            doc.text(order.address || 'Online Purchase', 50, infoTop + 45);
+            // Horizontal line
+            doc.moveTo(30, 120).lineTo(565, 120).strokeColor('#000000').lineWidth(1).stroke();
 
-            // Ship To (Mirroring for now, usually same unless specified)
-            doc.font('Helvetica-Bold').text('Ship To:', 225, infoTop);
-            doc.font('Helvetica').text(order.customerName || 'Valued Customer', 225, infoTop + 15);
-            doc.text(order.address || 'Online Purchase', 225, infoTop + 30);
+            // Bill of Supply Details Section (Left and Right columns)
+            let yPos = 135;
+            const leftCol = 30;
+            const rightCol = 320;
 
-            // Invoice Details
-            doc.font('Helvetica-Bold').text('Invoice Details:', 400, infoTop);
-            doc.font('Helvetica')
-                .text(`Invoice #: ${order.orderId}`, 400, infoTop + 15)
-                .text(`Date: ${new Date().toLocaleDateString()}`, 400, infoTop + 30)
-                .text('Terms: Paid via Online', 400, infoTop + 45);
+            doc.fontSize(9).font('Helvetica-Bold');
+            
+            // Left column
+            doc.text('Bill of Supply Details', leftCol, yPos);
+            yPos += 15;
+            doc.fontSize(8).font('Helvetica-Bold');
+            doc.text('Bill of Supply Number', leftCol, yPos);
+            doc.font('Helvetica').text(`: ${order.orderId || 'N/A'}`, leftCol + 110, yPos);
+            
+            yPos += 12;
+            doc.font('Helvetica-Bold').text('Bill of Supply Date', leftCol, yPos);
+            doc.font('Helvetica').text(`: ${new Date().toLocaleDateString('en-GB')}`, leftCol + 110, yPos);
+            
+            yPos += 12;
+            doc.font('Helvetica-Bold').text('Order Number', leftCol, yPos);
+            doc.font('Helvetica').text(`: ${order.orderId || 'N/A'}`, leftCol + 110, yPos);
+
+            // Right column
+            yPos = 150;
+            doc.fontSize(8).font('Helvetica-Bold');
+            doc.text('Nature of transaction', rightCol, yPos);
+            doc.font('Helvetica').text(': INTRA', rightCol + 110, yPos);
+            
+            yPos += 12;
+            doc.font('Helvetica-Bold').text('Nature Of Supply', rightCol, yPos);
+            doc.font('Helvetica').text(': Service', rightCol + 110, yPos);
+
+            // Horizontal line
+            yPos = 195;
+            doc.moveTo(30, yPos).lineTo(565, yPos).strokeColor('#000000').lineWidth(1).stroke();
+
+            // Billed From and Billed To Section
+            yPos += 10;
+            const col1 = 30;
+            const col2 = 310;
+
+            // Billed From (Company)
+            doc.fontSize(9).font('Helvetica-Bold').text('Billed From', col1, yPos);
+            yPos += 15;
+            doc.fontSize(8).font('Helvetica-Bold').text(COMPANY_INFO.name, col1, yPos);
+            yPos += 12;
+            doc.fontSize(7).font('Helvetica')
+                .text(COMPANY_INFO.addressLine1, col1, yPos, { width: 260 });
+            yPos += 10;
+            doc.text(COMPANY_INFO.addressLine2, col1, yPos, { width: 260 });
+            yPos += 10;
+            doc.text(COMPANY_INFO.addressLine3, col1, yPos, { width: 260 });
+            yPos += 10;
+            doc.text(`${COMPANY_INFO.city}, ${COMPANY_INFO.pincode}, ${COMPANY_INFO.state}, ${COMPANY_INFO.country}, IN- ${COMPANY_INFO.pincode}`, col1, yPos, { width: 260 });
+            yPos += 12;
+            doc.font('Helvetica-Bold').text(`GSTIN : ${COMPANY_INFO.gstin}`, col1, yPos);
+            yPos += 10;
+            doc.text(`PAN : ${COMPANY_INFO.pan}`, col1, yPos);
+
+            // Billed To (Customer - Billing Address)
+            yPos = 215;
+            const billingAddr = order.billingAddress || order.shippingAddress || {};
+            doc.fontSize(9).font('Helvetica-Bold').text('Billed To', col2, yPos);
+            yPos += 15;
+            doc.fontSize(8).font('Helvetica-Bold').text(getNameFromAddress(billingAddr), col2, yPos);
+            yPos += 12;
+            doc.fontSize(7).font('Helvetica')
+                .text(billingAddr.addressLine || 'N/A', col2, yPos, { width: 240 });
+            yPos += 10;
+            doc.text(`${billingAddr.city || 'N/A'}, ${billingAddr.state || 'N/A'} - ${billingAddr.pincode || 'N/A'}`, col2, yPos, { width: 240 });
+            yPos += 12;
+            doc.font('Helvetica-Bold').text(`State : ${billingAddr.state || 'Karnataka'}`, col2, yPos);
+            yPos += 10;
+            doc.text(`State Code : IN-KA`, col2, yPos);
+            yPos += 10;
+            doc.text(`Place of Supply : ${(billingAddr.state || 'KARNATAKA').toUpperCase()}`, col2, yPos);
+
+            // Shipped From and Shipped To Section
+            yPos = 330;
+            doc.moveTo(30, yPos).lineTo(565, yPos).strokeColor('#cccccc').lineWidth(0.5).stroke();
+            yPos += 10;
+
+            // Shipped From (Seller Address)
+            const sellerAddr = order.sellerAddress || {};
+            doc.fontSize(9).font('Helvetica-Bold').text('Shipped From', col1, yPos);
+            yPos += 15;
+            doc.fontSize(7).font('Helvetica')
+                .text(sellerAddr.addressLine || 'Survey No. 48, 486, 487, 488, 489, 490, 491, 492, 493, 494, 54,', col1, yPos, { width: 260 });
+            yPos += 10;
+            doc.text(sellerAddr.city ? `${sellerAddr.city}, ${sellerAddr.state || 'Karnataka'} - ${sellerAddr.pincode || '580011'}` : 'Kotur Dharwad Dist., Karnataka - 580011,', col1, yPos, { width: 260 });
+            yPos += 10;
+            doc.text(`${sellerAddr.state || 'KARNATAKA'}, IN-KA,`, col1, yPos);
+            yPos += 10;
+            doc.text(`India - ${sellerAddr.pincode || '580011'}`, col1, yPos);
+
+            // Shipped To (Customer - Shipping Address)
+            yPos = 345;
+            const shippingAddr = order.shippingAddress || billingAddr;
+            doc.fontSize(9).font('Helvetica-Bold').text('Shipped To', col2, yPos);
+            yPos += 15;
+            doc.fontSize(8).font('Helvetica-Bold').text(getNameFromAddress(shippingAddr), col2, yPos);
+            yPos += 12;
+            doc.fontSize(7).font('Helvetica')
+                .text(shippingAddr.addressLine || 'N/A', col2, yPos, { width: 240 });
+            yPos += 10;
+            doc.text(`${shippingAddr.city || 'N/A'}, ${shippingAddr.state || 'Karnataka'}, IN-KA,`, col2, yPos, { width: 240 });
+            yPos += 10;
+            doc.text(`India - ${shippingAddr.pincode || 'N/A'}`, col2, yPos);
+
+            // Items Table
+            yPos = 430;
+            doc.moveTo(30, yPos).lineTo(565, yPos).strokeColor('#000000').lineWidth(1).stroke();
+            yPos += 8;
 
             // Table Header
-            const tableTop = 230;
-            doc.rect(50, tableTop, 500, 25).fill('#f9f9f9');
-            doc.fillColor('#000000').font('Helvetica-Bold');
-            doc.text('Product / Service', 60, tableTop + 7)
-                .text('Qty', 300, tableTop + 7)
-                .text('Rate', 380, tableTop + 7)
-                .text('Amount', 480, tableTop + 7);
+            doc.fontSize(8).font('Helvetica-Bold');
+            doc.text('Particulars', 35, yPos);
+            doc.text('SAC', 180, yPos);
+            doc.text('Qty', 230, yPos);
+            doc.text('Gross', 270, yPos);
+            doc.text('Taxable', 320, yPos);
+            doc.text('SGST', 380, yPos);
+            doc.text('CGST', 430, yPos);
+            doc.text('Total', 490, yPos);
+            yPos += 10;
+            doc.text('Amount', 265, yPos);
+            doc.text('Value', 320, yPos);
 
-            // Table Body
-            let currentY = tableTop + 25;
+            yPos += 8;
+            doc.moveTo(30, yPos).lineTo(565, yPos).strokeColor('#000000').lineWidth(0.5).stroke();
+
+            // Table Rows
             const items = order.items || [];
-            doc.font('Helvetica');
+            let subtotal = 0;
+            let totalSGST = 0;
+            let totalCGST = 0;
 
             items.forEach((item, index) => {
-                const itemY = currentY + (index * 30);
+                yPos += 10;
+                const itemTotal = (item.price || 0) * (item.quantity || 1);
+                subtotal += itemTotal;
+                
+                // Calculate GST (if applicable)
+                const gstPercent = item.gstPercent || 0;
+                const sgst = (itemTotal * gstPercent) / 200; // Half of GST
+                const cgst = (itemTotal * gstPercent) / 200; // Half of GST
+                totalSGST += sgst;
+                totalCGST += cgst;
 
-                // Row background for alternance
-                if (index % 2 === 1) {
-                    doc.rect(50, itemY, 500, 30).fill('#fafafa');
+                doc.fontSize(7).font('Helvetica');
+                // Product name with GST breakdown
+                doc.text(item.name || item.title || 'Product', 35, yPos, { width: 140 });
+                yPos += 10;
+                doc.fontSize(6).text(`CGST ${(gstPercent/2).toFixed(1)} %`, 35, yPos);
+                yPos += 8;
+                doc.text(`SGST ${(gstPercent/2).toFixed(1)} %`, 35, yPos);
+                
+                yPos -= 18; // Reset for other columns
+                doc.fontSize(7);
+                doc.text('996511', 180, yPos);
+                doc.text((item.quantity || 1).toFixed(1), 230, yPos);
+                doc.text(`₹${itemTotal.toFixed(2)}`, 265, yPos);
+                doc.text(`₹${itemTotal.toFixed(2)}`, 320, yPos);
+                doc.text(`₹${sgst.toFixed(2)}`, 380, yPos);
+                doc.text(`₹${cgst.toFixed(2)}`, 430, yPos);
+                doc.text(`₹${(itemTotal + sgst + cgst).toFixed(2)}`, 485, yPos);
+
+                yPos += 25;
+                if (index < items.length - 1) {
+                    doc.moveTo(30, yPos).lineTo(565, yPos).strokeColor('#eeeeee').lineWidth(0.5).stroke();
                 }
-
-                doc.fillColor('#444444')
-                    .text(item.name || item.title || 'Product', 60, itemY + 10)
-                    .text(item.quantity || 1, 300, itemY + 10)
-                    .text(`₹${item.price?.toLocaleString()}`, 380, itemY + 10)
-                    .text(`₹${((item.price || 0) * (item.quantity || 1)).toLocaleString()}`, 480, itemY + 10);
-
-                doc.moveTo(50, itemY + 30).lineTo(550, itemY + 30).strokeColor('#f0f0f0').stroke();
             });
 
-            // Summary Section
-            const summaryTop = currentY + (items.length * 30) + 20;
-            const subtotal = order.total || 0;
+            // Total Row
+            yPos += 5;
+            doc.moveTo(30, yPos).lineTo(565, yPos).strokeColor('#000000').lineWidth(1).stroke();
+            yPos += 10;
+            
+            doc.fontSize(8).font('Helvetica-Bold');
+            doc.text('Total', 35, yPos);
+            doc.text(items.reduce((sum, item) => sum + (item.quantity || 1), 0).toFixed(1), 230, yPos);
+            doc.text(`₹${subtotal.toFixed(2)}`, 265, yPos);
+            doc.text(`₹${subtotal.toFixed(2)}`, 320, yPos);
+            doc.text(`₹${totalSGST.toFixed(2)}`, 380, yPos);
+            doc.text(`₹${totalCGST.toFixed(2)}`, 430, yPos);
+            doc.text(`₹${(subtotal + totalSGST + totalCGST).toFixed(2)}`, 485, yPos);
 
-            doc.fillColor('#000000').font('Helvetica-Bold');
-            doc.text('Subtotal:', 380, summaryTop);
-            doc.font('Helvetica').text(`₹${subtotal.toLocaleString()}`, 480, summaryTop);
+            yPos += 15;
+            doc.moveTo(30, yPos).lineTo(565, yPos).strokeColor('#000000').lineWidth(1).stroke();
 
-            doc.font('Helvetica-Bold').text('Tax (0%):', 380, summaryTop + 20);
-            doc.font('Helvetica').text('₹0', 480, summaryTop + 20);
+            // Details of Goods Transported Section
+            yPos += 15;
+            doc.fontSize(9).font('Helvetica-Bold').text('DETAILS OF GOODS TRANSPORTED BY GTA SUPPLIER', 30, yPos, { align: 'center', width: 535 });
+            
+            yPos += 20;
+            doc.moveTo(30, yPos).lineTo(565, yPos).strokeColor('#000000').lineWidth(0.5).stroke();
+            yPos += 8;
 
-            doc.font('Helvetica-Bold').text('Shipping:', 380, summaryTop + 40);
-            doc.font('Helvetica').text('₹0', 480, summaryTop + 40);
+            doc.fontSize(8).font('Helvetica-Bold');
+            doc.text('Description of', 35, yPos);
+            doc.text('Qty', 220, yPos);
+            doc.text('Gross Weight of', 280, yPos);
+            doc.text('Value of goods', 460, yPos);
+            yPos += 10;
+            doc.text('Goods', 35, yPos);
+            doc.text('Consignment', 280, yPos);
 
-            doc.rect(370, summaryTop + 65, 180, 40).fill('#2563eb');
-            doc.fillColor('#ffffff').fontSize(14).text('Total:', 380, summaryTop + 77);
-            doc.text(`₹${subtotal.toLocaleString()}`, 480, summaryTop + 77);
+            yPos += 8;
+            doc.moveTo(30, yPos).lineTo(565, yPos).strokeColor('#000000').lineWidth(0.5).stroke();
 
-            // Footer
-            doc.fillColor('#999999').fontSize(10).font('Helvetica')
-                .text('Customer Message: Thank you for your purchase! Please retain this invoice for your records.', 50, 700, { width: 300 })
-                .text('Questions? Contact us at support@sellsathi.com', 50, 730, { align: 'center', width: 500 });
+            // Goods description
+            items.forEach((item) => {
+                yPos += 10;
+                doc.fontSize(7).font('Helvetica');
+                doc.text(item.name || item.title || 'Product', 35, yPos, { width: 180 });
+                doc.text((item.quantity || 1).toFixed(1), 220, yPos);
+                doc.text('5000.0 grams', 280, yPos);
+                doc.text(((item.price || 0) * (item.quantity || 1)).toFixed(1), 460, yPos);
+                yPos += 15;
+            });
+
+            doc.moveTo(30, yPos).lineTo(565, yPos).strokeColor('#000000').lineWidth(0.5).stroke();
 
             doc.end();
 

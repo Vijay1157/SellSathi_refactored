@@ -172,7 +172,8 @@ export default function ProductListing() {
     const handleAddToCart = async (p) => {
         const res = await addToCart(p);
         if (res.success) {
-            alert('✅ Product added to cart successfully!');
+            // Silently added - no popup
+            window.dispatchEvent(new Event('cartUpdate'));
         }
     };
 

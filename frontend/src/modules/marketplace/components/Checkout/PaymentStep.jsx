@@ -6,40 +6,39 @@ export default function PaymentStep({
     step,
     paymentMethod,
     setPaymentMethod,
-    subtotal,
+    finalTotal,
     razorpayLoading,
     loading,
     handleContinue
 }) {
     return (
-        <section className={`bg-white rounded-[2.5rem] border border-gray-100 shadow-sm overflow-hidden transition-all ${step < 2 ? 'opacity-50 pointer-events-none grayscale' : ''}`}>
-            <div className="p-8 border-b border-gray-50">
-                <h3 className="text-xl font-bold text-gray-900 flex items-center gap-3">
-                    <div className="w-8 h-8 bg-primary rounded-xl flex items-center justify-center text-white text-xs font-black shadow-lg shadow-primary/20">2</div>
+        <section className={`bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden transition-all ${step < 2 ? 'opacity-50 pointer-events-none grayscale' : ''}`}>
+            <div className="p-4 border-b border-gray-50">
+                <h3 className="text-base font-bold text-gray-900 flex items-center gap-2">
+                    <div className="w-6 h-6 bg-primary rounded-lg flex items-center justify-center text-white text-xs font-bold">2</div>
                     Secure Payment Method
                 </h3>
             </div>
 
-            <div className="p-8 space-y-6">
+            <div className="p-4 space-y-3">
                 {/* Pay Online Option */}
                 <div
                     onClick={() => setPaymentMethod('razorpay')}
-                    className={`p-6 rounded-3xl border-2 transition-all cursor-pointer group relative overflow-hidden ${paymentMethod === 'razorpay' ? 'border-primary bg-primary/5 shadow-lg shadow-primary/10' : 'border-gray-100 bg-white hover:border-gray-200 hover:shadow-md'}`}
+                    className={`p-4 rounded-xl border-2 transition-all cursor-pointer ${paymentMethod === 'razorpay' ? 'border-primary bg-primary/5' : 'border-gray-100 hover:border-gray-200'}`}
                 >
-                    <div className="flex items-center gap-4 relative z-10">
-                        <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all ${paymentMethod === 'razorpay' ? 'border-primary bg-primary' : 'border-gray-300'}`}>
-                            {paymentMethod === 'razorpay' && <div className="w-2.5 h-2.5 bg-white rounded-full" />}
+                    <div className="flex items-center gap-3">
+                        <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${paymentMethod === 'razorpay' ? 'border-primary bg-primary' : 'border-gray-300'}`}>
+                            {paymentMethod === 'razorpay' && <div className="w-2 h-2 bg-white rounded-full" />}
                         </div>
-                        <div className={`w-12 h-12 rounded-2xl flex items-center justify-center transition-all ${paymentMethod === 'razorpay' ? 'bg-primary text-white' : 'bg-gray-50 text-gray-400 group-hover:text-primary'}`}>
-                            <CreditCard size={22} />
+                        <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${paymentMethod === 'razorpay' ? 'bg-primary text-white' : 'bg-gray-50 text-gray-400'}`}>
+                            <CreditCard size={18} />
                         </div>
                         <div className="flex-1">
-                            <h4 className="font-bold text-gray-900 text-lg">Pay Online</h4>
-                            <p className="text-xs text-gray-500 font-medium mt-0.5">Cards, UPI, Netbanking, Wallets via Razorpay</p>
+                            <h4 className="font-semibold text-gray-900 text-sm">Pay Online</h4>
+                            <p className="text-xs text-gray-500">Cards, UPI, Netbanking, Wallets</p>
                         </div>
                         {paymentMethod === 'razorpay' && (
-                            <div className="bg-green-50 text-green-600 px-3 py-1 rounded-full text-xs font-bold ring-1 ring-green-100">
-                                <Shield size={14} className="inline mr-1" />
+                            <div className="bg-green-50 text-green-600 px-2 py-0.5 rounded-full text-xs font-semibold">
                                 Secure
                             </div>
                         )}
@@ -51,24 +50,16 @@ export default function PaymentStep({
                                 initial={{ opacity: 0, height: 0 }}
                                 animate={{ opacity: 1, height: 'auto' }}
                                 exit={{ opacity: 0, height: 0 }}
-                                className="mt-6 pt-6 border-t border-gray-100 overflow-hidden"
+                                className="mt-3 pt-3 border-t border-gray-100"
                             >
-                                <div className="bg-gradient-to-br from-blue-50/50 to-purple-50/50 p-5 rounded-2xl mb-5 border border-blue-100/50">
-                                    <div className="flex items-start gap-3">
-                                        <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center text-blue-600 shadow-sm flex-shrink-0">
-                                            <Shield size={20} />
-                                        </div>
-                                        <div>
-                                            <p className="text-sm font-bold text-gray-900 mb-1">Secure Payment via Razorpay</p>
-                                            <p className="text-xs text-gray-600 leading-relaxed">
-                                                You'll be redirected to Razorpay to complete your payment. All major cards, UPI, netbanking & wallets are accepted.
-                                            </p>
-                                        </div>
-                                    </div>
+                                <div className="bg-blue-50/50 p-3 rounded-lg mb-3 border border-blue-100">
+                                    <p className="text-xs text-gray-600">
+                                        You'll be redirected to Razorpay for secure payment
+                                    </p>
                                 </div>
                                 <button
                                     type="button"
-                                    className="w-full py-5 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-2xl font-black shadow-xl shadow-indigo-500/20 hover:scale-[1.02] active:scale-95 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                                    className="w-full py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-xl font-semibold hover:opacity-90 transition-all disabled:opacity-50 text-sm flex items-center justify-center gap-2"
                                     onClick={(e) => {
                                         e.preventDefault();
                                         e.stopPropagation();
@@ -78,13 +69,13 @@ export default function PaymentStep({
                                 >
                                     {razorpayLoading ? (
                                         <>
-                                            <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                                            <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                                             Loading...
                                         </>
                                     ) : (
                                         <>
-                                            <Shield size={20} />
-                                            Pay ₹{subtotal.toLocaleString()} Securely
+                                            <Shield size={16} />
+                                            Pay ₹{finalTotal.toLocaleString()}
                                         </>
                                     )}
                                 </button>
@@ -96,18 +87,18 @@ export default function PaymentStep({
                 {/* Cash on Delivery Option */}
                 <div
                     onClick={() => setPaymentMethod('cod')}
-                    className={`p-6 rounded-3xl border-2 transition-all cursor-pointer group relative overflow-hidden ${paymentMethod === 'cod' ? 'border-primary bg-primary/5 shadow-lg shadow-primary/10' : 'border-gray-100 bg-white hover:border-gray-200 hover:shadow-md'}`}
+                    className={`p-4 rounded-xl border-2 transition-all cursor-pointer ${paymentMethod === 'cod' ? 'border-primary bg-primary/5' : 'border-gray-100 hover:border-gray-200'}`}
                 >
-                    <div className="flex items-center gap-4 relative z-10">
-                        <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all ${paymentMethod === 'cod' ? 'border-primary bg-primary' : 'border-gray-300'}`}>
-                            {paymentMethod === 'cod' && <div className="w-2.5 h-2.5 bg-white rounded-full" />}
+                    <div className="flex items-center gap-3">
+                        <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${paymentMethod === 'cod' ? 'border-primary bg-primary' : 'border-gray-300'}`}>
+                            {paymentMethod === 'cod' && <div className="w-2 h-2 bg-white rounded-full" />}
                         </div>
-                        <div className={`w-12 h-12 rounded-2xl flex items-center justify-center transition-all ${paymentMethod === 'cod' ? 'bg-primary text-white' : 'bg-gray-50 text-gray-400 group-hover:text-primary'}`}>
-                            <Banknote size={22} />
+                        <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${paymentMethod === 'cod' ? 'bg-primary text-white' : 'bg-gray-50 text-gray-400'}`}>
+                            <Banknote size={18} />
                         </div>
                         <div className="flex-1">
-                            <h4 className="font-bold text-gray-900 text-lg">Cash on Delivery</h4>
-                            <p className="text-xs text-gray-500 font-medium mt-0.5">Pay when you receive the order</p>
+                            <h4 className="font-semibold text-gray-900 text-sm">Cash on Delivery</h4>
+                            <p className="text-xs text-gray-500">Pay when you receive</p>
                         </div>
                     </div>
 
@@ -117,16 +108,16 @@ export default function PaymentStep({
                                 initial={{ opacity: 0, height: 0 }}
                                 animate={{ opacity: 1, height: 'auto' }}
                                 exit={{ opacity: 0, height: 0 }}
-                                className="mt-6 pt-6 border-t border-gray-100 overflow-hidden"
+                                className="mt-3 pt-3 border-t border-gray-100"
                             >
-                                <div className="bg-amber-50/50 p-5 rounded-2xl mb-5 border border-amber-100/50">
-                                    <p className="text-sm text-gray-700 leading-relaxed text-center font-medium">
-                                        Pay online for a safer and contactless delivery experience
+                                <div className="bg-amber-50/50 p-3 rounded-lg mb-3 border border-amber-100">
+                                    <p className="text-xs text-gray-600 text-center">
+                                        Pay online for safer delivery
                                     </p>
                                 </div>
                                 <button
                                     type="button"
-                                    className="w-full py-5 bg-primary text-white rounded-2xl font-black shadow-xl shadow-primary/20 hover:scale-[1.02] active:scale-95 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                                    className="w-full py-3 bg-primary text-white rounded-xl font-semibold hover:bg-primary/90 transition-all disabled:opacity-50 text-sm"
                                     onClick={(e) => {
                                         e.preventDefault();
                                         e.stopPropagation();
