@@ -7,6 +7,7 @@ import { db } from '@/modules/shared/config/firebase';
 import { addToCart } from '@/modules/shared/utils/cartUtils';
 import { listenToWishlist, addToWishlist, removeFromWishlist } from '@/modules/shared/utils/wishlistUtils';
 import { fetchProductReviews } from '@/modules/shared/utils/reviewUtils';
+import { fetchWithCache } from '@/modules/shared/utils/firestoreCache';
 import QuickViewModal from '@/modules/shared/components/common/QuickViewModal';
 import Rating from '@/modules/shared/components/common/Rating';
 import PriceDisplay from '@/modules/shared/components/common/PriceDisplay';
@@ -31,18 +32,25 @@ export default function NewArrivals() {
     useEffect(() => {
         const fetchNew = async () => {
             try {
-                // In a real app, we'd order by createdAt desc
-                const q = query(collection(db, "products"), limit(12));
-                const snap = await getDocs(q);
-                const data = snap.docs.map(doc => {
-                    const productData = doc.data();
-                    return {
-                        id: doc.id,
-                        ...productData,
-                        rating: productData.rating !== undefined ? productData.rating : 0,
-                        reviews: productData.reviewCount || 0
-                    };
-                });
+                // Use cache with 5 minute TTL to reduce Firestore reads
+                const data = await fetchWithCache(
+                    'new_arrivals_products',
+                    async () => {
+                        // In a real app, we'd order by createdAt desc
+                        const q = query(collection(db, "products"), limit(12));
+                        const snap = await getDocs(q);
+                        return snap.docs.map(doc => {
+                            const productData = doc.data();
+                            return {
+                                id: doc.id,
+                                ...productData,
+                                rating: productData.rating !== undefined ? productData.rating : 0,
+                                reviews: productData.reviewCount || 0
+                            };
+                        });
+                    },
+                    5 * 60 * 1000 // 5 minutes cache
+                );
                 setProducts(data);
                 setLoading(false);
                 fetchReviewsForProducts(data);

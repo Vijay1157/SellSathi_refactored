@@ -22,12 +22,20 @@ export default function Navbar() {
     const [cartCount, setCartCount] = useState(0);
     const [wishlistCount, setWishlistCount] = useState(0);
     const [dynamicMegaData, setDynamicMegaData] = useState({});
+    const [isHoverLocked, setIsHoverLocked] = useState(false);
 
     const navigate = useNavigate();
     const location = useLocation();
     const isSellerDashboard = location.pathname.startsWith('/seller/dashboard');
     const menuRef = useRef(null);
     const profileRef = useRef(null);
+
+    // Don't auto-collapse when navigating - let user control it
+    // useEffect(() => {
+    //     if (location.pathname !== '/') {
+    //         setShowAllSubcategories(false);
+    //     }
+    // }, [location.pathname]);
 
     const calculateAge = (dob) => {
         if (!dob) return null;
@@ -48,12 +56,12 @@ export default function Navbar() {
                 const products = await fetchWithCache(
                     'navbar_products',
                     async () => {
-                        // Limit to 50 products instead of 100 for faster loading
-                        const q = query(collection(db, "products"), limit(50));
+                        // Fetch more products to ensure we get all categories
+                        const q = query(collection(db, "products"), limit(100));
                         const snap = await getDocs(q);
                         return snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                     },
-                    15 * 60 * 1000 // 15 minutes cache (increased from 10)
+                    15 * 60 * 1000 // 15 minutes cache
                 );
 
                 // Only proceed if we have products from database
@@ -130,26 +138,62 @@ export default function Navbar() {
                         subGroups[sub].push(p);
                     });
 
+                    // Debug: Show what we found for Fashion categories
+                    if (cat === "Fashion (Men)" || cat === "Fashion (Women)") {
+                        console.log(`\n📊 ${cat} - Found ${catProducts.length} products`);
+                        console.log('Subcategories in DB:', Object.keys(subGroups));
+                        console.log('Expected subcategories:', SUBCATEGORIES[cat]);
+                        Object.keys(subGroups).forEach(sub => {
+                            console.log(`  ✓ ${sub}: ${subGroups[sub].length} products`);
+                        });
+                    }
+
                     // Create mega menu data only if products exist for this category
                     if (catProducts.length > 0) {
                         // Get the predefined subcategory list for this category
                         const predefinedSubs = SUBCATEGORIES[cat] || [];
+
+                        // Build categories array: First add predefined subcategories that have products
+                        const orderedCategories = [];
+                        const addedSubcategories = new Set();
                         
-                        // Build categories array in the order of predefined subcategories
-                        const orderedCategories = predefinedSubs.map(subName => ({
-                            id: subName.toLowerCase().replace(/\s+/g, '-'),
-                            name: subName,
-                            items: (subGroups[subName] || []).slice(0, 4) // Use matching subcategory or empty array
-                        }));
-                        
-                        // Add any additional subcategories not in the predefined list
+                        predefinedSubs.forEach(subName => {
+                            // Try exact match first
+                            let items = subGroups[subName] || [];
+                            
+                            // If no exact match, try case-insensitive match
+                            if (items.length === 0) {
+                                const matchingKey = Object.keys(subGroups).find(
+                                    key => key.toLowerCase() === subName.toLowerCase()
+                                );
+                                if (matchingKey) {
+                                    items = subGroups[matchingKey];
+                                    addedSubcategories.add(matchingKey.toLowerCase());
+                                }
+                            } else {
+                                addedSubcategories.add(subName.toLowerCase());
+                            }
+                            
+                            // Only add to ordered categories if there are products
+                            if (items.length > 0) {
+                                orderedCategories.push({
+                                    id: subName.toLowerCase().replace(/\s+/g, '-'),
+                                    name: subName,
+                                    items: items.slice(0, 4)
+                                });
+                            }
+                        });
+
+                        // Then add any database subcategories not in predefined list
                         Object.keys(subGroups).forEach(sub => {
-                            if (!predefinedSubs.includes(sub)) {
+                            // Check if already added (case-insensitive)
+                            if (!addedSubcategories.has(sub.toLowerCase()) && subGroups[sub].length > 0) {
                                 orderedCategories.push({
                                     id: sub.toLowerCase().replace(/\s+/g, '-'),
                                     name: sub,
                                     items: subGroups[sub].slice(0, 4)
                                 });
+                                addedSubcategories.add(sub.toLowerCase());
                             }
                         });
 
@@ -403,36 +447,116 @@ export default function Navbar() {
                         style={{ display: 'block' }}
                     >
                         <div className="container">
-                            {/* Single Row - All Categories (Horizontally Scrollable) */}
-                            <div className="sub-nav sub-nav-unified">
-                                {ALL_CATEGORIES.map(cat => {
-                                    let path = `/products?category=${cat}`;
-                                    if (cat === "Today's Deals") path = "/deals";
+                            {/* Row 1: First 11 categories + More button */}
+                            <div className="sub-nav sub-nav-row-1">
+                                {MAIN_CATEGORIES.slice(0, 11).map(cat => {
+                                    const path = `/products?category=${cat}`;
+                                    const isMega = !!SUBCATEGORIES[cat];
+
+                                    return (
+                                        <div key={cat} className="sub-nav-item">
+                                            <button
+                                                className={`sub-nav-link ${activeMegaMenu === cat ? 'active' : ''}`}
+                                                onMouseEnter={() => {
+                                                    // Only trigger hover if not locked
+                                                    if (isMega && !isHoverLocked) {
+                                                        setActiveMegaMenu(cat);
+                                                        setActiveSubCategory(0);
+                                                    }
+                                                }}
+                                                onClick={(e) => {
+                                                    e.preventDefault();
+                                                    if (isMega) {
+                                                        // Open megamenu and lock hover for 2 seconds
+                                                        setActiveMegaMenu(cat);
+                                                        setActiveSubCategory(0);
+                                                        setIsHoverLocked(true);
+                                                        
+                                                        // Unlock after 2 seconds
+                                                        setTimeout(() => {
+                                                            setIsHoverLocked(false);
+                                                        }, 2000);
+                                                    } else {
+                                                        // If no megamenu, navigate to category page
+                                                        navigate(path);
+                                                    }
+                                                }}
+                                            >
+                                                {cat}
+                                                {isMega && <ChevronDown size={12} />}
+                                            </button>
+                                        </div>
+                                    );
+                                })}
+                                <button
+                                    className="sub-nav-link more-categories-btn"
+                                    onClick={() => setShowAllSubcategories(!showAllSubcategories)}
+                                >
+                                    {showAllSubcategories ? 'Less Categories' : 'More Categories'}
+                                    <ChevronDown size={12} style={{ transform: showAllSubcategories ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s' }} />
+                                </button>
+                            </div>
+
+                            {/* Row 2: Remaining categories starting from Gifts & Customization (collapsible) */}
+                            {showAllSubcategories && (
+                                <div className="sub-nav sub-nav-row-2 animate-slide-down">
+                                    {MAIN_CATEGORIES.slice(11).map(cat => {
+                                        const path = `/products?category=${cat}`;
+                                        const isMega = !!SUBCATEGORIES[cat];
+
+                                        return (
+                                            <div key={cat} className="sub-nav-item">
+                                                <button
+                                                    className={`sub-nav-link ${activeMegaMenu === cat ? 'active' : ''}`}
+                                                    onMouseEnter={() => {
+                                                        // Only trigger hover if not locked
+                                                        if (isMega && !isHoverLocked) {
+                                                            setActiveMegaMenu(cat);
+                                                            setActiveSubCategory(0);
+                                                        }
+                                                    }}
+                                                    onClick={(e) => {
+                                                        e.preventDefault();
+                                                        if (isMega) {
+                                                            // Open megamenu and lock hover for 2 seconds
+                                                            setActiveMegaMenu(cat);
+                                                            setActiveSubCategory(0);
+                                                            setIsHoverLocked(true);
+                                                            
+                                                            // Unlock after 2 seconds
+                                                            setTimeout(() => {
+                                                                setIsHoverLocked(false);
+                                                            }, 2000);
+                                                        } else {
+                                                            // If no megamenu, navigate to category page
+                                                            navigate(path);
+                                                        }
+                                                    }}
+                                                >
+                                                    {cat}
+                                                    {isMega && <ChevronDown size={12} />}
+                                                </button>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            )}
+
+                            {/* Row 3: Special categories */}
+                            <div className="sub-nav sub-nav-row-3">
+                                {SPECIAL_CATEGORIES.map(cat => {
+                                    let path = "/deals";
                                     if (cat === "New Arrivals") path = "/new-arrivals";
                                     if (cat === "Trending") path = "/trending";
-
-                                    // Show mega menu if category has subcategories defined
-                                    const isMega = !!SUBCATEGORIES[cat];
-                                    const isSpecial = SPECIAL_CATEGORIES.includes(cat);
 
                                     return (
                                         <div key={cat} className="sub-nav-item">
                                             <Link
                                                 to={path}
-                                                className={`sub-nav-link ${isSpecial ? 'special-category' : ''} ${location.pathname.includes(cat) ? 'active' : ''}`}
-                                                onMouseEnter={() => {
-                                                    if (isMega) {
-                                                        setActiveMegaMenu(cat);
-                                                        setShowAllSubcategories(false);
-                                                        setActiveSubCategory(0);
-                                                    }
-                                                }}
-                                                onClick={() => {
-                                                    setActiveMegaMenu(null);
-                                                }}
+                                                className={`sub-nav-link special-category ${location.pathname === path ? 'active' : ''}`}
+                                                onClick={() => setActiveMegaMenu(null)}
                                             >
                                                 {cat}
-                                                {isMega && <ChevronDown size={12} />}
                                             </Link>
                                         </div>
                                     );

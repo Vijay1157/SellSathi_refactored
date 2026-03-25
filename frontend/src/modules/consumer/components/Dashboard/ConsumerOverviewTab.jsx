@@ -274,17 +274,41 @@ export default function ConsumerOverviewTab({
                     <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-5">
                         <h3 className="text-base font-semibold text-gray-900 mb-4">Quick Actions</h3>
                         <div className="space-y-2">
-                            <button onClick={() => navigate('/products')} className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-gray-50 transition-colors text-left">
-                                <RotateCcw size={18} className="text-blue-600" /><span className="text-sm font-medium text-gray-700">Buy Again</span>
+                            <button 
+                                onClick={() => navigate('/products')} 
+                                className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-blue-50 transition-colors text-left border border-transparent hover:border-blue-200"
+                            >
+                                <ShoppingBag size={18} className="text-blue-600" />
+                                <span className="text-sm font-medium text-gray-700">Buy Again</span>
                             </button>
-                            <button onClick={() => {
-                                if (selectedOrder?.status === 'Delivered') alert('Return request initiated. Our team will contact you soon.');
-                                else alert('Only delivered orders can be returned.');
-                            }} className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-gray-50 transition-colors text-left">
-                                <RotateCcw size={18} className="text-orange-600" /><span className="text-sm font-medium text-gray-700">Return Order</span>
+                            <button 
+                                onClick={() => {
+                                    if (!selectedOrder) {
+                                        alert('Please select an order first to initiate a return.');
+                                        return;
+                                    }
+                                    if (selectedOrder.status === 'Delivered') {
+                                        // Navigate to a return page or show return modal
+                                        alert('Return request initiated for Order #' + (selectedOrder.orderId || selectedOrder.id) + '. Our team will contact you within 24 hours.');
+                                    } else if (selectedOrder.status === 'Cancelled') {
+                                        alert('This order has already been cancelled.');
+                                    } else {
+                                        alert('Only delivered orders can be returned. This order is currently: ' + selectedOrder.status);
+                                    }
+                                }} 
+                                className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-orange-50 transition-colors text-left border border-transparent hover:border-orange-200"
+                                disabled={!selectedOrder}
+                                style={{ opacity: !selectedOrder ? 0.5 : 1, cursor: !selectedOrder ? 'not-allowed' : 'pointer' }}
+                            >
+                                <RotateCcw size={18} className="text-orange-600" />
+                                <span className="text-sm font-medium text-gray-700">Return Order</span>
                             </button>
-                            <button onClick={() => onSwitchTab('wishlist')} className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-gray-50 transition-colors text-left">
-                                <Bookmark size={18} className="text-red-600" /><span className="text-sm font-medium text-gray-700">Saved Items</span>
+                            <button 
+                                onClick={() => onSwitchTab('wishlist')} 
+                                className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-red-50 transition-colors text-left border border-transparent hover:border-red-200"
+                            >
+                                <Bookmark size={18} className="text-red-600" />
+                                <span className="text-sm font-medium text-gray-700">Saved Items</span>
                             </button>
                         </div>
                     </div>

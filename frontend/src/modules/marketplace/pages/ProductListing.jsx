@@ -122,17 +122,16 @@ export default function ProductListing() {
         }
 
         if (selectedCategory !== 'All') {
-            result = result.filter(p =>
-                p.category?.toLowerCase()?.trim() === selectedCategory.toLowerCase().trim()
+            result = result.filter(p => 
+                p.category === selectedCategory ||
+                p.category?.toLowerCase() === selectedCategory.toLowerCase()
             );
         }
 
         // selectedSubcategories is always synced from URL params, so use it as single source of truth
         if (selectedSubcategories.length > 0) {
             result = result.filter(p =>
-                selectedSubcategories.some(sub =>
-                    p.subCategory?.toLowerCase()?.trim() === sub.toLowerCase().trim()
-                )
+                selectedSubcategories.includes(p.subCategory)
             );
         }
 

@@ -63,26 +63,26 @@ export default function Home() {
                     }, {});
                 };
 
-                // Featured: Group by category, take 5 from each
-                const featuredGrouped = groupByCategory(allProducts.slice(0, 50));
+                // Featured: Take 5 products from each category
+                const featuredGrouped = groupByCategory(allProducts);
                 const featured = [];
-                Object.values(featuredGrouped).forEach(catProducts => {
-                    featured.push(...catProducts.slice(0, 5));
+                Object.keys(featuredGrouped).forEach(cat => {
+                    featured.push(...featuredGrouped[cat].slice(0, 5));
                 });
                 
-                // Latest: Group by category, take 5 from each (reversed)
-                const latestGrouped = groupByCategory(allProducts.slice().reverse().slice(0, 50));
+                // Latest: Take 5 products from each category (reversed for newest)
+                const latestGrouped = groupByCategory([...allProducts].reverse());
                 const latest = [];
-                Object.values(latestGrouped).forEach(catProducts => {
-                    latest.push(...catProducts.slice(0, 5));
+                Object.keys(latestGrouped).forEach(cat => {
+                    latest.push(...latestGrouped[cat].slice(0, 5));
                 });
                 
-                // Deals: Products with discount or oldPrice, group by category, take 5 from each
+                // Deals: Products with discount, take 5 from each category
                 const dealsFiltered = allProducts.filter(p => p.discount || p.oldPrice);
                 const dealsGrouped = groupByCategory(dealsFiltered);
                 const deals = [];
-                Object.values(dealsGrouped).forEach(catProducts => {
-                    deals.push(...catProducts.slice(0, 5));
+                Object.keys(dealsGrouped).forEach(cat => {
+                    deals.push(...dealsGrouped[cat].slice(0, 5));
                 });
 
                 setFeaturedProducts(featured);
