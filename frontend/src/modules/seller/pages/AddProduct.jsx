@@ -55,7 +55,7 @@ export default function AddProduct() {
 
     // Core state
     const [product, setProduct] = useState({
-        name: '', price: '', discountPrice: '', category: '', subCategory: '', stock: '', description: '', image: '', gstPercent: ''
+        name: '', price: '', discountPrice: '', category: '', subCategory: '', stock: '', description: '', image: '', images: [], gstPercent: ''
     });
 
     // Fee constants
@@ -215,6 +215,7 @@ export default function AddProduct() {
             stock: parseInt(product.stock),
             description: product.description,
             image: product.image,
+            images: product.images || [],
             platformFeePercent: PLATFORM_FEE_PERCENT,
             userFeePercent: USER_FEE_PERCENT,
         };

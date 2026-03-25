@@ -80,8 +80,7 @@ export default function AuthModal({ isOpen, onClose, onSuccess, hideRegister, se
             setError(
                 <span>
                     Only sellers are allowed to login here.<br />
-                    <button style={linkStyle} onClick={() => { handleClose(); navigate('/'); }}>To login as a user click here</button><br />
-                    <button style={linkStyle} onClick={() => { handleClose(); navigate('/admin/login'); }}>To login as an admin click here</button>
+                    <button style={linkStyle} onClick={() => { handleClose(); navigate('/'); }}>To login as a user click here</button>
                 </span>
             );
             await auth.signOut();
@@ -92,8 +91,7 @@ export default function AuthModal({ isOpen, onClose, onSuccess, hideRegister, se
             setError(
                 <span>
                     Only users are allowed to login here.<br />
-                    <button style={linkStyle} onClick={() => { handleClose(); navigate('/seller'); }}>To register/login as seller click here</button><br />
-                    <button style={linkStyle} onClick={() => { handleClose(); navigate('/admin/login'); }}>To login as an admin click here</button>
+                    <button style={linkStyle} onClick={() => { handleClose(); navigate('/seller'); }}>To login as seller click here</button>
                 </span>
             );
             await auth.signOut();
