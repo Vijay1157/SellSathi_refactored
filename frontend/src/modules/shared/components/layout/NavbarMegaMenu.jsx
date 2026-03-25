@@ -87,17 +87,41 @@ export default function NavbarMegaMenu({
                                         <div
                                             key={item.id}
                                             className="mega-item-card"
-                                            onClick={() => { navigate(`/product/${item.id}`); setActiveMegaMenu(null); }}
-                                        >
-                                            <div className="img-box">
-                                                <img src={item.images?.[0] || item.image || item.imageUrl} alt={item.name} />
+                                                onClick={() => { navigate(`/product/${item.id}`); setActiveMegaMenu(null); }}
+                                            >
+                                                <div className="img-box">
+                                                    <img src={item.images?.[0] || item.image || item.imageUrl} alt={item.name || item.title || 'Product'} />
+                                                </div>
+                                                <div className="item-info">
+                                                    <h5 style={{ 
+                                                        display: '-webkit-box', 
+                                                        visibility: 'visible', 
+                                                        opacity: 1,
+                                                        fontSize: '13px',
+                                                        fontWeight: 600,
+                                                        color: '#111827',
+                                                        lineHeight: '1.4',
+                                                        WebkitLineClamp: 2,
+                                                        WebkitBoxOrient: 'vertical',
+                                                        overflow: 'hidden',
+                                                        textOverflow: 'ellipsis',
+                                                        minHeight: '35px',
+                                                        margin: 0,
+                                                        padding: 0
+                                                    }}>{item.name || item.title || 'Product'}</h5>
+                                                    <p style={{ 
+                                                        display: 'block', 
+                                                        visibility: 'visible', 
+                                                        opacity: 1,
+                                                        fontSize: '15px',
+                                                        fontWeight: 700,
+                                                        color: '#2563EB',
+                                                        margin: 0,
+                                                        padding: 0
+                                                    }}>₹{item.price?.toLocaleString()}</p>
+                                                </div>
                                             </div>
-                                            <div className="item-info">
-                                                <h5>{item.name}</h5>
-                                                <p>₹{item.price?.toLocaleString()}</p>
-                                            </div>
-                                        </div>
-                                    ))}
+                                        ))}
                                 </div>
                             ) : (
                                 <div className="mega-empty-state">
