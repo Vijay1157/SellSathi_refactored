@@ -386,8 +386,8 @@ export default function AddProduct() {
                                     </div>
                                 </div>
 
-                                {/* GST, Platform, User Fee Row */}
-                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '1rem', marginTop: '1.5rem' }}>
+                                {/* GST, Platform Row */}
+                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginTop: '1.5rem' }}>
                                         <div>
                                             <label style={sty.label}>
                                                 <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
@@ -416,21 +416,6 @@ export default function AddProduct() {
                                             {PLATFORM_FEE_PERCENT}% <span style={{ fontSize: '0.75rem', color: '#94a3b8', fontWeight: 400 }}>(fixed)</span>
                                         </div>
                                         <p style={{ fontSize: '0.72rem', color: '#94a3b8', marginTop: '0.25rem' }}>SellSathi platform charges</p>
-                                    </div>
-                                    <div>
-                                        <label style={sty.label}>
-                                            <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                                                User Fee
-                                            </span>
-                                        </label>
-                                        <div style={{
-                                            padding: '0.7rem 1rem', border: '1.5px solid #e2e8f0',
-                                            borderRadius: '10px', background: '#f8fafc', color: '#475569',
-                                            fontWeight: 600, fontSize: '0.9rem'
-                                        }}>
-                                            {USER_FEE_PERCENT}% <span style={{ fontSize: '0.75rem', color: '#94a3b8', fontWeight: 400 }}>(fixed)</span>
-                                        </div>
-                                        <p style={{ fontSize: '0.72rem', color: '#94a3b8', marginTop: '0.25rem' }}>Transaction processing fee</p>
                                     </div>
                                 </div>
                             </div>
@@ -484,7 +469,6 @@ export default function AddProduct() {
                                             <div><strong>Specs:</strong> {specifications.filter(s => s.value).length} defined</div>
                                         )}
                                         <div><strong>Platform Fee:</strong> {PLATFORM_FEE_PERCENT}%</div>
-                                        <div><strong>User Fee:</strong> {USER_FEE_PERCENT}%</div>
                                         {sellerHasGST && product.gstPercent && (
                                             <div><strong>GST:</strong> {product.gstPercent}%</div>
                                         )}
