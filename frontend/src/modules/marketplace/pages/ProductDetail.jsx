@@ -409,7 +409,7 @@ export default function ProductDetail() {
         const productWithNumPrice = { ...product, price: Number(product.price) };
         const res = await addToCart(productWithNumPrice, selections);
         if (res.success) {
-            alert('✅ Product added to cart successfully!');
+            // Silently added - no popup
             window.dispatchEvent(new Event('cartUpdate'));
         } else if (!res.triggerLogin) {
             alert('❌ Failed to add product to cart: ' + (res.message || 'Please try again.'));

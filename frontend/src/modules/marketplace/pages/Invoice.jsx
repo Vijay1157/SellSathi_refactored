@@ -141,111 +141,231 @@ export default function Invoice() {
                 background: 'white',
                 width: '100%',
                 maxWidth: '850px',
-                padding: '3rem',
-                borderRadius: '8px',
-                boxShadow: '0 20px 50px rgba(0,0,0,0.05)',
-                color: '#1a1a1a',
+                padding: '2rem',
+                borderRadius: '4px',
+                boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+                border: '1px solid #e5e7eb',
+                color: '#000',
                 position: 'relative',
-                fontFamily: "'Inter', sans-serif"
+                fontFamily: "'Arial', 'Helvetica', sans-serif",
+                fontSize: '12px',
+                lineHeight: '1.5'
             }}>
                 {/* Header */}
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '2.5rem' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1.5rem', paddingBottom: '1rem', borderBottom: '2px solid #000' }}>
                     <div>
-                        <h1 style={{ fontSize: '3rem', fontWeight: '800', margin: 0, letterSpacing: '-2px', color: '#000' }}>INVOICE</h1>
-                        <p style={{ color: '#666', fontSize: '1.1rem', marginTop: '0.5rem' }}>#{order.orderId || order.id}</p>
+                        <h1 style={{ fontSize: '2rem', fontWeight: '700', margin: 0, letterSpacing: '0', color: '#000', textTransform: 'uppercase' }}>Bill of Supply</h1>
+                        <p style={{ color: '#000', fontSize: '1rem', marginTop: '0.25rem', fontWeight: '600' }}>#{order.orderId || order.id}</p>
                     </div>
-                    {/* Logo */}
+                    {/* QR Code Placeholder */}
                     <div style={{
-                        width: '45px',
-                        height: '45px',
-                        background: 'linear-gradient(135deg, #6366f1 0%, #a855f7 100%)',
-                        borderRadius: '12px',
+                        width: '70px',
+                        height: '70px',
+                        background: '#f9fafb',
+                        borderRadius: '4px',
                         display: 'flex',
                         alignItems: 'center',
-                        justifyContent: 'center'
+                        justifyContent: 'center',
+                        border: '1px solid #000',
+                        fontSize: '10px',
+                        color: '#000',
+                        textAlign: 'center',
+                        fontWeight: '700'
                     }}>
-                        <div style={{ width: '20px', height: '20px', border: '3px solid white', borderRadius: '4px' }}></div>
+                        QR<br/>CODE
                     </div>
                 </div>
 
-                {/* Info Grid */}
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem', marginBottom: '2rem', paddingBottom: '2rem', borderBottom: '1px solid #eee' }}>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+                {/* Bill of Supply Details and Info Grid */}
+                <div style={{ marginBottom: '1.5rem', paddingBottom: '1rem', borderBottom: '1px solid #000' }}>
+                    {/* Bill of Supply Details */}
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem', marginBottom: '1rem', fontSize: '11px' }}>
                         <div>
-                            <label style={{ color: '#999', fontSize: '0.85rem', fontWeight: '700', textTransform: 'uppercase', display: 'block', marginBottom: '0.5rem' }}>Date</label>
-                            <p style={{ fontWeight: '600', fontSize: '1.1rem' }}>{formatDate(order.createdAt)}</p>
+                            <h3 style={{ fontSize: '11px', fontWeight: '700', color: '#000', textTransform: 'uppercase', marginBottom: '0.5rem', letterSpacing: '0.5px' }}>Bill of Supply Details</h3>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.3rem' }}>
+                                <div><span style={{ fontWeight: '700', color: '#000' }}>Bill of Supply Number:</span> <span style={{ color: '#000' }}>{order.orderId || order.id}</span></div>
+                                <div><span style={{ fontWeight: '700', color: '#000' }}>Bill of Supply Date:</span> <span style={{ color: '#000' }}>{formatDate(order.createdAt)}</span></div>
+                                <div><span style={{ fontWeight: '700', color: '#000' }}>Order Number:</span> <span style={{ color: '#000' }}>{order.orderId || order.id}</span></div>
+                            </div>
                         </div>
                         <div>
-                            <label style={{ color: '#999', fontSize: '0.85rem', fontWeight: '700', textTransform: 'uppercase', display: 'block', marginBottom: '0.5rem' }}>Status</label>
-                            <span style={{
-                                background: order.paymentMethod === 'COD' ? '#f59e0b' : '#10b981',
-                                color: 'white',
-                                padding: '4px 12px',
-                                borderRadius: '20px',
-                                fontSize: '0.8rem',
-                                fontWeight: 'bold'
-                            }}>{order.paymentMethod === 'COD' ? 'COD' : 'PAID'}</span>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.3rem', marginTop: '1.5rem' }}>
+                                <div><span style={{ fontWeight: '700', color: '#000' }}>Nature of transaction:</span> <span style={{ color: '#000' }}>INTRA</span></div>
+                                <div><span style={{ fontWeight: '700', color: '#000' }}>Nature Of Supply:</span> <span style={{ color: '#000' }}>Service</span></div>
+                            </div>
                         </div>
                     </div>
-                    <div>
-                        <label style={{ color: '#999', fontSize: '0.85rem', fontWeight: '700', textTransform: 'uppercase', display: 'block', marginBottom: '0.5rem' }}>Billed From</label>
-                        <p style={{ fontWeight: '700', fontSize: '1.2rem', marginBottom: '0.4rem' }}>SELLSATHI Marketplace</p>
-                        <p style={{ color: '#555', lineHeight: '1.6', fontSize: '0.95rem' }}>
-                            Business address<br />
-                            Bangalore, Karnataka, IN — 560001<br />
-                            TAX ID: GSTIN29AAACB1234F1Z5
-                        </p>
+
+                    {/* Billed From and Billed To */}
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem', marginTop: '1rem', fontSize: '11px' }}>
+                        <div>
+                            <label style={{ color: '#000', fontSize: '11px', fontWeight: '700', textTransform: 'uppercase', display: 'block', marginBottom: '0.4rem', letterSpacing: '0.5px' }}>Billed From</label>
+                            <p style={{ fontWeight: '700', fontSize: '12px', marginBottom: '0.2rem', color: '#000' }}>Sellsathi Private Limited</p>
+                            <p style={{ color: '#000', lineHeight: '1.6', margin: 0 }}>
+                                No. 123, MG Road, Koramangala<br />
+                                Bangalore, Karnataka, India<br />
+                                Bangalore, 560034, Karnataka, IN-KA, IN- 560034<br />
+                                <span style={{ fontWeight: '700', color: '#000' }}>GSTIN:</span> 29AABCS1234M1ZX<br />
+                                <span style={{ fontWeight: '700', color: '#000' }}>PAN:</span> AABCS1234M
+                            </p>
+                        </div>
+                        <div>
+                            <label style={{ color: '#000', fontSize: '11px', fontWeight: '700', textTransform: 'uppercase', display: 'block', marginBottom: '0.4rem', letterSpacing: '0.5px' }}>Billed To</label>
+                            <p style={{ fontWeight: '700', fontSize: '12px', marginBottom: '0.2rem', color: '#000' }}>
+                                {order.billingAddress ? `${order.billingAddress.firstName || ''} ${order.billingAddress.lastName || ''}`.trim() : order.customerName || 'Customer'}
+                            </p>
+                            <p style={{ color: '#000', lineHeight: '1.6', margin: 0 }}>
+                                {order.billingAddress?.addressLine || order.shippingAddress?.addressLine || order.address?.addressLine || 'N/A'}<br />
+                                {order.billingAddress?.city || order.shippingAddress?.city || order.address?.city || 'N/A'}, {order.billingAddress?.state || order.shippingAddress?.state || order.address?.state || 'Karnataka'} - {order.billingAddress?.pincode || order.shippingAddress?.pincode || order.address?.pincode || 'N/A'}<br />
+                                <span style={{ fontWeight: '700', color: '#000' }}>State:</span> {order.billingAddress?.state || order.shippingAddress?.state || order.address?.state || 'Karnataka'}<br />
+                                <span style={{ fontWeight: '700', color: '#000' }}>State Code:</span> IN-KA<br />
+                                <span style={{ fontWeight: '700', color: '#000' }}>Place of Supply:</span> {(order.billingAddress?.state || order.shippingAddress?.state || order.address?.state || 'KARNATAKA').toUpperCase()}
+                            </p>
+                        </div>
+                    </div>
+
+                    {/* Shipped From and Shipped To */}
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem', marginTop: '1rem', paddingTop: '1rem', borderTop: '1px solid #000', fontSize: '11px' }}>
+                        <div>
+                            <label style={{ color: '#000', fontSize: '11px', fontWeight: '700', textTransform: 'uppercase', display: 'block', marginBottom: '0.4rem', letterSpacing: '0.5px' }}>Shipped From</label>
+                            <p style={{ color: '#000', lineHeight: '1.6', margin: 0 }}>
+                                {order.sellerAddress?.addressLine || 'Survey No. 48, 486, 487, 488, 489, 490, 491, 492, 493, 494, 54,'}<br />
+                                {order.sellerAddress?.city ? `${order.sellerAddress.city}, ${order.sellerAddress.state || 'Karnataka'} - ${order.sellerAddress.pincode || '580011'}` : 'Kotur Dharwad Dist., Karnataka - 580011,'}<br />
+                                {order.sellerAddress?.state || 'KARNATAKA'}, IN-KA,<br />
+                                India - {order.sellerAddress?.pincode || '580011'}
+                            </p>
+                        </div>
+                        <div>
+                            <label style={{ color: '#000', fontSize: '11px', fontWeight: '700', textTransform: 'uppercase', display: 'block', marginBottom: '0.4rem', letterSpacing: '0.5px' }}>Shipped To</label>
+                            <p style={{ fontWeight: '700', fontSize: '12px', marginBottom: '0.2rem', color: '#000' }}>
+                                {order.shippingAddress ? `${order.shippingAddress.firstName || ''} ${order.shippingAddress.lastName || ''}`.trim() : order.customerName || 'Customer'}
+                            </p>
+                            <p style={{ color: '#000', lineHeight: '1.6', margin: 0 }}>
+                                {order.shippingAddress?.addressLine || order.address?.addressLine || 'N/A'}<br />
+                                {order.shippingAddress?.city || order.address?.city || 'N/A'}, {order.shippingAddress?.state || order.address?.state || 'Karnataka'}, IN-KA,<br />
+                                India - {order.shippingAddress?.pincode || order.address?.pincode || 'N/A'}
+                            </p>
+                        </div>
                     </div>
                 </div>
 
-                {/* Table */}
-                <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: '2rem' }}>
+                {/* Table - GST Breakdown */}
+                <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: '1.5rem', fontSize: '10px', border: '1px solid #000' }}>
                     <thead>
-                        <tr style={{ borderBottom: '1px solid #eee' }}>
-                            <th style={{ textAlign: 'left', padding: '1rem 0', color: '#666', fontWeight: '500', fontSize: '0.9rem' }}>Item</th>
-                            <th style={{ textAlign: 'center', padding: '1rem 0', color: '#666', fontWeight: '500', fontSize: '0.9rem' }}>Qty</th>
-                            <th style={{ textAlign: 'right', padding: '1rem 0', color: '#666', fontWeight: '500', fontSize: '0.9rem' }}>Price</th>
-                            <th style={{ textAlign: 'right', padding: '1rem 0', color: '#666', fontWeight: '500', fontSize: '0.9rem' }}>Line total</th>
+                        <tr style={{ borderBottom: '1px solid #000', background: '#f9fafb' }}>
+                            <th style={{ textAlign: 'left', padding: '0.5rem', color: '#000', fontWeight: '700', fontSize: '10px', border: '1px solid #000' }}>Particulars</th>
+                            <th style={{ textAlign: 'center', padding: '0.5rem', color: '#000', fontWeight: '700', fontSize: '10px', border: '1px solid #000' }}>SAC</th>
+                            <th style={{ textAlign: 'center', padding: '0.5rem', color: '#000', fontWeight: '700', fontSize: '10px', border: '1px solid #000' }}>Qty</th>
+                            <th style={{ textAlign: 'right', padding: '0.5rem', color: '#000', fontWeight: '700', fontSize: '10px', border: '1px solid #000' }}>Gross<br/>Amount</th>
+                            <th style={{ textAlign: 'right', padding: '0.5rem', color: '#000', fontWeight: '700', fontSize: '10px', border: '1px solid #000' }}>Taxable<br/>Value</th>
+                            <th style={{ textAlign: 'right', padding: '0.5rem', color: '#000', fontWeight: '700', fontSize: '10px', border: '1px solid #000' }}>SGST</th>
+                            <th style={{ textAlign: 'right', padding: '0.5rem', color: '#000', fontWeight: '700', fontSize: '10px', border: '1px solid #000' }}>CGST</th>
+                            <th style={{ textAlign: 'right', padding: '0.5rem', color: '#000', fontWeight: '700', fontSize: '10px', border: '1px solid #000' }}>Total</th>
                         </tr>
                     </thead>
                     <tbody>
-                        {order.items && order.items.map((item, index) => (
-                            <tr key={index} style={{ borderBottom: '1px solid #f9f9f9' }}>
-                                <td style={{ padding: '1rem 0', fontWeight: '500' }}>{item.name || item.title || 'Product'}</td>
-                                <td style={{ textAlign: 'center', padding: '1rem 0' }}>{item.quantity || 1}</td>
-                                <td style={{ textAlign: 'right', padding: '1rem 0' }}>₹{(item.price || 0).toLocaleString()}</td>
-                                <td style={{ textAlign: 'right', padding: '1rem 0', fontWeight: '600' }}>₹{((item.price || 0) * (item.quantity || 1)).toLocaleString()}</td>
-                            </tr>
-                        ))}
+                        {order.items && order.items.map((item, index) => {
+                            const itemTotal = (item.price || 0) * (item.quantity || 1);
+                            const gstPercent = item.gstPercent || 0;
+                            const sgst = (itemTotal * gstPercent) / 200;
+                            const cgst = (itemTotal * gstPercent) / 200;
+                            const totalWithGst = itemTotal + sgst + cgst;
+                            
+                            return (
+                                <tr key={index} style={{ borderBottom: '1px solid #000' }}>
+                                    <td style={{ padding: '0.5rem', fontWeight: '500', color: '#000', border: '1px solid #000' }}>
+                                        {item.name || item.title || 'Product'}
+                                        <div style={{ fontSize: '9px', color: '#000', marginTop: '0.15rem' }}>
+                                            CGST {(gstPercent/2).toFixed(1)}%<br/>
+                                            SGST {(gstPercent/2).toFixed(1)}%
+                                        </div>
+                                    </td>
+                                    <td style={{ textAlign: 'center', padding: '0.5rem', color: '#000', border: '1px solid #000' }}>996511</td>
+                                    <td style={{ textAlign: 'center', padding: '0.5rem', color: '#000', border: '1px solid #000' }}>{(item.quantity || 1).toFixed(1)}</td>
+                                    <td style={{ textAlign: 'right', padding: '0.5rem', color: '#000', border: '1px solid #000' }}>₹{itemTotal.toFixed(2)}</td>
+                                    <td style={{ textAlign: 'right', padding: '0.5rem', color: '#000', border: '1px solid #000' }}>₹{itemTotal.toFixed(2)}</td>
+                                    <td style={{ textAlign: 'right', padding: '0.5rem', color: '#000', border: '1px solid #000' }}>₹{sgst.toFixed(2)}</td>
+                                    <td style={{ textAlign: 'right', padding: '0.5rem', color: '#000', border: '1px solid #000' }}>₹{cgst.toFixed(2)}</td>
+                                    <td style={{ textAlign: 'right', padding: '0.5rem', fontWeight: '600', color: '#000', border: '1px solid #000' }}>₹{totalWithGst.toFixed(2)}</td>
+                                </tr>
+                            );
+                        })}
+                        <tr style={{ borderTop: '2px solid #000', background: '#f9fafb' }}>
+                            <td style={{ padding: '0.5rem', fontWeight: '700', color: '#000', border: '1px solid #000' }}>Total</td>
+                            <td style={{ textAlign: 'center', padding: '0.5rem', color: '#000', border: '1px solid #000' }}>-</td>
+                            <td style={{ textAlign: 'center', padding: '0.5rem', fontWeight: '700', color: '#000', border: '1px solid #000' }}>
+                                {order.items?.reduce((sum, item) => sum + (item.quantity || 1), 0).toFixed(1)}
+                            </td>
+                            <td style={{ textAlign: 'right', padding: '0.5rem', fontWeight: '700', color: '#000', border: '1px solid #000' }}>
+                                ₹{order.items?.reduce((sum, item) => sum + ((item.price || 0) * (item.quantity || 1)), 0).toFixed(2)}
+                            </td>
+                            <td style={{ textAlign: 'right', padding: '0.5rem', fontWeight: '700', color: '#000', border: '1px solid #000' }}>
+                                ₹{order.items?.reduce((sum, item) => sum + ((item.price || 0) * (item.quantity || 1)), 0).toFixed(2)}
+                            </td>
+                            <td style={{ textAlign: 'right', padding: '0.5rem', fontWeight: '700', color: '#000', border: '1px solid #000' }}>
+                                ₹{order.items?.reduce((sum, item) => {
+                                    const itemTotal = (item.price || 0) * (item.quantity || 1);
+                                    const gstPercent = item.gstPercent || 0;
+                                    return sum + ((itemTotal * gstPercent) / 200);
+                                }, 0).toFixed(2)}
+                            </td>
+                            <td style={{ textAlign: 'right', padding: '0.5rem', fontWeight: '700', color: '#000', border: '1px solid #000' }}>
+                                ₹{order.items?.reduce((sum, item) => {
+                                    const itemTotal = (item.price || 0) * (item.quantity || 1);
+                                    const gstPercent = item.gstPercent || 0;
+                                    return sum + ((itemTotal * gstPercent) / 200);
+                                }, 0).toFixed(2)}
+                            </td>
+                            <td style={{ textAlign: 'right', padding: '0.5rem', fontWeight: '700', color: '#000', border: '1px solid #000' }}>
+                                ₹{order.items?.reduce((sum, item) => {
+                                    const itemTotal = (item.price || 0) * (item.quantity || 1);
+                                    const gstPercent = item.gstPercent || 0;
+                                    const sgst = (itemTotal * gstPercent) / 200;
+                                    const cgst = (itemTotal * gstPercent) / 200;
+                                    return sum + itemTotal + sgst + cgst;
+                                }, 0).toFixed(2)}
+                            </td>
+                        </tr>
                     </tbody>
                 </table>
 
-                {/* Summary */}
-                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '1rem' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', width: '280px' }}>
-                        <span style={{ color: '#666' }}>Subtotal</span>
-                        <span style={{ fontWeight: '600' }}>₹{(order.total || 0).toLocaleString()}</span>
-                    </div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', width: '280px' }}>
-                        <span style={{ color: '#666' }}>Shipping</span>
-                        <span style={{ color: '#10b981', fontWeight: '600' }}>FREE</span>
-                    </div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', width: '280px', marginTop: '1rem', paddingTop: '1rem', borderTop: '2px solid #000', fontSize: '1.4rem', fontWeight: '900' }}>
-                        <span>Total</span>
-                        <span>₹{(order.total || 0).toLocaleString()}</span>
-                    </div>
+                {/* Details of Goods Transported */}
+                <div style={{ marginBottom: '1.5rem', paddingTop: '1rem', borderTop: '1px solid #000' }}>
+                    <h3 style={{ fontSize: '10px', fontWeight: '700', color: '#000', textAlign: 'center', marginBottom: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                        Details of Goods Transported by GTA Supplier
+                    </h3>
+                    <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '10px', border: '1px solid #000' }}>
+                        <thead>
+                            <tr style={{ borderBottom: '1px solid #000', background: '#f9fafb' }}>
+                                <th style={{ textAlign: 'left', padding: '0.5rem', color: '#000', fontWeight: '700', fontSize: '10px', border: '1px solid #000' }}>Description of<br/>Goods</th>
+                                <th style={{ textAlign: 'center', padding: '0.5rem', color: '#000', fontWeight: '700', fontSize: '10px', border: '1px solid #000' }}>Qty</th>
+                                <th style={{ textAlign: 'center', padding: '0.5rem', color: '#000', fontWeight: '700', fontSize: '10px', border: '1px solid #000' }}>Gross Weight of<br/>Consignment</th>
+                                <th style={{ textAlign: 'right', padding: '0.5rem', color: '#000', fontWeight: '700', fontSize: '10px', border: '1px solid #000' }}>Value of goods</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {order.items && order.items.map((item, index) => (
+                                <tr key={index} style={{ borderBottom: '1px solid #000' }}>
+                                    <td style={{ padding: '0.5rem', color: '#000', border: '1px solid #000' }}>{item.name || item.title || 'Product'}</td>
+                                    <td style={{ textAlign: 'center', padding: '0.5rem', color: '#000', border: '1px solid #000' }}>{(item.quantity || 1).toFixed(1)}</td>
+                                    <td style={{ textAlign: 'center', padding: '0.5rem', color: '#000', border: '1px solid #000' }}>5000.0 grams</td>
+                                    <td style={{ textAlign: 'right', padding: '0.5rem', color: '#000', border: '1px solid #000' }}>₹{((item.price || 0) * (item.quantity || 1)).toFixed(2)}</td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
                 </div>
 
                 {/* Footer */}
-                <div style={{ marginTop: '4rem', paddingTop: '1.5rem', borderTop: '1px solid #eee' }}>
-                    <p style={{ fontWeight: '700', marginBottom: '0.4rem' }}>Thank you for Shopping!</p>
-                    <p style={{ color: '#666', fontSize: '0.9rem' }}>Please contact support if you have any questions.</p>
+                <div style={{ marginTop: '2rem', paddingTop: '1rem', borderTop: '2px solid #000', fontSize: '11px' }}>
+                    <p style={{ fontWeight: '700', marginBottom: '0.3rem', color: '#000' }}>Thank you for Shopping!</p>
+                    <p style={{ color: '#000', fontSize: '10px', marginBottom: '1rem' }}>Please contact support if you have any questions.</p>
 
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '2.5rem' }}>
-                        <p style={{ fontWeight: '600', color: '#000' }}>SELLSATHI - Empowering Local Sellers</p>
-                        <div style={{ display: 'flex', gap: '2rem', color: '#666', fontSize: '0.9rem' }}>
-                            <span style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}><Phone size={14} /> +91 98765 43210</span>
-                            <span style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}><Mail size={14} /> support@sellsathi.com</span>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <p style={{ fontWeight: '700', color: '#000', fontSize: '11px', margin: 0 }}>Sellsathi Private Limited - Empowering Local Sellers</p>
+                        <div style={{ display: 'flex', gap: '1rem', color: '#000', fontSize: '10px' }}>
+                            <span style={{ display: 'flex', alignItems: 'center', gap: '0.3rem' }}><Phone size={12} /> +91 98765 43210</span>
+                            <span style={{ display: 'flex', alignItems: 'center', gap: '0.3rem' }}><Mail size={12} /> support@sellsathi.com</span>
                         </div>
                     </div>
                 </div>

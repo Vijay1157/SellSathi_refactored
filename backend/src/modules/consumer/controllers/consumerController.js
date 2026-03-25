@@ -95,16 +95,39 @@ const saveAddress = async (req, res) => {
         const doc = await userRef.get();
         let addresses = doc.data()?.addresses || [];
 
-        if (address.isDefault) addresses = addresses.map(a => ({ ...a, isDefault: false }));
+        // Ensure address has required fields
+        if (!address.firstName || !address.lastName || !address.addressLine || !address.city || !address.state || !address.pincode) {
+            return res.status(400).json({ success: false, message: "Missing required address fields" });
+        }
 
+        // Set address type (shipping or billing, default to shipping)
+        if (!address.type) {
+            address.type = 'shipping';
+        }
+
+        // If setting as default, remove default flag from other addresses of same type
+        if (address.isDefault) {
+            addresses = addresses.map(a => {
+                if (a.type === address.type) {
+                    return { ...a, isDefault: false };
+                }
+                return a;
+            });
+        }
+
+        // Add or update address
         const existingIdx = addresses.findIndex(a => a.id === address.id);
-        if (existingIdx > -1) addresses[existingIdx] = address;
-        else addresses.push({ ...address, id: Date.now() });
+        if (existingIdx > -1) {
+            addresses[existingIdx] = address;
+        } else {
+            addresses.push({ ...address, id: Date.now().toString() });
+        }
 
         await userRef.update({ addresses });
         cache.invalidate(`addresses_${uid}`);
-        return res.json({ success: true, message: "Address saved" });
+        return res.json({ success: true, message: "Address saved", addresses });
     } catch (error) {
+        console.error('Error saving address:', error);
         return res.status(500).json({ success: false, message: "Failed to save address" });
     }
 };

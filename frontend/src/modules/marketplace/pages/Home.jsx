@@ -128,7 +128,8 @@ export default function Home() {
         if (e) e.stopPropagation();
         const res = await addToCart(product);
         if (res.success) {
-            alert('✅ Product added to cart successfully!');
+            // Silently added - no popup
+            window.dispatchEvent(new Event('cartUpdate'));
         }
     };
 

@@ -4,75 +4,106 @@ import { Shield, Package, TrendingUp } from 'lucide-react';
 export default function CheckoutOrderSummary({ 
     subtotal, 
     couponDiscount, 
-    finalTotal
+    finalTotal,
+    selectedItems = [],
+    adminConfig = { defaultPlatformFeePercent: 7, defaultGstPercent: 18, defaultShippingHandlingPercent: 0 }
 }) {
+    // Calculate dynamic fees based on selected products
+    const calculateFees = () => {
+        let totalPlatformFee = 0;
+        let totalGST = 0;
+        let shippingFee = 0; // Will be dynamic from Shiprocket later
+        
+        selectedItems.forEach(item => {
+            const itemTotal = (item.price || 0) * (item.quantity || 1);
+            
+            // Platform Fee (use product-specific or admin default)
+            const platformFeePercent = item.platformFeePercent ?? adminConfig.defaultPlatformFeePercent;
+            totalPlatformFee += (itemTotal * platformFeePercent) / 100;
+            
+            // GST (use product-specific or admin default)
+            const gstPercent = item.gstPercent ?? adminConfig.defaultGstPercent;
+            totalGST += (itemTotal * gstPercent) / 100;
+        });
+        
+        return {
+            platformFee: totalPlatformFee,
+            gst: totalGST,
+            shipping: shippingFee
+        };
+    };
+    
+    const fees = calculateFees();
+    // Use the finalTotal passed from parent instead of recalculating
+    // const grandTotal = subtotal + fees.platformFee + fees.gst + fees.shipping - couponDiscount;
+    
     return (
         <div className="xl:col-span-4 lg:sticky lg:top-10">
-            <section className="bg-white rounded-[2.5rem] border border-gray-100 shadow-xl overflow-hidden">
-                <div className="p-8 border-b border-gray-50">
-                    <h3 className="text-xl font-bold text-gray-900">Order Summary</h3>
+            <section className="bg-white rounded-3xl border border-gray-100 shadow-xl overflow-hidden">
+                <div className="p-6 border-b border-gray-50">
+                    <h3 className="text-lg font-bold text-gray-900">Order Summary</h3>
                 </div>
-                <div className="p-8 space-y-6">
-                    <div className="space-y-4">
-                        <div className="flex justify-between items-center group">
-                            <span className="text-gray-400 font-bold text-sm">Cart Subtotal</span>
-                            <span className="text-gray-900 font-black">₹{subtotal.toLocaleString()}</span>
+                <div className="p-6 space-y-4">
+                    <div className="space-y-3">
+                        <div className="flex justify-between items-center">
+                            <span className="text-gray-500 font-semibold text-sm">Cart Subtotal</span>
+                            <span className="text-gray-900 font-bold">₹{subtotal.toLocaleString()}</span>
                         </div>
-                        <div className="flex justify-between items-center group">
-                            <span className="text-gray-400 font-bold text-sm">Shipping Fee</span>
-                            <span className="text-green-500 font-black uppercase text-xs">Free</span>
+                        
+                        <div className="flex justify-between items-center">
+                            <span className="text-gray-500 font-semibold text-sm">Platform Fee</span>
+                            <span className="text-gray-900 font-bold">₹{fees.platformFee.toFixed(2)}</span>
                         </div>
-                        <div className="flex justify-between items-center group">
-                            <span className="text-gray-400 font-bold text-sm">Platform Tax</span>
-                            <span className="text-gray-900 font-black">₹0.00</span>
+                        
+                        {fees.gst > 0 && (
+                            <div className="flex justify-between items-center">
+                                <span className="text-gray-500 font-semibold text-sm">GST</span>
+                                <span className="text-gray-900 font-bold">₹{fees.gst.toFixed(2)}</span>
+                            </div>
+                        )}
+                        
+                        <div className="flex justify-between items-center">
+                            <span className="text-gray-500 font-semibold text-sm">Shipping Fee</span>
+                            <span className="text-green-500 font-bold uppercase text-xs">
+                                {fees.shipping > 0 ? `₹${fees.shipping.toFixed(2)}` : 'FREE'}
+                            </span>
                         </div>
+                        
                         {couponDiscount > 0 && (
-                            <div className="flex justify-between items-center group bg-green-50 -mx-2 px-2 py-2 rounded-xl">
-                                <span className="text-green-600 font-bold text-sm">Coupon Discount</span>
-                                <span className="text-green-600 font-black">-₹{couponDiscount.toLocaleString()}</span>
+                            <div className="flex justify-between items-center bg-green-50 -mx-2 px-2 py-2 rounded-xl">
+                                <span className="text-green-600 font-semibold text-sm">Coupon Discount</span>
+                                <span className="text-green-600 font-bold">-₹{couponDiscount.toLocaleString()}</span>
                             </div>
                         )}
                     </div>
-                    <div className="h-px bg-gray-50 w-full" />
-                    <div className="space-y-2">
+                    
+                    <div className="h-px bg-gray-100 w-full" />
+                    
+                    <div className="space-y-1">
                         <div className="flex justify-between items-end">
-                            <span className="text-gray-900 font-black text-lg">Total Amount</span>
+                            <span className="text-gray-900 font-bold text-base">Total Amount</span>
                             <div className="text-right">
-                                <span className="text-3xl font-black text-primary">₹{finalTotal.toLocaleString()}</span>
+                                <span className="text-2xl font-black text-primary">₹{finalTotal.toLocaleString()}</span>
                             </div>
                         </div>
-                        <p className="text-[10px] text-green-600 font-bold text-right uppercase tracking-widest">
+                        <p className="text-[10px] text-green-600 font-bold text-right uppercase tracking-wide">
                             Save with Sellsathi Premium
                         </p>
                     </div>
+                    
                     <div className="pt-2">
-                        <div className="bg-primary/5 p-4 rounded-2xl border border-primary/10 flex gap-3 items-center">
-                            <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center text-primary shadow-sm">
-                                <Shield size={20} />
+                        <div className="bg-primary/5 p-3 rounded-xl border border-primary/10 flex gap-3 items-center">
+                            <div className="w-9 h-9 bg-white rounded-lg flex items-center justify-center text-primary shadow-sm">
+                                <Shield size={18} />
                             </div>
                             <div>
-                                <h5 className="text-xs font-black text-gray-900 leading-none mb-1">Guaranteed Safety</h5>
-                                <p className="text-[10px] text-gray-400 font-bold">100% Secure Transaction System</p>
+                                <h5 className="text-xs font-bold text-gray-900 leading-none mb-0.5">Guaranteed Safety</h5>
+                                <p className="text-[10px] text-gray-500 font-medium">100% Secure Transaction</p>
                             </div>
                         </div>
                     </div>
                 </div>
-                <div className="bg-gray-50/50 p-6 flex flex-col items-center gap-3">
-                    <div className="flex -space-x-2">
-                        {[1, 2, 3, 4].map(i => (
-                            <div key={i} className="w-8 h-8 rounded-full border-2 border-white bg-gray-200" />
-                        ))}
-                        <div className="w-8 h-8 rounded-full border-2 border-white bg-primary text-[8px] flex items-center justify-center text-white font-black">+2k</div>
-                    </div>
-                    <p className="text-[10px] text-gray-400 font-bold">Consumers recently purchased here</p>
-                </div>
             </section>
-
-            <div className="mt-6 flex items-center justify-center gap-6 grayscale opacity-30">
-                <Shield size={24} />
-                <Package size={24} />
-                <TrendingUp size={24} />
-            </div>
         </div>
     );
 }

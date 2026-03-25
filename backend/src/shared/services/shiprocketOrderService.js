@@ -66,6 +66,10 @@ class ShiprocketOrderService {
       const firstName = nameParts[0] || '';
       const lastName = nameParts.slice(1).join(' ') || '';
 
+      // Use billing address for billing details, shipping address for delivery
+      const billingAddr = orderData.billingAddress || orderData.shippingAddress;
+      const shippingAddr = orderData.shippingAddress;
+
       // Map order data to Shiprocket API format
       const shiprocketPayload = {
         order_id: orderData.orderId,
@@ -73,14 +77,14 @@ class ShiprocketOrderService {
         pickup_location: validPickupLocation,
         billing_customer_name: firstName,
         billing_last_name: lastName,
-        billing_address: orderData.shippingAddress.addressLine,
-        billing_city: orderData.shippingAddress.city,
-        billing_pincode: orderData.shippingAddress.pincode,
-        billing_state: orderData.shippingAddress.state || 'Karnataka', // Fallback to avoid 422 error on missing state
-        billing_country: orderData.shippingAddress.country || 'India',
+        billing_address: billingAddr.addressLine,
+        billing_city: billingAddr.city,
+        billing_pincode: billingAddr.pincode,
+        billing_state: billingAddr.state || 'Karnataka',
+        billing_country: billingAddr.country || 'India',
         billing_email: orderData.customerEmail,
         billing_phone: orderData.customerPhone,
-        shipping_is_billing: true,
+        shipping_is_billing: (billingAddr === shippingAddr),
         order_items: orderData.items.map(item => ({
           name: item.name,
           sku: item.sku || item.id || 'SKU-' + item.id,

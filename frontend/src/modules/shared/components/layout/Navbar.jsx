@@ -483,7 +483,6 @@ export default function Navbar() {
                                                 }}
                                             >
                                                 {cat}
-                                                {isMega && <ChevronDown size={12} />}
                                             </button>
                                         </div>
                                     );
@@ -493,7 +492,7 @@ export default function Navbar() {
                                     onClick={() => setShowAllSubcategories(!showAllSubcategories)}
                                 >
                                     {showAllSubcategories ? 'Less Categories' : 'More Categories'}
-                                    <ChevronDown size={12} style={{ transform: showAllSubcategories ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s' }} />
+                                    <ChevronDown size={12} style={{ transform: showAllSubcategories ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s', strokeWidth: 3 }} />
                                 </button>
                             </div>
 
@@ -534,7 +533,6 @@ export default function Navbar() {
                                                     }}
                                                 >
                                                     {cat}
-                                                    {isMega && <ChevronDown size={12} />}
                                                 </button>
                                             </div>
                                         );

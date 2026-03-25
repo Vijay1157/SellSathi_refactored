@@ -31,7 +31,11 @@ const getAdminProfile = async (req, res) => {
             address: adminData.address || '',
             websiteName: adminData.websiteName || 'SellSathi',
             websiteInfo: adminData.websiteInfo || 'Your Trusted E-Commerce Platform',
-            profileImage: adminData.profileImage || null
+            profileImage: adminData.profileImage || null,
+            // Default platform charges
+            defaultPlatformFeePercent: adminData.defaultPlatformFeePercent || 7,
+            defaultGstPercent: adminData.defaultGstPercent || 18,
+            defaultShippingHandlingPercent: adminData.defaultShippingHandlingPercent || 0
         };
         
         return res.status(200).json({ success: true, profile });
@@ -47,7 +51,7 @@ const getAdminProfile = async (req, res) => {
 const updateAdminProfile = async (req, res) => {
     try {
         const uid = req.user.uid;
-        const { name, dateOfBirth, address, websiteName, websiteInfo, adminEmail, phone } = req.body;
+        const { name, dateOfBirth, address, websiteName, websiteInfo, adminEmail, phone, defaultPlatformFeePercent, defaultGstPercent, defaultShippingHandlingPercent } = req.body;
         
         // Validate required fields
         if (!name || !name.trim()) {
@@ -62,6 +66,28 @@ const updateAdminProfile = async (req, res) => {
             }
         }
         
+        // Validate default charges if provided
+        if (defaultPlatformFeePercent !== undefined) {
+            const fee = parseFloat(defaultPlatformFeePercent);
+            if (isNaN(fee) || fee < 0 || fee > 100) {
+                return res.status(400).json({ success: false, message: "Platform fee must be between 0 and 100" });
+            }
+        }
+        
+        if (defaultGstPercent !== undefined) {
+            const gst = parseFloat(defaultGstPercent);
+            if (isNaN(gst) || gst < 0 || gst > 100) {
+                return res.status(400).json({ success: false, message: "GST must be between 0 and 100" });
+            }
+        }
+        
+        if (defaultShippingHandlingPercent !== undefined) {
+            const shipping = parseFloat(defaultShippingHandlingPercent);
+            if (isNaN(shipping) || shipping < 0 || shipping > 100) {
+                return res.status(400).json({ success: false, message: "Shipping handling must be between 0 and 100" });
+            }
+        }
+        
         // Prepare update data
         const updateData = {
             name: name.trim(),
@@ -72,6 +98,17 @@ const updateAdminProfile = async (req, res) => {
             adminEmail: adminEmail ? adminEmail.trim() : '',
             updatedAt: admin.firestore.FieldValue.serverTimestamp()
         };
+        
+        // Add default charges if provided
+        if (defaultPlatformFeePercent !== undefined) {
+            updateData.defaultPlatformFeePercent = parseFloat(defaultPlatformFeePercent);
+        }
+        if (defaultGstPercent !== undefined) {
+            updateData.defaultGstPercent = parseFloat(defaultGstPercent);
+        }
+        if (defaultShippingHandlingPercent !== undefined) {
+            updateData.defaultShippingHandlingPercent = parseFloat(defaultShippingHandlingPercent);
+        }
         
         // Update or create admin profile
         await db.collection("adminProfiles").doc(uid).set(updateData, { merge: true });

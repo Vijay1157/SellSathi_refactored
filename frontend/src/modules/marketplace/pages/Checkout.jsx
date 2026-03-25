@@ -40,7 +40,19 @@ export default function Checkout() {
         addressLine: '',
         city: '',
         state: '',
-        pincode: ''
+        pincode: '',
+        phone: '',
+        type: 'shipping'
+    });
+    const [billingAddress, setBillingAddress] = useState({
+        firstName: '',
+        lastName: '',
+        addressLine: '',
+        city: '',
+        state: '',
+        pincode: '',
+        phone: '',
+        type: 'billing'
     });
     const [paymentMethod, setPaymentMethod] = useState('razorpay');
     const [cardDetails, setCardDetails] = useState({
@@ -64,11 +76,47 @@ export default function Checkout() {
     const [appliedCoupon, setAppliedCoupon] = useState(null);
     const [couponError, setCouponError] = useState('');
     const [applyingCoupon, setApplyingCoupon] = useState(false);
+    const [validationError, setValidationError] = useState(''); // Add inline validation error
+    const [adminConfig, setAdminConfig] = useState({
+        defaultPlatformFeePercent: 7,
+        defaultGstPercent: 18,
+        defaultShippingHandlingPercent: 0
+    });
 
     // Address selection states
     const [addressMode, setAddressMode] = useState('saved');
     const [savedAddresses, setSavedAddresses] = useState([]);
     const [selectedAddressIndex, setSelectedAddressIndex] = useState(null);
+    
+    // Billing address states
+    const [billingAddressMode, setBillingAddressMode] = useState('saved');
+    const [selectedBillingAddressIndex, setSelectedBillingAddressIndex] = useState(null);
+    const [saveBillingForFuture, setSaveBillingForFuture] = useState(false);
+    const [setBillingAsDefault, setSetBillingAsDefault] = useState(false);
+    
+    // Computed: Filter saved addresses by type
+    const savedBillingAddresses = savedAddresses.filter(addr => addr.type === 'billing');
+
+    // Fetch admin config for default charges
+    useEffect(() => {
+        const fetchAdminConfig = async () => {
+            try {
+                const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5001'}/admin/config/public`);
+                const data = await response.json();
+                if (data.success && data.config) {
+                    setAdminConfig({
+                        defaultPlatformFeePercent: data.config.defaultPlatformFeePercent ?? 7,
+                        defaultGstPercent: data.config.defaultGstPercent ?? 18,
+                        defaultShippingHandlingPercent: data.config.defaultShippingHandlingPercent ?? 0
+                    });
+                }
+            } catch (error) {
+                console.error('Failed to fetch admin config:', error);
+                // Keep default values
+            }
+        };
+        fetchAdminConfig();
+    }, []);
 
     useEffect(() => {
         const unsubscribe = auth.onAuthStateChanged(async (u) => {
@@ -81,18 +129,36 @@ export default function Checkout() {
                     const addresses = data.success ? (data.addresses || []) : [];
                     setSavedAddresses(addresses);
 
-                    const defaultAddr = addresses.find(addr => addr.isDefault === true);
-                    if (defaultAddr) {
-                        const defaultIndex = addresses.indexOf(defaultAddr);
-                        setSelectedAddressIndex(defaultIndex);
-                        setShippingAddress(defaultAddr);
-                        setAddressMode('saved');
-                    } else if (addresses.length > 0) {
-                        setSelectedAddressIndex(0);
-                        setShippingAddress(addresses[0]);
+                    // Find default shipping address
+                    const defaultShipping = addresses.find(addr => addr.type === 'shipping' && addr.isDefault === true);
+                    // Find default billing address
+                    const defaultBilling = addresses.find(addr => addr.type === 'billing' && addr.isDefault === true);
+                    
+                    // Set shipping address
+                    if (defaultShipping) {
+                        const shippingIndex = addresses.indexOf(defaultShipping);
+                        setSelectedAddressIndex(shippingIndex);
+                        setShippingAddress(defaultShipping);
                         setAddressMode('saved');
                     } else {
-                        setAddressMode('new');
+                        // Fallback to first shipping address
+                        const firstShipping = addresses.find(addr => addr.type === 'shipping');
+                        if (firstShipping) {
+                            const shippingIndex = addresses.indexOf(firstShipping);
+                            setSelectedAddressIndex(shippingIndex);
+                            setShippingAddress(firstShipping);
+                            setAddressMode('saved');
+                        } else {
+                            setAddressMode('new');
+                        }
+                    }
+                    
+                    // Set billing address
+                    if (defaultBilling) {
+                        setBillingAddress(defaultBilling);
+                    } else if (sameAsBilling && defaultShipping) {
+                        // If same as billing is checked, copy shipping to billing
+                        setBillingAddress({ ...defaultShipping, type: 'billing' });
                     }
                 } catch (error) {
                     console.error("Error fetching addresses:", error);
@@ -210,16 +276,34 @@ export default function Checkout() {
         }
     };
 
+    const handleBillingAddressChange = (e) => {
+        const { name, value } = e.target;
+        if (name === 'pincode') {
+            const numericValue = value.replace(/[^0-9]/g, '').slice(0, 6);
+            setBillingAddress(prev => ({ ...prev, [name]: numericValue }));
+        } else {
+            setBillingAddress(prev => ({ ...prev, [name]: value }));
+        }
+        if (errors[`billing_${name}`]) {
+            setErrors(prev => ({ ...prev, [`billing_${name}`]: '' }));
+        }
+    };
+
     const handleRazorpayPayment = async () => {
         setRazorpayLoading(true);
         try {
             const selectedCartItems = selectedCheckoutItems;
+            
+            // Prepare billing address (same as shipping if checkbox is checked)
+            const finalBillingAddress = sameAsBilling ? { ...shippingAddress, type: 'billing' } : billingAddress;
+            
             const customerInfo = {
                 firstName: shippingAddress.firstName,
                 lastName: shippingAddress.lastName,
                 email: user?.email || '',
-                phone: user?.phoneNumber || user?.phone || '',
-                address: shippingAddress
+                phone: user?.phoneNumber || user?.phone || shippingAddress.phone || '',
+                shippingAddress: shippingAddress,
+                billingAddress: finalBillingAddress
             };
 
             const createOrderResponse = await authFetch('/payment/create-order', {
@@ -259,6 +343,19 @@ export default function Checkout() {
                     handler: async function (response) {
                         try {
                             const selectedCartItems = selectedCheckoutItems;
+                            
+                            // Prepare billing address
+                            const finalBillingAddress = sameAsBilling ? { ...shippingAddress, type: 'billing' } : billingAddress;
+                            
+                            const customerInfo = {
+                                firstName: shippingAddress.firstName,
+                                lastName: shippingAddress.lastName,
+                                email: user?.email || '',
+                                phone: user?.phoneNumber || user?.phone || shippingAddress.phone || '',
+                                shippingAddress: shippingAddress,
+                                billingAddress: finalBillingAddress
+                            };
+                            
                             const verifyResponse = await authFetch('/payment/verify', {
                                 method: 'POST',
                                 headers: { 'Content-Type': 'application/json' },
@@ -338,12 +435,17 @@ export default function Checkout() {
         setLoading(true);
         try {
             const selectedCartItems = selectedCheckoutItems;
+            
+            // Prepare billing address
+            const finalBillingAddress = sameAsBilling ? { ...shippingAddress, type: 'billing' } : billingAddress;
+            
             const customerInfo = {
                 firstName: shippingAddress.firstName,
                 lastName: shippingAddress.lastName,
                 email: user?.email || '',
-                phone: user?.phoneNumber || user?.phone || '',
-                address: shippingAddress
+                phone: user?.phoneNumber || user?.phone || shippingAddress.phone || '',
+                shippingAddress: shippingAddress,
+                billingAddress: finalBillingAddress
             };
 
             const currentUser = auth.currentUser;
@@ -371,9 +473,15 @@ export default function Checkout() {
             if (result.success) {
                 if (addressMode === 'new' && saveAddressForFuture && user) {
                     try {
-                        const newAddress = { ...shippingAddress, isDefault: setAsDefault };
+                        const newAddress = { 
+                            ...shippingAddress, 
+                            isDefault: setAsDefault,
+                            type: 'shipping',
+                            id: Date.now().toString()
+                        };
                         await authFetch(`/consumer/${user.uid}/addresses`, {
                             method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
                             body: JSON.stringify({ address: newAddress })
                         });
                     } catch (error) {
@@ -402,12 +510,25 @@ export default function Checkout() {
 
     const validateForm = () => {
         const newErrors = {};
+        
+        // Validate shipping address
         if (!shippingAddress.firstName.trim()) newErrors.firstName = 'First name is required';
         if (!shippingAddress.lastName.trim()) newErrors.lastName = 'Last name is required';
         if (!shippingAddress.addressLine.trim() || shippingAddress.addressLine.length < 5) newErrors.addressLine = 'Full address is required';
         if (!shippingAddress.city.trim()) newErrors.city = 'City is required';
         if (!shippingAddress.state.trim()) newErrors.state = 'State is required';
         if (!/^\d{6}$/.test(shippingAddress.pincode)) newErrors.pincode = 'Pincode must be exactly 6 digits';
+        
+        // Validate billing address if different from shipping
+        if (!sameAsBilling) {
+            if (!billingAddress.firstName.trim()) newErrors.billing_firstName = 'Billing first name is required';
+            if (!billingAddress.lastName.trim()) newErrors.billing_lastName = 'Billing last name is required';
+            if (!billingAddress.addressLine.trim() || billingAddress.addressLine.length < 5) newErrors.billing_addressLine = 'Billing address is required';
+            if (!billingAddress.city.trim()) newErrors.billing_city = 'Billing city is required';
+            if (!billingAddress.state.trim()) newErrors.billing_state = 'Billing state is required';
+            if (!/^\d{6}$/.test(billingAddress.pincode)) newErrors.billing_pincode = 'Billing pincode must be exactly 6 digits';
+        }
+        
         if (step === 2 && !paymentMethod) newErrors.payment = 'Please select a payment method';
         setErrors(newErrors);
         return Object.keys(newErrors).length === 0;
@@ -423,15 +544,41 @@ export default function Checkout() {
             return;
         }
         if (step === 1) {
-            if (validateForm()) { setStep(2); }
-            else { alert('Please fill in all required address fields correctly.'); }
+            if (validateForm()) { 
+                setValidationError('');
+                setStep(2); 
+            }
+            else { 
+                // Check if billing address is the issue
+                const hasBillingErrors = Object.keys(errors).some(key => key.startsWith('billing_'));
+                if (hasBillingErrors && !sameAsBilling) {
+                    setValidationError('Please fill in all required billing address fields correctly.');
+                } else {
+                    setValidationError('Please fill in all required address fields correctly.');
+                }
+                // Scroll to error message
+                setTimeout(() => {
+                    const errorElement = document.getElementById('validation-error');
+                    if (errorElement) {
+                        errorElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    }
+                }, 100);
+            }
         } else {
             const isValid = validateForm();
             if (isValid) {
+                setValidationError('');
                 if (paymentMethod === 'razorpay') { handleRazorpayPayment(); }
                 else { processOrder(paymentMethod); }
             } else {
-                alert('Please fix the validation errors before continuing.');
+                setValidationError('Please fix the validation errors before continuing.');
+                // Scroll to error message
+                setTimeout(() => {
+                    const errorElement = document.getElementById('validation-error');
+                    if (errorElement) {
+                        errorElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    }
+                }, 100);
             }
         }
     };
@@ -456,9 +603,36 @@ export default function Checkout() {
 
     const subtotal = selectedCheckoutItems.reduce((acc, item) => acc + (item.price * item.quantity), 0);
     
+    // Calculate dynamic fees
+    const calculateFees = () => {
+        let totalPlatformFee = 0;
+        let totalGST = 0;
+        let shippingFee = 0; // Will be dynamic from Shiprocket later
+        
+        selectedCheckoutItems.forEach(item => {
+            const itemTotal = (item.price || 0) * (item.quantity || 1);
+            
+            // Platform Fee (use product-specific or admin default)
+            const platformFeePercent = item.platformFeePercent ?? adminConfig.defaultPlatformFeePercent;
+            totalPlatformFee += (itemTotal * platformFeePercent) / 100;
+            
+            // GST (use product-specific or admin default)
+            const gstPercent = item.gstPercent ?? adminConfig.defaultGstPercent;
+            totalGST += (itemTotal * gstPercent) / 100;
+        });
+        
+        return {
+            platformFee: totalPlatformFee,
+            gst: totalGST,
+            shipping: shippingFee
+        };
+    };
+    
+    const fees = calculateFees();
+    
     // Calculate discount from coupon
     const couponDiscount = appliedCoupon ? (subtotal * appliedCoupon.discountPercent / 100) : 0;
-    const finalTotal = subtotal - couponDiscount;
+    const finalTotal = subtotal + fees.platformFee + fees.gst + fees.shipping - couponDiscount;
 
     // Apply coupon function
     const handleApplyCoupon = async () => {
@@ -542,34 +716,34 @@ export default function Checkout() {
 
     return (
         <div className="bg-gray-50/20 min-h-screen">
-            <div className="container px-6 py-12 max-w-7xl mx-auto">
-                <div className="mb-12 flex flex-col md:flex-row md:items-center justify-between gap-6">
+            <div className="container px-4 py-6 max-w-7xl mx-auto">
+                <div className="mb-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
                     <div>
-                        <h1 className="text-4xl font-black text-gray-900 tracking-tight">
+                        <h1 className="text-3xl font-black text-gray-900 tracking-tight">
                             Checkout <span className="text-gray-400 font-light">Process</span>
                         </h1>
-                        <p className="text-gray-500 font-medium mt-2">Securely complete your purchase at Sellsathi</p>
+                        <p className="text-gray-500 font-medium mt-1">Securely complete your purchase at Sellsathi</p>
                     </div>
                     <Link
                         to="/"
-                        className="flex items-center justify-center gap-2 px-6 py-4 bg-white border border-gray-100 rounded-2xl font-bold text-gray-600 hover:bg-gray-50 hover:border-primary/20 hover:text-primary transition-all shadow-sm self-start"
+                        className="flex items-center justify-center gap-2 px-5 py-3 bg-white border border-gray-100 rounded-xl font-bold text-gray-600 hover:bg-gray-50 hover:border-primary/20 hover:text-primary transition-all shadow-sm md:self-start"
                     >
                         <ArrowLeft size={18} />
                         Back to Shopping
                     </Link>
                 </div>
 
-                <div className="grid grid-cols-1 xl:grid-cols-12 gap-12 items-start">
-                    <div className="xl:col-span-8 space-y-8">
+                <div className="grid grid-cols-1 xl:grid-cols-12 gap-6 items-start">
+                    <div className="xl:col-span-8 space-y-4">
                         {/* Cart Items List */}
-                        <section className="bg-white rounded-[2.5rem] border border-gray-100 shadow-sm overflow-hidden">
-                            <div className="p-8 border-b border-gray-50">
-                                <h3 className="text-xl font-bold text-gray-900 flex items-center gap-3">
-                                    <ShoppingBag size={22} className="text-primary" />
+                        <section className="bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden">
+                            <div className="p-6 border-b border-gray-50">
+                                <h3 className="text-lg font-bold text-gray-900 flex items-center gap-3">
+                                    <ShoppingBag size={20} className="text-primary" />
                                     Your Items ({selectedItems.size} of {checkoutItems.length} selected)
                                 </h3>
                             </div>
-                            <div className="p-8 space-y-4">
+                            <div className="p-6 space-y-3">
                                 {(() => {
                                     // Separate selected and unselected items
                                     const selectedItemsList = checkoutItems.filter(item => 
@@ -589,69 +763,67 @@ export default function Checkout() {
                                         const isBuyNowItem = item.isBuyNow;
                                         
                                         return (
-                                            <div key={itemId} className={`flex gap-4 items-center p-4 rounded-2xl border bg-white shadow-sm group hover:shadow-md transition-all ${isSelected ? 'border-primary border-2' : 'border-gray-200'}`}>
+                                            <div key={itemId} className={`flex gap-3 items-center p-3 rounded-xl border bg-white hover:shadow-sm transition-all ${isSelected ? 'border-primary border-2' : 'border-gray-200'}`}>
                                             {/* Checkbox */}
-                                            <div className="flex items-center pt-1">
-                                                <input
-                                                    type="checkbox"
-                                                    checked={isSelected}
-                                                    onChange={() => toggleItemSelection(itemId)}
-                                                    className="w-5 h-5 rounded border-gray-300 text-primary focus:ring-primary cursor-pointer"
-                                                />
-                                            </div>
+                                            <input
+                                                type="checkbox"
+                                                checked={isSelected}
+                                                onChange={() => toggleItemSelection(itemId)}
+                                                className="w-4 h-4 rounded border-gray-300 text-primary focus:ring-primary cursor-pointer flex-shrink-0"
+                                            />
                                             
-                                            <div className="w-20 h-20 rounded-xl overflow-hidden shadow-sm flex-shrink-0">
-                                                <img src={item.imageUrl || item.image} alt={item.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
+                                            <div className="w-16 h-16 rounded-lg overflow-hidden flex-shrink-0">
+                                                <img src={item.imageUrl || item.image} alt={item.name} className="w-full h-full object-cover" />
                                             </div>
                                             <div className="flex-1 min-w-0">
-                                                <div className="flex items-center gap-2 mb-1">
-                                                    <h4 className="font-bold text-gray-900 truncate">{item.name}</h4>
+                                                <div className="flex items-center gap-2 mb-0.5">
+                                                    <h4 className="font-semibold text-gray-900 truncate text-sm">{item.name}</h4>
                                                     {isBuyNowItem && (
-                                                        <span className="bg-orange-500 text-white text-xs px-2 py-0.5 rounded-full font-semibold flex-shrink-0">
+                                                        <span className="bg-orange-500 text-white text-xs px-1.5 py-0.5 rounded font-semibold flex-shrink-0">
                                                             Buy Now
                                                         </span>
                                                     )}
                                                 </div>
                                                 {/* Variant Info */}
                                                 {(item.selectedColor || item.selectedSize || item.selectedStorage) && (
-                                                    <div className="flex gap-1 mt-1 text-xs text-gray-600 flex-wrap">
+                                                    <div className="flex gap-1 text-xs text-gray-600 flex-wrap">
                                                         {item.selectedColor && (
-                                                            <span className="px-2 py-0.5 bg-gray-100 rounded">
+                                                            <span className="px-1.5 py-0.5 bg-gray-100 rounded text-xs">
                                                                 {item.selectedColor}
                                                             </span>
                                                         )}
                                                         {item.selectedSize && (
-                                                            <span className="px-2 py-0.5 bg-gray-100 rounded">
+                                                            <span className="px-1.5 py-0.5 bg-gray-100 rounded text-xs">
                                                                 {item.selectedSize}
                                                             </span>
                                                         )}
                                                         {item.selectedStorage && (
-                                                            <span className="px-2 py-0.5 bg-gray-100 rounded">
+                                                            <span className="px-1.5 py-0.5 bg-gray-100 rounded text-xs">
                                                                 {item.selectedStorage}
                                                             </span>
                                                         )}
                                                     </div>
                                                 )}
-                                                <div className="flex items-center gap-2 mt-2">
-                                                    <span className="text-xs font-semibold text-gray-500">Qty:</span>
+                                                <div className="flex items-center gap-2 mt-1">
+                                                    <span className="text-xs font-medium text-gray-500">Qty:</span>
                                                     <div className="flex items-center gap-1 bg-gray-100 rounded-lg p-0.5">
                                                         <button onClick={() => handleQuantityChange(item, item.quantity - 1)} disabled={item.quantity <= 1}
-                                                            className="w-6 h-6 flex items-center justify-center rounded-md bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all">
-                                                            <Minus size={12} />
+                                                            className="w-5 h-5 flex items-center justify-center rounded bg-white hover:bg-gray-50 disabled:opacity-50 text-xs">
+                                                            <Minus size={10} />
                                                         </button>
-                                                        <span className="w-8 text-center font-bold text-gray-900 text-sm">{item.quantity}</span>
+                                                        <span className="w-6 text-center font-semibold text-gray-900 text-xs">{item.quantity}</span>
                                                         <button onClick={() => handleQuantityChange(item, item.quantity + 1)} disabled={item.quantity >= (item.stock || 99)}
-                                                            className="w-6 h-6 flex items-center justify-center rounded-md bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all">
-                                                            <Plus size={12} />
+                                                            className="w-5 h-5 flex items-center justify-center rounded bg-white hover:bg-gray-50 disabled:opacity-50 text-xs">
+                                                            <Plus size={10} />
                                                         </button>
                                                     </div>
                                                 </div>
                                             </div>
-                                            <div className="flex flex-col items-end gap-3 flex-shrink-0">
+                                            <div className="flex flex-col items-end gap-2 flex-shrink-0">
                                                 <PriceDisplay product={{ ...item, price: item.originalPrice || item.price, discountPrice: item.price }} size="sm" showBadge={false} />
                                                 {!isBuyNowItem && (
-                                                    <button onClick={() => handleRemove(itemId)} className="p-2 text-gray-300 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all" title="Remove">
-                                                        <Trash2 size={16} />
+                                                    <button onClick={() => handleRemove(itemId)} className="p-1.5 text-gray-300 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all" title="Remove">
+                                                        <Trash2 size={14} />
                                                     </button>
                                                 )}
                                             </div>
@@ -715,64 +887,71 @@ export default function Checkout() {
                             handleContinue={handleContinue}
                             sameAsBilling={sameAsBilling}
                             setSameAsBilling={setSameAsBilling}
+                            validationError={validationError}
+                            billingAddress={billingAddress}
+                            handleBillingAddressChange={handleBillingAddressChange}
+                            billingAddressMode={billingAddressMode}
+                            setBillingAddressMode={setBillingAddressMode}
+                            savedBillingAddresses={savedBillingAddresses}
+                            selectedBillingAddressIndex={selectedBillingAddressIndex}
+                            setSelectedBillingAddressIndex={setSelectedBillingAddressIndex}
+                            setBillingAddress={setBillingAddress}
+                            saveBillingForFuture={saveBillingForFuture}
+                            setSaveBillingForFuture={setSaveBillingForFuture}
+                            setBillingAsDefault={setBillingAsDefault}
+                            setSetBillingAsDefault={setSetBillingAsDefault}
                         />
 
                         {/* Coupon Section - Between Items and Shipping */}
-                        <section className="bg-white rounded-[2.5rem] border border-gray-100 shadow-sm overflow-hidden">
-                            <div className="p-8 border-b border-gray-50">
-                                <h3 className="text-xl font-bold text-gray-900 flex items-center gap-3">
-                                    <Tag size={22} className="text-primary" />
+                        <section className="bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden">
+                            <div className="p-4 border-b border-gray-50">
+                                <h3 className="text-base font-bold text-gray-900 flex items-center gap-2">
+                                    <Tag size={18} className="text-primary" />
                                     Apply Coupon Code
                                 </h3>
                             </div>
-                            <div className="p-8">
+                            <div className="p-4">
                                 {!appliedCoupon ? (
-                                    <div className="space-y-3">
-                                        <label className="text-xs font-bold text-gray-500">
-                                            Have a coupon code? Enter it here to get discount
-                                        </label>
-                                        <div className="flex gap-3">
+                                    <div className="space-y-2">
+                                        <div className="flex gap-2">
                                             <input
                                                 type="text"
                                                 value={couponCode}
                                                 onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
                                                 placeholder="Enter coupon code"
-                                                className="flex-1 px-6 py-4 bg-gray-50 border-none rounded-2xl font-bold focus:ring-4 ring-primary/10 transition-all outline-none"
+                                                className="flex-1 px-4 py-2.5 bg-gray-50 border-none rounded-lg text-sm font-medium focus:ring-2 ring-primary/20 transition-all outline-none"
                                                 disabled={applyingCoupon}
                                             />
                                             <button
                                                 onClick={handleApplyCoupon}
                                                 disabled={applyingCoupon || !couponCode.trim()}
-                                                className="px-8 py-4 bg-primary text-white rounded-2xl font-bold hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg shadow-primary/20"
+                                                className="px-6 py-2.5 bg-primary text-white rounded-lg font-semibold hover:bg-primary/90 disabled:opacity-50 text-sm"
                                             >
                                                 {applyingCoupon ? 'Applying...' : 'Apply'}
                                             </button>
                                         </div>
                                         {couponError && (
-                                            <p className="text-sm text-red-500 font-semibold px-1">{couponError}</p>
+                                            <p className="text-xs text-red-500 font-medium px-1">{couponError}</p>
                                         )}
                                     </div>
                                 ) : (
-                                    <div className="bg-gradient-to-br from-green-50 to-emerald-50 border-2 border-green-200 rounded-2xl p-6">
+                                    <div className="bg-green-50 border border-green-200 rounded-lg p-3">
                                         <div className="flex items-center justify-between">
-                                            <div className="flex items-center gap-4">
-                                                <div className="w-12 h-12 bg-green-500 rounded-xl flex items-center justify-center shadow-lg">
-                                                    <Tag size={24} className="text-white" />
+                                            <div className="flex items-center gap-3">
+                                                <div className="w-8 h-8 bg-green-500 rounded-lg flex items-center justify-center">
+                                                    <Tag size={16} className="text-white" />
                                                 </div>
                                                 <div>
-                                                    <p className="text-lg font-black text-green-900">{appliedCoupon.code}</p>
-                                                    <p className="text-sm text-green-700 font-semibold">{appliedCoupon.description}</p>
-                                                    <p className="text-xs text-green-600 font-bold mt-1">
-                                                        You're saving ₹{couponDiscount.toLocaleString()} on this order!
-                                                    </p>
+                                                    <p className="text-sm font-bold text-green-900">{appliedCoupon.code}</p>
+                                                    <p className="text-xs text-green-700">{appliedCoupon.description}</p>
                                                 </div>
                                             </div>
                                             <button
                                                 onClick={handleRemoveCoupon}
-                                                className="p-3 hover:bg-green-100 rounded-xl transition-all"
+                                                className="p-1.5 hover:bg-green-100 rounded-lg transition-all"
                                                 title="Remove coupon"
                                             >
-                                                <X size={20} className="text-green-700" />
+                                                <X size={16} className="text-green-700" />
                                             </button>
                                         </div>
                                     </div>
@@ -785,7 +964,7 @@ export default function Checkout() {
                             step={step}
                             paymentMethod={paymentMethod}
                             setPaymentMethod={setPaymentMethod}
-                            subtotal={subtotal}
+                            finalTotal={finalTotal}
                             razorpayLoading={razorpayLoading}
                             loading={loading}
                             handleContinue={handleContinue}
@@ -797,6 +976,8 @@ export default function Checkout() {
                         subtotal={subtotal} 
                         couponDiscount={couponDiscount}
                         finalTotal={finalTotal}
+                        selectedItems={selectedCheckoutItems}
+                        adminConfig={adminConfig}
                     />
                 </div>
             </div>
