@@ -56,34 +56,40 @@ export default function ProductDetail() {
         });
     }, [product, selectedSize, selectedStorage, selectedMemory, purchaseOption]);
 
-    // Build comprehensive images array including main image, additional images, and variant images
-    const images = useMemo(() => {
+    // Main product images (for arrow navigation)
+    const mainImages = useMemo(() => {
         if (!product) return [];
-
         const imageSet = new Set();
-
         if (product.image) imageSet.add(product.image);
         if (product.imageUrl) imageSet.add(product.imageUrl);
-
         if (product.images && Array.isArray(product.images)) {
-            product.images.forEach(img => {
-                if (img && typeof img === 'string') imageSet.add(img);
-            });
+            product.images.forEach(img => { if (img && typeof img === 'string') imageSet.add(img); });
         }
-
-        if (product.variantImages && typeof product.variantImages === 'object') {
-            Object.values(product.variantImages).forEach(img => {
-                if (Array.isArray(img)) {
-                    img.forEach(url => { if (url && typeof url === 'string') imageSet.add(url); });
-                } else if (img && typeof img === 'string') {
-                    imageSet.add(img);
-                }
-            });
-        }
-
-        const imagesArray = Array.from(imageSet).filter(Boolean);
-        return imagesArray.length > 0 ? imagesArray : ['/placeholder-image.jpg'];
+        const arr = Array.from(imageSet).filter(Boolean);
+        return arr.length > 0 ? arr : ['/placeholder-image.jpg'];
     }, [product]);
+
+    // Variant images keyed by color/variant name (for thumbnail strip)
+    const variantImageMap = useMemo(() => {
+        if (!product?.variantImages || typeof product.variantImages !== 'object') return {};
+        const map = {};
+        Object.entries(product.variantImages).forEach(([key, val]) => {
+            const firstUrl = Array.isArray(val) ? val[0] : val;
+            if (firstUrl && typeof firstUrl === 'string') map[key] = firstUrl;
+        });
+        return map;
+    }, [product]);
+
+    // The currently displayed image (either a main image or a variant image)
+    const [variantImageUrl, setVariantImageUrl] = useState(null);
+
+    // images kept for backward compat with ProductInfo color-click logic
+    const images = useMemo(() => {
+        if (!product) return [];
+        const imageSet = new Set([...mainImages]);
+        Object.values(variantImageMap).forEach(url => imageSet.add(url));
+        return Array.from(imageSet).filter(Boolean);
+    }, [mainImages, variantImageMap]);
 
 
 
@@ -480,8 +486,14 @@ export default function ProductDetail() {
                     <ProductGallery
                         product={product}
                         images={images}
+                        mainImages={mainImages}
+                        variantImageMap={variantImageMap}
+                        variantImageUrl={variantImageUrl}
+                        setVariantImageUrl={setVariantImageUrl}
                         activeImageIndex={activeImageIndex}
                         setActiveImageIndex={setActiveImageIndex}
+                        selectedColor={selectedColor}
+                        setSelectedColor={setSelectedColor}
                     />
 
                     {/* Right: Info & Config */}
@@ -504,6 +516,8 @@ export default function ProductDetail() {
                         purchaseOption={purchaseOption}
                         images={images}
                         setActiveImageIndex={setActiveImageIndex}
+                        setVariantImageUrl={setVariantImageUrl}
+                        variantImageMap={variantImageMap}
                         isSizeChartOpen={isSizeChartOpen}
                         setIsSizeChartOpen={setIsSizeChartOpen}
                     />

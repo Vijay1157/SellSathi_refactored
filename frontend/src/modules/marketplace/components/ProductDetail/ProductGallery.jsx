@@ -1,21 +1,48 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronLeft, ChevronRight, X } from 'lucide-react';
 
-export default function ProductGallery({ product, images, activeImageIndex, setActiveImageIndex }) {
+/**
+ * ProductGallery
+ *
+ * - Main image area: shows mainImages[activeImageIndex] OR variantImageUrl if a variant is selected
+ * - Arrows: cycle through mainImages only
+ * - Thumbnail strip: shows only variant images (one per color/variant key)
+ *   Clicking a variant thumb → sets variantImageUrl + selects that color
+ */
+export default function ProductGallery({
+    product,
+    mainImages,
+    variantImageMap,
+    variantImageUrl,
+    setVariantImageUrl,
+    activeImageIndex,
+    setActiveImageIndex,
+    selectedColor,
+    setSelectedColor,
+}) {
     const [isZoomed, setIsZoomed] = useState(false);
     const [showZoomPreview, setShowZoomPreview] = useState(false);
     const [zoomPosition, setZoomPosition] = useState({ x: 0, y: 0 });
 
+    const safeMainImages = mainImages?.length > 0 ? mainImages : ['/placeholder-image.jpg'];
+    const displayImage = variantImageUrl || safeMainImages[activeImageIndex] || safeMainImages[0];
 
+    const nextImage = () => {
+        setVariantImageUrl(null); // clear variant override when using arrows
+        setActiveImageIndex((prev) => (prev + 1) % safeMainImages.length);
+    };
+    const prevImage = () => {
+        setVariantImageUrl(null);
+        setActiveImageIndex((prev) => (prev - 1 + safeMainImages.length) % safeMainImages.length);
+    };
 
-    const nextImage = () => setActiveImageIndex((prev) => (prev + 1) % images.length);
-    const prevImage = () => setActiveImageIndex((prev) => (prev - 1 + images.length) % images.length);
+    const variantEntries = Object.entries(variantImageMap || {});
 
     return (
         <div className="pd-media">
             <div className="media-container">
-                <div 
+                <div
                     className="media-stage glass-card"
                     onMouseMove={(e) => {
                         if (!showZoomPreview) return;
@@ -29,36 +56,35 @@ export default function ProductGallery({ product, images, activeImageIndex, setA
                     onClick={() => setIsZoomed(true)}
                 >
                     <motion.img
-                        key={activeImageIndex}
-                        src={images[activeImageIndex]}
+                        key={displayImage}
+                        src={displayImage}
                         alt={product?.name || 'Product'}
                         className="product-main-image"
+                        initial={{ opacity: 0.7 }}
+                        animate={{ opacity: 1 }}
+                        transition={{ duration: 0.2 }}
                     />
-                    <div className="media-controls-bottom">
-                        <button 
-                            className="ctrl-btn-bottom" 
-                            onClick={(e) => { 
-                                e.stopPropagation(); 
-                                prevImage(); 
-                            }}
-                            onMouseEnter={(e) => e.stopPropagation()}
-                        >
-                            <ChevronLeft size={20} />
-                        </button>
-                        <button 
-                            className="ctrl-btn-bottom" 
-                            onClick={(e) => { 
-                                e.stopPropagation(); 
-                                nextImage(); 
-                            }}
-                            onMouseEnter={(e) => e.stopPropagation()}
-                        >
-                            <ChevronRight size={20} />
-                        </button>
-                    </div>
+                    {safeMainImages.length > 1 && (
+                        <div className="media-controls-bottom">
+                            <button
+                                className="ctrl-btn-bottom"
+                                onClick={(e) => { e.stopPropagation(); prevImage(); }}
+                                onMouseEnter={(e) => e.stopPropagation()}
+                            >
+                                <ChevronLeft size={20} />
+                            </button>
+                            <button
+                                className="ctrl-btn-bottom"
+                                onClick={(e) => { e.stopPropagation(); nextImage(); }}
+                                onMouseEnter={(e) => e.stopPropagation()}
+                            >
+                                <ChevronRight size={20} />
+                            </button>
+                        </div>
+                    )}
                 </div>
 
-                {/* Zoom Preview - Shows to the right on hover */}
+                {/* Zoom Preview on hover */}
                 <AnimatePresence>
                     {showZoomPreview && (
                         <motion.div
@@ -68,10 +94,10 @@ export default function ProductGallery({ product, images, activeImageIndex, setA
                             exit={{ opacity: 0, x: -20 }}
                             transition={{ duration: 0.2 }}
                         >
-                            <div 
+                            <div
                                 className="zoom-preview-image"
                                 style={{
-                                    backgroundImage: `url(${images[activeImageIndex]})`,
+                                    backgroundImage: `url(${displayImage})`,
                                     backgroundPosition: `${zoomPosition.x}% ${zoomPosition.y}%`,
                                     backgroundSize: '250%'
                                 }}
@@ -81,7 +107,7 @@ export default function ProductGallery({ product, images, activeImageIndex, setA
                 </AnimatePresence>
             </div>
 
-            {/* Zoom Modal - Click to open full image */}
+            {/* Zoom Modal */}
             <AnimatePresence>
                 {isZoomed && (
                     <motion.div
@@ -99,7 +125,7 @@ export default function ProductGallery({ product, images, activeImageIndex, setA
                             transition={{ duration: 0.2 }}
                             onClick={e => e.stopPropagation()}
                         >
-                            <img src={images[activeImageIndex]} alt="Full size" />
+                            <img src={displayImage} alt="Full size" />
                             <button className="close-zoom-btn" onClick={() => setIsZoomed(false)}>
                                 <X size={24} />
                             </button>
@@ -107,18 +133,34 @@ export default function ProductGallery({ product, images, activeImageIndex, setA
                     </motion.div>
                 )}
             </AnimatePresence>
-            
-            <div className="thumbnail-track">
-                {images.map((img, i) => (
-                    <div
-                        key={i}
-                        className={`thumb-item ${i === activeImageIndex ? 'active' : ''}`}
-                        onClick={() => setActiveImageIndex(i)}
-                    >
-                        <img src={img} alt="" />
-                    </div>
-                ))}
-            </div>
+
+            {/* Thumbnail strip — variant images only */}
+            {variantEntries.length > 0 && (
+                <div className="thumbnail-track">
+                    {variantEntries.map(([colorKey, imgUrl]) => {
+                        const isActive = variantImageUrl === imgUrl ||
+                            (selectedColor && (typeof selectedColor === 'object' ? selectedColor.name : selectedColor) === colorKey);
+                        return (
+                            <div
+                                key={colorKey}
+                                className={`thumb-item ${isActive ? 'active' : ''}`}
+                                title={colorKey}
+                                onClick={() => {
+                                    setVariantImageUrl(imgUrl);
+                                    if (setSelectedColor && product?.colors) {
+                                        const match = product.colors.find(c =>
+                                            (typeof c === 'object' ? c.name : c) === colorKey
+                                        );
+                                        if (match) setSelectedColor(match);
+                                    }
+                                }}
+                            >
+                                <img src={imgUrl} alt={colorKey} />
+                            </div>
+                        );
+                    })}
+                </div>
+            )}
         </div>
     );
 }

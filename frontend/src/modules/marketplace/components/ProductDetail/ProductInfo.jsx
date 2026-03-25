@@ -24,6 +24,8 @@ export default function ProductInfo({
     purchaseOption,
     images,
     setActiveImageIndex,
+    setVariantImageUrl,
+    variantImageMap,
     isSizeChartOpen,
     setIsSizeChartOpen
 }) {
@@ -81,15 +83,8 @@ export default function ProductInfo({
                                     className={`pill ${selectedColor === c ? 'active' : ''}`}
                                     onClick={() => {
                                         setSelectedColor(c);
-                                        if (product.variantImages && product.variantImages[colorKey]) {
-                                            const variantImg = product.variantImages[colorKey];
-                                            // Handle both array and string formats
-                                            const firstUrl = Array.isArray(variantImg) ? variantImg[0] : variantImg;
-                                            const variantImageIndex = images.indexOf(firstUrl);
-                                            if (variantImageIndex !== -1) {
-                                                setActiveImageIndex(variantImageIndex);
-                                            }
-                                        }
+                                        const url = variantImageMap?.[colorKey];
+                                        if (url && setVariantImageUrl) setVariantImageUrl(url);
                                     }}
                                 >
                                     {colorName}
@@ -137,14 +132,8 @@ export default function ProductInfo({
                                     className={`pill variant-pill ${isActive ? 'active' : ''}`}
                                     onClick={() => {
                                         setSelectedStorage(s);
-                                        if (product.variantImages && product.variantImages[s.label || s]) {
-                                            const variantImg = product.variantImages[s.label || s];
-                                            const firstUrl = Array.isArray(variantImg) ? variantImg[0] : variantImg;
-                                            const variantImageIndex = images.indexOf(firstUrl);
-                                            if (variantImageIndex !== -1) {
-                                                setActiveImageIndex(variantImageIndex);
-                                            }
-                                        }
+                                        const url = variantImageMap?.[s.label || s];
+                                        if (url && setVariantImageUrl) setVariantImageUrl(url);
                                     }}
                                 >
                                     <span className="v-label">{s.label || s}</span>
@@ -172,14 +161,8 @@ export default function ProductInfo({
                                     className={`pill variant-pill ${isActive ? 'active' : ''}`}
                                     onClick={() => {
                                         setSelectedMemory(m);
-                                        if (product.variantImages && product.variantImages[m.label || m]) {
-                                            const variantImg = product.variantImages[m.label || m];
-                                            const firstUrl = Array.isArray(variantImg) ? variantImg[0] : variantImg;
-                                            const variantImageIndex = images.indexOf(firstUrl);
-                                            if (variantImageIndex !== -1) {
-                                                setActiveImageIndex(variantImageIndex);
-                                            }
-                                        }
+                                        const url = variantImageMap?.[m.label || m];
+                                        if (url && setVariantImageUrl) setVariantImageUrl(url);
                                     }}
                                 >
                                     <span className="v-label">{m.label || m}</span>
