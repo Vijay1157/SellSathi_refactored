@@ -16,7 +16,7 @@ const reviewRoutes = require('./modules/reviews/routes/reviewRoutes');
 const shippingRoutes = require('./modules/shipping/routes/shippingRoutes');
 
 const app = express();
-const PORT = process.env.PORT || 5001;
+const PORT = process.env.PORT || 5000;
 
 // Middleware
 app.use(cors());

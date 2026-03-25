@@ -14,6 +14,7 @@ const TEST_CREDENTIALS = {
     '+919876543210': { otp: '123456', role: 'CONSUMER' },
     '+917676879059': { otp: '123456', role: 'CONSUMER' },
     '+919353469036': { otp: '741852', role: 'SELLER' },
+    '+916366151635': { otp: '123456', role: 'SELLER' },
 };
 
 /** Redirects user based on role/status after a successful auth response */
