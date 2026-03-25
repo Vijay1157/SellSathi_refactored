@@ -2,7 +2,7 @@ import { auth } from '@/modules/shared/config/firebase';
 
 export const API_BASE = import.meta.env.PROD
     ? (import.meta.env.VITE_API_BASE_URL || 'https://sellsathi-refactored.onrender.com')
-    : 'http://localhost:5000';
+    : 'http://localhost:5001';
 
 /**
  * Authenticated fetch wrapper.
