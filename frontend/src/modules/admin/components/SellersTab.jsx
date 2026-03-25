@@ -10,6 +10,7 @@ export default function SellersTab({
     orders,
     loading,
     fetchAllData,
+    scrollToTop,
 }) {
     const [searchTerm, setSearchTerm] = useState('');
     const [searchCategory, setSearchCategory] = useState('');
@@ -258,6 +259,28 @@ export default function SellersTab({
 
     return (
         <>
+            {/* If a seller is selected, show full-page detail view */}
+            {selectedSeller ? (
+                <SellerDetailModal
+                    seller={selectedSeller}
+                    onClose={() => { setSelectedSeller(null); if (scrollToTop) scrollToTop(); }}
+                    onApprove={handleApproveSeller}
+                    onReject={handleRejectSeller}
+                    onBlock={handleBlockSeller}
+                    scrollToTop={scrollToTop}
+                />
+            ) : editingSeller ? (
+                <SellerEditModal
+                    seller={editingSeller}
+                    onClose={() => { setEditingSeller(null); if (scrollToTop) scrollToTop(); }}
+                    onSave={() => {
+                        fetchAllData();
+                        fetchSellersWithEditRequests();
+                        setEditingSeller(null);
+                        if (scrollToTop) scrollToTop();
+                    }}
+                />
+            ) : (
             <div className="animate-fade-in flex flex-col gap-8">
                 {/* Pending Approvals Section */}
                 <div className="flex flex-col gap-4">
@@ -302,24 +325,6 @@ export default function SellersTab({
                                             </td>
                                             <td style={{ padding: '1.25rem 1.5rem', textAlign: 'right' }}>
                                                 <div className="flex gap-3 justify-end">
-                                                    <button 
-                                                        className="btn btn-secondary" 
-                                                        onClick={() => setEditingSeller(s)} 
-                                                        title="Edit Seller Details" 
-                                                        style={{ 
-                                                            padding: '8px 16px', 
-                                                            fontSize: '0.85rem', 
-                                                            fontWeight: 700, 
-                                                            display: 'flex', 
-                                                            alignItems: 'center', 
-                                                            gap: '6px',
-                                                            background: 'var(--warning)',
-                                                            borderColor: 'var(--warning)',
-                                                            color: 'white'
-                                                        }}
-                                                    >
-                                                        <Edit size={16} /> Edit
-                                                    </button>
                                                     <button className="btn btn-primary" onClick={() => handleApproveSeller(s.uid)} title="Approve Seller" style={{ padding: '8px 16px', fontSize: '0.85rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '6px' }}>
                                                         <Check size={16} /> Accept
                                                     </button>
@@ -341,7 +346,7 @@ export default function SellersTab({
                 {/* Seller Management Section - APPROVED */}
                 <div className="flex flex-col gap-4">
                     <div className="flex justify-between items-center">
-                        <h3 style={{ fontSize: '1.5rem', fontWeight: 700 }}>Seller Management ({approvedSellers.length})</h3>
+                        <h3 style={{ fontSize: '1.5rem', fontWeight: 700 }}>Total Sellers ({approvedSellers.length})</h3>
                         <div className="flex gap-2">
                             <input type="text" placeholder="Search by shop name..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} style={{ padding: '0.5rem', borderRadius: '4px', border: '1px solid var(--border)', width: '200px' }} />
                             <select value={searchCategory} onChange={(e) => setSearchCategory(e.target.value)} style={{ padding: '0.5rem', borderRadius: '4px', border: '1px solid var(--border)', minWidth: '150px' }}>
@@ -500,25 +505,6 @@ export default function SellersTab({
                                             </td>
                                             <td style={{ padding: '1.25rem 1.5rem', textAlign: 'right' }}>
                                                 <div className="flex gap-2 justify-end">
-                                                    <button 
-                                                        className="btn btn-secondary" 
-                                                        onClick={() => setEditingSeller(s)} 
-                                                        title="Edit Seller Details" 
-                                                        style={{ 
-                                                            padding: '6px 14px', 
-                                                            fontSize: '0.8rem', 
-                                                            fontWeight: 700, 
-                                                            borderRadius: '8px', 
-                                                            gap: '6px',
-                                                            background: 'var(--warning)',
-                                                            borderColor: 'var(--warning)',
-                                                            color: 'white',
-                                                            display: 'flex',
-                                                            alignItems: 'center'
-                                                        }}
-                                                    >
-                                                        <Edit size={14} /> Edit
-                                                    </button>
                                                     <button className="btn btn-primary" onClick={() => handleAcceptRejectedSeller(s.uid)} style={{ padding: '6px 14px', fontSize: '0.8rem', fontWeight: 700, borderRadius: '8px', gap: '6px', background: 'var(--success)', borderColor: 'var(--success)' }}><Check size={14} /> Accept</button>
                                                     <button className="btn" onClick={() => handleDeleteSeller(s.uid, s.shopName)} style={{ padding: '6px 14px', fontSize: '0.8rem', fontWeight: 700, borderRadius: '8px', gap: '6px', background: '#ef4444', borderColor: '#ef4444', color: 'white' }} title="Permanently delete seller and all their data"><X size={14} /> Delete</button>
                                                 </div>
@@ -600,25 +586,6 @@ export default function SellersTab({
                                             </td>
                                             <td style={{ padding: '1.25rem 1.5rem', textAlign: 'right' }}>
                                                 <div className="flex gap-2 justify-end">
-                                                    <button 
-                                                        className="btn btn-secondary" 
-                                                        onClick={() => setEditingSeller(s)} 
-                                                        title="Edit Seller Details" 
-                                                        style={{ 
-                                                            padding: '6px 14px', 
-                                                            fontSize: '0.8rem', 
-                                                            fontWeight: 700, 
-                                                            borderRadius: '8px', 
-                                                            gap: '6px',
-                                                            background: 'var(--warning)',
-                                                            borderColor: 'var(--warning)',
-                                                            color: 'white',
-                                                            display: 'flex',
-                                                            alignItems: 'center'
-                                                        }}
-                                                    >
-                                                        <Edit size={14} /> Edit
-                                                    </button>
                                                     <button className="btn btn-primary" onClick={() => handleUnblockSeller(s.uid)} style={{ padding: '6px 14px', fontSize: '0.8rem', fontWeight: 700, borderRadius: '8px', gap: '6px', background: 'var(--success)', borderColor: 'var(--success)' }}><Check size={14} /> Unblock</button>
                                                     <button className="btn" onClick={() => handleDeleteSeller(s.uid, s.shopName)} style={{ padding: '6px 14px', fontSize: '0.8rem', fontWeight: 700, borderRadius: '8px', gap: '6px', background: '#ef4444', borderColor: '#ef4444', color: 'white' }} title="Permanently delete seller and all their data"><X size={14} /> Delete</button>
                                                 </div>
@@ -809,30 +776,7 @@ export default function SellersTab({
                     )}
                 </div>
             </div>
-
-            {/* Seller Detail + Block + Bank Details modals */}
-            {selectedSeller && (
-                <SellerDetailModal
-                    seller={selectedSeller}
-                    onClose={() => setSelectedSeller(null)}
-                    onApprove={handleApproveSeller}
-                    onReject={handleRejectSeller}
-                    onBlock={handleBlockSeller}
-                />
-            )}
-
-            {/* Seller Edit Modal */}
-            {editingSeller && (
-                <SellerEditModal
-                    seller={editingSeller}
-                    onClose={() => setEditingSeller(null)}
-                    onSave={() => {
-                        fetchAllData();
-                        fetchSellersWithEditRequests();
-                        setEditingSeller(null);
-                    }}
-                />
-            )}
+            )} {/* end of !selectedSeller */}
         </>
     );
 }

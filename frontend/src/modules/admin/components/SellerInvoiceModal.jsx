@@ -159,6 +159,10 @@ export default function SellerInvoiceModal({ seller, onClose, onDownloadPDF, isD
                             <p className="text-muted" style={{ fontSize: '0.85rem', marginBottom: '0.5rem' }}>Registration Date</p>
                             <p style={{ fontWeight: 500, fontSize: '0.9rem' }}>{formatDate(seller.createdAt)}</p>
                         </div>
+                        <div>
+                            <p className="text-muted" style={{ fontSize: '0.85rem', marginBottom: '0.5rem' }}>GST Number</p>
+                            <p style={{ fontWeight: 600, fontSize: '0.9rem', fontFamily: 'monospace' }}>{seller.gstNumber || 'N/A'}</p>
+                        </div>
                     </div>
                 </div>
 

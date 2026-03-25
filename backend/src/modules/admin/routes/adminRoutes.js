@@ -45,8 +45,12 @@ router.delete('/rejected-sellers/all', sellerActionController.deleteAllRejectedS
 router.get('/products', productController.getAllProducts);
 router.get('/products/inactive', productController.getInactiveProducts);
 router.get('/products/out-of-stock', productController.getOutOfStockProducts);
+router.get('/products/admin-removed', productController.getAdminRemovedProducts);
 router.post('/products/notify-all-out-of-stock', productController.notifyAllSellersOutOfStock);
 router.post('/product/:id/notify-out-of-stock', productController.notifySellerOutOfStock);
+router.post('/product/:id/admin-remove', productController.adminRemoveProduct);
+router.post('/product/:id/restore', productController.restoreAdminRemovedProduct);
+router.delete('/products/admin-removed/all', productController.deleteAllAdminRemovedProducts);
 router.delete('/product/:id', productController.deleteProduct);
 router.delete('/products/inactive/all', productController.deleteAllInactiveProducts);
 

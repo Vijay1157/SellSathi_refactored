@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
-import { ShieldCheck, Users, Box, Truck, AlertOctagon, Loader, Home, Mail, DollarSign, FileText, UserCircle } from 'lucide-react';
+import { useState, useEffect, useRef } from 'react';
+import { ShieldCheck, Users, Box, Truck, AlertOctagon, Loader, Home, Mail, DollarSign, FileText } from 'lucide-react';
 import { authFetch } from '@/modules/shared/utils/api';
 import SellerAnalyticsModal from '@/modules/admin/components/SellerAnalyticsModal';
 import SellerInvoiceModal from '@/modules/admin/components/SellerInvoiceModal';
@@ -10,7 +10,6 @@ import OrdersTab from '@/modules/admin/components/OrdersTab';
 import ReviewsTab from '@/modules/admin/components/ReviewsTab';
 import PayoutsTab from '@/modules/admin/components/PayoutsTab';
 import InvoicesTab from '@/modules/admin/components/InvoicesTab';
-import ProfileTab from '@/modules/admin/components/ProfileTab';
 
 export default function AdminDashboard() {
     const [activeTab, setActiveTab] = useState('home');
@@ -35,10 +34,10 @@ export default function AdminDashboard() {
     const [isDownloadingPDF, setIsDownloadingPDF] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedProductDate, setSelectedProductDate] = useState('');
-    const [adminProfile, setAdminProfile] = useState(null);
 
     // Track which tabs have already been loaded
     const [loadedTabs, setLoadedTabs] = useState(new Set());
+    const contentRef = useRef(null);
 
     // Update selected invoice seller when allSellers data changes
     useEffect(() => {
@@ -72,10 +71,9 @@ export default function AdminDashboard() {
         }
     }, [analytics]);
 
-    // Fetch stats and admin profile on mount
+    // Fetch stats on mount
     useEffect(() => {
         fetchStats();
-        fetchAdminProfile();
     }, []);
 
     // Lazy-load tab data when active tab changes
@@ -119,20 +117,6 @@ export default function AdminDashboard() {
             console.warn('[fetchStats] failed:', err.message);
         } finally {
             setLoading(false);
-        }
-    };
-
-    const fetchAdminProfile = async () => {
-        try {
-            const res = await safeFetch('/admin/profile');
-            if (res.ok) {
-                const d = await res.json();
-                if (d.success) {
-                    setAdminProfile(d.profile);
-                }
-            }
-        } catch (err) {
-            console.warn('[fetchAdminProfile] failed:', err.message);
         }
     };
 
@@ -220,8 +204,6 @@ export default function AdminDashboard() {
                         }
                     }
                 }
-            } else if (tab === 'profile') {
-                await fetchAdminProfile();
             }
             setLoadedTabs(prev => new Set([...prev, tab]));
         } catch (err) {
@@ -281,7 +263,6 @@ export default function AdminDashboard() {
         { key: 'feedback', label: 'Customer Feedback', icon: <Mail size={20} /> },
         { key: 'payout', label: 'Payout', icon: <DollarSign size={20} /> },
         { key: 'invoice', label: 'Seller Invoice', icon: <FileText size={20} /> },
-        { key: 'profile', label: 'Profile', icon: <UserCircle size={20} /> },
     ];
 
     return (
@@ -342,16 +323,15 @@ export default function AdminDashboard() {
                         {loading ? (
                             <div className="flex justify-center p-12 glass-card flex-1"><Loader className="animate-spin" /></div>
                         ) : (
-                            <div className="glass-card flex-1" style={{ padding: activeTab === 'home' ? '2rem' : '0', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+                            <div className="glass-card flex-1" ref={contentRef} style={{ padding: activeTab === 'home' ? '2rem' : '0', display: 'flex', flexDirection: 'column', overflow: 'auto' }}>
                                 <div style={{ padding: activeTab === 'home' ? '0' : '1.5rem', borderBottom: activeTab === 'home' ? 'none' : '1px solid var(--border)' }}>
-                                    {activeTab === 'home' && <OverviewTab stats={stats} loading={loading} setActiveTab={setActiveTab} setSearchTerm={setSearchTerm} setSelectedProductDate={setSelectedProductDate} adminProfile={adminProfile} />}
-                                    {activeTab === 'sellers' && <SellersTab sellers={sellers} allSellers={allSellers} orders={orders} loading={loading} fetchAllData={fetchAllData} />}
+                                    {activeTab === 'home' && <OverviewTab stats={stats} loading={loading} setActiveTab={setActiveTab} setSearchTerm={setSearchTerm} setSelectedProductDate={setSelectedProductDate} />}
+                                    {activeTab === 'sellers' && <SellersTab sellers={sellers} allSellers={allSellers} orders={orders} loading={loading} fetchAllData={fetchAllData} scrollToTop={() => { if (contentRef.current) contentRef.current.scrollTop = 0; }} />}
                                     {activeTab === 'products' && <ProductsTab products={products} fetchAllData={fetchAllData} />}
                                     {activeTab === 'orders' && <OrdersTab orders={orders} fetchAllData={fetchAllData} />}
                                     {activeTab === 'feedback' && <ReviewsTab reviews={reviews} fetchAllData={fetchAllData} />}
                                     {activeTab === 'payout' && <PayoutsTab analytics={analytics} setSelectedAnalyticsSeller={setSelectedAnalyticsSeller} fetchAllData={fetchAllData} />}
                                     {activeTab === 'invoice' && <InvoicesTab allSellers={allSellers} setSelectedInvoiceSeller={setSelectedInvoiceSeller} fetchAllData={fetchAllData} />}
-                                    {activeTab === 'profile' && <ProfileTab adminData={adminProfile} fetchAdminProfile={fetchAdminProfile} />}
                                 </div>
                             </div>
                         )}

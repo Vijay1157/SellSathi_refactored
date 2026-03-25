@@ -289,6 +289,8 @@ const getSellerAnalytics = async (req, res) => {
                 createdAt: sellerData.createdAt,
                 joined: formattedDate,
                 timestamp: timestamp,
+                gstNumber: sellerData.gstNumber || null,
+                panNumber: sellerData.panNumber || null,
                 bankName: sellerData.bankName || null,
                 accountHolderName: sellerData.accountHolderName || null,
                 accountNumber: sellerData.accountNumber || null,

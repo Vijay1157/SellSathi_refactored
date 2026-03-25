@@ -825,3 +825,154 @@ exports.sendOutOfStockNotification = async (sellerEmail, sellerName, productName
         return null;
     }
 };
+
+
+/**
+ * Send product removal notification to seller
+ */
+exports.sendProductRemovedNotification = async (sellerEmail, sellerName, productName, productDetails = {}) => {
+    try {
+        console.log(`📧 Sending product removal notification to ${sellerEmail} for product: ${productName}`);
+
+        const adminConfig = await getAdminConfig();
+        const senderConfig = await getSenderConfig();
+
+        const mailOptions = {
+            ...senderConfig,
+            to: sellerEmail,
+            subject: `Product Removed: ${productName} - ${adminConfig.websiteName}`,
+            html: `
+                <div style="font-family: Arial, sans-serif; padding: 20px; color: #333; line-height: 1.6;">
+                    <div style="text-align: center; margin-bottom: 20px;">
+                        <h1 style="color: #2563eb; margin: 0;">${adminConfig.websiteName}</h1>
+                        <p style="color: #64748b; margin: 5px 0;">${adminConfig.websiteInfo}</p>
+                    </div>
+                    <div style="background: white; border: 1px solid #e2e8f0; border-radius: 12px; padding: 24px; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);">
+                        <h2 style="color: #dc2626; margin-top: 0;">⚠️ Product Removed from Website</h2>
+                        <p>Hi <strong>${sellerName}</strong>,</p>
+                        <p>We're writing to inform you that your product <strong>"${productName}"</strong> has been removed from the website by the admin.</p>
+                        
+                        <div style="background: #fef2f2; padding: 20px; border-radius: 8px; margin: 24px 0; border: 1px solid #fecaca;">
+                            <h3 style="margin-top: 0; color: #991b1b; font-size: 16px;">Product Details</h3>
+                            <table style="width: 100%; border-collapse: collapse;">
+                                <tr>
+                                    <td style="padding: 8px 0; color: #64748b;">Product Name:</td>
+                                    <td style="padding: 8px 0; text-align: right; color: #1e293b; font-weight: 600;">${productName}</td>
+                                </tr>
+                                ${productDetails.category ? `
+                                <tr>
+                                    <td style="padding: 8px 0; color: #64748b;">Category:</td>
+                                    <td style="padding: 8px 0; text-align: right; color: #1e293b;">${productDetails.category}</td>
+                                </tr>` : ''}
+                                ${productDetails.price ? `
+                                <tr>
+                                    <td style="padding: 8px 0; color: #64748b;">Price:</td>
+                                    <td style="padding: 8px 0; text-align: right; color: #1e293b;">₹${productDetails.price}</td>
+                                </tr>` : ''}
+                                <tr>
+                                    <td style="padding: 8px 0; color: #64748b;">Status:</td>
+                                    <td style="padding: 8px 0; text-align: right; color: #dc2626; font-weight: 600;">Removed by Admin</td>
+                                </tr>
+                            </table>
+                        </div>
+
+                        <p style="color: #475569; font-size: 14px; margin-bottom: 24px;">
+                            This product is no longer visible to customers on the website. If you believe this was done in error or have questions, please contact the admin at <a href="mailto:${adminConfig.email}" style="color: #2563eb;">${adminConfig.email}</a>.
+                        </p>
+
+                        <div style="text-align: center;">
+                            <a href="${FRONTEND_URL}/seller/dashboard" style="background: #2563eb; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: 600; display: inline-block;">Go to Seller Dashboard</a>
+                        </div>
+                    </div>
+                    <div style="text-align: center; margin-top: 24px; color: #94a3b8; font-size: 12px;">
+                        <p>&copy; 2026 ${adminConfig.websiteName}. All rights reserved.</p>
+                        <p>Contact Admin: ${adminConfig.email}</p>
+                    </div>
+                </div>
+            `
+        };
+
+        const result = await transporter.sendMail(mailOptions);
+        console.log('✅ Product removal notification sent successfully:', result.messageId);
+        return result;
+
+    } catch (error) {
+        console.error('❌ Product removal notification error:', error);
+        return null;
+    }
+};
+
+/**
+ * Send product restored notification to seller
+ */
+exports.sendProductRestoredNotification = async (sellerEmail, sellerName, productName, productDetails = {}) => {
+    try {
+        console.log(`📧 Sending product restored notification to ${sellerEmail} for product: ${productName}`);
+
+        const adminConfig = await getAdminConfig();
+        const senderConfig = await getSenderConfig();
+
+        const mailOptions = {
+            ...senderConfig,
+            to: sellerEmail,
+            subject: `Product Restored: ${productName} - ${adminConfig.websiteName}`,
+            html: `
+                <div style="font-family: Arial, sans-serif; padding: 20px; color: #333; line-height: 1.6;">
+                    <div style="text-align: center; margin-bottom: 20px;">
+                        <h1 style="color: #2563eb; margin: 0;">${adminConfig.websiteName}</h1>
+                        <p style="color: #64748b; margin: 5px 0;">${adminConfig.websiteInfo}</p>
+                    </div>
+                    <div style="background: white; border: 1px solid #e2e8f0; border-radius: 12px; padding: 24px; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);">
+                        <h2 style="color: #16a34a; margin-top: 0;">✅ Product Restored to Website</h2>
+                        <p>Hi <strong>${sellerName}</strong>,</p>
+                        <p>Great news! Your product <strong>"${productName}"</strong> has been restored and is now live on the website again.</p>
+                        
+                        <div style="background: #f0fdf4; padding: 20px; border-radius: 8px; margin: 24px 0; border: 1px solid #bbf7d0;">
+                            <h3 style="margin-top: 0; color: #166534; font-size: 16px;">Product Details</h3>
+                            <table style="width: 100%; border-collapse: collapse;">
+                                <tr>
+                                    <td style="padding: 8px 0; color: #64748b;">Product Name:</td>
+                                    <td style="padding: 8px 0; text-align: right; color: #1e293b; font-weight: 600;">${productName}</td>
+                                </tr>
+                                ${productDetails.category ? `
+                                <tr>
+                                    <td style="padding: 8px 0; color: #64748b;">Category:</td>
+                                    <td style="padding: 8px 0; text-align: right; color: #1e293b;">${productDetails.category}</td>
+                                </tr>` : ''}
+                                ${productDetails.price ? `
+                                <tr>
+                                    <td style="padding: 8px 0; color: #64748b;">Price:</td>
+                                    <td style="padding: 8px 0; text-align: right; color: #1e293b;">₹${productDetails.price}</td>
+                                </tr>` : ''}
+                                <tr>
+                                    <td style="padding: 8px 0; color: #64748b;">Status:</td>
+                                    <td style="padding: 8px 0; text-align: right; color: #16a34a; font-weight: 600;">Active & Live</td>
+                                </tr>
+                            </table>
+                        </div>
+
+                        <p style="color: #475569; font-size: 14px; margin-bottom: 24px;">
+                            Your product is now visible to customers and available for purchase. You can manage your products and view sales in your seller dashboard.
+                        </p>
+
+                        <div style="text-align: center;">
+                            <a href="${FRONTEND_URL}/seller/dashboard" style="background: #16a34a; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: 600; display: inline-block;">Go to Seller Dashboard</a>
+                        </div>
+                    </div>
+                    <div style="text-align: center; margin-top: 24px; color: #94a3b8; font-size: 12px;">
+                        <p>&copy; 2026 ${adminConfig.websiteName}. All rights reserved.</p>
+                        <p>Contact Admin: ${adminConfig.email}</p>
+                    </div>
+                </div>
+            `
+        };
+
+        const result = await transporter.sendMail(mailOptions);
+        console.log('✅ Product restored notification sent successfully:', result.messageId);
+        return result;
+
+    } catch (error) {
+        console.error('❌ Product restored notification error:', error);
+        return null;
+    }
+};

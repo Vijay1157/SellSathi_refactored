@@ -22,7 +22,9 @@ const getAllProducts = async (req, res) => {
         }
 
         const snapshot = await query.get();
-        const products = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        const products = snapshot.docs
+            .filter(doc => !doc.data().adminRemoved)
+            .map(doc => ({ id: doc.id, ...doc.data() }));
 
         cache.set(cacheKey, products, PRODUCTS_CACHE_TTL);
         return res.status(200).json({ success: true, products });
@@ -45,8 +47,11 @@ const getProductById = async (req, res) => {
 
         const doc = await db.collection("products").doc(id).get();
         if (!doc.exists) return res.status(404).json({ success: false, message: "Product not found" });
+        
+        const data = doc.data();
+        if (data.adminRemoved) return res.status(404).json({ success: false, message: "Product not found" });
 
-        const product = { id: doc.id, ...doc.data() };
+        const product = { id: doc.id, ...data };
         cache.set(cacheKey, product, 10 * 60 * 1000);
         return res.status(200).json({ success: true, product });
     } catch (error) {
@@ -65,7 +70,9 @@ const getSellerProducts = async (req, res) => {
         if (cached) return res.status(200).json({ success: true, products: cached });
 
         const snapshot = await db.collection('products').where('sellerId', '==', uid).get();
-        const products = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        const products = snapshot.docs
+            .filter(doc => !doc.data().adminRemoved)
+            .map(doc => ({ id: doc.id, ...doc.data() }));
         cache.set(cacheKey, products, PRODUCTS_CACHE_TTL);
         return res.status(200).json({ success: true, products });
     } catch (error) {

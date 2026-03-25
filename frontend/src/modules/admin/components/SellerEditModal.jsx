@@ -116,36 +116,31 @@ export default function SellerEditModal({ seller, onClose, onSave }) {
     ];
 
     return (
-        <div style={{
-            position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
-            backgroundColor: 'rgba(0,0,0,0.7)', display: 'flex',
-            alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: '2rem'
-        }}>
+        <div className="animate-fade-in" style={{ width: '100%', padding: '2rem', display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+            {/* Header */}
             <div style={{
-                backgroundColor: 'white', borderRadius: '12px', width: '100%',
-                maxWidth: '860px', maxHeight: '90vh', overflow: 'hidden',
-                boxShadow: '0 20px 60px rgba(0,0,0,0.3)'
+                borderRadius: '12px', padding: '1.5rem 2rem',
+                display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                background: 'linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%)', color: 'white'
             }}>
-                {/* Header */}
-                <div style={{
-                    padding: '1.5rem 2rem', borderBottom: '1px solid var(--border)',
-                    display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-                    background: 'linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%)', color: 'white'
-                }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                    <button onClick={onClose} style={{
+                        background: 'rgba(255,255,255,0.2)', border: 'none', borderRadius: '10px',
+                        padding: '0.6rem 1.1rem', display: 'flex', alignItems: 'center',
+                        gap: '6px', cursor: 'pointer', color: 'white', fontWeight: 600, fontSize: '0.9rem'
+                    }}>
+                        ← Back
+                    </button>
                     <div>
                         <h2 style={{ margin: 0, fontSize: '1.4rem', fontWeight: 700 }}>Edit Seller Details</h2>
                         <p style={{ margin: '0.4rem 0 0', opacity: 0.9, fontSize: '0.85rem' }}>
                             {seller.shopName || seller.name} • {seller.email}
                         </p>
                     </div>
-                    <button onClick={onClose} style={{
-                        background: 'rgba(255,255,255,0.2)', border: 'none', borderRadius: '50%',
-                        width: '40px', height: '40px', display: 'flex', alignItems: 'center',
-                        justifyContent: 'center', cursor: 'pointer', color: 'white'
-                    }}>
-                        <X size={20} />
-                    </button>
                 </div>
+            </div>
+
+            <div style={{ background: 'var(--surface-card, white)', borderRadius: '12px', border: '1px solid var(--border)', overflow: 'hidden' }}>
 
                 {loading ? (
                     <div style={{ padding: '3rem', textAlign: 'center' }}>

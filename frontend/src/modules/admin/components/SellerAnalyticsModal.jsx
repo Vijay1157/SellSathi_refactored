@@ -10,6 +10,11 @@ export default function SellerAnalyticsModal({ seller, onClose, onDownloadPDF, i
     const [showBankDetails, setShowBankDetails] = useState(false);
     const [isRefreshing, setIsRefreshing] = useState(false);
 
+    // ── Bank Details inline page ──
+    if (showBankDetails) {
+        return <BankDetailsModal seller={seller} onClose={() => setShowBankDetails(false)} />;
+    }
+
     // Handle refresh with loading state
     const handleRefresh = async () => {
         setIsRefreshing(true);
@@ -208,14 +213,6 @@ export default function SellerAnalyticsModal({ seller, onClose, onDownloadPDF, i
                 {/* All Products Table */}
                 <SellerAnalyticsTable seller={seller} onDownloadPDF={onDownloadPDF} />
             </div>
-
-            {/* Bank Details Modal */}
-            {showBankDetails && (
-                <BankDetailsModal 
-                    seller={seller} 
-                    onClose={() => setShowBankDetails(false)} 
-                />
-            )}
         </div>
     );
 }

@@ -128,6 +128,8 @@ const getWishlist = async (req, res) => {
                 
                 if (productDoc.exists) {
                     const productData = productDoc.data();
+                    // Skip admin-removed products
+                    if (productData.adminRemoved) continue;
                     // Merge wishlist item with fresh product data (prioritize fresh data)
                     items.push({
                         id: doc.id,

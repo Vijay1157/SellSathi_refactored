@@ -1,157 +1,236 @@
-import { useState } from 'react';
-import { X, Check, CreditCard, User, Store, MapPin } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { X, Check, CreditCard, User, Store, MapPin, ArrowLeft, Calendar } from 'lucide-react';
 import BankDetailsModal from '@/modules/admin/components/BankDetailsModal';
 
-/**
- * SellerDetailModal — shows full seller info, Aadhaar image, and approve/reject/block actions.
- * Extracted from SellersTab to keep each file under 500 lines.
- */
-export default function SellerDetailModal({ seller, onClose, onApprove, onReject, onBlock }) {
+const Field = ({ label, value, mono = false, span = false }) => (
+    <div style={{
+        background: 'var(--surface)',
+        border: '1px solid var(--border)',
+        borderRadius: '10px',
+        padding: '0.85rem 1.1rem',
+        gridColumn: span ? 'span 2' : undefined,
+    }}>
+        <div style={{ fontSize: '0.72rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--text-muted)', marginBottom: '4px' }}>{label}</div>
+        <div style={{ fontWeight: 600, fontSize: '0.95rem', fontFamily: mono ? 'monospace' : undefined, color: 'var(--text)' }}>{value || '—'}</div>
+    </div>
+);
+
+const Section = ({ icon, title, children }) => (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', paddingBottom: '0.5rem', borderBottom: '2px solid var(--border)' }}>
+            {icon}
+            <span style={{ fontWeight: 700, fontSize: '0.85rem', textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--text)' }}>{title}</span>
+        </div>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
+            {children}
+        </div>
+    </div>
+);
+
+export default function SellerDetailModal({ seller, onClose, onApprove, onReject, onBlock, scrollToTop }) {
     const [showBankDetailsModal, setShowBankDetailsModal] = useState(false);
     const [blockModalOpen, setBlockModalOpen] = useState(false);
     const [blockDuration, setBlockDuration] = useState('1');
+    const [customDays, setCustomDays] = useState('');
+
+    const doScrollTop = () => {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        if (scrollToTop) scrollToTop();
+    };
+
+    // Scroll to top when detail view opens
+    useEffect(() => { doScrollTop(); }, []);
+
+    // Scroll to top when block page opens
+    useEffect(() => { if (blockModalOpen) doScrollTop(); }, [blockModalOpen]);
 
     if (!seller) return null;
 
     const handleBlockConfirm = () => {
-        onBlock(seller.uid, blockDuration === 'permanent' ? 'permanent' : parseInt(blockDuration));
+        const duration = blockDuration === 'custom' ? parseInt(customDays) : blockDuration === 'permanent' ? 'permanent' : parseInt(blockDuration);
+        onBlock(seller.uid, duration);
         setBlockModalOpen(false);
     };
 
-    return (
-        <>
-            {/* Seller Detail Overlay */}
-            <div
-                className="modal-overlay flex items-center justify-center"
-                style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(10px)', zIndex: 9999, padding: '2rem' }}
-                onClick={e => e.target === e.currentTarget && onClose()}
-            >
-                <div className="glass-card animate-fade-in" style={{ padding: 0, overflow: 'hidden', background: 'white', border: '1px solid var(--border)', borderRadius: '1.5rem', boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)', width: '100%', maxWidth: '900px', maxHeight: '90vh', display: 'flex', flexDirection: 'column' }}>
+    // ── Bank Details page ───────────────────────────────────────────────────
+    if (showBankDetailsModal) {
+        return <BankDetailsModal seller={seller} onClose={() => { setShowBankDetailsModal(false); doScrollTop(); }} />;
+    }
 
-                    {/* Header */}
-                    <div style={{ padding: '1.5rem 2rem', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--surface)' }}>
-                        <div>
-                            <h2 style={{ fontSize: '1.5rem', fontWeight: 800, color: 'var(--text)' }}>Review Seller Application</h2>
-                            <p className="text-muted" style={{ margin: 0 }}>UID: {seller.uid}</p>
-                        </div>
-                        <div className="flex items-center gap-2">
-                            <button onClick={() => setShowBankDetailsModal(true)} className="btn btn-primary" style={{ padding: '0.5rem 1rem', fontSize: '0.875rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '6px' }}>
-                                <CreditCard size={16} /> View Bank Details
-                            </button>
-                            <button onClick={onClose} className="btn btn-secondary" style={{ padding: '0.5rem', borderRadius: '50%', width: '40px', height: '40px' }}>
-                                <X size={20} />
-                            </button>
-                        </div>
+    // ── Block page ──────────────────────────────────────────────────────────
+    if (blockModalOpen) {
+        return (
+            <div className="animate-fade-in" style={{ width: '100%', padding: '2rem', display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+                {/* Top bar */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                    <button className="btn btn-secondary" onClick={() => setBlockModalOpen(false)} style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '0.5rem 1rem', fontSize: '0.9rem' }}>
+                        <ArrowLeft size={16} /> Back
+                    </button>
+                    <div>
+                        <h2 style={{ margin: 0, fontSize: '1.6rem', fontWeight: 800, color: 'var(--error)' }}>Block Seller</h2>
+                        <span style={{ fontSize: '0.82rem', color: 'var(--text-muted)' }}>{seller.shopName} · UID: {seller.uid}</span>
+                    </div>
+                </div>
+
+                {/* Warning card */}
+                <div style={{ background: 'rgba(239,68,68,0.07)', border: '1px solid rgba(239,68,68,0.3)', borderRadius: '12px', padding: '1.25rem 1.5rem', fontSize: '0.9rem', color: '#b91c1c', lineHeight: 1.7 }}>
+                    Blocking <strong>{seller.shopName}</strong> will immediately deactivate their account and hide all their products from customers. The seller will be notified via email.
+                </div>
+
+                {/* Form card */}
+                <div className="glass-card" style={{ padding: '2rem', display: 'flex', flexDirection: 'column', gap: '1.5rem', maxWidth: '560px' }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                        <label style={{ fontWeight: 700, fontSize: '0.9rem' }}>Block Duration</label>
+                        <select
+                            value={blockDuration}
+                            onChange={e => setBlockDuration(e.target.value)}
+                            style={{ width: '100%', padding: '0.85rem 1rem', borderRadius: '8px', border: '1px solid var(--border)', fontSize: '1rem', background: 'var(--surface)', color: 'var(--text)' }}
+                        >
+                            <option value="1">1 Day</option>
+                            <option value="3">3 Days</option>
+                            <option value="5">5 Days</option>
+                            <option value="7">7 Days</option>
+                            <option value="14">14 Days</option>
+                            <option value="30">30 Days</option>
+                            <option value="custom">Custom Days</option>
+                            <option value="permanent">Permanent Block</option>
+                        </select>
                     </div>
 
-                    {/* Scrollable Content */}
-                    <div style={{ padding: '2rem', overflowY: 'auto', flex: 1 }}>
-                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1.2fr', gap: '2rem' }}>
-                            {/* Document image */}
-                            <div className="flex flex-col gap-4">
-                                <div className="flex items-center gap-2 mb-2"><CreditCard size={18} className="text-primary" /><h4 style={{ margin: 0 }}>Document Proof</h4></div>
-                                <div style={{ background: '#111', borderRadius: '12px', overflow: 'hidden', border: '1px solid var(--border)', boxShadow: 'var(--shadow-md)' }}>
-                                    <img src={seller.aadhaarImageUrl} alt="Identity Document" style={{ width: '100%', display: 'block' }} />
-                                </div>
-                                <p className="text-xs text-center text-muted italic">Registered Aadhaar/Identity Card Preview</p>
-                            </div>
-
-                            {/* Info fields */}
-                            <div className="flex flex-col gap-6">
-                                {/* Personal identity */}
-                                <div className="flex flex-col gap-3">
-                                    <div className="flex items-center gap-2" style={{ borderBottom: '1px solid var(--border)', paddingBottom: '0.5rem' }}><User size={16} className="text-primary" /><span style={{ fontWeight: 700, fontSize: '0.8rem', textTransform: 'uppercase' }}>Personal Identity</span></div>
-                                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-                                        <div style={{ background: 'var(--surface)', padding: '0.75rem 1rem', borderRadius: '10px' }}><small className="text-muted mb-1 d-block">Full Name</small><p style={{ fontWeight: 700, margin: 0 }}>{seller.extractedName || seller.name}</p></div>
-                                        <div style={{ background: 'var(--surface)', padding: '0.75rem 1rem', borderRadius: '10px' }}><small className="text-muted mb-1 d-block">UIDAI Number</small><p style={{ fontWeight: 700, margin: 0, fontFamily: 'monospace', letterSpacing: '0.05em' }}>{seller.aadhaarNumber || 'Not Extracted'}</p></div>
-                                        <div style={{ background: 'var(--surface)', padding: '0.75rem 1rem', borderRadius: '10px' }}><small className="text-muted mb-1 d-block">D.O.B</small><p style={{ fontWeight: 700, margin: 0 }}>{seller.dateOfBirth || 'N/A'}</p></div>
-                                        <div style={{ background: 'var(--surface)', padding: '0.75rem 1rem', borderRadius: '10px', gridColumn: 'span 2' }}><small className="text-muted mb-1 d-block">Age / Gender</small><p style={{ fontWeight: 700, margin: 0 }}>{seller.age || 'N/A'} | {seller.gender || 'N/A'}</p></div>
-                                    </div>
-                                </div>
-
-                                {/* Store profile */}
-                                <div className="flex flex-col gap-3">
-                                    <div className="flex items-center gap-2" style={{ borderBottom: '1px solid var(--border)', paddingBottom: '0.5rem' }}><Store size={16} className="text-secondary" /><span style={{ fontWeight: 700, fontSize: '0.8rem', textTransform: 'uppercase' }}>Store Profile</span></div>
-                                    <div style={{ background: 'var(--surface)', padding: '1rem', borderRadius: '10px' }}>
-                                        <small className="text-muted mb-1 d-block">Store Name</small>
-                                        <p style={{ fontWeight: 800, fontSize: '1.2rem', color: 'var(--primary)', margin: '0 0 0.5rem 0' }}>{seller.shopName}</p>
-                                        <div className="flex flex-wrap gap-12" style={{ marginTop: '0.5rem' }}>
-                                            <div><small className="text-muted" style={{ display: 'block', marginBottom: '4px', fontWeight: 600, textTransform: 'uppercase', fontSize: '10px', letterSpacing: '0.05em' }}>Shop Category</small><span style={{ fontWeight: 600, color: 'var(--text)', fontSize: '1rem' }}>{seller.category}</span></div>
-                                            <div><small className="text-muted" style={{ display: 'block', marginBottom: '4px', fontWeight: 600, textTransform: 'uppercase', fontSize: '10px', letterSpacing: '0.05em' }}>Contact Number</small><span style={{ fontWeight: 600, color: 'var(--text)', fontSize: '1rem' }}>{seller.email}</span></div>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                {/* Address */}
-                                <div className="flex flex-col gap-3">
-                                    <div className="flex items-center gap-2" style={{ borderBottom: '1px solid var(--border)', paddingBottom: '0.5rem' }}><MapPin size={16} className="text-warning" /><span style={{ fontWeight: 700, fontSize: '0.8rem', textTransform: 'uppercase' }}>Verification Address</span></div>
-                                    <div style={{ background: 'hsla(40, 90%, 60%, 0.05)', border: '1px dashed var(--warning)', padding: '1rem', borderRadius: '10px' }}>
-                                        <p style={{ fontSize: '0.9rem', lineHeight: 1.6, margin: 0, color: 'var(--text)' }}>{seller.address || 'Address information not extracted correctly.'}</p>
-                                    </div>
-                                </div>
-                            </div>
+                    {blockDuration === 'custom' && (
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                            <label style={{ fontWeight: 700, fontSize: '0.9rem' }}>Number of Days</label>
+                            <input
+                                type="number" min="1" placeholder="e.g. 60"
+                                value={customDays}
+                                onChange={e => setCustomDays(e.target.value)}
+                                style={{ width: '100%', padding: '0.85rem 1rem', borderRadius: '8px', border: '1px solid var(--border)', fontSize: '1rem', background: 'var(--surface)', color: 'var(--text)' }}
+                            />
                         </div>
-                    </div>
+                    )}
 
-                    {/* Footer Actions */}
-                    <div style={{ padding: '1.5rem 2rem', background: 'var(--surface)', borderTop: '1px solid var(--border)', display: 'flex', gap: '1rem', width: '100%' }}>
-                        {seller.status === 'PENDING' ? (
-                            <>
-                                <button className="btn btn-primary" style={{ flex: '1 1 50%', fontSize: '1rem', fontWeight: 700, display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px' }} onClick={() => { onApprove(seller.uid); onClose(); }}>
-                                    <Check size={20} /> Approve Seller
-                                </button>
-                                <button className="btn btn-secondary" style={{ flex: '1 1 50%', fontSize: '1rem', fontWeight: 700, color: 'var(--error)', borderColor: 'var(--error)', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px', background: 'white' }} onClick={() => { onReject(seller.uid); onClose(); }}>
-                                    <X size={20} /> Reject Application
-                                </button>
-                            </>
-                        ) : seller.status === 'APPROVED' ? (
-                            <button className="btn btn-secondary" style={{ flex: '1 1 100%', fontSize: '1rem', fontWeight: 700, color: 'var(--error)', borderColor: 'var(--error)', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px', background: 'white' }} onClick={() => setBlockModalOpen(true)}>
-                                <X size={20} /> Block Seller
-                            </button>
-                        ) : (
-                            <button className="btn btn-secondary" style={{ flex: '1 1 100%', fontSize: '1rem', fontWeight: 700, display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px' }} onClick={onClose}>Close</button>
-                        )}
+                    <div style={{ display: 'flex', gap: '1rem', paddingTop: '0.5rem', borderTop: '1px solid var(--border)' }}>
+                        <button className="btn btn-secondary" onClick={() => setBlockModalOpen(false)} style={{ flex: 1, padding: '0.85rem', fontWeight: 600, fontSize: '1rem' }}>
+                            Cancel
+                        </button>
+                        <button className="btn btn-primary" onClick={handleBlockConfirm} style={{ flex: 1, padding: '0.85rem', fontWeight: 700, fontSize: '1rem', background: 'var(--error)', borderColor: 'var(--error)' }}>
+                            Confirm Block
+                        </button>
                     </div>
                 </div>
             </div>
+        );
+    }
 
-            {/* Block Duration Modal */}
-            {blockModalOpen && (
-                <div className="modal-overlay flex items-center justify-center" style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(10px)', zIndex: 10000, padding: '2rem' }} onClick={e => e.target === e.currentTarget && setBlockModalOpen(false)}>
-                    <div className="glass-card animate-fade-in" style={{ padding: '2rem', background: 'white', border: '1px solid var(--border)', borderRadius: '1rem', boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)', width: '100%', maxWidth: '500px' }}>
-                        <h2 style={{ fontSize: '1.5rem', fontWeight: 800, color: 'var(--text)', marginBottom: '0.5rem' }}>Block Seller</h2>
-                        <p className="text-muted">Block {seller.shopName} for a specified duration</p>
-                        <div style={{ marginBottom: '1.5rem' }}>
-                            <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 600 }}>Block Duration</label>
-                            <select value={blockDuration} onChange={e => setBlockDuration(e.target.value)} style={{ width: '100%', padding: '0.75rem', borderRadius: '8px', border: '1px solid var(--border)', fontSize: '1rem' }}>
-                                <option value="1">1 Day</option>
-                                <option value="3">3 Days</option>
-                                <option value="5">5 Days</option>
-                                <option value="7">7 Days</option>
-                                <option value="14">14 Days</option>
-                                <option value="30">30 Days</option>
-                                <option value="custom">Custom Days</option>
-                                <option value="permanent">Permanent Block</option>
-                            </select>
-                        </div>
-                        {blockDuration === 'custom' && (
-                            <div style={{ marginBottom: '1.5rem' }}>
-                                <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 600 }}>Number of Days</label>
-                                <input type="number" min="1" placeholder="Enter number of days" onChange={e => setBlockDuration(e.target.value)} style={{ width: '100%', padding: '0.75rem', borderRadius: '8px', border: '1px solid var(--border)', fontSize: '1rem' }} />
-                            </div>
-                        )}
-                        <div style={{ display: 'flex', gap: '1rem' }}>
-                            <button className="btn btn-secondary" onClick={() => setBlockModalOpen(false)} style={{ flex: 1, padding: '0.75rem' }}>Cancel</button>
-                            <button className="btn btn-primary" onClick={handleBlockConfirm} style={{ flex: 1, padding: '0.75rem', background: 'var(--error)', borderColor: 'var(--error)' }}>Block Seller</button>
+    const statusColor = seller.status === 'APPROVED' ? { bg: 'rgba(var(--success-rgb),0.12)', color: 'var(--success)' }
+        : seller.status === 'REJECTED' ? { bg: 'rgba(239,68,68,0.12)', color: '#ef4444' }
+        : seller.status === 'PENDING' ? { bg: 'rgba(255,152,0,0.12)', color: '#f59e0b' }
+        : { bg: 'var(--glass)', color: 'var(--text-muted)' };
+
+    return (
+        <>
+            {/* Full-page inline detail view */}
+            <div className="animate-fade-in" style={{ width: '100%', padding: '2rem', display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+
+                {/* Top bar */}
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '1rem' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                        <button className="btn btn-secondary" onClick={onClose} style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '0.5rem 1rem', fontSize: '0.9rem' }}>
+                            <ArrowLeft size={16} /> Back
+                        </button>
+                        <div>
+                            <h2 style={{ margin: 0, fontSize: '1.6rem', fontWeight: 800 }}>{seller.shopName}</h2>
+                            <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)', fontFamily: 'monospace' }}>UID: {seller.uid}</span>
                         </div>
                     </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
+                        <span style={{ padding: '6px 14px', borderRadius: '8px', fontSize: '0.82rem', fontWeight: 700, background: statusColor.bg, color: statusColor.color }}>
+                            {seller.isBlocked ? 'BLOCKED' : seller.status}
+                        </span>
+                        <button onClick={() => setShowBankDetailsModal(true)} className="btn btn-secondary" style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.85rem' }}>
+                            <CreditCard size={15} /> Bank Details
+                        </button>
+                    </div>
                 </div>
-            )}
 
-            {/* Bank Details Modal */}
+                {/* Main content grid */}
+                <div style={{ display: 'grid', gridTemplateColumns: '340px 1fr', gap: '2rem', alignItems: 'start' }}>
+
+                    {/* Left — Aadhaar image */}
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', paddingBottom: '0.5rem', borderBottom: '2px solid var(--border)' }}>
+                            <CreditCard size={16} style={{ color: 'var(--primary)' }} />
+                            <span style={{ fontWeight: 700, fontSize: '0.85rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Identity Document</span>
+                        </div>
+                        {seller.aadhaarImageUrl ? (
+                            <div style={{ borderRadius: '12px', overflow: 'hidden', border: '1px solid var(--border)', background: '#111' }}>
+                                <img src={seller.aadhaarImageUrl} alt="Aadhaar / Identity Document" style={{ width: '100%', display: 'block' }} />
+                            </div>
+                        ) : (
+                            <div style={{ borderRadius: '12px', border: '1px dashed var(--border)', padding: '3rem', textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.85rem' }}>
+                                No document uploaded
+                            </div>
+                        )}
+                        <p style={{ margin: 0, fontSize: '0.75rem', textAlign: 'center', color: 'var(--text-muted)', fontStyle: 'italic' }}>Aadhaar / Identity Card Preview</p>
+                    </div>
+
+                    {/* Right — Info sections */}
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '1.75rem' }}>
+
+                        <Section icon={<User size={16} style={{ color: 'var(--primary)' }} />} title="Personal Identity">
+                            <Field label="Full Name" value={seller.extractedName || seller.name} />
+                            <Field label="UIDAI / Aadhaar Number" value={seller.aadhaarNumber} mono />
+                            <Field label="Date of Birth" value={seller.dateOfBirth} />
+                            <Field label="Age / Gender" value={`${seller.age || '—'} / ${seller.gender || '—'}`} />
+                        </Section>
+
+                        <Section icon={<Store size={16} style={{ color: 'var(--secondary)' }} />} title="Store Profile">
+                            <Field label="Shop / Store Name" value={seller.shopName} span />
+                            <Field label="Category" value={seller.category} />
+                            <Field label="Contact (Phone / Email)" value={seller.email} />
+                            {seller.businessType && <Field label="Business Type" value={seller.businessType} />}
+                            <Field label="GST Number" value={seller.gstNumber} mono />
+                            {seller.panNumber && <Field label="PAN Number" value={seller.panNumber} mono />}
+                            {seller.contactEmail && <Field label="Contact Email" value={seller.contactEmail} />}
+                        </Section>
+
+                        <Section icon={<MapPin size={16} style={{ color: 'var(--warning)' }} />} title="Address">
+                            <div style={{ gridColumn: 'span 2', background: 'hsla(40,90%,60%,0.05)', border: '1px dashed var(--warning)', borderRadius: '10px', padding: '1rem', fontSize: '0.9rem', lineHeight: 1.7, color: 'var(--text)' }}>
+                                {seller.address || 'Address information not available.'}
+                            </div>
+                        </Section>
+
+                        <Section icon={<Calendar size={16} style={{ color: 'var(--text-muted)' }} />} title="Application Info">
+                            <Field label="Applied / Joined" value={seller.joined} />
+                            <Field label="Seller UID" value={seller.uid} mono span />
+                        </Section>
+                    </div>
+                </div>
+
+                {/* Action footer */}
+                <div style={{ display: 'flex', gap: '1rem', paddingTop: '1.5rem', borderTop: '2px solid var(--border)', flexWrap: 'wrap' }}>
+                    {seller.status === 'PENDING' && !seller.isBlocked ? (
+                        <>
+                            <button className="btn btn-primary" style={{ flex: '1 1 200px', fontSize: '1rem', fontWeight: 700, display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px' }} onClick={() => { onApprove(seller.uid); onClose(); }}>
+                                <Check size={18} /> Approve Seller
+                            </button>
+                            <button className="btn btn-secondary" style={{ flex: '1 1 200px', fontSize: '1rem', fontWeight: 700, color: 'var(--error)', borderColor: 'var(--error)', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px' }} onClick={() => { onReject(seller.uid); onClose(); }}>
+                                <X size={18} /> Reject Application
+                            </button>
+                        </>
+                    ) : seller.status === 'APPROVED' && !seller.isBlocked ? (
+                        <button className="btn btn-secondary" style={{ flex: '1 1 200px', fontSize: '1rem', fontWeight: 700, color: 'var(--error)', borderColor: 'var(--error)', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px' }} onClick={() => setBlockModalOpen(true)}>
+                            <X size={18} /> Block Seller
+                        </button>
+                    ) : null}
+                    <button className="btn btn-secondary" style={{ flex: '0 0 auto', fontSize: '1rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '8px' }} onClick={onClose}>
+                        <ArrowLeft size={18} /> Back to List
+                    </button>
+                </div>
+            </div>
+
             {showBankDetailsModal && (
                 <BankDetailsModal seller={seller} onClose={() => setShowBankDetailsModal(false)} />
-            )}
-        </>
+            )}        </>
     );
 }

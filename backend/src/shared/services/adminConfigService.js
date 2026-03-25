@@ -44,6 +44,7 @@ const getAdminConfig = async () => {
             websiteName: adminProfile.websiteName || 'SellSathi',
             websiteInfo: adminProfile.websiteInfo || 'Your Trusted E-Commerce Platform',
             profileImage: adminProfile.profileImage || null,
+            platformChargeRate: adminProfile.platformChargeRate ?? 0.10,
             uid: adminUid
         };
 
