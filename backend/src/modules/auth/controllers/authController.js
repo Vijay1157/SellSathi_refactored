@@ -19,6 +19,21 @@ const login = async (req, res) => {
             email = testEmail || null;
             fullName = req.body.fullName || testEmail?.split('@')[0] || "Test User";
             phoneNumber = phone || null;
+
+            // Try to find real user by phone number to support real sellers/admins in test mode
+            if (phone) {
+                const phoneVariants = [phone, phone.replace('+91', ''), phone.startsWith('+91') ? phone : `+91${phone.replace(/[^0-9]/g, '')}`];
+                for (const variant of phoneVariants) {
+                    const snap = await db.collection('users').where('phone', '==', variant).limit(1).get();
+                    if (!snap.empty) {
+                        uid = snap.docs[0].id;
+                        const d = snap.docs[0].data();
+                        fullName = d.fullName || fullName;
+                        email = d.email || email;
+                        break;
+                    }
+                }
+            }
         } else {
             if (!idToken) return res.status(400).json({ success: false, message: "ID token is required" });
             decodedToken = await admin.auth().verifyIdToken(idToken);
