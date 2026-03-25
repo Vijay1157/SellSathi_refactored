@@ -1,246 +1,72 @@
-import React, { useState, useEffect } from 'react';
-import { X, CreditCard, Building, DollarSign, Smartphone, Loader, User } from 'lucide-react';
+import { CreditCard, ArrowLeft, Store } from 'lucide-react';
+
+const Field = ({ label, value, mono = false, span = false }) => (
+    <div style={{
+        background: 'var(--surface)',
+        border: '1px solid var(--border)',
+        borderRadius: '10px',
+        padding: '0.85rem 1.1rem',
+        gridColumn: span ? 'span 2' : undefined,
+    }}>
+        <div style={{ fontSize: '0.72rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--text-muted)', marginBottom: '4px' }}>{label}</div>
+        <div style={{ fontWeight: 600, fontSize: '0.95rem', fontFamily: mono ? 'monospace' : undefined, color: 'var(--text)' }}>{value || '—'}</div>
+    </div>
+);
 
 export default function BankDetailsModal({ seller, onClose }) {
-    const [bankDetails, setBankDetails] = useState(null);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState('');
-
-    useEffect(() => {
-        if (seller) {
-            console.log('[BankDetailsModal] Seller data received:', seller);
-            
-            // Extract bank details directly from seller object
-            const details = {
-                bankName: seller.bankName || '',
-                accountHolderName: seller.accountHolderName || '',
-                accountNumber: seller.accountNumber || '',
-                ifscCode: seller.ifscCode || '',
-                upiId: seller.upiId || ''
-            };
-            
-            console.log('[BankDetailsModal] Extracted bank details:', details);
-            
-            // Check if any bank details exist
-            if (details.bankName || details.accountHolderName || 
-                details.accountNumber || details.ifscCode || details.upiId) {
-                setBankDetails(details);
-                setError('');
-            } else {
-                console.log('[BankDetailsModal] No bank details found in seller data');
-                setError('Bank details not submitted by seller.');
-            }
-        } else {
-            console.log('[BankDetailsModal] No seller data provided');
-            setError('Seller data not available.');
-        }
-        setLoading(false);
-    }, [seller]);
+    const hasBank = seller?.bankName || seller?.accountHolderName || seller?.accountNumber || seller?.ifscCode || seller?.upiId;
 
     return (
-        <div
-            className="modal-overlay flex items-center justify-center"
-            style={{ 
-                position: 'fixed', 
-                inset: 0, 
-                background: 'rgba(0,0,0,0.7)', 
-                backdropFilter: 'blur(10px)', 
-                zIndex: 10000, 
-                padding: '2rem' 
-            }}
-            onClick={(e) => e.target === e.currentTarget && onClose()}
-        >
-            <div 
-                className="glass-card animate-fade-in" 
-                style={{ 
-                    padding: 0, 
-                    overflow: 'hidden', 
-                    background: 'white', 
-                    border: '1px solid var(--border)', 
-                    borderRadius: '1.5rem', 
-                    boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)', 
-                    width: '100%', 
-                    maxWidth: '500px',
-                    maxHeight: '80vh',
-                    display: 'flex',
-                    flexDirection: 'column'
-                }}
-            >
+        <div className="animate-fade-in" style={{ width: '100%', padding: '2rem', display: 'flex', flexDirection: 'column', gap: '2rem' }}>
 
-                {/* Header */}
-                <div style={{ 
-                    padding: '1.5rem 2rem', 
-                    borderBottom: '1px solid var(--border)', 
-                    display: 'flex', 
-                    justifyContent: 'space-between', 
-                    alignItems: 'center', 
-                    background: 'var(--surface)' 
-                }}>
-                    <div className="flex items-center gap-3">
-                        <div className="flex items-center justify-center w-10 h-10 rounded-full bg-purple-100">
-                            <CreditCard size={20} className="text-purple-600" />
-                        </div>
-                        <div>
-                            <h2 style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--text)', margin: 0 }}>
-                                Bank Details
-                            </h2>
-                            <p className="text-muted" style={{ margin: 0, fontSize: '0.875rem' }}>
-                                {seller?.shopName || seller?.name || 'Seller Information'}
-                            </p>
-                        </div>
-                    </div>
-                    <button
-                        onClick={onClose}
-                        className="btn btn-secondary"
-                        style={{ padding: '0.5rem', borderRadius: '50%', width: '36px', height: '36px' }}
-                    >
-                        <X size={18} />
-                    </button>
-                </div>
-
-                {/* Content */}
-                <div style={{ padding: '2rem', overflowY: 'auto', flex: 1 }}>
-                    {loading ? (
-                        <div className="flex flex-col items-center justify-center py-8">
-                            <Loader className="animate-spin text-purple-600 mb-4" size={32} />
-                            <p className="text-muted">Loading bank details...</p>
-                        </div>
-                    ) : error ? (
-                        <div className="text-center py-8">
-                            <div className="flex items-center justify-center w-16 h-16 rounded-full bg-gray-100 mx-auto mb-4">
-                                <CreditCard size={32} className="text-gray-400" />
-                            </div>
-                            <p className="text-gray-600 font-medium mb-2">No Bank Details Found</p>
-                            <p className="text-muted text-sm">{error}</p>
-                        </div>
-                    ) : bankDetails ? (
-                        <div className="space-y-4">
-                            {/* Bank Name */}
-                            <div className="flex items-start gap-3">
-                                <div className="flex items-center justify-center w-10 h-10 rounded-full bg-blue-100 flex-shrink-0 mt-1">
-                                    <Building size={18} className="text-blue-600" />
-                                </div>
-                                <div className="flex-1">
-                                    <small className="text-muted d-block mb-1" style={{ fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                                        Bank Name
-                                    </small>
-                                    <p style={{ fontWeight: 600, margin: 0, fontSize: '1rem' }}>
-                                        {bankDetails.bankName || 'Not provided'}
-                                    </p>
-                                </div>
-                            </div>
-
-                            {/* Account Holder Name */}
-                            <div className="flex items-start gap-3">
-                                <div className="flex items-center justify-center w-10 h-10 rounded-full bg-green-100 flex-shrink-0 mt-1">
-                                    <User size={18} className="text-green-600" />
-                                </div>
-                                <div className="flex-1">
-                                    <small className="text-muted d-block mb-1" style={{ fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                                        Account Holder Name
-                                    </small>
-                                    <p style={{ fontWeight: 600, margin: 0, fontSize: '1rem' }}>
-                                        {bankDetails.accountHolderName || 'Not provided'}
-                                    </p>
-                                </div>
-                            </div>
-
-                            {/* Account Number */}
-                            <div className="flex items-start gap-3">
-                                <div className="flex items-center justify-center w-10 h-10 rounded-full bg-yellow-100 flex-shrink-0 mt-1">
-                                    <CreditCard size={18} className="text-yellow-600" />
-                                </div>
-                                <div className="flex-1">
-                                    <small className="text-muted d-block mb-1" style={{ fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                                        Account Number
-                                    </small>
-                                    <p style={{ 
-                                        fontWeight: 600, 
-                                        margin: 0, 
-                                        fontSize: '1rem',
-                                        fontFamily: 'monospace',
-                                        letterSpacing: '0.1em',
-                                        backgroundColor: 'var(--surface)',
-                                        padding: '0.5rem 0.75rem',
-                                        borderRadius: '6px',
-                                        border: '1px solid var(--border)'
-                                    }}>
-                                        {bankDetails.accountNumber || 'Not provided'}
-                                    </p>
-                                </div>
-                            </div>
-
-                            {/* IFSC Code */}
-                            <div className="flex items-start gap-3">
-                                <div className="flex items-center justify-center w-10 h-10 rounded-full bg-purple-100 flex-shrink-0 mt-1">
-                                    <DollarSign size={18} className="text-purple-600" />
-                                </div>
-                                <div className="flex-1">
-                                    <small className="text-muted d-block mb-1" style={{ fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                                        IFSC Code
-                                    </small>
-                                    <p style={{ 
-                                        fontWeight: 600, 
-                                        margin: 0, 
-                                        fontSize: '1rem',
-                                        fontFamily: 'monospace',
-                                        letterSpacing: '0.05em',
-                                        backgroundColor: 'var(--surface)',
-                                        padding: '0.5rem 0.75rem',
-                                        borderRadius: '6px',
-                                        border: '1px solid var(--border)'
-                                    }}>
-                                        {bankDetails.ifscCode || 'Not provided'}
-                                    </p>
-                                </div>
-                            </div>
-
-                            {/* UPI ID */}
-                            <div className="flex items-start gap-3">
-                                <div className="flex items-center justify-center w-10 h-10 rounded-full bg-orange-100 flex-shrink-0 mt-1">
-                                    <Smartphone size={18} className="text-orange-600" />
-                                </div>
-                                <div className="flex-1">
-                                    <small className="text-muted d-block mb-1" style={{ fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                                        UPI ID
-                                    </small>
-                                    <p style={{ 
-                                        fontWeight: 600, 
-                                        margin: 0, 
-                                        fontSize: '1rem',
-                                        backgroundColor: bankDetails.upiId ? 'var(--surface)' : 'transparent',
-                                        padding: bankDetails.upiId ? '0.5rem 0.75rem' : '0',
-                                        borderRadius: '6px',
-                                        border: bankDetails.upiId ? '1px solid var(--border)' : 'none'
-                                    }}>
-                                        {bankDetails.upiId || 'Not provided'}
-                                    </p>
-                                </div>
-                            </div>
-                        </div>
-                    ) : null}
-                </div>
-
-                {/* Footer */}
-                <div style={{ 
-                    padding: '1.5rem 2rem', 
-                    background: 'var(--surface)', 
-                    borderTop: '1px solid var(--border)', 
-                    display: 'flex', 
-                    justifyContent: 'flex-end' 
-                }}>
-                    <button
-                        onClick={onClose}
-                        className="btn btn-secondary"
-                        style={{ padding: '0.75rem 1.5rem', fontWeight: 600 }}
-                    >
-                        Close
-                    </button>
+            {/* Top bar */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                <button className="btn btn-secondary" onClick={onClose}
+                    style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '0.5rem 1rem', fontSize: '0.9rem' }}>
+                    <ArrowLeft size={16} /> Back
+                </button>
+                <div>
+                    <h2 style={{ margin: 0, fontSize: '1.6rem', fontWeight: 800 }}>Bank Details</h2>
+                    <span style={{ fontSize: '0.82rem', color: 'var(--text-muted)' }}>{seller?.shopName || seller?.name || 'Seller'}</span>
                 </div>
             </div>
+
+            {/* Seller Info */}
+            <div className="glass-card" style={{ padding: '1.5rem', maxWidth: '700px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', paddingBottom: '0.75rem', marginBottom: '1.25rem', borderBottom: '2px solid var(--border)' }}>
+                    <Store size={16} style={{ color: 'var(--secondary)' }} />
+                    <span style={{ fontWeight: 700, fontSize: '0.85rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Seller Information</span>
+                </div>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
+                    <Field label="Shop Name" value={seller?.shopName} span />
+                    <Field label="Category" value={seller?.category} />
+                    <Field label="GST Number" value={seller?.gstNumber} mono />
+                    {seller?.email && <Field label="Contact Email" value={seller.email} />}
+                </div>
+            </div>
+
+            {/* Bank Details */}
+            {!hasBank ? (
+                <div className="glass-card" style={{ padding: '3rem', textAlign: 'center', color: 'var(--text-muted)', maxWidth: '700px' }}>
+                    <CreditCard size={40} style={{ margin: '0 auto 1rem', opacity: 0.4 }} />
+                    <p style={{ fontWeight: 600, marginBottom: '0.5rem' }}>No Bank Details Found</p>
+                    <p style={{ fontSize: '0.85rem' }}>This seller has not submitted bank details yet.</p>
+                </div>
+            ) : (
+                <div className="glass-card" style={{ padding: '1.5rem', maxWidth: '700px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', paddingBottom: '0.75rem', marginBottom: '1.25rem', borderBottom: '2px solid var(--border)' }}>
+                        <CreditCard size={16} style={{ color: 'var(--primary)' }} />
+                        <span style={{ fontWeight: 700, fontSize: '0.85rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Payment Information</span>
+                    </div>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
+                        <Field label="Bank Name" value={seller.bankName} />
+                        <Field label="Account Holder Name" value={seller.accountHolderName} />
+                        <Field label="Account Number" value={seller.accountNumber} mono />
+                        <Field label="IFSC Code" value={seller.ifscCode} mono />
+                        <Field label="UPI ID" value={seller.upiId} mono />
+                    </div>
+                </div>
+            )}
         </div>
     );
 }
-
-
-

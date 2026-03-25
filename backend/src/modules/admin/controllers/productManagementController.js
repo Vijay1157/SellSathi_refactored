@@ -5,13 +5,44 @@ const cache = require('../../../utils/cache');
 const emailService = require('../../../shared/services/emailService');
 
 /**
+ * Shared helper — fetch seller names for a list of sellerIds.
+ * Checks sellers.shopName → sellers.extractedName → sellers.name → users.fullName → users.name
+ */
+const fetchSellerNamesMap = async (sellerIds) => {
+    const map = {};
+    if (!sellerIds || sellerIds.length === 0) return map;
+
+    const unique = [...new Set(sellerIds.filter(id => id && id !== 'Unknown'))];
+    const chunks = [];
+    for (let i = 0; i < unique.length; i += 10) chunks.push(unique.slice(i, i + 10));
+
+    for (const chunk of chunks) {
+        const [sellersSnap, usersSnap] = await Promise.all([
+            db.collection('sellers').where(admin.firestore.FieldPath.documentId(), 'in', chunk).get(),
+            db.collection('users').where(admin.firestore.FieldPath.documentId(), 'in', chunk).get()
+        ]);
+
+        sellersSnap.forEach(doc => {
+            const d = doc.data();
+            map[doc.id] = d.shopName || d.extractedName || d.supplierName || d.name || null;
+        });
+
+        usersSnap.forEach(doc => {
+            const d = doc.data();
+            if (!map[doc.id]) map[doc.id] = d.fullName || d.name || null;
+        });
+    }
+    return map;
+};
+
+/**
  * Get all products for admin management.
  */
 const getAllProducts = async (req, res) => {
     try {
         const productsSnap = await db.collection("products").get();
         
-        const products = productsSnap.docs.map(doc => {
+        const productsData = productsSnap.docs.filter(doc => !doc.data().adminRemoved).map(doc => {
             const data = doc.data();
             
             let formattedDate = 'N/A';
@@ -50,6 +81,16 @@ const getAllProducts = async (req, res) => {
             };
         });
 
+        // Fetch seller names for all products
+        const sellerIds = [...new Set(productsData.map(p => p.sellerId).filter(id => id && id !== 'Unknown'))];
+        const sellerNamesMap = await fetchSellerNamesMap(sellerIds);
+
+        // Add seller names to products
+        const products = productsData.map(p => ({
+            ...p,
+            sellerName: sellerNamesMap[p.sellerId] || p.sellerName || p.seller || (p.sellerId !== 'Unknown' ? p.sellerId : 'Unknown Seller')
+        }));
+
         products.sort((a, b) => b.timestamp - a.timestamp);
 
         return res.status(200).json({ 
@@ -71,6 +112,8 @@ const getInactiveProducts = async (req, res) => {
         const productsSnap = await db.collection("products").get();
 
         const inactive = [];
+        const sellerIds = new Set();
+        
         productsSnap.forEach(doc => {
             const data = doc.data();
             const status = data.status || 'Active';
@@ -89,14 +132,25 @@ const getInactiveProducts = async (req, res) => {
                     name: data.name || data.title || 'Unnamed Product',
                     category: data.category || 'Uncategorized',
                     sellerId: data.sellerId || 'Unknown',
+                    sellerName: data.sellerName || null,
                     price: data.price || 0,
                     status: status,
                     removalDate,
                 });
+                if (data.sellerId) sellerIds.add(data.sellerId);
             }
         });
 
-        return res.status(200).json({ success: true, products: inactive, count: inactive.length });
+        // Fetch seller names
+        const sellerNamesMap = await fetchSellerNamesMap(Array.from(sellerIds));
+
+        // Add seller names
+        const inactiveWithNames = inactive.map(p => ({
+            ...p,
+            sellerName: sellerNamesMap[p.sellerId] || p.sellerName || p.seller || (p.sellerId !== 'Unknown' ? p.sellerId : 'Unknown Seller')
+        }));
+
+        return res.status(200).json({ success: true, products: inactiveWithNames, count: inactiveWithNames.length });
     } catch (error) {
         console.error("[GetInactiveProducts] ERROR:", error);
         return res.status(500).json({ success: false, message: "Failed to fetch inactive products" });
@@ -187,6 +241,7 @@ const getOutOfStockProducts = async (req, res) => {
     try {
         const productsSnap = await db.collection("products").get();
         const outOfStock = [];
+        const sellerIds = new Set();
 
         productsSnap.forEach(doc => {
             const data = doc.data();
@@ -204,12 +259,23 @@ const getOutOfStockProducts = async (req, res) => {
                 name: data.name || data.title || 'Unnamed Product',
                 category: data.category || 'Uncategorized',
                 sellerId: data.sellerId || 'Unknown',
+                sellerName: data.sellerName || null,
                 price: data.price || 0,
                 stock: Number(stockVal),
             });
+            if (data.sellerId) sellerIds.add(data.sellerId);
         });
 
-        return res.status(200).json({ success: true, products: outOfStock, count: outOfStock.length });
+        // Fetch seller names
+        const sellerNamesMap = await fetchSellerNamesMap(Array.from(sellerIds));
+
+        // Add seller names
+        const outOfStockWithNames = outOfStock.map(p => ({
+            ...p,
+            sellerName: sellerNamesMap[p.sellerId] || p.sellerName || p.seller || (p.sellerId !== 'Unknown' ? p.sellerId : 'Unknown Seller')
+        }));
+
+        return res.status(200).json({ success: true, products: outOfStockWithNames, count: outOfStockWithNames.length });
     } catch (error) {
         console.error("[GetOutOfStockProducts] ERROR:", error);
         return res.status(500).json({ success: false, message: "Failed to fetch out-of-stock products" });
@@ -344,4 +410,204 @@ const notifyAllSellersOutOfStock = async (req, res) => {
     }
 };
 
-module.exports = { getAllProducts, getInactiveProducts, deleteProduct, deleteAllInactiveProducts, getOutOfStockProducts, notifySellerOutOfStock, notifyAllSellersOutOfStock };
+/**
+ * Admin remove a product — sets adminRemoved: true, adminRemovedAt timestamp
+ */
+const adminRemoveProduct = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const productRef = db.collection("products").doc(id);
+        const snap = await productRef.get();
+        if (!snap.exists) return res.status(404).json({ success: false, message: "Product not found" });
+
+        const productData = snap.data();
+        const sellerId = productData.sellerId;
+
+        await productRef.update({
+            adminRemoved: true,
+            adminRemovedAt: new Date().toISOString()
+        });
+
+        cache.invalidate('adminStats');
+        cache.invalidatePrefix('products_');
+
+        // Send email notification to seller
+        if (sellerId) {
+            const [sellerDoc, userDoc] = await Promise.all([
+                db.collection('sellers').doc(sellerId).get(),
+                db.collection('users').doc(sellerId).get()
+            ]);
+
+            if (sellerDoc.exists || userDoc.exists) {
+                const sellerData = sellerDoc.exists ? sellerDoc.data() : {};
+                const userData = userDoc.exists ? userDoc.data() : {};
+                
+                const sellerEmail = sellerData.contactEmail || sellerData.emailId || userData.email;
+                const sellerName = userData.fullName || sellerData.shopName || sellerData.supplierName || 'Seller';
+
+                if (sellerEmail && sellerEmail.includes('@')) {
+                    await emailService.sendProductRemovedNotification(
+                        sellerEmail,
+                        sellerName,
+                        productData.name || productData.title || 'Your Product',
+                        {
+                            category: productData.category,
+                            price: productData.price
+                        }
+                    ).catch(err => console.error('[AdminRemoveProduct] Email error:', err));
+                }
+            }
+        }
+
+        return res.status(200).json({ success: true, message: "Product removed by admin" });
+    } catch (error) {
+        console.error("[AdminRemoveProduct] ERROR:", error);
+        return res.status(500).json({ success: false, message: "Failed to remove product" });
+    }
+};
+
+/**
+ * Get all admin-removed products (adminRemoved === true)
+ */
+const getAdminRemovedProducts = async (req, res) => {
+    try {
+        const productsSnap = await db.collection("products").where("adminRemoved", "==", true).get();
+
+        const removed = [];
+        const sellerIds = new Set();
+        
+        productsSnap.docs.forEach(doc => {
+            const data = doc.data();
+            let removedOn = 'N/A';
+            if (data.adminRemovedAt) {
+                try {
+                    const d = new Date(data.adminRemovedAt);
+                    if (!isNaN(d.getTime())) removedOn = formatDateDDMMYYYY(d);
+                } catch (_) {}
+            }
+            removed.push({
+                id: doc.id,
+                name: data.name || data.title || 'Unnamed Product',
+                category: data.category || 'Uncategorized',
+                sellerId: data.sellerId || 'Unknown',
+                sellerName: data.sellerName || null,
+                price: data.price || 0,
+                removedOn,
+                adminRemovedAt: data.adminRemovedAt || null,
+            });
+            if (data.sellerId) sellerIds.add(data.sellerId);
+        });
+
+        // Fetch seller names and sort newest first
+        const sellerNamesMap = await fetchSellerNamesMap(Array.from(sellerIds));
+
+        const removedWithNames = removed.map(p => ({
+            ...p,
+            sellerName: sellerNamesMap[p.sellerId] || p.sellerName || p.seller || (p.sellerId !== 'Unknown' ? p.sellerId : 'Unknown Seller')
+        }));
+
+        removedWithNames.sort((a, b) => {
+            if (!a.adminRemovedAt) return 1;
+            if (!b.adminRemovedAt) return -1;
+            return new Date(b.adminRemovedAt) - new Date(a.adminRemovedAt);
+        });
+
+        return res.status(200).json({ success: true, products: removedWithNames, count: removedWithNames.length });
+    } catch (error) {
+        console.error("[GetAdminRemovedProducts] ERROR:", error);
+        return res.status(500).json({ success: false, message: "Failed to fetch removed products" });
+    }
+};
+
+/**
+ * Restore an admin-removed product — clears adminRemoved and adminRemovedAt
+ */
+const restoreAdminRemovedProduct = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const productRef = db.collection("products").doc(id);
+        const snap = await productRef.get();
+        if (!snap.exists) return res.status(404).json({ success: false, message: "Product not found" });
+
+        const productData = snap.data();
+        const sellerId = productData.sellerId;
+
+        await productRef.update({
+            adminRemoved: admin.firestore.FieldValue.delete(),
+            adminRemovedAt: admin.firestore.FieldValue.delete()
+        });
+
+        cache.invalidate('adminStats');
+        cache.invalidatePrefix('products_');
+
+        // Send email notification to seller
+        if (sellerId) {
+            const [sellerDoc, userDoc] = await Promise.all([
+                db.collection('sellers').doc(sellerId).get(),
+                db.collection('users').doc(sellerId).get()
+            ]);
+
+            if (sellerDoc.exists || userDoc.exists) {
+                const sellerData = sellerDoc.exists ? sellerDoc.data() : {};
+                const userData = userDoc.exists ? userDoc.data() : {};
+                
+                const sellerEmail = sellerData.contactEmail || sellerData.emailId || userData.email;
+                const sellerName = userData.fullName || sellerData.shopName || sellerData.supplierName || 'Seller';
+
+                if (sellerEmail && sellerEmail.includes('@')) {
+                    await emailService.sendProductRestoredNotification(
+                        sellerEmail,
+                        sellerName,
+                        productData.name || productData.title || 'Your Product',
+                        {
+                            category: productData.category,
+                            price: productData.price
+                        }
+                    ).catch(err => console.error('[RestoreProduct] Email error:', err));
+                }
+            }
+        }
+
+        return res.status(200).json({ success: true, message: "Product restored successfully" });
+    } catch (error) {
+        console.error("[RestoreAdminRemovedProduct] ERROR:", error);
+        return res.status(500).json({ success: false, message: "Failed to restore product" });
+    }
+};
+
+/**
+ * Permanently delete ALL admin-removed products
+ */
+const deleteAllAdminRemovedProducts = async (req, res) => {
+    try {
+        const productsSnap = await db.collection("products").where("adminRemoved", "==", true).get();
+        if (productsSnap.empty) return res.status(200).json({ success: true, message: "No removed products to delete", deleted: 0 });
+
+        const batch = db.batch();
+        const sellerIds = new Set();
+
+        productsSnap.forEach(doc => {
+            batch.delete(doc.ref);
+            if (doc.data().sellerId) sellerIds.add(doc.data().sellerId);
+        });
+
+        await batch.commit();
+
+        for (const sellerId of sellerIds) {
+            cache.invalidate(`sellerDash_${sellerId}`, `sellerProducts_${sellerId}`);
+        }
+        cache.invalidate('adminStats');
+        cache.invalidatePrefix('products_');
+
+        return res.status(200).json({ success: true, message: `Deleted ${productsSnap.size} removed products`, deleted: productsSnap.size });
+    } catch (error) {
+        console.error("[DeleteAllAdminRemovedProducts] ERROR:", error);
+        return res.status(500).json({ success: false, message: "Failed to delete all removed products" });
+    }
+};
+
+module.exports = {
+    getAllProducts, getInactiveProducts, deleteProduct, deleteAllInactiveProducts,
+    getOutOfStockProducts, notifySellerOutOfStock, notifyAllSellersOutOfStock,
+    adminRemoveProduct, getAdminRemovedProducts, restoreAdminRemovedProduct, deleteAllAdminRemovedProducts
+};

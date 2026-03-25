@@ -65,6 +65,12 @@ const getPendingSellers = async (req, res) => {
                 accountNumber: sellerData.accountNumber || null,
                 ifscCode: sellerData.ifscCode || null,
                 upiId: sellerData.upiId || null,
+                gstNumber: sellerData.gstNumber || null,
+                panNumber: sellerData.panNumber || null,
+                supplierName: sellerData.supplierName || null,
+                businessType: sellerData.businessType || null,
+                contactEmail: sellerData.contactEmail || null,
+                dateOfBirth: sellerData.dateOfBirth || null,
             };
         });
 
@@ -190,6 +196,12 @@ const getAllSellers = async (req, res) => {
                 accountNumber: sellerData.accountNumber || null,
                 ifscCode: sellerData.ifscCode || null,
                 upiId: sellerData.upiId || null,
+                gstNumber: sellerData.gstNumber || null,
+                panNumber: sellerData.panNumber || null,
+                supplierName: sellerData.supplierName || null,
+                businessType: sellerData.businessType || null,
+                contactEmail: sellerData.contactEmail || null,
+                dateOfBirth: sellerData.dateOfBirth || null,
                 financials: {
                     totalProducts: productCountMap[doc.id] || 0,
                     totalRevenue: fin.totalRevenue,

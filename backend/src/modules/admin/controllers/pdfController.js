@@ -143,8 +143,13 @@ const generateAnalyticsPDF = async (req, res) => {
         doc.text('Category:', 320, sellerInfoY + 30);
         doc.text(sellerData.category || 'N/A', 390, sellerInfoY + 30);
 
+        doc.text('GST Number:', 55, sellerInfoY + 50);
+        doc.text(sellerData.gstNumber || 'N/A', 150, sellerInfoY + 50);
+        doc.text('Contact:', 320, sellerInfoY + 50);
+        doc.text(sellerContact || 'N/A', 390, sellerInfoY + 50);
+
         // Bank Details Section
-        const bankDetailsY = sellerInfoY + 60;
+        const bankDetailsY = sellerInfoY + 80;
         doc.rect(50, bankDetailsY, 495, 15).fillAndStroke('#f3f4f6', '#e5e7eb');
         doc.fontSize(11).fillColor('#000000').font('Helvetica-Bold').text('BANK DETAILS', 55, bankDetailsY + 5);
 
@@ -358,26 +363,29 @@ const generateInvoicePDF = async (req, res) => {
         doc.text('Category:', 320, 245);
         doc.text(sellerData.category || 'N/A', 420, 245);
 
+        doc.text('GST Number:', 55, 265);
+        doc.text(sellerData.gstNumber || 'N/A', 180, 265);
+
         // Bank Details Section
-        doc.rect(50, 275, 495, 18).fillAndStroke('#f3f4f6', '#e5e7eb');
-        doc.fontSize(12).fillColor('#000000').font('Helvetica-Bold').text('BANK DETAILS', 55, 281);
+        doc.rect(50, 295, 495, 18).fillAndStroke('#f3f4f6', '#e5e7eb');
+        doc.fontSize(12).fillColor('#000000').font('Helvetica-Bold').text('BANK DETAILS', 55, 301);
 
         doc.fontSize(10).font('Helvetica').fillColor('#000000');
-        doc.text('Bank Name:', 55, 310);
-        doc.text(bankDetails.bankName, 180, 310);
-        doc.text('Account Holder:', 320, 310);
-        doc.text(bankDetails.accountHolderName, 440, 310);
+        doc.text('Bank Name:', 55, 330);
+        doc.text(bankDetails.bankName, 180, 330);
+        doc.text('Account Holder:', 320, 330);
+        doc.text(bankDetails.accountHolderName, 440, 330);
 
-        doc.text('Account Number:', 55, 330);
-        doc.text(bankDetails.accountNumber, 180, 330);
-        doc.text('IFSC Code:', 320, 330);
-        doc.text(bankDetails.ifscCode, 440, 330);
+        doc.text('Account Number:', 55, 350);
+        doc.text(bankDetails.accountNumber, 180, 350);
+        doc.text('IFSC Code:', 320, 350);
+        doc.text(bankDetails.ifscCode, 440, 350);
 
-        doc.text('UPI ID:', 55, 350);
-        doc.text(bankDetails.upiId, 180, 350);
+        doc.text('UPI ID:', 55, 370);
+        doc.text(bankDetails.upiId, 180, 370);
 
         // Summary
-        const summaryY = 380;
+        const summaryY = 400;
         doc.rect(50, summaryY, 495, 18).fillAndStroke('#f3f4f6', '#e5e7eb');
         doc.fontSize(12).fillColor('#000000').font('Helvetica-Bold').text('INVOICE SUMMARY', 55, summaryY + 6);
 

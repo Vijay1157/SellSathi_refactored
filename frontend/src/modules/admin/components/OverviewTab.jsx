@@ -35,7 +35,7 @@ const StatCardWithView = ({ label, value, icon, color, onView, loading }) => (
     </div>
 );
 
-export default function OverviewTab({ stats, loading, setActiveTab, setSearchTerm, setSelectedProductDate, adminProfile }) {
+export default function OverviewTab({ stats, loading, setActiveTab, setSearchTerm, setSelectedProductDate }) {
     return (
         <div className="animate-fade-in flex flex-col gap-6">
             {/* Welcome Header */}
@@ -46,7 +46,7 @@ export default function OverviewTab({ stats, loading, setActiveTab, setSearchTer
                 borderRadius: '16px'
             }}>
                 <h1 style={{ fontSize: '2.5rem', fontWeight: 800, marginBottom: '0.5rem' }}>
-                    Welcome, {adminProfile?.name || 'Admin'}
+                    Welcome, Admin
                 </h1>
                 <p style={{ fontSize: '1.1rem', opacity: 0.9 }}>
                     Manage your marketplace from this central dashboard
