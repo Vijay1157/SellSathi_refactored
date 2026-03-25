@@ -67,6 +67,7 @@ export default function PayoutsTab({ analytics, setSelectedAnalyticsSeller, fetc
                         <tr style={{ borderBottom: '2px solid var(--border)' }}>
                             <th style={thStyle}>Shop Overview</th>
                             <th style={{ ...thStyle, textAlign: 'center' }}>Date Listed</th>
+                            <th style={{ ...thStyle, textAlign: 'center' }}>Products Listed</th>
                             <th style={{ ...thStyle, textAlign: 'center' }}>Inventory (Stock)</th>
                             <th style={{ ...thStyle, textAlign: 'center' }}>Units Sold</th>
                             <th style={{ ...thStyle, textAlign: 'right' }}>Gross Payout</th>
@@ -75,7 +76,7 @@ export default function PayoutsTab({ analytics, setSelectedAnalyticsSeller, fetc
                     </thead>
                     <tbody>
                         {analytics.filter(filterSeller).length === 0 ? (
-                            <tr><td colSpan="6" style={{ padding: '3rem', textAlign: 'center', color: 'var(--text-muted)' }}>{analytics.length === 0 ? 'No approved sellers with analytics data yet.' : 'No sellers found matching your search criteria.'}</td></tr>
+                            <tr><td colSpan="7" style={{ padding: '3rem', textAlign: 'center', color: 'var(--text-muted)' }}>{analytics.length === 0 ? 'No approved sellers with analytics data yet.' : 'No sellers found matching your search criteria.'}</td></tr>
                         ) : (
                             analytics.filter(filterSeller).map(s => (
                                 <tr key={s.uid} style={{ borderBottom: '1px solid var(--border)' }} onMouseOver={(e) => e.currentTarget.style.background = 'var(--surface)'} onMouseOut={(e) => e.currentTarget.style.background = 'transparent'}>
@@ -86,6 +87,9 @@ export default function PayoutsTab({ analytics, setSelectedAnalyticsSeller, fetc
                                         </div>
                                     </td>
                                     <td style={{ padding: '1.25rem 1.5rem', textAlign: 'center' }}><span style={{ fontWeight: 500, fontSize: '0.9rem' }}>{s.joined || 'N/A'}</span></td>
+                                    <td style={{ padding: '1.25rem 1.5rem', textAlign: 'center' }}>
+                                        <span style={{ fontWeight: 600 }}>{s.metrics.totalProducts}</span>
+                                    </td>
                                     <td style={{ padding: '1.25rem 1.5rem', textAlign: 'center' }}>
                                         <div className="flex flex-col items-center"><Package size={18} className="text-muted mb-1" /><span style={{ fontWeight: 600 }}>{s.metrics.totalStockLeft}</span></div>
                                     </td>
