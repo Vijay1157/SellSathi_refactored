@@ -28,7 +28,7 @@ function redirectByRole(data, navigate, isSellerLogin = false) {
             navigate('/seller/dashboard');
         } else if (data.role === 'SELLER' && (data.status === 'PENDING' || data.sellerStatus === 'PENDING')) {
             alert(`⏳ Your seller application for "${data.shopName || 'your shop'}" is pending admin approval.`);
-            navigate('/');
+            navigate('/seller');
         } else {
             // Not a seller or pending, but logged in from seller page
             navigate('/');
