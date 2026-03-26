@@ -247,6 +247,23 @@ export default function Navbar() {
         };
     }, []);
 
+<<<<<<< HEAD
+    const checkUser = () => {
+        const userData = localStorage.getItem('user');
+        const loginCtx = localStorage.getItem('loginContext');
+        if (userData) {
+            try {
+                const parsed = JSON.parse(userData);
+                const isSellerRoute = location.pathname.startsWith('/seller');
+                
+                // SESSION ISOLATION:
+                // 1. Seller context profile only visible on seller routes
+                if (loginCtx === 'SELLER' && !isSellerRoute) {
+                    setUser(null);
+                } 
+                // 2. Consumer context profile hidden on the seller landing/onboarding routes
+                else if (loginCtx === 'CONSUMER' && isSellerRoute) {
+=======
     useEffect(() => {
         const checkUser = () => {
             const userData = localStorage.getItem('user');
@@ -265,14 +282,33 @@ export default function Navbar() {
                     }
                 } catch (error) {
                     console.error('Error parsing user data:', error);
+>>>>>>> 4dae6ed (Fix login race condition: retry auth check in ProtectedRoute and Navbar, handle localStorage-only users in consumer dashboard)
                     setUser(null);
                 }
-            } else {
+                else {
+                    setUser(parsed);
+                }
+            } catch (error) {
+                console.error('Error parsing user data:', error);
                 setUser(null);
             }
-        };
+        } else {
+            setUser(null);
+        }
+    };
 
+    // Sync on mount and location/loginContext change
+    useEffect(() => {
         checkUser();
+<<<<<<< HEAD
+    }, [location.pathname]);
+
+    // Handle external user storage changes
+    useEffect(() => {
+        const handleUserChange = () => checkUser();
+        window.addEventListener('userDataChanged', handleUserChange);
+        
+=======
 
         // Retry once after 500ms to handle race condition where localStorage
         // is set slightly after navigation (e.g. after phone/email login)
@@ -293,6 +329,7 @@ export default function Navbar() {
         };
         document.addEventListener('mousedown', handleClickOutside);
 
+>>>>>>> 4dae6ed (Fix login race condition: retry auth check in ProtectedRoute and Navbar, handle localStorage-only users in consumer dashboard)
         const handleOpenLogin = () => setIsLoginModalOpen(true);
         window.addEventListener('openLoginModal', handleOpenLogin);
 
@@ -303,6 +340,20 @@ export default function Navbar() {
             document.removeEventListener('mousedown', handleClickOutside);
             window.removeEventListener('openLoginModal', handleOpenLogin);
         };
+    }, [location.pathname]);
+
+    // Independent UI listeners
+    useEffect(() => {
+        const handleClickOutside = (event) => {
+            if (menuRef.current && !menuRef.current.contains(event.target)) {
+                setActiveMegaMenu(null);
+            }
+            if (profileRef.current && !profileRef.current.contains(event.target)) {
+                setIsProfileOpen(false);
+            }
+        };
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
     }, []);
 
     const handleSignOut = async () => {
@@ -474,7 +525,7 @@ export default function Navbar() {
                                 </button>
                             )}
 
-                            {user && user.role === 'SELLER' && (
+                            {user && user.role === 'SELLER' && !isSellerDashboard && (
                                 <button
                                     onClick={() => navigate('/seller/dashboard')}
                                     className="btn btn-seller"
