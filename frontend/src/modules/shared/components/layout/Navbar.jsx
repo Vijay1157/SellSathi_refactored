@@ -51,12 +51,15 @@ export default function Navbar() {
     };
 
     useEffect(() => {
-        // Fetch custom admin categories
-        fetch('http://localhost:5000/admin/config/public')
+        // Fetch custom admin categories using the correct API base
+        const API_BASE = import.meta.env.PROD
+            ? (import.meta.env.VITE_API_BASE_URL || 'https://sellsathi-refactored.onrender.com')
+            : 'http://localhost:5000';
+        fetch(`${API_BASE}/admin/config/public`)
             .then(r => r.json())
             .then(d => {
                 if (d.success && d.config?.categoryGstRates) {
-                    const custom = Object.keys(d.config.categoryGstRates).filter(k => !MAIN_CATEGORIES.includes(k) && !['Others'].includes(k));
+                    const custom = Object.keys(d.config.categoryGstRates).filter(k => !MAIN_CATEGORIES.includes(k) && k !== 'Others');
                     setCustomAdminCategories(custom);
                 }
             })

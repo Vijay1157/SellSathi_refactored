@@ -3,6 +3,10 @@ import { SlidersHorizontal, ChevronDown, ChevronRight } from 'lucide-react';
 import { MAIN_CATEGORIES, getSubcategories } from '@/modules/shared/config/categories';
 import { useNavigate } from 'react-router-dom';
 
+const API_BASE = import.meta.env.PROD
+    ? (import.meta.env.VITE_API_BASE_URL || 'https://sellsathi-refactored.onrender.com')
+    : 'http://localhost:5000';
+
 export default function FilterSidebar({
     selectedCategory,
     setSelectedCategory,
@@ -16,6 +20,19 @@ export default function FilterSidebar({
 }) {
     const navigate = useNavigate();
     const [expandedCategories, setExpandedCategories] = useState([]);
+    const [customCategories, setCustomCategories] = useState([]);
+
+    useEffect(() => {
+        fetch(`${API_BASE}/admin/config/public`)
+            .then(r => r.json())
+            .then(d => {
+                if (d.success && d.config?.categoryGstRates) {
+                    const custom = Object.keys(d.config.categoryGstRates).filter(k => !MAIN_CATEGORIES.includes(k) && k !== 'Others');
+                    setCustomCategories(custom);
+                }
+            })
+            .catch(() => {});
+    }, []);
 
     // Auto-expand category if subcategory is selected
     useEffect(() => {
@@ -94,7 +111,7 @@ export default function FilterSidebar({
                     >
                         All Products
                     </button>
-                    {MAIN_CATEGORIES.map(cat => {
+                    {[...MAIN_CATEGORIES, ...customCategories].map(cat => {
                         const subcategories = getSubcategories(cat);
                         const isExpanded = expandedCategories.includes(cat);
                         const hasSubcategories = subcategories.length > 0;

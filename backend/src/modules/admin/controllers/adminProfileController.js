@@ -120,7 +120,15 @@ const updateAdminProfile = async (req, res) => {
         }
         
         // Update or create admin profile
-        await db.collection("adminProfiles").doc(uid).set(updateData, { merge: true });
+        // Use set with merge for most fields, but categoryGstRates needs direct replacement
+        if (categoryGstRates && typeof categoryGstRates === 'object') {
+            // First set the other fields with merge
+            await db.collection("adminProfiles").doc(uid).set(updateData, { merge: true });
+            // Then explicitly replace categoryGstRates (not merge)
+            await db.collection("adminProfiles").doc(uid).update({ categoryGstRates: updateData.categoryGstRates });
+        } else {
+            await db.collection("adminProfiles").doc(uid).set(updateData, { merge: true });
+        }
 
         // Update phone in users collection if provided
         if (phone !== undefined) {

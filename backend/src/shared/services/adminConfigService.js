@@ -17,11 +17,18 @@ const getAdminConfig = async () => {
             return cached;
         }
 
-        // Get the first admin user (you can modify this logic if you have multiple admins)
-        const usersSnap = await db.collection("users")
-            .where("role", "==", "admin")
+        // Get the first admin user — check both "ADMIN" and "admin" role values
+        let usersSnap = await db.collection("users")
+            .where("role", "==", "ADMIN")
             .limit(1)
             .get();
+
+        if (usersSnap.empty) {
+            usersSnap = await db.collection("users")
+                .where("role", "==", "admin")
+                .limit(1)
+                .get();
+        }
 
         if (usersSnap.empty) {
             console.warn('[AdminConfig] No admin user found, using defaults');
