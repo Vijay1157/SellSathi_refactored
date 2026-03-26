@@ -18,6 +18,7 @@ const categories = [
 
 export const SellerPage = () => {
   const [isLoginOpen, setIsLoginOpen] = useState(false);
+  const [isConsumerLoginOpen, setIsConsumerLoginOpen] = useState(false);
   const navigate = useNavigate();
 
   const [showNotRegisteredPopup, setShowNotRegisteredPopup] = useState(false);
@@ -27,7 +28,7 @@ export const SellerPage = () => {
     try {
       const userStr = localStorage.getItem('user');
       if (!userStr || !JSON.parse(userStr)) {
-        setIsLoginOpen(true);
+        setIsConsumerLoginOpen(true);
         return;
       }
       const user = JSON.parse(userStr);
@@ -43,7 +44,7 @@ export const SellerPage = () => {
       // If valid consumer role, proceed
       navigate('/seller/register');
     } catch (err) { 
-        setIsLoginOpen(true);
+        setIsConsumerLoginOpen(true);
     }
   };
 
@@ -206,6 +207,7 @@ export const SellerPage = () => {
 
       <Footer />
       <AuthModal isOpen={isLoginOpen} onClose={() => setIsLoginOpen(false)} hideRegister={true} sellerLogin={true} />
+      <AuthModal isOpen={isConsumerLoginOpen} onClose={() => setIsConsumerLoginOpen(false)} />
     </div>
   );
 };
