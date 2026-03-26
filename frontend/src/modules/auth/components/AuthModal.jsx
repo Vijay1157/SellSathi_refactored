@@ -50,7 +50,7 @@ function persistUser(data, extras = {}) {
     window.dispatchEvent(new CustomEvent('userDataChanged', { detail: userData }));
 }
 
-export default function AuthModal({ isOpen, onClose, onSuccess, hideRegister, sellerLogin = false }) {
+export default function AuthModal({ isOpen, onClose, onSuccess, hideRegister, sellerLogin = false, startSellingFlow = false }) {
     const [step, setStep] = useState('phone');
     const [isRegistering, setIsRegistering] = useState(false);
     const [isEmailSignup, setIsEmailSignup] = useState(false);
@@ -73,15 +73,54 @@ export default function AuthModal({ isOpen, onClose, onSuccess, hideRegister, se
 
     const checkRoleAllowed = async (data) => {
         if (!data || !data.success) return true;
-        
+
         const linkStyle = { color: 'var(--primary)', textDecoration: 'underline', fontWeight: 600, display: 'inline-block', marginTop: '4px', cursor: 'pointer', background: 'none', border: 'none', padding: 0 };
-        
+
+        // Start Selling flow — special handling (Only for Login, not Register)
+        if (startSellingFlow && !isRegistering) {
+            if (data.role === 'SELLER') {
+                // Already a seller → persist and redirect to dashboard
+                persistUser(data, { fullName: data.fullName, status: data.status, sellerStatus: data.sellerStatus, shopName: data.shopName });
+                localStorage.setItem('loginContext', 'SELLER');
+                if (data.status === 'APPROVED' || data.sellerStatus === 'APPROVED') {
+                    navigate('/seller/dashboard');
+                } else {
+                    alert('⏳ Your seller application is pending admin approval.');
+                    navigate('/seller');
+                }
+                handleClose();
+                return false;
+            }
+            if (data.role === 'ADMIN') {
+                setError('Admins cannot register as sellers.');
+                await auth.signOut();
+                return false;
+            }
+            // CONSUMER → show "already a customer" message with options
+            setError(
+                <span>
+                    You are already a registered customer. Would you like to continue with the same credentials to become a seller?<br />
+                    <button style={{ ...linkStyle, marginTop: '8px', padding: '6px 16px', background: 'var(--primary)', color: '#fff', borderRadius: '6px', textDecoration: 'none' }} onClick={() => {
+                        persistUser(data, { fullName: data.fullName, status: data.status });
+                        handleClose();
+                        navigate('/seller/register');
+                    }}>Continue with existing credentials</button>
+                    <br />
+                    <span style={{ fontSize: '12px', color: '#6B7280', marginTop: '6px', display: 'inline-block' }}>
+                        Or register as a new user
+                    </span>
+                </span>
+            );
+            // Don't sign out — keep auth active for "Continue"
+            return false;
+        }
+
         // Block consumers and admins from seller login
         if (sellerLogin && data.role !== 'SELLER') {
             setError(
                 <span>
                     Only sellers are allowed to login here.<br />
-                    <button style={linkStyle} onClick={() => { handleClose(); navigate('/'); }}>To login as a user click here</button>
+                    <button style={linkStyle} onClick={() => { handleClose(); navigate('/'); setTimeout(() => window.dispatchEvent(new Event('openLoginModal')), 300); }}>To login as a user click here</button>
                 </span>
             );
             await auth.signOut();
@@ -92,7 +131,7 @@ export default function AuthModal({ isOpen, onClose, onSuccess, hideRegister, se
             setError(
                 <span>
                     Only users are allowed to login here.<br />
-                    <button style={linkStyle} onClick={() => { handleClose(); navigate('/seller'); }}>To login as seller click here</button>
+                    <button style={linkStyle} onClick={() => { handleClose(); window.open(`${window.location.origin}${window.location.pathname}#/seller?login=true`, '_blank'); }}>To login as seller click here</button>
                 </span>
             );
             await auth.signOut();
@@ -121,6 +160,7 @@ export default function AuthModal({ isOpen, onClose, onSuccess, hideRegister, se
     };
 
     useEffect(() => { return () => cleanupRecaptcha(); }, []);
+    useEffect(() => { setError(''); }, [isRegistering, isEmailLogin, isEmailSignup]);
     useEffect(() => {
         if (!isOpen) handleClose();
 
@@ -235,8 +275,9 @@ export default function AuthModal({ isOpen, onClose, onSuccess, hideRegister, se
                         return;
                     }
                 }
+                localStorage.setItem('loginContext', sellerLogin || startSellingFlow ? 'SELLER' : 'CONSUMER');
                 persistUser(data, { phone: phoneNumber, status: data.status, sellerStatus: data.sellerStatus, shopName: data.shopName, fullName: formData.fullName || data.fullName, dob: formData.dob });
-                if (isRegistering) navigate('/'); else redirectByRole(data, navigate, sellerLogin);
+                if (isRegistering) navigate(startSellingFlow ? '/seller/register' : '/'); else redirectByRole(data, navigate, sellerLogin);
                 if (onSuccess) onSuccess(data);
                 handleClose();
             } else setError(data.message || 'Verification failed');
@@ -385,7 +426,8 @@ export default function AuthModal({ isOpen, onClose, onSuccess, hideRegister, se
                     fullName: formData.fullName,
                     dob: formData.dob
                 });
-                navigate('/');
+                localStorage.setItem('loginContext', sellerLogin || startSellingFlow ? 'SELLER' : 'CONSUMER');
+                navigate(startSellingFlow ? '/seller/register' : '/');
                 if (onSuccess) onSuccess(data);
                 handleClose();
             } else setError(data.message || 'Registration failed');
@@ -447,9 +489,9 @@ export default function AuthModal({ isOpen, onClose, onSuccess, hideRegister, se
                                 otp={emailOtp}
                                 setOtp={setEmailOtp}
                                 onVerifyOtp={handleRegisterDirectly} // The function handles both based on state
-                                onSwitchToLogin={() => { setIsEmailSignup(false); setIsEmailLogin(true); setEmailOtpStep('details'); }}
-                                onSwitchToSignup={() => { setIsEmailLogin(false); setIsRegistering(true); setEmailOtpStep('details'); }}
-                                onBackToPhone={() => { setIsEmailLogin(false); setIsEmailSignup(false); setEmailOtpStep('details'); }}
+                                onSwitchToLogin={() => { setIsEmailSignup(false); setIsEmailLogin(true); setEmailOtpStep('details'); setError(''); }}
+                                onSwitchToSignup={() => { setIsEmailLogin(false); setIsRegistering(true); setEmailOtpStep('details'); setError(''); }}
+                                onBackToPhone={() => { setIsEmailLogin(false); setIsEmailSignup(false); setEmailOtpStep('details'); setError(''); }}
                             />
                         ) : (
                             <PhoneOtpForm

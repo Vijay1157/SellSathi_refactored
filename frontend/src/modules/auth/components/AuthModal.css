@@ -22,44 +22,28 @@ input::-webkit-credentials-auto-fill-button {
     background: var(--background);
     border: 1px solid var(--border);
     border-radius: 24px;
-    padding: 2.5rem;
+    padding: 1.5rem 2rem;
     position: relative;
     box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+    /* Allow scrolling in Auth Modal */
     max-height: 90vh;
+    overflow-y: auto;
     width: 100%;
     margin: auto;
-    overflow-y: auto;
-    scrollbar-gutter: stable both-edges; /* Modern way to keep content perfectly centered on both sides */
-    
-    /* Subtle Greyish-White for Firefox */
-    scrollbar-width: thin;
-    scrollbar-color: rgba(255, 255, 255, 0.15) transparent;
 }
 
-/* Custom subtle greyish-white scrollbar */
+/* Custom greyish-white scrollbar for Auth Modal */
 .auth-modal-content::-webkit-scrollbar {
-    width: 4px;
-}
-
-.auth-modal-content::-webkit-scrollbar-track {
-    background: transparent;
+    width: 5px;
 }
 
 .auth-modal-content::-webkit-scrollbar-thumb {
-    background: rgba(255, 255, 255, 0.15); /* Semi-transparent greyish white */
+    background: rgba(255, 255, 255, 0.2);
     border-radius: 10px;
 }
 
 .auth-modal-content::-webkit-scrollbar-thumb:hover {
-    background: rgba(255, 255, 255, 0.3); /* Slightly more visible on hover */
-}
-
-/* No longer needed - simplified above */
-
-/* Firefox scrollbar */
-.auth-modal-content {
-    scrollbar-width: thin;
-    scrollbar-color: var(--primary) transparent;
+    background: rgba(255, 255, 255, 0.4);
 }
 
 .auth-close-btn {
@@ -88,7 +72,7 @@ input::-webkit-credentials-auto-fill-button {
 
 .auth-header {
     text-align: center;
-    margin-bottom: 1.5rem;
+    margin-bottom: 1rem;
 }
 
 .auth-icon-container {
@@ -327,10 +311,10 @@ input::-webkit-credentials-auto-fill-button {
 }
 
 .auth-toggle {
-    margin-top: 1.25rem;
+    margin-top: 0.75rem;
     text-align: center;
     font-size: 0.9rem;
-    padding-top: 1.25rem;
+    padding-top: 0.75rem;
     border-top: 1px solid var(--border);
 }
 
