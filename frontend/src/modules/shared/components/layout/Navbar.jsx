@@ -413,7 +413,7 @@ export default function Navbar() {
                                                 </div>
                                             </div>
                                             <div className="menu-items">
-                                                {!isSellerDashboard && (
+                                                {!isSellerDashboard && user?.role !== 'SELLER' && (
                                                     <button onClick={() => {
                                                         navigate('/dashboard');
                                                         setIsProfileOpen(false);
