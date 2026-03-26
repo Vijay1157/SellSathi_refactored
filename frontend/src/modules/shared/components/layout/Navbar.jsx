@@ -288,7 +288,6 @@ export default function Navbar() {
             clearTimeout(retryTimer);
             window.removeEventListener('userDataChanged', handleUserChange);
             window.removeEventListener('storage', handleUserChange);
-            document.removeEventListener('mousedown', handleClickOutside);
             window.removeEventListener('openLoginModal', handleOpenLogin);
         };
     }, [location.pathname]);
