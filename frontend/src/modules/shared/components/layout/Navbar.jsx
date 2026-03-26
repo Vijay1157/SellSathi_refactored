@@ -395,6 +395,16 @@ export default function Navbar() {
                                 {user && cartCount > 0 && <span className="cart-badge">{cartCount}</span>}
                             </Link>
 
+                            {user && user.role === 'SELLER' && (
+                                <button
+                                    onClick={() => navigate('/seller/dashboard')}
+                                    className="btn btn-seller"
+                                    style={{ padding: '6px 12px', fontSize: '13px', borderRadius: '6px' }}
+                                >
+                                    Dashboard
+                                </button>
+                            )}
+
                             {user ? (
                                 <div className="profile-dropdown-container" ref={profileRef}>
                                     <button
