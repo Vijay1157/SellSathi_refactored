@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Search, LayoutGrid, List, ShoppingCart, Heart, Eye } from 'lucide-react';
 import Rating from '@/modules/shared/components/common/Rating';
 import PriceDisplay from '@/modules/shared/components/common/PriceDisplay';
+import LoadingSpinner from '@/modules/shared/components/common/LoadingSpinner';
 
 export default function ProductGrid({
     filteredProducts,
@@ -43,10 +44,10 @@ export default function ProductGrid({
 
             <AnimatePresence mode="popLayout">
                 {loading ? (
-                    <div className="loading-state">
-                        <div className="spinner"></div>
-                        <p>Discovering best products for you...</p>
-                    </div>
+                    <LoadingSpinner 
+                        size="large" 
+                        message="Discovering best products for you..." 
+                    />
                 ) : filteredProducts.length === 0 ? (
                     <motion.div
                         initial={{ opacity: 0 }}

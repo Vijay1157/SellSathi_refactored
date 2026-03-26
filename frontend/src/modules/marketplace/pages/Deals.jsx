@@ -8,6 +8,7 @@ import { addToCart } from '@/modules/shared/utils/cartUtils';
 import { listenToWishlist, addToWishlist, removeFromWishlist } from '@/modules/shared/utils/wishlistUtils';
 import { fetchProductReviews } from '@/modules/shared/utils/reviewUtils';
 import { fetchWithCache } from '@/modules/shared/utils/firestoreCache';
+import LoadingSpinner from '@/modules/shared/components/common/LoadingSpinner';
 import QuickViewModal from '@/modules/shared/components/common/QuickViewModal';
 import Rating from '@/modules/shared/components/common/Rating';
 import PriceDisplay from '@/modules/shared/components/common/PriceDisplay';
@@ -53,7 +54,8 @@ export default function Deals() {
                 );
                 setProducts(data);
                 setLoading(false);
-                fetchReviewsForProducts(data);
+                // Lazy load reviews - fetch only first 8 products' reviews
+                fetchReviewsForProducts(data.slice(0, 8));
             } catch (err) {
                 console.error(err);
                 setLoading(false);
@@ -123,7 +125,7 @@ export default function Deals() {
                 </header>
 
                 {loading ? (
-                    <div className="loading">Loading deals...</div>
+                    <LoadingSpinner size="large" message="Loading deals..." />
                 ) : (
                     <div className="deals-grid">
                         {products.map((p, idx) => (

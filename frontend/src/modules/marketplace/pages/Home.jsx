@@ -6,6 +6,7 @@ import { API_BASE } from '@/modules/shared/utils/api';
 import { addToCart } from '@/modules/shared/utils/cartUtils';
 import { addToWishlist, removeFromWishlist, listenToWishlist } from '@/modules/shared/utils/wishlistUtils';
 import QuickViewModal from '@/modules/shared/components/common/QuickViewModal';
+import LoadingSpinner from '@/modules/shared/components/common/LoadingSpinner';
 import { fetchWithCache } from '@/modules/shared/utils/firestoreCache';
 import { fetchProductReviews } from '@/modules/shared/utils/reviewUtils';
 
@@ -90,8 +91,9 @@ export default function Home() {
                 setDealsProducts(deals);
                 setLoading(false);
 
-                // Fetch reviews for all loaded products
-                fetchReviewsForProducts([...featured, ...latest, ...deals]);
+                // Lazy load reviews - fetch only first 15 products' reviews initially
+                const priorityProducts = [...featured.slice(0, 5), ...latest.slice(0, 5), ...deals.slice(0, 5)];
+                fetchReviewsForProducts(priorityProducts);
             } catch (err) {
                 console.error(err);
                 setLoading(false);
@@ -179,6 +181,10 @@ export default function Home() {
         setIsQuickViewOpen(true);
     };
 
+    if (loading) {
+        return <LoadingSpinner fullScreen size="large" message="Loading amazing products for you..." />;
+    }
+
     return (
         <div className="home-wrapper" style={{ background: '#F8F9FA' }}>
             <HeroCarousel />
@@ -202,7 +208,7 @@ export default function Home() {
                     subtitle={sec.subtitle}
                     groupedData={sec.groupedData}
                     bg={sec.bg}
-                    loading={loading}
+                    loading={false}
                     wishlist={wishlist}
                     productReviews={productReviews}
                     handleAddToCart={handleAddToCart}

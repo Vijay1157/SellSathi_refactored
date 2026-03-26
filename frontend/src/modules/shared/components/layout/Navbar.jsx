@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { ShoppingCart, User, Search, LogOut, ChevronDown, Heart, ShoppingBag } from 'lucide-react';
+import { ShoppingCart, User, Search, LogOut, ChevronDown, Heart, ShoppingBag, Menu } from 'lucide-react';
 import AuthModal from '@/modules/auth/components/AuthModal';
 import { collection, getDocs, query, limit } from 'firebase/firestore';
 import { db, auth } from '@/modules/shared/config/firebase';
@@ -9,6 +9,7 @@ import { listenToWishlist } from '@/modules/shared/utils/wishlistUtils';
 import { MAIN_CATEGORIES, SPECIAL_CATEGORIES, SUBCATEGORIES, ALL_CATEGORIES } from '@/modules/shared/config/categories';
 import { fetchWithCache } from '@/modules/shared/utils/firestoreCache';
 import NavbarMegaMenu from './NavbarMegaMenu';
+import CategorySidebar from './CategorySidebar';
 import { authFetch } from '@/modules/shared/utils/api';
 import './Navbar.css';
 
@@ -18,6 +19,7 @@ export default function Navbar() {
     const [activeMegaMenu, setActiveMegaMenu] = useState(null);
     const [activeSubCategory, setActiveSubCategory] = useState(0);
     const [showAllSubcategories, setShowAllSubcategories] = useState(false);
+    const [isSidebarOpen, setIsSidebarOpen] = useState(false);
     const [user, setUser] = useState(null);
     const [cartCount, setCartCount] = useState(0);
     const [wishlistCount, setWishlistCount] = useState(0);
@@ -490,9 +492,18 @@ export default function Navbar() {
                         style={{ display: 'block' }}
                     >
                         <div className="container">
-                            {/* Row 1: First 11 categories + More button */}
+                            {/* Row 1: All button + First 10 categories + More button */}
                             <div className="sub-nav sub-nav-row-1">
-                                {MAIN_CATEGORIES.slice(0, 11).map(cat => {
+                                {/* All Categories Button */}
+                                <button
+                                    className="sub-nav-link all-categories-btn"
+                                    onClick={() => setIsSidebarOpen(true)}
+                                >
+                                    <Menu size={14} />
+                                    All
+                                </button>
+
+                                {MAIN_CATEGORIES.slice(0, 10).map(cat => {
                                     const path = `/products?category=${cat}`;
                                     const isMega = !!SUBCATEGORIES[cat];
 
@@ -534,7 +545,7 @@ export default function Navbar() {
                                     className="sub-nav-link more-categories-btn"
                                     onClick={() => setShowAllSubcategories(!showAllSubcategories)}
                                 >
-                                    {showAllSubcategories ? 'Less Categories' : 'More Categories'}
+                                    {showAllSubcategories ? 'Less' : 'More'}
                                     <ChevronDown size={12} style={{ transform: showAllSubcategories ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s', strokeWidth: 3 }} />
                                 </button>
                             </div>
@@ -542,7 +553,7 @@ export default function Navbar() {
                             {/* Row 2: Remaining categories starting from Gifts & Customization (collapsible) */}
                             {showAllSubcategories && (
                                 <div className="sub-nav sub-nav-row-2 animate-slide-down">
-                                    {[...MAIN_CATEGORIES.slice(11), ...customAdminCategories].map(cat => {
+                                    {[...MAIN_CATEGORIES.slice(10), ...customAdminCategories].map(cat => {
                                         const path = `/products?category=${cat}`;
                                         const isMega = !!SUBCATEGORIES[cat];
 
@@ -618,6 +629,12 @@ export default function Navbar() {
                     </div>
                 )}
             </nav >
+
+            {/* Category Sidebar */}
+            <CategorySidebar 
+                isOpen={isSidebarOpen} 
+                onClose={() => setIsSidebarOpen(false)} 
+            />
 
             <AuthModal
                 isOpen={isLoginModalOpen}

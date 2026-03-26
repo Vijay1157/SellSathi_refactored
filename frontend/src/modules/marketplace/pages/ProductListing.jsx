@@ -59,7 +59,8 @@ export default function ProductListing() {
                 });
                 setProducts(data);
                 setLoading(false);
-                fetchReviewsForProducts(data);
+                // Lazy load reviews - fetch only first 10 products' reviews initially
+                fetchReviewsForProducts(data.slice(0, 10));
             } catch (err) {
                 console.warn('[ProductListing] API failed, falling back to Firestore:', err.message);
                 try {
@@ -73,7 +74,7 @@ export default function ProductListing() {
                     });
                     setProducts(data);
                     setLoading(false);
-                    fetchReviewsForProducts(data);
+                    fetchReviewsForProducts(data.slice(0, 10));
                 } catch (fbErr) {
                     console.error('Both API and Firestore failed:', fbErr);
                     setProducts([]);
