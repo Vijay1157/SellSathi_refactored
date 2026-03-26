@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import SellerHeader from '../components/SellerHeader';
 import Footer from '../components/Footer';
 import StatsSection from '../components/StatsSection';
@@ -18,30 +18,22 @@ const categories = [
 
 export const SellerPage = () => {
   const [isLoginOpen, setIsLoginOpen] = useState(false);
-  const [isConsumerLoginOpen, setIsConsumerLoginOpen] = useState(false);
+  const [isStartSellingOpen, setIsStartSellingOpen] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
 
-  const [showNotRegisteredPopup, setShowNotRegisteredPopup] = useState(false);
+  // Auto-open seller login if redirected here with ?login=true
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    if (params.get('login') === 'true') {
+      setIsLoginOpen(true);
+      navigate('/seller', { replace: true });
+    }
+  }, [location.search]);
 
   const handleNewSellerClick = (e) => {
     e?.preventDefault();
-    try {
-      const userStr = localStorage.getItem('user');
-      if (!userStr || !JSON.parse(userStr)) {
-        setIsConsumerLoginOpen(true);
-        return;
-      }
-      const user = JSON.parse(userStr);
-      if (user.role === 'SELLER' || user.role === 'ADMIN') {
-        // Already logged in as seller/admin — open consumer login to switch account
-        setIsConsumerLoginOpen(true);
-        return;
-      }
-      // If valid consumer role, proceed to registration
-      navigate('/seller/register');
-    } catch (err) { 
-        setIsConsumerLoginOpen(true);
-    }
+    setIsStartSellingOpen(true);
   };
 
   return (
@@ -68,12 +60,12 @@ export const SellerPage = () => {
                   onClick={handleNewSellerClick}
                   className="w-full sm:w-auto px-10 py-4 rounded-2xl bg-brand text-white font-bold text-lg shadow-xl shadow-brand/20 hover:bg-brand-hover hover:-translate-y-1 transition-all"
                 >
-                  New Seller
+                  Start Selling
                 </button>
               </div>
               <p className="text-sm text-gray-500">
                 <span className="bg-brand text-white text-[10px] font-bold px-2 py-0.5 rounded mr-2">NEW</span>
-                Don’t have a GSTIN? You can still sell on SellSathi.{' '}
+                Don't have a GSTIN? You can still sell on SellSathi.{' '}
                 <Link to="#" className="text-brand font-semibold hover:underline">Know more</Link>
               </p>
             </motion.div>
@@ -202,8 +194,10 @@ export const SellerPage = () => {
       </section>
 
       <Footer />
+      {/* Seller Login modal (Login button) */}
       <AuthModal isOpen={isLoginOpen} onClose={() => setIsLoginOpen(false)} hideRegister={true} sellerLogin={true} />
-      <AuthModal isOpen={isConsumerLoginOpen} onClose={() => setIsConsumerLoginOpen(false)} onSuccess={() => navigate('/seller')} />
+      {/* Start Selling modal (New Seller / Start Selling button) */}
+      <AuthModal isOpen={isStartSellingOpen} onClose={() => setIsStartSellingOpen(false)} startSellingFlow={true} />
     </div>
   );
 };

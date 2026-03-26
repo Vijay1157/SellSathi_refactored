@@ -231,9 +231,25 @@ export default function Navbar() {
     useEffect(() => {
         const checkUser = () => {
             const userData = localStorage.getItem('user');
+            const loginCtx = localStorage.getItem('loginContext');
             if (userData) {
                 try {
-                    setUser(JSON.parse(userData));
+                    const parsed = JSON.parse(userData);
+                    const isSellerRoute = location.pathname.startsWith('/seller');
+                    
+                    // SESSION ISOLATION:
+                    // 1. Seller context profile only visible on seller routes
+                    if (loginCtx === 'SELLER' && !isSellerRoute) {
+                        setUser(null);
+                    } 
+                    // 2. Consumer context profile hidden on the seller landing/onboarding routes
+                    // (They must log in specifically for seller context if they want to access those)
+                    else if (loginCtx === 'CONSUMER' && isSellerRoute) {
+                        setUser(null);
+                    }
+                    else {
+                        setUser(parsed);
+                    }
                 } catch (error) {
                     console.error('Error parsing user data:', error);
                     setUser(null);
@@ -395,16 +411,6 @@ export default function Navbar() {
                                 {user && cartCount > 0 && <span className="cart-badge">{cartCount}</span>}
                             </Link>
 
-                            {user && user.role === 'SELLER' && (
-                                <button
-                                    onClick={() => navigate('/seller/dashboard')}
-                                    className="btn btn-seller"
-                                    style={{ padding: '6px 12px', fontSize: '13px', borderRadius: '6px' }}
-                                >
-                                    Dashboard
-                                </button>
-                            )}
-
                             {user ? (
                                 <div className="profile-dropdown-container" ref={profileRef}>
                                     <button
@@ -444,6 +450,16 @@ export default function Navbar() {
                             ) : (
                                 <button onClick={() => setIsLoginModalOpen(true)} className="btn btn-secondary icon-btn">
                                     <User size={20} />
+                                </button>
+                            )}
+
+                            {user && user.role === 'SELLER' && (
+                                <button
+                                    onClick={() => navigate('/seller/dashboard')}
+                                    className="btn btn-seller"
+                                    style={{ padding: '6px 12px', fontSize: '13px', borderRadius: '6px' }}
+                                >
+                                    Dashboard
                                 </button>
                             )}
                         </div>

@@ -13,6 +13,16 @@ export default function SellerRegistration() {
     const [success, setSuccess] = useState('');
     const [isExtracting, setIsExtracting] = useState(false);
 
+    // Lock body scroll for upload step (No scroll as requested)
+    React.useEffect(() => {
+        if (step === 'upload') {
+            document.body.style.overflow = 'hidden';
+        } else {
+            document.body.style.overflow = 'auto';
+        }
+        return () => { document.body.style.overflow = 'auto'; };
+    }, [step]);
+
     // Form data
     const [formData, setFormData] = useState({
         fullName: '',
@@ -29,6 +39,22 @@ export default function SellerRegistration() {
     // User data from existing logic
     const [user, setUser] = useState(null);
     const [status, setStatus] = useState(null);
+
+    // Sync session data (Load on mount and listen for changes)
+    React.useEffect(() => {
+        const loadUser = () => {
+            const storedUser = localStorage.getItem('user');
+            if (storedUser) {
+                const parsed = JSON.parse(storedUser);
+                setUser(parsed);
+                setStatus(parsed.status);
+            }
+        };
+
+        loadUser();
+        window.addEventListener('userDataChanged', loadUser);
+        return () => window.removeEventListener('userDataChanged', loadUser);
+    }, []);
 
     // Existing Aadhaar upload logic - PRESERVED
     const handleAadhaarUpload = async (e) => {
@@ -207,13 +233,13 @@ export default function SellerRegistration() {
             </div>
 
             {/* Right Side - Form (Full Width Container) */}
-            <div className="lg:w-1/2 bg-gray-50 flex items-center justify-center p-6 lg:p-12 overflow-y-auto lg:h-screen">
+            <div className="lg:w-1/2 bg-gray-50 flex items-center justify-center p-6 lg:p-12">
                 <motion.div
                     initial={{ opacity: 0, x: 20 }}
                     animate={{ opacity: 1, x: 0 }}
-                    className="w-full max-w-2xl bg-white rounded-3xl shadow-xl p-8 lg:p-10 border border-gray-100 flex flex-col max-h-[90vh]"
+                    className="w-full max-w-2xl bg-white rounded-3xl shadow-xl p-8 lg:p-8 border border-gray-100 flex flex-col overflow-hidden"
                 >
-                    <div className="overflow-y-auto pr-2 custom-scrollbar">
+                    <div>
                         {error && (
                             <div className="mb-6 p-4 rounded-xl bg-red-50 border border-red-200 text-red-700 text-sm">
                                 {error}
@@ -229,7 +255,7 @@ export default function SellerRegistration() {
                         {step === 'upload' ? (
                             <div className="text-center">
                                 <h2 className="text-3xl font-bold text-gray-900 mb-4">Verify Your Identity</h2>
-                                <p className="text-gray-500 mb-10">Upload your Aadhaar card for quick verification and automatic field filling.</p>
+                                <p className="text-gray-500 mb-6">Upload your Aadhaar card for quick verification and automatic field filling.</p>
 
                                 <div className="space-y-6">
                                     <label className="block">
