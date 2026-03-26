@@ -32,16 +32,12 @@ export const SellerPage = () => {
         return;
       }
       const user = JSON.parse(userStr);
-      if (user.role === 'SELLER') {
-        alert('We found an existing Seller profile matching this account! Redirecting you straight to your Seller Dashboard.');
-        navigate('/seller/dashboard');
+      if (user.role === 'SELLER' || user.role === 'ADMIN') {
+        // Already logged in as seller/admin — open consumer login to switch account
+        setIsConsumerLoginOpen(true);
         return;
       }
-      if (user.role === 'ADMIN') {
-        alert('Admins cannot register as sellers.');
-        return;
-      }
-      // If valid consumer role, proceed
+      // If valid consumer role, proceed to registration
       navigate('/seller/register');
     } catch (err) { 
         setIsConsumerLoginOpen(true);
@@ -207,7 +203,7 @@ export const SellerPage = () => {
 
       <Footer />
       <AuthModal isOpen={isLoginOpen} onClose={() => setIsLoginOpen(false)} hideRegister={true} sellerLogin={true} />
-      <AuthModal isOpen={isConsumerLoginOpen} onClose={() => setIsConsumerLoginOpen(false)} />
+      <AuthModal isOpen={isConsumerLoginOpen} onClose={() => setIsConsumerLoginOpen(false)} onSuccess={() => navigate('/seller')} />
     </div>
   );
 };
