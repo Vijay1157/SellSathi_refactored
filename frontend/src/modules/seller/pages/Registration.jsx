@@ -181,65 +181,79 @@ export default function SellerRegistration() {
     };
 
     return (
-        <div className="min-h-screen bg-white flex flex-col lg:flex-row overflow-hidden">
-            {/* Left Side - Branding & Info (Full Height) */}
-            <div className="lg:w-1/2 bg-[#6A3FD8] p-8 lg:p-16 text-white flex flex-col justify-center relative min-h-[40vh] lg:min-h-screen">
-                {/* Clean background with subtle gradient */}
-                <div className="absolute inset-0 bg-gradient-to-br from-[#7B4DDB] to-[#5A32C8] opacity-50" />
+        <>
+            <style>{`
+                /* Hide scrollbar for Chrome, Safari and Opera */
+                .no-scrollbar::-webkit-scrollbar {
+                    display: none;
+                }
+                /* Hide scrollbar for IE, Edge and Firefox */
+                .no-scrollbar {
+                    -ms-overflow-style: none;  /* IE and Edge */
+                    scrollbar-width: none;  /* Firefox */
+                }
+                body { overflow: hidden !important; }
+            `}</style>
 
-                <div className="relative z-10">
-                    <Link to="/seller" className="inline-flex items-center gap-2 text-white/80 hover:text-white mb-12 transition-colors">
-                        <ArrowLeft size={20} /> Back to SellSathi
-                    </Link>
+            <div className="min-h-screen bg-white flex flex-col lg:flex-row overflow-hidden">
+                {/* Left Side - Branding & Info (Full Height) */}
+                <div className="lg:w-1/2 bg-[#6A3FD8] p-8 lg:p-16 text-white flex flex-col justify-center relative min-h-[40vh] lg:min-h-screen">
+                    {/* Clean background with subtle gradient */}
+                    <div className="absolute inset-0 bg-gradient-to-br from-[#7B4DDB] to-[#5A32C8] opacity-50" />
 
-                    <div className="flex items-center gap-3 mb-12">
-                        <div className="w-12 h-12 rounded-2xl bg-white/20 backdrop-blur-md flex items-center justify-center">
-                            <Store size={24} />
+                    <div className="relative z-10">
+                        <Link to="/seller" className="inline-flex items-center gap-2 text-white/80 hover:text-white mb-12 transition-colors">
+                            <ArrowLeft size={20} /> Back to SellSathi
+                        </Link>
+
+                        <div className="flex items-center gap-3 mb-12">
+                            <div className="w-12 h-12 rounded-2xl bg-white/20 backdrop-blur-md flex items-center justify-center">
+                                <Store size={24} />
+                            </div>
+                            <div>
+                                <h3 className="text-xl font-bold">Seller Center</h3>
+                                <p className="text-white/60 text-sm">SellSathi for Business</p>
+                            </div>
                         </div>
+
+                        <h1 className="text-5xl lg:text-6xl font-bold leading-tight mb-8">
+                            Grow your business with SellSathi
+                        </h1>
+                        <p className="text-xl text-white/80 max-w-md mb-12">
+                            Reach millions of customers and scale your brand with powerful selling tools.
+                        </p>
+
+                        <div className="grid grid-cols-2 gap-4">
+                            <div className="p-4 rounded-2xl bg-white/10 backdrop-blur-md border border-white/10">
+                                <p className="text-sm font-semibold">Sales Analytics</p>
+                            </div>
+                            <div className="p-4 rounded-2xl bg-white/10 backdrop-blur-md border border-white/10">
+                                <p className="text-sm font-semibold">Inventory Mgmt</p>
+                            </div>
+                            <div className="p-4 rounded-2xl bg-white/10 backdrop-blur-md border border-white/10">
+                                <p className="text-sm font-semibold">Growth Insights</p>
+                            </div>
+                            <div className="p-4 rounded-2xl bg-white/10 backdrop-blur-md border border-white/10">
+                                <p className="text-sm font-semibold">Fast Payouts</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="relative z-10 pt-12">
+                        <p className="text-sm text-white/60">
+                            By logging in, you agree to SellSathi's Seller <Link to="#" className="underline">Terms of Service</Link>
+                        </p>
+                    </div>
+                </div>
+
+                {/* Right Side - Form (Full Width Container) */}
+                <div className="lg:w-1/2 bg-gray-50 flex items-center justify-center p-4 lg:p-8 overflow-hidden h-screen no-scrollbar">
+                    <motion.div
+                        initial={{ opacity: 0, x: 20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        className="w-full max-w-2xl bg-white rounded-3xl shadow-xl p-8 lg:p-8 border border-gray-100 flex flex-col overflow-hidden"
+                    >
                         <div>
-                            <h3 className="text-xl font-bold">Seller Center</h3>
-                            <p className="text-white/60 text-sm">SellSathi for Business</p>
-                        </div>
-                    </div>
-
-                    <h1 className="text-5xl lg:text-6xl font-bold leading-tight mb-8">
-                        Grow your business with SellSathi
-                    </h1>
-                    <p className="text-xl text-white/80 max-w-md mb-12">
-                        Reach millions of customers and scale your brand with powerful selling tools.
-                    </p>
-
-                    <div className="grid grid-cols-2 gap-4">
-                        <div className="p-4 rounded-2xl bg-white/10 backdrop-blur-md border border-white/10">
-                            <p className="text-sm font-semibold">Sales Analytics</p>
-                        </div>
-                        <div className="p-4 rounded-2xl bg-white/10 backdrop-blur-md border border-white/10">
-                            <p className="text-sm font-semibold">Inventory Mgmt</p>
-                        </div>
-                        <div className="p-4 rounded-2xl bg-white/10 backdrop-blur-md border border-white/10">
-                            <p className="text-sm font-semibold">Growth Insights</p>
-                        </div>
-                        <div className="p-4 rounded-2xl bg-white/10 backdrop-blur-md border border-white/10">
-                            <p className="text-sm font-semibold">Fast Payouts</p>
-                        </div>
-                    </div>
-                </div>
-
-                <div className="relative z-10 pt-12">
-                    <p className="text-sm text-white/60">
-                        By logging in, you agree to SellSathi's Seller <Link to="#" className="underline">Terms of Service</Link>
-                    </p>
-                </div>
-            </div>
-
-            {/* Right Side - Form (Full Width Container) */}
-            <div className="lg:w-1/2 bg-gray-50 flex items-center justify-center p-6 lg:p-12">
-                <motion.div
-                    initial={{ opacity: 0, x: 20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    className="w-full max-w-2xl bg-white rounded-3xl shadow-xl p-8 lg:p-8 border border-gray-100 flex flex-col overflow-hidden"
-                >
-                    <div>
                         {error && (
                             <div className="mb-6 p-4 rounded-xl bg-red-50 border border-red-200 text-red-700 text-sm">
                                 {error}
@@ -447,5 +461,6 @@ export default function SellerRegistration() {
                 </motion.div>
             </div>
         </div>
+    </>
     );
 }
