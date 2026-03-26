@@ -119,7 +119,31 @@ export default function ConsumerDashboard() {
                 wishlistUnsubscribe = listenToWishlist((items) => { if (mounted) setWishlist(items); });
                 if (mounted) setLoading(false);
             } else {
-                navigate('/');
+                // Firebase auth is null — check if user is logged in via test/phone (localStorage)
+                const localUser = JSON.parse(localStorage.getItem('user') || 'null');
+                if (localUser && localUser.uid) {
+                    // User is logged in via test mode — load data from localStorage
+                    setUser({ uid: localUser.uid, displayName: localUser.fullName || localUser.name || 'User' });
+                    const name = localUser.fullName || localUser.name || 'User';
+                    setUserName(name);
+                    setUserPhoto(localUser.photoURL || null);
+                    setProfileData({
+                        fullName: name,
+                        email: localUser.email || '',
+                        phone: localUser.phone || localUser.phoneNumber || ''
+                    });
+                    try {
+                        await Promise.all([
+                            fetchOrders(localUser.uid),
+                            fetchAddresses(localUser.uid),
+                            fetchReviewableOrders(localUser.uid)
+                        ]);
+                    } catch (err) { console.error('Error loading dashboard data:', err); }
+                    wishlistUnsubscribe = listenToWishlist((items) => { if (mounted) setWishlist(items); });
+                    if (mounted) setLoading(false);
+                } else {
+                    navigate('/');
+                }
             }
         });
 

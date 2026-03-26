@@ -61,6 +61,10 @@ export default function ProtectedRoute({ children, requiredRole = null }) {
         // Check authorization on mount
         checkAuthorization();
 
+        // Retry after 600ms to handle race condition where localStorage
+        // is written slightly after navigation (phone/email login)
+        const retryTimer = setTimeout(checkAuthorization, 600);
+
         // Listen for custom userDataChanged event
         const handleUserChange = () => {
             console.log('User data changed - Re-checking authorization');
@@ -68,9 +72,12 @@ export default function ProtectedRoute({ children, requiredRole = null }) {
         };
 
         window.addEventListener('userDataChanged', handleUserChange);
+        window.addEventListener('storage', handleUserChange);
 
         return () => {
+            clearTimeout(retryTimer);
             window.removeEventListener('userDataChanged', handleUserChange);
+            window.removeEventListener('storage', handleUserChange);
         };
     }, [requiredRole]);
 
@@ -94,7 +101,7 @@ export default function ProtectedRoute({ children, requiredRole = null }) {
         return (
             <div className="flex flex-col items-center justify-center h-screen bg-white">
                 <div className="w-12 h-12 border-4 border-indigo-200 border-t-indigo-600 rounded-full animate-spin"></div>
-                <p className="mt-4 text-gray-600 font-semibold">Verifying access...</p>
+                <p className="mt-4 text-gray-600 font-semibold">Loading...</p>
             </div>
         );
     }
