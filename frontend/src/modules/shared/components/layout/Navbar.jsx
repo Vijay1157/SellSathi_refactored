@@ -478,7 +478,7 @@ export default function Navbar() {
                                 </button>
                             )}
 
-                            {user && user.role === 'SELLER' && (
+                            {user && user.role === 'SELLER' && !isSellerDashboard && (
                                 <button
                                     onClick={() => navigate('/seller/dashboard')}
                                     className="btn btn-seller"
