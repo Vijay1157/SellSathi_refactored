@@ -85,25 +85,26 @@ export default function PlatformSettingsTab() {
                 </div>
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '0.75rem' }}>
                     {displayCategories.map(cat => { const isCustom = !SELLER_CATEGORIES.includes(cat); return (<div key={cat} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0.75rem 1rem', borderRadius: '10px', background: 'var(--surface)', border: '1px solid ' + (isCustom ? 'var(--primary)' : 'var(--border)') }}><span style={{ fontSize: '0.88rem', fontWeight: 500, color: 'var(--text)', flex: 1, marginRight: '0.5rem' }}>{cat}{isCustom && <span style={{ fontSize: '0.7rem', color: 'var(--primary)', marginLeft: '6px', fontWeight: 700 }}>CUSTOM</span>}</span><div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}><input type="number" value={categoryGstRates[cat] ?? 18} onChange={e => handleGstChange(cat, e.target.value)} min="0" max="100" step="0.5" style={{ ...iStyle, width: '70px', padding: '0.4rem 0.6rem' }} /><span style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--text-muted)' }}>%</span>{isCustom && <button onClick={() => handleRemoveCustom(cat)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#dc2626', fontWeight: 700, padding: '0 4px' }}>x</button>}</div></div>); })}
-                    {displayCategories.length === 0 && <div style={{ gridColumn: '1/-1', padding: '2rem', textAlign: 'center', color: 'var(--text-muted)' }}>No categories match your search.</div>}
                 </div>
-                <div style={{ marginTop: '1.25rem', padding: '1.25rem', borderRadius: '12px', background: 'rgba(99,102,241,0.04)', border: '1px solid rgba(99,102,241,0.2)' }}>
-                    <div style={{ fontWeight: 700, fontSize: '0.82rem', textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--primary)', marginBottom: '0.85rem' }}>+ Add Custom Category (Others)</div>
-                    <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center', flexWrap: 'wrap' }}>
-                        <input type="text" placeholder="Category name..." value={customCatName} onChange={e => setCustomCatName(e.target.value)} style={{ ...iStyle, width: '220px', textAlign: 'left' }} />
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}><input type="number" placeholder="GST %" value={customCatGst} onChange={e => setCustomCatGst(e.target.value)} min="0" max="100" step="0.5" style={{ ...iStyle, width: '80px' }} /><span style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--text-muted)' }}>%</span></div>
-                        <button className="btn btn-primary" onClick={handleAddCustom} style={{ padding: '0.5rem 1.25rem', fontSize: '0.85rem', fontWeight: 700 }}>Add Category</button>
-                    </div>
-                    <p style={{ margin: '0.5rem 0 0', fontSize: '0.78rem', color: 'var(--text-muted)' }}>Custom categories appear in the consumer marketplace. Click Save Changes to persist.</p>
+            </div>
+
+            {/* How GST Works */}
+            <div className="glass-card" style={{ padding: '1.75rem', background: 'rgba(245,158,11,0.04)', border: '1px solid rgba(245,158,11,0.25)' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', paddingBottom: '0.75rem', marginBottom: '1.25rem', borderBottom: '2px solid rgba(245,158,11,0.25)' }}>
+                    <Truck size={16} style={{ color: '#d97706' }} />
+                    <span style={{ fontWeight: 700, fontSize: '0.85rem', textTransform: 'uppercase', letterSpacing: '0.05em', color: '#92400e' }}>How GST Works</span>
                 </div>
-                <div style={{ marginTop: '1.25rem', padding: '0.85rem 1rem', borderRadius: '10px', background: 'rgba(245,158,11,0.06)', border: '1px solid rgba(245,158,11,0.2)' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '0.5rem' }}><Truck size={14} style={{ color: '#d97706' }} /><span style={{ fontWeight: 700, fontSize: '0.8rem', color: '#92400e', textTransform: 'uppercase', letterSpacing: '0.05em' }}>How GST works</span></div>
-                    <ul style={{ margin: 0, padding: '0 0 0 1.1rem', display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
-                        <li style={{ fontSize: '0.82rem', color: '#92400e', lineHeight: 1.5 }}>Sellers with a GST number can manually set their product GST rate</li>
-                        <li style={{ fontSize: '0.82rem', color: '#92400e', lineHeight: 1.5 }}>Sellers without a GST number get the rate from this table automatically</li>
-                        <li style={{ fontSize: '0.82rem', color: '#92400e', lineHeight: 1.5 }}>Custom categories added here appear in the consumer marketplace navigation</li>
-                        <li style={{ fontSize: '0.82rem', color: '#92400e', lineHeight: 1.5 }}>Changes take effect immediately after saving</li>
-                    </ul>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '0.75rem' }}>
+                    {[
+                        'Sellers with a GST number can manually set their product GST rate',
+                        'Sellers without a GST number get the rate from this table automatically',
+                        'Changes take effect immediately after saving'
+                    ].map((note, i) => (
+                        <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: '0.75rem', padding: '0.85rem 1rem', borderRadius: '10px', background: 'var(--surface)', border: '1px solid rgba(245,158,11,0.2)' }}>
+                            <span style={{ color: '#d97706', fontWeight: 700, fontSize: '1rem', lineHeight: 1, marginTop: '1px' }}>•</span>
+                            <span style={{ fontSize: '0.88rem', color: '#92400e', lineHeight: 1.6 }}>{note}</span>
+                        </div>
+                    ))}
                 </div>
             </div>
         </div>
