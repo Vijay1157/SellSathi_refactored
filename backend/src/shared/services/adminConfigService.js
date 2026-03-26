@@ -36,6 +36,17 @@ const getAdminConfig = async () => {
         const adminProfileDoc = await db.collection("adminProfiles").doc(adminUid).get();
         const adminProfile = adminProfileDoc.exists ? adminProfileDoc.data() : {};
 
+        const DEFAULT_CATEGORY_GST = {
+            "Fashion (Men)": 5, "Fashion (Women)": 5, "Kids & Baby": 12,
+            "Electronics": 18, "Home & Living": 18, "Handicrafts": 5,
+            "Artworks": 12, "Beauty & Personal Care": 18, "Sports & Fitness": 18,
+            "Books & Stationery": 12, "Food & Beverages": 5, "Gifts & Customization": 18,
+            "Jewelry & Accessories": 5, "Fabrics & Tailoring Materials": 5,
+            "Local Sellers / Homepreneurs": 5, "Services": 18, "Pet Supplies": 12,
+            "Automotive & Accessories": 18, "Travel & Utility": 18,
+            "Sustainability & Eco-Friendly": 12, "Others": 18
+        };
+
         const config = {
             name: adminProfile.name || userData.name || userData.fullName || 'Admin',
             email: adminProfile.adminEmail || userData.email || 'admin@sellsathi.com',
@@ -45,10 +56,10 @@ const getAdminConfig = async () => {
             websiteInfo: adminProfile.websiteInfo || 'Your Trusted E-Commerce Platform',
             profileImage: adminProfile.profileImage || null,
             platformChargeRate: adminProfile.platformChargeRate ?? 0.10,
-            // Default platform charges
             defaultPlatformFeePercent: adminProfile.defaultPlatformFeePercent ?? 7,
             defaultGstPercent: adminProfile.defaultGstPercent ?? 18,
             defaultShippingHandlingPercent: adminProfile.defaultShippingHandlingPercent ?? 0,
+            categoryGstRates: adminProfile.categoryGstRates || DEFAULT_CATEGORY_GST,
             uid: adminUid
         };
 
@@ -77,6 +88,16 @@ const getDefaultConfig = () => {
         defaultPlatformFeePercent: 7,
         defaultGstPercent: 18,
         defaultShippingHandlingPercent: 0,
+        categoryGstRates: {
+            "Fashion (Men)": 5, "Fashion (Women)": 5, "Kids & Baby": 12,
+            "Electronics": 18, "Home & Living": 18, "Handicrafts": 5,
+            "Artworks": 12, "Beauty & Personal Care": 18, "Sports & Fitness": 18,
+            "Books & Stationery": 12, "Food & Beverages": 5, "Gifts & Customization": 18,
+            "Jewelry & Accessories": 5, "Fabrics & Tailoring Materials": 5,
+            "Local Sellers / Homepreneurs": 5, "Services": 18, "Pet Supplies": 12,
+            "Automotive & Accessories": 18, "Travel & Utility": 18,
+            "Sustainability & Eco-Friendly": 12, "Others": 18
+        },
         uid: null
     };
 };
