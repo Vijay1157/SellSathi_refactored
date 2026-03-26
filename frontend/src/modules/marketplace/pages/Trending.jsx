@@ -8,6 +8,7 @@ import { addToCart } from '@/modules/shared/utils/cartUtils';
 import { listenToWishlist, addToWishlist, removeFromWishlist } from '@/modules/shared/utils/wishlistUtils';
 import { fetchProductReviews } from '@/modules/shared/utils/reviewUtils';
 import { fetchWithCache } from '@/modules/shared/utils/firestoreCache';
+import LoadingSpinner from '@/modules/shared/components/common/LoadingSpinner';
 import QuickViewModal from '@/modules/shared/components/common/QuickViewModal';
 import Rating from '@/modules/shared/components/common/Rating';
 import PriceDisplay from '@/modules/shared/components/common/PriceDisplay';
@@ -52,7 +53,8 @@ export default function Trending() {
                 );
                 setProducts(data);
                 setLoading(false);
-                fetchReviewsForProducts(data);
+                // Lazy load reviews - fetch only first 8 products' reviews
+                fetchReviewsForProducts(data.slice(0, 8));
             } catch (err) {
                 console.error(err);
                 setLoading(false);
@@ -123,7 +125,7 @@ export default function Trending() {
                 </header>
 
                 {loading ? (
-                    <div className="loading">Checking what's viral...</div>
+                    <LoadingSpinner size="large" message="Checking what's viral..." />
                 ) : (
                     <div className="trending-grid">
                         {products.map((p, idx) => (

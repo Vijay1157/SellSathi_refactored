@@ -8,6 +8,7 @@ import { authFetch, API_BASE } from '@/modules/shared/utils/api';
 import { addToWishlist, removeFromWishlist, listenToWishlist } from '@/modules/shared/utils/wishlistUtils';
 import { ArrowRight, Share2, MessageCircle, Facebook, Twitter, Mail, Rss } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import LoadingSpinner from '@/modules/shared/components/common/LoadingSpinner';
 import ProductGallery from '../components/ProductDetail/ProductGallery';
 import ProductInfo from '../components/ProductDetail/ProductInfo';
 import ProductReviews from '../components/ProductDetail/ProductReviews';
@@ -465,7 +466,7 @@ export default function ProductDetail() {
     const fbtTotalPrice = fbtProducts.reduce((sum, p, i) => fbtSelections[i] ? sum + p.price : sum, 0);
     const fbtTotalCount = Object.values(fbtSelections).filter(Boolean).length;
 
-    if (loading) return <div className="loading-fullscreen"><div className="spinner"></div></div>;
+    if (loading) return <LoadingSpinner fullScreen size="large" message="Loading product details..." />;
     if (!product) return <div className="error-fullscreen"><h2>Oops! Product not found.</h2><button onClick={() => navigate('/')}>Go Home</button></div>;
 
     return (
