@@ -51,10 +51,10 @@ const getAdminProfile = async (req, res) => {
 const updateAdminProfile = async (req, res) => {
     try {
         const uid = req.user.uid;
-        const { name, dateOfBirth, address, websiteName, websiteInfo, adminEmail, phone, defaultPlatformFeePercent, defaultGstPercent, defaultShippingHandlingPercent } = req.body;
+        const { name, dateOfBirth, address, websiteName, websiteInfo, adminEmail, phone, defaultPlatformFeePercent, defaultGstPercent, defaultShippingHandlingPercent, categoryGstRates } = req.body;
         
-        // Validate required fields
-        if (!name || !name.trim()) {
+        // Validate required fields — name only required for profile updates, not settings-only updates
+        if (name !== undefined && (!name || !name.trim())) {
             return res.status(400).json({ success: false, message: "Name is required" });
         }
         
@@ -90,14 +90,14 @@ const updateAdminProfile = async (req, res) => {
         
         // Prepare update data
         const updateData = {
-            name: name.trim(),
-            dateOfBirth: dateOfBirth || '',
-            address: address || '',
-            websiteName: websiteName || 'SellSathi',
-            websiteInfo: websiteInfo || 'Your Trusted E-Commerce Platform',
-            adminEmail: adminEmail ? adminEmail.trim() : '',
             updatedAt: admin.firestore.FieldValue.serverTimestamp()
         };
+        if (name !== undefined) updateData.name = name.trim();
+        if (dateOfBirth !== undefined) updateData.dateOfBirth = dateOfBirth || '';
+        if (address !== undefined) updateData.address = address || '';
+        if (websiteName !== undefined) updateData.websiteName = websiteName || 'SellSathi';
+        if (websiteInfo !== undefined) updateData.websiteInfo = websiteInfo || 'Your Trusted E-Commerce Platform';
+        if (adminEmail !== undefined) updateData.adminEmail = adminEmail ? adminEmail.trim() : '';
         
         // Add default charges if provided
         if (defaultPlatformFeePercent !== undefined) {
@@ -108,6 +108,15 @@ const updateAdminProfile = async (req, res) => {
         }
         if (defaultShippingHandlingPercent !== undefined) {
             updateData.defaultShippingHandlingPercent = parseFloat(defaultShippingHandlingPercent);
+        }
+        if (categoryGstRates && typeof categoryGstRates === 'object') {
+            // Validate all values are numbers between 0-100
+            const validated = {};
+            for (const [cat, rate] of Object.entries(categoryGstRates)) {
+                const r = parseFloat(rate);
+                if (!isNaN(r) && r >= 0 && r <= 100) validated[cat] = r;
+            }
+            if (Object.keys(validated).length > 0) updateData.categoryGstRates = validated;
         }
         
         // Update or create admin profile

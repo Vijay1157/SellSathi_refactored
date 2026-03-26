@@ -14,26 +14,14 @@ import VariantsEditor from '../components/AddProduct/VariantsEditor';
 const CATEGORY_CONFIG = VARIANT_CONFIGS;
 const categories = SELLER_CATEGORIES;
 
-const CATEGORY_GST_RATES = {
-    "Fashion (Men)": 5,
-    "Fashion (Women)": 5,
-    "Kids & Baby": 12,
-    "Electronics": 18,
-    "Home & Living": 18,
-    "Handicrafts": 5,
-    "Artworks": 12,
-    "Beauty & Personal Care": 18,
-    "Sports & Fitness": 18,
-    "Books & Stationery": 12,
-    "Food & Beverages": 5,
-    "Gifts & Customization": 18,
-    "Jewelry & Accessories": 5,
-    "Fabrics & Tailoring Materials": 5,
-    "Local Sellers / Homepreneurs": 5,
-    "Services": 18,
-    "Pet Supplies": 12,
-    "Automotive & Accessories": 18,
-    "Travel & Utility": 18,
+const CATEGORY_GST_RATES_DEFAULT = {
+    "Fashion (Men)": 5, "Fashion (Women)": 5, "Kids & Baby": 12,
+    "Electronics": 18, "Home & Living": 18, "Handicrafts": 5,
+    "Artworks": 12, "Beauty & Personal Care": 18, "Sports & Fitness": 18,
+    "Books & Stationery": 12, "Food & Beverages": 5, "Gifts & Customization": 18,
+    "Jewelry & Accessories": 5, "Fabrics & Tailoring Materials": 5,
+    "Local Sellers / Homepreneurs": 5, "Services": 18, "Pet Supplies": 12,
+    "Automotive & Accessories": 18, "Travel & Utility": 18,
     "Sustainability & Eco-Friendly": 12
 };
 
@@ -88,8 +76,17 @@ export default function AddProduct() {
 
     const config = CATEGORY_CONFIG[product.category] || null;
 
-    // Load seller profile to check GST status
+    const [categoryGstRates, setCategoryGstRates] = useState(CATEGORY_GST_RATES_DEFAULT);
+
+    // Load seller profile to check GST status + fetch admin category GST rates
     useEffect(() => {
+        // Fetch admin-configured GST rates
+        import('@/modules/shared/utils/api').then(({ authFetch }) => {
+            authFetch('/admin/config/public').then(r => r.json()).then(d => {
+                if (d.success && d.config?.categoryGstRates) setCategoryGstRates(d.config.categoryGstRates);
+            }).catch(() => {});
+        });
+
         const loadSellerProfile = async () => {
             try {
                 const user = auth.currentUser;
@@ -106,7 +103,7 @@ export default function AddProduct() {
                         
                         // If they don't have GST, strictly lock and pre-fill the static rate immediately
                         if (!hasGST && product.category) {
-                            setProduct(prev => ({ ...prev, gstPercent: CATEGORY_GST_RATES[prev.category] || 18 }));
+                            setProduct(prev => ({ ...prev, gstPercent: categoryGstRates[prev.category] ?? 18 }));
                         }
                     }
                 }
@@ -319,7 +316,7 @@ export default function AddProduct() {
                                     <select required style={sty.select} value={product.category}
                                         onChange={e => {
                                             const newCat = e.target.value;
-                                            const newGst = !sellerHasGST ? (CATEGORY_GST_RATES[newCat] || 18) : product.gstPercent;
+                                            const newGst = !sellerHasGST ? (categoryGstRates[newCat] ?? 18) : product.gstPercent;
                                             setProduct({ ...product, category: newCat, subCategory: '', gstPercent: newGst });
                                             setSelectedSizes([]); setSelectedColors([]); setVariants({});
                                             setSpecifications([]); setPricingType('same'); setSizePrices({});

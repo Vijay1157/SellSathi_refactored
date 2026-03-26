@@ -23,6 +23,7 @@ export default function Navbar() {
     const [wishlistCount, setWishlistCount] = useState(0);
     const [dynamicMegaData, setDynamicMegaData] = useState({});
     const [isHoverLocked, setIsHoverLocked] = useState(false);
+    const [customAdminCategories, setCustomAdminCategories] = useState([]);
 
     const navigate = useNavigate();
     const location = useLocation();
@@ -50,6 +51,19 @@ export default function Navbar() {
     };
 
     useEffect(() => {
+        // Fetch custom admin categories
+        fetch('http://localhost:5000/admin/config/public')
+            .then(r => r.json())
+            .then(d => {
+                if (d.success && d.config?.categoryGstRates) {
+                    const custom = Object.keys(d.config.categoryGstRates).filter(k => !MAIN_CATEGORIES.includes(k) && !['Others'].includes(k));
+                    setCustomAdminCategories(custom);
+                }
+            })
+            .catch(() => {});
+    }, []);
+
+    useEffect(() => {
         const fetchMegaData = async () => {
             try {
                 // Use cache with 15 minute TTL to reduce Firestore reads
@@ -71,7 +85,7 @@ export default function Navbar() {
                 }
 
                 const mega = {};
-                [...MAIN_CATEGORIES, ...SPECIAL_CATEGORIES].forEach(cat => {
+                [...MAIN_CATEGORIES, ...SPECIAL_CATEGORIES, ...customAdminCategories].forEach(cat => {
                     let catProducts;
                     if (cat === "Today's Deals") {
                         catProducts = products.filter(p => p.discount || p.oldPrice);
@@ -509,7 +523,7 @@ export default function Navbar() {
                             {/* Row 2: Remaining categories starting from Gifts & Customization (collapsible) */}
                             {showAllSubcategories && (
                                 <div className="sub-nav sub-nav-row-2 animate-slide-down">
-                                    {MAIN_CATEGORIES.slice(11).map(cat => {
+                                    {[...MAIN_CATEGORIES.slice(11), ...customAdminCategories].map(cat => {
                                         const path = `/products?category=${cat}`;
                                         const isMega = !!SUBCATEGORIES[cat];
 

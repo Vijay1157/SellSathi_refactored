@@ -1,233 +1,109 @@
 ﻿import { useState, useEffect } from 'react';
-import { Settings, Save, Loader } from 'lucide-react';
+import { Settings, Save, Loader, RefreshCw, Percent, Truck, Tag } from 'lucide-react';
 import { authFetch } from '@/modules/shared/utils/api';
+import { SELLER_CATEGORIES } from '@/modules/shared/config/categories';
+
+const DEFAULT_GST = {
+    "Fashion (Men)": 5, "Fashion (Women)": 5, "Kids & Baby": 12,
+    "Electronics": 18, "Home & Living": 18, "Handicrafts": 5,
+    "Artworks": 12, "Beauty & Personal Care": 18, "Sports & Fitness": 18,
+    "Books & Stationery": 12, "Food & Beverages": 5, "Gifts & Customization": 18,
+    "Jewelry & Accessories": 5, "Fabrics & Tailoring Materials": 5,
+    "Local Sellers / Homepreneurs": 5, "Services": 18, "Pet Supplies": 12,
+    "Automotive & Accessories": 18, "Travel & Utility": 18,
+    "Sustainability & Eco-Friendly": 12, "Others": 18
+};
+const iStyle = { padding: '0.55rem 0.85rem', borderRadius: '8px', border: '1px solid var(--border)', fontSize: '0.95rem', background: 'var(--surface)', color: 'var(--text)', width: '90px', outline: 'none', textAlign: 'center' };
+const lStyle = { fontSize: '0.78rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--text-muted)', marginBottom: '6px', display: 'block' };
 
 export default function PlatformSettingsTab() {
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [hasChanges, setHasChanges] = useState(false);
-    
-    const [formData, setFormData] = useState({
-        defaultPlatformFeePercent: 7,
-        defaultGstPercent: 18,
-        defaultShippingHandlingPercent: 0
-    });
+    const [catSearch, setCatSearch] = useState('');
+    const [formData, setFormData] = useState({ defaultPlatformFeePercent: 7, defaultShippingHandlingPercent: 0 });
+    const [categoryGstRates, setCategoryGstRates] = useState(DEFAULT_GST);
+    const [customCategories, setCustomCategories] = useState([]);
+    const [customCatName, setCustomCatName] = useState('');
+    const [customCatGst, setCustomCatGst] = useState('');
 
-    useEffect(() => {
-        fetchConfig();
-    }, []);
+    useEffect(() => { fetchConfig(); }, []);
 
     const fetchConfig = async () => {
         setLoading(true);
         try {
-            const response = await authFetch('/admin/config/public');
-            const data = await response.json();
+            const res = await authFetch('/admin/config/public');
+            const data = await res.json();
             if (data.success && data.config) {
-                setFormData({
-                    defaultPlatformFeePercent: data.config.defaultPlatformFeePercent ?? 7,
-                    defaultGstPercent: data.config.defaultGstPercent ?? 18,
-                    defaultShippingHandlingPercent: data.config.defaultShippingHandlingPercent ?? 0
-                });
+                setFormData({ defaultPlatformFeePercent: data.config.defaultPlatformFeePercent ?? 7, defaultShippingHandlingPercent: data.config.defaultShippingHandlingPercent ?? 0 });
+                if (data.config.categoryGstRates) {
+                    setCategoryGstRates({ ...DEFAULT_GST, ...data.config.categoryGstRates });
+                    setCustomCategories(Object.keys(data.config.categoryGstRates).filter(k => !SELLER_CATEGORIES.includes(k)));
+                }
             }
-        } catch (error) {
-            console.error('Failed to fetch config:', error);
-        } finally {
-            setLoading(false);
-        }
+        } catch (err) { console.error(err); }
+        finally { setLoading(false); }
     };
 
-    const handleInputChange = (e) => {
-        const { name, value } = e.target;
-        const numValue = parseFloat(value) || 0;
-        if (numValue < 0 || numValue > 100) return;
-        setFormData(prev => ({ ...prev, [name]: numValue }));
-        setHasChanges(true);
-    };
+    const handleChange = (e) => { const val = parseFloat(e.target.value) || 0; if (val < 0 || val > 100) return; setFormData(prev => ({ ...prev, [e.target.name]: val })); setHasChanges(true); };
+    const handleGstChange = (cat, value) => { const val = parseFloat(value); if (isNaN(val) || val < 0 || val > 100) return; setCategoryGstRates(prev => ({ ...prev, [cat]: val })); setHasChanges(true); };
+    const handleAddCustom = () => { const name = customCatName.trim(); const gst = parseFloat(customCatGst); if (!name) { alert('Enter a category name.'); return; } if (isNaN(gst) || gst < 0 || gst > 100) { alert('Enter a valid GST % (0-100).'); return; } if (categoryGstRates[name] !== undefined) { alert('Category already exists.'); return; } setCategoryGstRates(prev => ({ ...prev, [name]: gst })); setCustomCategories(prev => [...prev, name]); setCustomCatName(''); setCustomCatGst(''); setHasChanges(true); };
+    const handleRemoveCustom = (name) => { setCategoryGstRates(prev => { const n = { ...prev }; delete n[name]; return n; }); setCustomCategories(prev => prev.filter(c => c !== name)); setHasChanges(true); };
+    const handleSave = async () => { setSaving(true); try { const res = await authFetch('/admin/profile', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ...formData, categoryGstRates }) }); const data = await res.json(); if (data.success) { alert('Platform settings saved!'); setHasChanges(false); await fetchConfig(); } else { alert('Failed: ' + (data.message || 'Unknown error')); } } catch (err) { alert('Error: ' + err.message); } finally { setSaving(false); } };
 
-    const handleSave = async () => {
-        setSaving(true);
-        try {
-            const response = await authFetch('/admin/profile', {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(formData)
-            });
-            if (!response.ok) throw new Error('Failed to update settings');
-            const data = await response.json();
-            if (data.success) {
-                alert('Platform settings updated successfully!');
-                setHasChanges(false);
-                await fetchConfig();
-            } else {
-                alert(data.message || 'Failed to update settings');
-            }
-        } catch (error) {
-            console.error('Save error:', error);
-            alert('Error updating settings: ' + error.message);
-        } finally {
-            setSaving(false);
-        }
-    };
+    const allCategories = [...SELLER_CATEGORIES, ...customCategories.filter(c => !SELLER_CATEGORIES.includes(c))];
+    const displayCategories = allCategories.filter(c => !catSearch || c.toLowerCase().includes(catSearch.toLowerCase()));
 
-    const handleReset = () => {
-        fetchConfig();
-        setHasChanges(false);
-    };
-
-    if (loading) {
-        return (
-            <div className="flex justify-center items-center p-12">
-                <Loader className="animate-spin" size={32} />
-            </div>
-        );
-    }
+    if (loading) return (<div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', padding: '4rem' }}><Loader className="animate-spin" size={32} style={{ color: 'var(--primary)' }} /></div>);
 
     return (
-        <div className="p-6">
-            <div className="flex items-center justify-between mb-6">
-                <div className="flex items-center gap-3">
-                    <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center">
-                        <Settings size={24} className="text-primary" />
-                    </div>
-                    <div>
-                        <h2 className="text-2xl font-bold text-gray-900">Platform Settings</h2>
-                        <p className="text-sm text-gray-500">Configure default charges for the marketplace</p>
+        <div className="animate-fade-in flex flex-col gap-8">
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                    <div style={{ width: '48px', height: '48px', borderRadius: '12px', background: 'rgba(99,102,241,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Settings size={24} style={{ color: 'var(--primary)' }} /></div>
+                    <div><h3 style={{ fontSize: '1.5rem', fontWeight: 700, margin: 0 }}>Platform Settings</h3><p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--text-muted)' }}>Configure platform charges and category GST rates</p></div>
+                </div>
+                <div style={{ display: 'flex', gap: '0.75rem' }}>
+                    <button className="btn btn-secondary" onClick={() => { fetchConfig(); setHasChanges(false); }} style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '0.5rem 1rem' }}><RefreshCw size={15} /> Reset</button>
+                    <button className="btn btn-primary" onClick={handleSave} disabled={saving || !hasChanges} style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '0.5rem 1.25rem', opacity: !hasChanges ? 0.5 : 1 }}>{saving ? <Loader size={15} className="animate-spin" /> : <Save size={15} />}{saving ? 'Saving...' : 'Save Changes'}</button>
+                </div>
+            </div>
+            <div className="glass-card" style={{ padding: '2rem' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', paddingBottom: '0.75rem', marginBottom: '1.75rem', borderBottom: '2px solid var(--border)' }}><Percent size={16} style={{ color: 'var(--primary)' }} /><span style={{ fontWeight: 700, fontSize: '0.85rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Default Platform Charges</span></div>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '2rem', maxWidth: '600px' }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}><label style={lStyle}>Platform Fee (%)</label><input type="number" name="defaultPlatformFeePercent" value={formData.defaultPlatformFeePercent} onChange={handleChange} min="0" max="100" step="0.1" style={iStyle} /><p style={{ margin: 0, fontSize: '0.8rem', color: 'var(--text-muted)' }}>Commission charged on each sale</p></div>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}><label style={lStyle}>Shipping and Handling (%)</label><input type="number" name="defaultShippingHandlingPercent" value={formData.defaultShippingHandlingPercent} onChange={handleChange} min="0" max="100" step="0.1" style={iStyle} /><p style={{ margin: 0, fontSize: '0.8rem', color: 'var(--text-muted)' }}>{formData.defaultShippingHandlingPercent === 0 ? 'FREE shipping' : formData.defaultShippingHandlingPercent + '% shipping charge'}</p></div>
+                </div>
+            </div>
+            <div className="glass-card" style={{ padding: '2rem' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingBottom: '0.75rem', marginBottom: '1.5rem', borderBottom: '2px solid var(--border)', flexWrap: 'wrap', gap: '0.75rem' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}><Tag size={16} style={{ color: 'var(--secondary)' }} /><span style={{ fontWeight: 700, fontSize: '0.85rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Category GST Rates</span><span style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>applied to all products per category</span></div>
+                    <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                        <input type="text" placeholder="Search category..." value={catSearch} onChange={e => setCatSearch(e.target.value)} style={{ padding: '0.45rem 0.85rem', borderRadius: '8px', border: '1px solid var(--border)', fontSize: '0.85rem', background: 'var(--surface)', color: 'var(--text)', width: '180px', outline: 'none' }} />
+                        <button className="btn btn-secondary" onClick={() => setCatSearch('')} style={{ padding: '0.4rem 0.85rem', fontSize: '0.82rem' }}>Clear</button>
                     </div>
                 </div>
-                {hasChanges && (
-                    <div className="flex gap-2">
-                        <button onClick={handleReset} className="btn btn-secondary" disabled={saving}>
-                            Cancel
-                        </button>
-                        <button onClick={handleSave} className="btn btn-primary flex items-center gap-2" disabled={saving}>
-                            {saving ? (
-                                <>
-                                    <Loader className="animate-spin" size={16} />
-                                    Saving...
-                                </>
-                            ) : (
-                                <>
-                                    <Save size={16} />
-                                    Save Changes
-                                </>
-                            )}
-                        </button>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '0.75rem' }}>
+                    {displayCategories.map(cat => { const isCustom = !SELLER_CATEGORIES.includes(cat); return (<div key={cat} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0.75rem 1rem', borderRadius: '10px', background: 'var(--surface)', border: '1px solid ' + (isCustom ? 'var(--primary)' : 'var(--border)') }}><span style={{ fontSize: '0.88rem', fontWeight: 500, color: 'var(--text)', flex: 1, marginRight: '0.5rem' }}>{cat}{isCustom && <span style={{ fontSize: '0.7rem', color: 'var(--primary)', marginLeft: '6px', fontWeight: 700 }}>CUSTOM</span>}</span><div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}><input type="number" value={categoryGstRates[cat] ?? 18} onChange={e => handleGstChange(cat, e.target.value)} min="0" max="100" step="0.5" style={{ ...iStyle, width: '70px', padding: '0.4rem 0.6rem' }} /><span style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--text-muted)' }}>%</span>{isCustom && <button onClick={() => handleRemoveCustom(cat)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#dc2626', fontWeight: 700, padding: '0 4px' }}>x</button>}</div></div>); })}
+                    {displayCategories.length === 0 && <div style={{ gridColumn: '1/-1', padding: '2rem', textAlign: 'center', color: 'var(--text-muted)' }}>No categories match your search.</div>}
+                </div>
+                <div style={{ marginTop: '1.25rem', padding: '1.25rem', borderRadius: '12px', background: 'rgba(99,102,241,0.04)', border: '1px solid rgba(99,102,241,0.2)' }}>
+                    <div style={{ fontWeight: 700, fontSize: '0.82rem', textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--primary)', marginBottom: '0.85rem' }}>+ Add Custom Category (Others)</div>
+                    <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center', flexWrap: 'wrap' }}>
+                        <input type="text" placeholder="Category name..." value={customCatName} onChange={e => setCustomCatName(e.target.value)} style={{ ...iStyle, width: '220px', textAlign: 'left' }} />
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}><input type="number" placeholder="GST %" value={customCatGst} onChange={e => setCustomCatGst(e.target.value)} min="0" max="100" step="0.5" style={{ ...iStyle, width: '80px' }} /><span style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--text-muted)' }}>%</span></div>
+                        <button className="btn btn-primary" onClick={handleAddCustom} style={{ padding: '0.5rem 1.25rem', fontSize: '0.85rem', fontWeight: 700 }}>Add Category</button>
                     </div>
-                )}
-            </div>
-            <div className="glass-card p-6 max-w-3xl">
-                <div className="space-y-6">
-                    <div className="pb-4 border-b border-gray-200">
-                        <h3 className="text-lg font-semibold text-gray-900 mb-2">Default Platform Charges</h3>
-                        <p className="text-sm text-gray-600">
-                            These percentages will be applied to all products unless overridden at the product level.
-                        </p>
-                    </div>
-                    <div className="space-y-2">
-                        <label className="block text-sm font-semibold text-gray-700">Default Platform Fee (%)</label>
-                        <div className="flex items-center gap-4">
-                            <input
-                                type="number"
-                                name="defaultPlatformFeePercent"
-                                value={formData.defaultPlatformFeePercent}
-                                onChange={handleInputChange}
-                                min="0"
-                                max="100"
-                                step="0.1"
-                                className="input flex-1"
-                                style={{ maxWidth: '200px' }}
-                            />
-                            <div className="flex-1">
-                                <div className="text-sm text-gray-600">Commission charged on each sale</div>
-                                <div className="text-xs text-gray-500 mt-1">
-                                    Example: On ₹1,000 sale = ₹{(1000 * formData.defaultPlatformFeePercent / 100).toFixed(2)} fee
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div className="space-y-2">
-                        <label className="block text-sm font-semibold text-gray-700">Default GST (%)</label>
-                        <div className="flex items-center gap-4">
-                            <input
-                                type="number"
-                                name="defaultGstPercent"
-                                value={formData.defaultGstPercent}
-                                onChange={handleInputChange}
-                                min="0"
-                                max="100"
-                                step="0.1"
-                                className="input flex-1"
-                                style={{ maxWidth: '200px' }}
-                            />
-                            <div className="flex-1">
-                                <div className="text-sm text-gray-600">Goods and Services Tax</div>
-                                <div className="text-xs text-gray-500 mt-1">
-                                    Example: On ₹1,000 sale = ₹{(1000 * formData.defaultGstPercent / 100).toFixed(2)} GST
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div className="space-y-2">
-                        <label className="block text-sm font-semibold text-gray-700">Default Shipping Handling (%)</label>
-                        <div className="flex items-center gap-4">
-                            <input
-                                type="number"
-                                name="defaultShippingHandlingPercent"
-                                value={formData.defaultShippingHandlingPercent}
-                                onChange={handleInputChange}
-                                min="0"
-                                max="100"
-                                step="0.1"
-                                className="input flex-1"
-                                style={{ maxWidth: '200px' }}
-                            />
-                            <div className="flex-1">
-                                <div className="text-sm text-gray-600">Shipping and handling charges</div>
-                                <div className="text-xs text-gray-500 mt-1">
-                                    Currently: {formData.defaultShippingHandlingPercent === 0 ? 'FREE shipping' : `₹${(1000 * formData.defaultShippingHandlingPercent / 100).toFixed(2)} on ₹1,000`}
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div className="mt-8 p-4 bg-blue-50 border border-blue-200 rounded-xl">
-                        <h4 className="text-sm font-semibold text-blue-900 mb-3">Example Calculation</h4>
-                        <div className="space-y-2 text-sm">
-                            <div className="flex justify-between">
-                                <span className="text-gray-700">Product Price:</span>
-                                <span className="font-semibold">₹1,000</span>
-                            </div>
-                            <div className="flex justify-between">
-                                <span className="text-gray-700">Platform Fee ({formData.defaultPlatformFeePercent}%):</span>
-                                <span className="font-semibold">₹{(1000 * formData.defaultPlatformFeePercent / 100).toFixed(2)}</span>
-                            </div>
-                            <div className="flex justify-between">
-                                <span className="text-gray-700">GST ({formData.defaultGstPercent}%):</span>
-                                <span className="font-semibold">₹{(1000 * formData.defaultGstPercent / 100).toFixed(2)}</span>
-                            </div>
-                            <div className="flex justify-between">
-                                <span className="text-gray-700">Shipping ({formData.defaultShippingHandlingPercent}%):</span>
-                                <span className="font-semibold">
-                                    {formData.defaultShippingHandlingPercent === 0 ? 'FREE' : `₹${(1000 * formData.defaultShippingHandlingPercent / 100).toFixed(2)}`}
-                                </span>
-                            </div>
-                            <div className="pt-2 border-t border-blue-300 flex justify-between">
-                                <span className="text-blue-900 font-bold">Customer Pays:</span>
-                                <span className="text-blue-900 font-bold text-lg">
-                                    ₹{(1000 + (1000 * formData.defaultPlatformFeePercent / 100) + (1000 * formData.defaultGstPercent / 100) + (1000 * formData.defaultShippingHandlingPercent / 100)).toFixed(2)}
-                                </span>
-                            </div>
-                        </div>
-                    </div>
-                    <div className="mt-6 p-4 bg-amber-50 border border-amber-200 rounded-xl">
-                        <h4 className="text-sm font-semibold text-amber-900 mb-2">Important Notes</h4>
-                        <ul className="text-sm text-amber-800 space-y-1 list-disc list-inside">
-                            <li>These are default values applied to all products</li>
-                            <li>Individual products can override these values</li>
-                            <li>Changes apply immediately to new orders</li>
-                            <li>Existing orders are not affected</li>
-                            <li>All percentages must be between 0 and 100</li>
-                        </ul>
-                    </div>
+                    <p style={{ margin: '0.5rem 0 0', fontSize: '0.78rem', color: 'var(--text-muted)' }}>Custom categories appear in the consumer marketplace. Click Save Changes to persist.</p>
+                </div>
+                <div style={{ marginTop: '1.25rem', padding: '0.85rem 1rem', borderRadius: '10px', background: 'rgba(245,158,11,0.06)', border: '1px solid rgba(245,158,11,0.2)' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '0.5rem' }}><Truck size={14} style={{ color: '#d97706' }} /><span style={{ fontWeight: 700, fontSize: '0.8rem', color: '#92400e', textTransform: 'uppercase', letterSpacing: '0.05em' }}>How GST works</span></div>
+                    <ul style={{ margin: 0, padding: '0 0 0 1.1rem', display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
+                        <li style={{ fontSize: '0.82rem', color: '#92400e', lineHeight: 1.5 }}>Sellers with a GST number can manually set their product GST rate</li>
+                        <li style={{ fontSize: '0.82rem', color: '#92400e', lineHeight: 1.5 }}>Sellers without a GST number get the rate from this table automatically</li>
+                        <li style={{ fontSize: '0.82rem', color: '#92400e', lineHeight: 1.5 }}>Custom categories added here appear in the consumer marketplace navigation</li>
+                        <li style={{ fontSize: '0.82rem', color: '#92400e', lineHeight: 1.5 }}>Changes take effect immediately after saving</li>
+                    </ul>
                 </div>
             </div>
         </div>

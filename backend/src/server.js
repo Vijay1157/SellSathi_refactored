@@ -7,6 +7,7 @@ const bodyParser = require('body-parser');
 // Module Routes
 const authRoutes = require('./modules/auth/routes/authRoutes');
 const adminRoutes = require('./modules/admin/routes/adminRoutes');
+const adminConfigRoutes = require('./modules/admin/routes/adminConfigRoutes');
 const sellerRoutes = require('./modules/seller/routes/sellerRoutes');
 const productRoutes = require('./modules/products/routes/productRoutes');
 const orderRoutes = require('./modules/orders/routes/orderRoutes');
@@ -38,6 +39,7 @@ app.use((req, res, next) => {
 // Domain Routes
 app.use('/auth', authRoutes);
 app.use('/admin', adminRoutes);
+app.use('/admin/config', adminConfigRoutes);
 app.use('/seller', sellerRoutes);
 app.use('/products', productRoutes);
 app.use('/orders', orderRoutes);
