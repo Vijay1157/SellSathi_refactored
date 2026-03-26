@@ -27,8 +27,7 @@ export const SellerPage = () => {
     try {
       const userStr = localStorage.getItem('user');
       if (!userStr || !JSON.parse(userStr)) {
-        navigate('/');
-        setTimeout(() => window.dispatchEvent(new Event('openLoginModal')), 100);
+        setIsLoginOpen(true);
         return;
       }
       const user = JSON.parse(userStr);
@@ -44,8 +43,7 @@ export const SellerPage = () => {
       // If valid consumer role, proceed
       navigate('/seller/register');
     } catch (err) { 
-        navigate('/');
-        setTimeout(() => window.dispatchEvent(new Event('openLoginModal')), 100);
+        setIsLoginOpen(true);
     }
   };
 
