@@ -196,10 +196,21 @@ const SellerOnboarding = () => {
       const result = await response.json();
 
       if (result.success) {
-        setSuccess('Your seller application has been submitted successfully. Our team will review it shortly.');
-        setTimeout(() => {
-          navigate('/seller/dashboard');
-        }, 3000);
+        setSuccess('Your seller application has been submitted successfully. Our team will review it shortly. You can now return to the seller landing page.');
+        
+        // Update local session to reflect pending status
+        const storedUser = localStorage.getItem('user');
+        if (storedUser) {
+          try {
+            const userData = JSON.parse(storedUser);
+            // We set status to PENDING but keep role as is (it will be updated by admin later)
+            const updated = { ...userData, status: 'PENDING', sellerStatus: 'PENDING' };
+            localStorage.setItem('user', JSON.stringify(updated));
+            window.dispatchEvent(new CustomEvent('userDataChanged', { detail: updated }));
+          } catch (e) {
+            console.error("Failed to update local user session:", e);
+          }
+        }
       } else {
         setError(result.message || 'Failed to submit application');
       }
@@ -309,12 +320,18 @@ const SellerOnboarding = () => {
               )}
 
               {success ? (
-                <div className="text-center py-10">
-                  <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                <div className="text-center py-10 px-6">
+                  <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-8">
                     <CheckCircle2 className="text-green-600" size={40} />
                   </div>
-                  <h2 className="text-2xl font-bold text-gray-900 mb-2">Application Submitted!</h2>
-                  <p className="text-gray-500">{success}</p>
+                  <h2 className="text-3xl font-bold text-gray-900 mb-4">Application Submitted!</h2>
+                  <p className="text-gray-600 mb-10 text-lg leading-relaxed">{success}</p>
+                  <Link
+                    to="/seller"
+                    className="inline-flex items-center justify-center gap-2 bg-[#7B4DDB] text-white px-10 py-4 rounded-2xl font-bold hover:brightness-110 transition-all shadow-xl"
+                  >
+                    <ArrowLeft size={20} /> Back to Seller Page
+                  </Link>
                 </div>
               ) : (
                 renderStep()

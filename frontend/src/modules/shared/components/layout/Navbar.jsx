@@ -247,60 +247,66 @@ export default function Navbar() {
         };
     }, []);
 
-    useEffect(() => {
-        const checkUser = () => {
-            const userData = localStorage.getItem('user');
-            const loginCtx = localStorage.getItem('loginContext');
-            if (userData) {
-                try {
-                    const parsed = JSON.parse(userData);
-                    const isSellerRoute = location.pathname.startsWith('/seller');
-                    
-                    // SESSION ISOLATION:
-                    // 1. Seller context profile only visible on seller routes
-                    if (loginCtx === 'SELLER' && !isSellerRoute) {
-                        setUser(null);
-                    } 
-                    // 2. Consumer context profile hidden on the seller landing/onboarding routes
-                    // (They must log in specifically for seller context if they want to access those)
-                    else if (loginCtx === 'CONSUMER' && isSellerRoute) {
-                        setUser(null);
-                    }
-                    else {
-                        setUser(parsed);
-                    }
-                } catch (error) {
-                    console.error('Error parsing user data:', error);
+    const checkUser = () => {
+        const userData = localStorage.getItem('user');
+        const loginCtx = localStorage.getItem('loginContext');
+        if (userData) {
+            try {
+                const parsed = JSON.parse(userData);
+                const isSellerRoute = location.pathname.startsWith('/seller');
+                
+                // SESSION ISOLATION:
+                // 1. Seller context profile only visible on seller routes
+                if (loginCtx === 'SELLER' && !isSellerRoute) {
+                    setUser(null);
+                } 
+                // 2. Consumer context profile hidden on the seller landing/onboarding routes
+                else if (loginCtx === 'CONSUMER' && isSellerRoute) {
                     setUser(null);
                 }
-            } else {
+                else {
+                    setUser(parsed);
+                }
+            } catch (error) {
+                console.error('Error parsing user data:', error);
                 setUser(null);
             }
-        };
+        } else {
+            setUser(null);
+        }
+    };
 
+    // Sync on mount and location/loginContext change
+    useEffect(() => {
         checkUser();
+    }, [location.pathname]);
+
+    // Handle external user storage changes
+    useEffect(() => {
         const handleUserChange = () => checkUser();
         window.addEventListener('userDataChanged', handleUserChange);
-
-        const handleClickOutside = (event) => {
-            if (menuRef.current && !menuRef.current.contains(event.target)) {
-                setActiveMegaMenu(null);
-            }
-            // Close profile dropdown when clicking outside
-            if (profileRef.current && !profileRef.current.contains(event.target)) {
-                setIsProfileOpen(false);
-            }
-        };
-        document.addEventListener('mousedown', handleClickOutside);
-
+        
         const handleOpenLogin = () => setIsLoginModalOpen(true);
         window.addEventListener('openLoginModal', handleOpenLogin);
 
         return () => {
             window.removeEventListener('userDataChanged', handleUserChange);
-            document.removeEventListener('mousedown', handleClickOutside);
             window.removeEventListener('openLoginModal', handleOpenLogin);
         };
+    }, [location.pathname]);
+
+    // Independent UI listeners
+    useEffect(() => {
+        const handleClickOutside = (event) => {
+            if (menuRef.current && !menuRef.current.contains(event.target)) {
+                setActiveMegaMenu(null);
+            }
+            if (profileRef.current && !profileRef.current.contains(event.target)) {
+                setIsProfileOpen(false);
+            }
+        };
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
     }, []);
 
     const handleSignOut = async () => {

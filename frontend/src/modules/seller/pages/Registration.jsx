@@ -164,11 +164,22 @@ export default function SellerRegistration() {
             const result = await response.json();
 
             if (result.success) {
-                setSuccess('Application submitted successfully! Your account is now under review.');
+                const message = 'Application submitted successfully! Your account is now under review.';
+                setSuccess(message);
                 setStatus('PENDING');
-                setTimeout(() => {
-                    // Redirect logic can be added here if needed
-                }, 2000);
+
+                // Update local session to reflect pending status
+                const storedUser = localStorage.getItem('user');
+                if (storedUser) {
+                    try {
+                        const userData = JSON.parse(storedUser);
+                        const updated = { ...userData, status: 'PENDING', sellerStatus: 'PENDING' };
+                        localStorage.setItem('user', JSON.stringify(updated));
+                        window.dispatchEvent(new CustomEvent('userDataChanged', { detail: updated }));
+                    } catch (e) {
+                        console.error("Failed to update local user session:", e);
+                    }
+                }
             } else {
                 setError(result.message || 'Application submission failed');
             }
@@ -261,11 +272,43 @@ export default function SellerRegistration() {
                         )}
 
                         {success && (
-                            <div className="mb-6 p-4 rounded-xl bg-green-50 border border-green-200 text-green-700 text-sm">
-                                {success}
+                            <div className="mb-6 p-10 rounded-3xl bg-green-50 border border-green-200 text-center">
+                                <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                                    <CheckCircle2 className="text-green-600" size={32} />
+                                </div>
+                                <h2 className="text-2xl font-bold text-gray-900 mb-4">Application Submitted!</h2>
+                                <p className="text-green-700 text-base mb-8">
+                                    {success}
+                                </p>
+                                <Link
+                                    to="/seller"
+                                    className="inline-flex items-center justify-center gap-2 bg-[#7B4DDB] text-white px-8 py-4 rounded-2xl font-bold hover:brightness-110 transition-all shadow-lg"
+                                >
+                                    <ArrowLeft size={18} /> Back to Seller Page
+                                </Link>
                             </div>
                         )}
 
+                        {status === 'PENDING' && !success && (
+                            <div className="text-center p-10">
+                                <div className="w-16 h-16 bg-yellow-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                                    <Loader className="text-yellow-600 animate-pulse" size={32} />
+                                </div>
+                                <h2 className="text-2xl font-bold text-gray-900 mb-4">Application Under Review</h2>
+                                <p className="text-gray-500 mb-8 leading-relaxed">
+                                    You have already submitted an application. Our team is currently reviewing it. We'll notify you once it's approved.
+                                </p>
+                                <Link
+                                    to="/seller"
+                                    className="inline-flex items-center justify-center gap-2 bg-[#7B4DDB] text-white px-8 py-4 rounded-2xl font-bold hover:brightness-110 transition-all shadow-lg"
+                                >
+                                    <ArrowLeft size={18} /> Back to Seller Page
+                                </Link>
+                            </div>
+                        )}
+
+                        {!success && status !== 'PENDING' && (
+                            <>
                         {step === 'upload' ? (
                             <div className="text-center">
                                 <h2 className="text-3xl font-bold text-gray-900 mb-4">Verify Your Identity</h2>
@@ -456,6 +499,8 @@ export default function SellerRegistration() {
                                     </button>
                                 </form>
                             </div>
+                        )}
+                        </>
                         )}
                     </div>
                 </motion.div>
