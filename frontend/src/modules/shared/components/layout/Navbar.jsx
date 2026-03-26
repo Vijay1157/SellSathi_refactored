@@ -256,17 +256,11 @@ export default function Navbar() {
                     const parsed = JSON.parse(userData);
                     const isSellerRoute = location.pathname.startsWith('/seller');
                     
-                    // SESSION ISOLATION:
-                    // 1. Seller context profile only visible on seller routes
                     if (loginCtx === 'SELLER' && !isSellerRoute) {
                         setUser(null);
-                    } 
-                    // 2. Consumer context profile hidden on the seller landing/onboarding routes
-                    // (They must log in specifically for seller context if they want to access those)
-                    else if (loginCtx === 'CONSUMER' && isSellerRoute) {
+                    } else if (loginCtx === 'CONSUMER' && isSellerRoute) {
                         setUser(null);
-                    }
-                    else {
+                    } else {
                         setUser(parsed);
                     }
                 } catch (error) {
@@ -279,8 +273,14 @@ export default function Navbar() {
         };
 
         checkUser();
+
+        // Retry once after 500ms to handle race condition where localStorage
+        // is set slightly after navigation (e.g. after phone/email login)
+        const retryTimer = setTimeout(checkUser, 500);
+
         const handleUserChange = () => checkUser();
         window.addEventListener('userDataChanged', handleUserChange);
+        window.addEventListener('storage', handleUserChange);
 
         const handleClickOutside = (event) => {
             if (menuRef.current && !menuRef.current.contains(event.target)) {
@@ -297,7 +297,9 @@ export default function Navbar() {
         window.addEventListener('openLoginModal', handleOpenLogin);
 
         return () => {
+            clearTimeout(retryTimer);
             window.removeEventListener('userDataChanged', handleUserChange);
+            window.removeEventListener('storage', handleUserChange);
             document.removeEventListener('mousedown', handleClickOutside);
             window.removeEventListener('openLoginModal', handleOpenLogin);
         };
