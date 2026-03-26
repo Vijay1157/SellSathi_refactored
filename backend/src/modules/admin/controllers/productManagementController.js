@@ -310,12 +310,25 @@ const notifySellerOutOfStock = async (req, res) => {
         const sellerData = sellerDoc.exists ? sellerDoc.data() : {};
         const userData = userDoc.exists ? userDoc.data() : {};
 
-        // contactEmail is set during seller onboarding; email is set during user registration
-        const sellerEmail = sellerData.contactEmail || sellerData.emailId || userData.email;
-        const sellerName = userData.fullName || sellerData.shopName || sellerData.supplierName || 'Seller';
+        // Try every possible email field across both collections
+        const sellerEmail = 
+            sellerData.contactEmail ||
+            sellerData.emailId ||
+            sellerData.email ||
+            sellerData.sellerEmail ||
+            userData.email ||
+            userData.emailId ||
+            userData.contactEmail ||
+            data.sellerEmail ||  // fallback: email stored on product itself
+            null;
+
+        const sellerName = userData.fullName || userData.name || sellerData.shopName || sellerData.supplierName || sellerData.extractedName || 'Seller';
 
         if (!sellerEmail || !sellerEmail.includes('@')) {
-            return res.status(400).json({ success: false, message: `No valid email found for seller ${sellerId}. contactEmail: ${sellerData.contactEmail}, userEmail: ${userData.email}` });
+            return res.status(400).json({ 
+                success: false, 
+                message: `No valid email found for this seller. Please update the seller's email in their profile before sending notifications.`
+            });
         }
 
         const emailResult = await emailService.sendOutOfStockNotification(sellerEmail, sellerName, data.name || data.title, {
@@ -384,8 +397,8 @@ const notifyAllSellersOutOfStock = async (req, res) => {
             ]);
             const uData = uDoc.exists ? uDoc.data() : {};
             const sData = sDoc.exists ? sDoc.data() : {};
-            sellerEmail = sData.contactEmail || sData.emailId || uData.email;
-            sellerName = uData.fullName || sData.shopName || sData.supplierName || 'Seller';
+            sellerEmail = sData.contactEmail || sData.emailId || sData.email || sData.sellerEmail || uData.email || uData.emailId || uData.contactEmail;
+            sellerName = uData.fullName || uData.name || sData.shopName || sData.supplierName || sData.extractedName || 'Seller';
 
             if (!sellerEmail || !sellerEmail.includes('@')) continue;
 
@@ -442,8 +455,8 @@ const adminRemoveProduct = async (req, res) => {
                 const sellerData = sellerDoc.exists ? sellerDoc.data() : {};
                 const userData = userDoc.exists ? userDoc.data() : {};
                 
-                const sellerEmail = sellerData.contactEmail || sellerData.emailId || userData.email;
-                const sellerName = userData.fullName || sellerData.shopName || sellerData.supplierName || 'Seller';
+                const sellerEmail = sellerData.contactEmail || sellerData.emailId || sellerData.email || sellerData.sellerEmail || userData.email || userData.emailId || userData.contactEmail;
+                const sellerName = userData.fullName || userData.name || sellerData.shopName || sellerData.supplierName || sellerData.extractedName || 'Seller';
 
                 if (sellerEmail && sellerEmail.includes('@')) {
                     await emailService.sendProductRemovedNotification(
@@ -551,8 +564,8 @@ const restoreAdminRemovedProduct = async (req, res) => {
                 const sellerData = sellerDoc.exists ? sellerDoc.data() : {};
                 const userData = userDoc.exists ? userDoc.data() : {};
                 
-                const sellerEmail = sellerData.contactEmail || sellerData.emailId || userData.email;
-                const sellerName = userData.fullName || sellerData.shopName || sellerData.supplierName || 'Seller';
+                const sellerEmail = sellerData.contactEmail || sellerData.emailId || sellerData.email || sellerData.sellerEmail || userData.email || userData.emailId || userData.contactEmail;
+                const sellerName = userData.fullName || userData.name || sellerData.shopName || sellerData.supplierName || sellerData.extractedName || 'Seller';
 
                 if (sellerEmail && sellerEmail.includes('@')) {
                     await emailService.sendProductRestoredNotification(

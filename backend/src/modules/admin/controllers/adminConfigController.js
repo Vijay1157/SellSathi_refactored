@@ -15,7 +15,8 @@ const getPublicAdminConfig = async (req, res) => {
             websiteInfo: config.websiteInfo,
             defaultPlatformFeePercent: config.defaultPlatformFeePercent,
             defaultGstPercent: config.defaultGstPercent,
-            defaultShippingHandlingPercent: config.defaultShippingHandlingPercent
+            defaultShippingHandlingPercent: config.defaultShippingHandlingPercent,
+            categoryGstRates: config.categoryGstRates || {}
         };
         
         return res.status(200).json({ success: true, config: publicConfig });
