@@ -97,7 +97,8 @@ const SellerHeader = ({ onLoginClick, onNewSellerClick }) => {
     sessionStorage.removeItem('loginContext');
     setUser(null);
     window.dispatchEvent(new CustomEvent('userDataChanged'));
-    navigate('/seller');
+    window.location.href = window.location.origin + '/#/seller';
+    window.location.reload();
   };
 
   const navItems = [
