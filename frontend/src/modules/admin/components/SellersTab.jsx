@@ -255,7 +255,7 @@ export default function SellersTab({
         return sellerDate === `${day}/${month}/${year}`;
     };
 
-    const thStyle = { padding: '1.25rem 1.5rem', fontWeight: 600, fontSize: '0.85rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', background: 'var(--surface)' };
+    const thStyle = { padding: '0.5rem 0.75rem', fontWeight: 600, fontSize: '0.65rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', background: 'var(--surface)' };
 
     return (
         <>
@@ -273,29 +273,32 @@ export default function SellersTab({
                 <SellerEditModal
                     seller={editingSeller}
                     onClose={() => { setEditingSeller(null); if (scrollToTop) scrollToTop(); }}
-                    onSave={() => {
-                        fetchAllData();
-                        fetchSellersWithEditRequests();
+                    onSave={async () => {
+                        console.log('[SellersTab] Seller updated, refreshing all data...');
+                        // Refresh all seller-related data
+                        await fetchAllData();
+                        await fetchSellersWithEditRequests();
                         setEditingSeller(null);
                         if (scrollToTop) scrollToTop();
+                        console.log('[SellersTab] Data refresh complete');
                     }}
                 />
             ) : (
-            <div className="animate-fade-in flex flex-col gap-8">
+            <div className="animate-fade-in flex flex-col" style={{ gap: '0.5rem' }}>
                 {/* Pending Approvals Section */}
-                <div className="flex flex-col gap-4">
+                <div className="flex flex-col" style={{ gap: '0.5rem' }}>
                     <div className="flex justify-between items-center">
-                        <h3 style={{ fontSize: '1.5rem', fontWeight: 700 }}>Pending Approvals ({pendingSellers.length})</h3>
+                        <h3 style={{ fontSize: '1.2rem', fontWeight: 700 }}>Pending Approvals ({pendingSellers.length})</h3>
                         <div className="flex gap-2">
-                            <input type="text" placeholder="Search pending sellers..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} style={{ padding: '0.5rem', borderRadius: '4px', border: '1px solid var(--border)' }} />
-                            <button className="btn btn-secondary" onClick={fetchAllData}>Refresh</button>
+                            <input type="text" placeholder="Search pending sellers..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} style={{ padding: '0.4rem 0.6rem', borderRadius: '4px', border: '1px solid var(--border)', fontSize: '0.8rem' }} />
+                            <button className="btn btn-secondary" onClick={fetchAllData} style={{ padding: '0.4rem 0.8rem', fontSize: '0.75rem' }}>Refresh</button>
                         </div>
                     </div>
                     {pendingSellers.filter(s => s.shopName.toLowerCase().includes(searchTerm.toLowerCase()) || s.email.toLowerCase().includes(searchTerm.toLowerCase())).length === 0 ? (
                         <div className="glass-card text-center p-8 text-muted">No pending approvals.</div>
                     ) : (
-                        <div className="glass-card" style={{ padding: 0, overflowX: 'auto', overflowY: 'scroll', maxHeight: '400px', border: '1px solid var(--border)' }}>
-                            <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: '800px' }}>
+                        <div className="glass-card" style={{ padding: 0, overflowY: 'scroll', maxHeight: '400px', border: '1px solid var(--border)' }}>
+                            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                                 <thead style={{ background: 'var(--surface)', textAlign: 'left', position: 'sticky', top: 0, zIndex: 1 }}>
                                     <tr style={{ borderBottom: '2px solid var(--border)' }}>
                                         <th style={thStyle}>Name</th>
@@ -309,27 +312,27 @@ export default function SellersTab({
                                 <tbody>
                                     {pendingSellers.filter(s => s.shopName.toLowerCase().includes(searchTerm.toLowerCase()) || s.email.toLowerCase().includes(searchTerm.toLowerCase())).map(s => (
                                         <tr key={s.uid} style={{ borderBottom: '1px solid var(--border)', transition: 'background 0.2s' }} onMouseOver={(e) => e.currentTarget.style.background = 'var(--surface)'} onMouseOut={(e) => e.currentTarget.style.background = 'transparent'}>
-                                            <td style={{ padding: '1.25rem 1.5rem' }}>
+                                            <td style={{ padding: '0.5rem 0.75rem' }}>
                                                 <div className="flex flex-col">
-                                                    <span style={{ fontWeight: 700, fontSize: '1rem', color: 'var(--text)' }}>{s.extractedName || s.shopName}</span>
-                                                    <span className="text-muted" style={{ fontSize: '0.75rem', marginTop: '2px' }}>Shop: {s.shopName}</span>
+                                                    <span style={{ fontWeight: 700, fontSize: '0.75rem', color: 'var(--text)' }}>{s.extractedName || s.shopName}</span>
+                                                    <span className="text-muted" style={{ fontSize: '0.6rem', marginTop: '2px' }}>Shop: {s.shopName}</span>
                                                 </div>
                                             </td>
-                                            <td style={{ padding: '1.25rem 1.5rem' }}><span style={{ fontWeight: 500, fontSize: '0.9rem' }}>{s.email}</span></td>
-                                            <td style={{ padding: '1.25rem 1.5rem' }}><span style={{ fontFamily: 'monospace', fontSize: '0.85rem' }}>{s.aadhaarNumber || 'N/A'}</span></td>
-                                            <td style={{ padding: '1.25rem 1.5rem' }}><span className="text-muted" style={{ fontSize: '0.85rem' }}>{s.address?.substring(0, 30)}...</span></td>
-                                            <td style={{ padding: '1.25rem 1.5rem', textAlign: 'center' }}>
-                                                <button className="btn btn-secondary shadow-sm" onClick={() => setSelectedSeller(s)} style={{ padding: '6px 14px', fontSize: '0.8rem', fontWeight: 700, borderRadius: '8px', gap: '6px' }}>
-                                                    <Box size={14} /> View Full Details
+                                            <td style={{ padding: '0.5rem 0.75rem' }}><span style={{ fontWeight: 500, fontSize: '0.7rem' }}>{s.email}</span></td>
+                                            <td style={{ padding: '0.5rem 0.75rem' }}><span style={{ fontFamily: 'monospace', fontSize: '0.65rem' }}>{s.aadhaarNumber || 'N/A'}</span></td>
+                                            <td style={{ padding: '0.5rem 0.75rem' }}><span className="text-muted" style={{ fontSize: '0.65rem' }}>{s.address?.substring(0, 25)}...</span></td>
+                                            <td style={{ padding: '0.5rem 0.75rem', textAlign: 'center' }}>
+                                                <button className="btn btn-secondary shadow-sm" onClick={() => setSelectedSeller(s)} style={{ padding: '3px 8px', fontSize: '0.65rem', fontWeight: 700, borderRadius: '5px', gap: '3px' }}>
+                                                    <Box size={11} /> View Details
                                                 </button>
                                             </td>
-                                            <td style={{ padding: '1.25rem 1.5rem', textAlign: 'right' }}>
-                                                <div className="flex gap-3 justify-end">
-                                                    <button className="btn btn-primary" onClick={() => handleApproveSeller(s.uid)} title="Approve Seller" style={{ padding: '8px 16px', fontSize: '0.85rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '6px' }}>
-                                                        <Check size={16} /> Accept
+                                            <td style={{ padding: '0.5rem 0.75rem', textAlign: 'right' }}>
+                                                <div className="flex gap-2 justify-end">
+                                                    <button className="btn btn-primary" onClick={() => handleApproveSeller(s.uid)} title="Approve Seller" style={{ padding: '5px 10px', fontSize: '0.65rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '3px' }}>
+                                                        <Check size={12} /> Accept
                                                     </button>
-                                                    <button className="btn btn-secondary" onClick={() => handleRejectSeller(s.uid)} title="Reject Seller" style={{ color: 'var(--error)', padding: '8px 16px', fontSize: '0.85rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '6px' }}>
-                                                        <X size={16} /> Reject
+                                                    <button className="btn btn-secondary" onClick={() => handleRejectSeller(s.uid)} title="Reject Seller" style={{ color: 'var(--error)', padding: '5px 10px', fontSize: '0.65rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '3px' }}>
+                                                        <X size={12} /> Reject
                                                     </button>
                                                 </div>
                                             </td>
@@ -344,20 +347,20 @@ export default function SellersTab({
                 <div style={{ height: '3rem', borderBottom: '2px solid var(--border)' }}></div>
 
                 {/* Seller Management Section - APPROVED */}
-                <div className="flex flex-col gap-4">
+                <div className="flex flex-col" style={{ gap: '0.5rem' }}>
                     <div className="flex justify-between items-center">
-                        <h3 style={{ fontSize: '1.5rem', fontWeight: 700 }}>Total Sellers ({approvedSellers.length})</h3>
+                        <h3 style={{ fontSize: '1.2rem', fontWeight: 700 }}>Total Sellers ({approvedSellers.length})</h3>
                         <div className="flex gap-2">
-                            <input type="text" placeholder="Search by shop name..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} style={{ padding: '0.5rem', borderRadius: '4px', border: '1px solid var(--border)', width: '200px' }} />
-                            <select value={searchCategory} onChange={(e) => setSearchCategory(e.target.value)} style={{ padding: '0.5rem', borderRadius: '4px', border: '1px solid var(--border)', minWidth: '150px' }}>
+                            <input type="text" placeholder="Search by shop name..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} style={{ padding: '0.4rem 0.6rem', borderRadius: '4px', border: '1px solid var(--border)', width: '160px', fontSize: '0.8rem' }} />
+                            <select value={searchCategory} onChange={(e) => setSearchCategory(e.target.value)} style={{ padding: '0.4rem 0.6rem', borderRadius: '4px', border: '1px solid var(--border)', minWidth: '120px', fontSize: '0.8rem' }}>
                                 <option value="">All Categories</option>
                                 {[...new Set(approvedSellers.map(s => s.category))].sort().map(category => (
                                     <option key={category} value={category}>{category}</option>
                                 ))}
                             </select>
-                            <input type="date" value={selectedJoinDate} onChange={(e) => setSelectedJoinDate(e.target.value)} style={{ padding: '0.5rem', borderRadius: '4px', border: '1px solid var(--border)' }} title="Filter by join date" />
-                            <button className="btn btn-secondary" onClick={() => { setSearchTerm(''); setSearchCategory(''); setSelectedJoinDate(''); }} style={{ padding: '0.5rem 1rem', fontSize: '0.85rem' }}>Clear</button>
-                            <button className="btn btn-secondary" onClick={fetchAllData} style={{ padding: '0.5rem 1rem', fontSize: '0.85rem' }}>Refresh</button>
+                            <input type="date" value={selectedJoinDate} onChange={(e) => setSelectedJoinDate(e.target.value)} style={{ padding: '0.4rem 0.6rem', borderRadius: '4px', border: '1px solid var(--border)', fontSize: '0.8rem' }} title="Filter by join date" />
+                            <button className="btn btn-secondary" onClick={() => { setSearchTerm(''); setSearchCategory(''); setSelectedJoinDate(''); }} style={{ padding: '0.4rem 0.8rem', fontSize: '0.75rem' }}>Clear</button>
+                            <button className="btn btn-secondary" onClick={fetchAllData} style={{ padding: '0.4rem 0.8rem', fontSize: '0.75rem' }}>Refresh</button>
                         </div>
                     </div>
                     {approvedSellers.filter(s => {
@@ -368,8 +371,8 @@ export default function SellersTab({
                     }).length === 0 ? (
                         <div className="glass-card text-center p-8 text-muted">No approved sellers found.</div>
                     ) : (
-                        <div className="glass-card" style={{ padding: 0, overflowX: 'auto', overflowY: 'scroll', maxHeight: '400px', border: '1px solid var(--border)' }}>
-                            <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: '800px' }}>
+                        <div className="glass-card" style={{ padding: 0, overflowY: 'scroll', maxHeight: '400px', border: '1px solid var(--border)' }}>
+                            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                                 <thead style={{ background: 'var(--surface)', textAlign: 'left', position: 'sticky', top: 0, zIndex: 1 }}>
                                     <tr style={{ borderBottom: '2px solid var(--border)' }}>
                                         <th style={thStyle}>Shop Identity</th>
@@ -389,35 +392,35 @@ export default function SellersTab({
                                         return matchesCategory && matchesName && matchesDate;
                                     }).map(s => (
                                         <tr key={s.uid} style={{ borderBottom: '1px solid var(--border)', transition: 'background 0.2s' }} onMouseOver={(e) => e.currentTarget.style.background = 'var(--surface)'} onMouseOut={(e) => e.currentTarget.style.background = 'transparent'}>
-                                            <td style={{ padding: '1.25rem 1.5rem' }}>
+                                            <td style={{ padding: '0.5rem 0.75rem' }}>
                                                 <div className="flex flex-col">
-                                                    <span style={{ fontWeight: 700, fontSize: '1rem', color: 'var(--text)' }}>{s.shopName}</span>
-                                                    <span className="text-muted" style={{ fontSize: '0.75rem', marginTop: '2px' }}>UID: {s.uid?.substring(0, 8)}</span>
+                                                    <span style={{ fontWeight: 700, fontSize: '0.75rem', color: 'var(--text)' }}>{s.shopName}</span>
+                                                    <span className="text-muted" style={{ fontSize: '0.6rem', marginTop: '2px' }}>UID: {s.uid?.substring(0, 8)}</span>
                                                 </div>
                                             </td>
-                                            <td style={{ padding: '1.25rem 1.5rem' }}><span style={{ padding: '4px 10px', background: 'var(--glass)', border: '1px solid var(--border)', borderRadius: '6px', fontSize: '0.8rem', fontWeight: 600 }}>{s.category}</span></td>
-                                            <td style={{ padding: '1.25rem 1.5rem' }}>
+                                            <td style={{ padding: '0.5rem 0.75rem' }}><span style={{ padding: '2px 6px', background: 'var(--glass)', border: '1px solid var(--border)', borderRadius: '5px', fontSize: '0.65rem', fontWeight: 600 }}>{s.category}</span></td>
+                                            <td style={{ padding: '0.5rem 0.75rem' }}>
                                                 <div className="flex flex-col">
-                                                    <span style={{ fontWeight: 500, fontSize: '0.9rem' }}>{s.email}</span>
-                                                    <span style={{ fontSize: '0.75rem', color: 'var(--primary)' }}>UID: {s.uid?.substring(0, 8)}</span>
+                                                    <span style={{ fontWeight: 500, fontSize: '0.7rem' }}>{s.email}</span>
+                                                    <span style={{ fontSize: '0.6rem', color: 'var(--primary)' }}>UID: {s.uid?.substring(0, 8)}</span>
                                                 </div>
                                             </td>
-                                            <td style={{ padding: '1.25rem 1.5rem' }}><span style={{ padding: '6px 12px', background: 'rgba(var(--success-rgb), 0.1)', color: 'var(--success)', borderRadius: '8px', fontSize: '0.8rem', fontWeight: 700 }}>APPROVED</span></td>
-                                            <td style={{ padding: '1.25rem 1.5rem' }}><span className="text-muted" style={{ fontSize: '0.85rem' }}>{s.joined}</span></td>
-                                            <td style={{ padding: '1.25rem 1.5rem', textAlign: 'center' }}>
-                                                <button className="btn btn-secondary shadow-sm" onClick={() => setSelectedSeller(s)} style={{ padding: '6px 14px', fontSize: '0.8rem', fontWeight: 700, borderRadius: '8px', gap: '6px' }}><Box size={14} /> Review Data</button>
+                                            <td style={{ padding: '0.5rem 0.75rem' }}><span style={{ padding: '4px 8px', background: 'rgba(var(--success-rgb), 0.1)', color: 'var(--success)', borderRadius: '5px', fontSize: '0.65rem', fontWeight: 700 }}>APPROVED</span></td>
+                                            <td style={{ padding: '0.5rem 0.75rem' }}><span className="text-muted" style={{ fontSize: '0.65rem' }}>{s.joined}</span></td>
+                                            <td style={{ padding: '0.5rem 0.75rem', textAlign: 'center' }}>
+                                                <button className="btn btn-secondary shadow-sm" onClick={() => setSelectedSeller(s)} style={{ padding: '3px 8px', fontSize: '0.65rem', fontWeight: 700, borderRadius: '5px', gap: '3px' }}><Box size={11} /> Review</button>
                                             </td>
-                                            <td style={{ padding: '1.25rem 1.5rem', textAlign: 'right' }}>
+                                            <td style={{ padding: '0.5rem 0.75rem', textAlign: 'right' }}>
                                                 <button 
                                                     className="btn btn-secondary" 
                                                     onClick={() => setEditingSeller(s)} 
                                                     title="Edit Seller Details" 
                                                     style={{ 
-                                                        padding: '6px 14px', 
-                                                        fontSize: '0.8rem', 
+                                                        padding: '3px 8px', 
+                                                        fontSize: '0.65rem', 
                                                         fontWeight: 700, 
-                                                        borderRadius: '8px', 
-                                                        gap: '6px',
+                                                        borderRadius: '5px', 
+                                                        gap: '3px',
                                                         background: 'var(--warning)',
                                                         borderColor: 'var(--warning)',
                                                         color: 'white',
@@ -425,7 +428,7 @@ export default function SellersTab({
                                                         alignItems: 'center'
                                                     }}
                                                 >
-                                                    <Edit size={14} /> Edit
+                                                    <Edit size={11} /> Edit
                                                 </button>
                                             </td>
                                         </tr>
@@ -439,21 +442,21 @@ export default function SellersTab({
                 <div style={{ height: '3rem', borderBottom: '2px solid var(--border)' }}></div>
 
                 {/* Rejected Applications Section */}
-                <div className="flex flex-col gap-4">
+                <div className="flex flex-col" style={{ gap: '0.5rem' }}>
                     <div className="flex justify-between items-center">
-                        <h3 style={{ fontSize: '1.5rem', fontWeight: 700 }}>Rejected Applications ({rejectedSellers.length})</h3>
+                        <h3 style={{ fontSize: '1.2rem', fontWeight: 700 }}>Rejected Applications ({rejectedSellers.length})</h3>
                         <div className="flex gap-2">
-                            <input type="text" placeholder="Search rejected sellers..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} style={{ padding: '0.5rem', borderRadius: '4px', border: '1px solid var(--border)', width: '200px' }} />
-                            <select value={selectedRejectCategory} onChange={(e) => setSelectedRejectCategory(e.target.value)} style={{ padding: '0.5rem', borderRadius: '4px', border: '1px solid var(--border)', minWidth: '150px' }}>
+                            <input type="text" placeholder="Search rejected sellers..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} style={{ padding: '0.4rem 0.6rem', borderRadius: '4px', border: '1px solid var(--border)', width: '160px', fontSize: '0.8rem' }} />
+                            <select value={selectedRejectCategory} onChange={(e) => setSelectedRejectCategory(e.target.value)} style={{ padding: '0.4rem 0.6rem', borderRadius: '4px', border: '1px solid var(--border)', minWidth: '120px', fontSize: '0.8rem' }}>
                                 <option value="">All Categories</option>
                                 {[...new Set(rejectedSellers.map(s => s.category).filter(Boolean))].sort().map(category => (
                                     <option key={category} value={category}>{category}</option>
                                 ))}
                             </select>
-                            <input type="date" value={selectedRejectDate} onChange={(e) => setSelectedRejectDate(e.target.value)} style={{ padding: '0.5rem', borderRadius: '4px', border: '1px solid var(--border)' }} title="Filter by date" />
-                            <button className="btn btn-secondary" onClick={() => { setSearchTerm(''); setSelectedRejectCategory(''); setSelectedRejectDate(''); }} style={{ padding: '0.5rem 1rem', fontSize: '0.85rem' }}>Clear</button>
-                            <button className="btn" onClick={handleDeleteAllRejectedSellers} style={{ padding: '0.5rem 1rem', fontSize: '0.85rem', background: '#ef4444', borderColor: '#ef4444', color: 'white', fontWeight: 700 }} title="Permanently delete all rejected sellers">Delete All Rejected</button>
-                            <button className="btn btn-secondary" onClick={fetchAllData} style={{ padding: '0.5rem 1rem', fontSize: '0.85rem' }}>Refresh</button>
+                            <input type="date" value={selectedRejectDate} onChange={(e) => setSelectedRejectDate(e.target.value)} style={{ padding: '0.4rem 0.6rem', borderRadius: '4px', border: '1px solid var(--border)', fontSize: '0.8rem' }} title="Filter by date" />
+                            <button className="btn btn-secondary" onClick={() => { setSearchTerm(''); setSelectedRejectCategory(''); setSelectedRejectDate(''); }} style={{ padding: '0.4rem 0.8rem', fontSize: '0.75rem' }}>Clear</button>
+                            <button className="btn" onClick={handleDeleteAllRejectedSellers} style={{ padding: '0.4rem 0.8rem', fontSize: '0.75rem', background: '#ef4444', borderColor: '#ef4444', color: 'white', fontWeight: 700 }} title="Permanently delete all rejected sellers">Delete All Rejected</button>
+                            <button className="btn btn-secondary" onClick={fetchAllData} style={{ padding: '0.4rem 0.8rem', fontSize: '0.75rem' }}>Refresh</button>
                         </div>
                     </div>
                     {rejectedSellers.filter(s => {
@@ -464,8 +467,8 @@ export default function SellersTab({
                     }).length === 0 ? (
                         <div className="glass-card text-center p-8 text-muted">No rejected sellers.</div>
                     ) : (
-                        <div className="glass-card" style={{ padding: 0, overflowX: 'auto', overflowY: 'scroll', maxHeight: '400px', border: '1px solid var(--border)' }}>
-                            <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: '800px' }}>
+                        <div className="glass-card" style={{ padding: 0, overflowY: 'scroll', maxHeight: '400px', border: '1px solid var(--border)' }}>
+                            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                                 <thead style={{ background: 'var(--surface)', textAlign: 'left', position: 'sticky', top: 0, zIndex: 1 }}>
                                     <tr style={{ borderBottom: '2px solid var(--border)' }}>
                                         <th style={thStyle}>Shop Identity</th>
@@ -485,28 +488,28 @@ export default function SellersTab({
                                         return matchesName && matchesCategory && matchesDate;
                                     }).map(s => (
                                         <tr key={s.uid} style={{ borderBottom: '1px solid var(--border)', transition: 'background 0.2s' }} onMouseOver={(e) => e.currentTarget.style.background = 'var(--surface)'} onMouseOut={(e) => e.currentTarget.style.background = 'transparent'}>
-                                            <td style={{ padding: '1.25rem 1.5rem' }}>
+                                            <td style={{ padding: '0.5rem 0.75rem' }}>
                                                 <div className="flex flex-col">
-                                                    <span style={{ fontWeight: 700, fontSize: '1rem', color: 'var(--text)' }}>{s.shopName}</span>
-                                                    <span className="text-muted" style={{ fontSize: '0.75rem', marginTop: '2px' }}>UID: {s.uid?.substring(0, 8)}</span>
+                                                    <span style={{ fontWeight: 700, fontSize: '0.75rem', color: 'var(--text)' }}>{s.shopName}</span>
+                                                    <span className="text-muted" style={{ fontSize: '0.6rem', marginTop: '2px' }}>UID: {s.uid?.substring(0, 8)}</span>
                                                 </div>
                                             </td>
-                                            <td style={{ padding: '1.25rem 1.5rem' }}><span style={{ padding: '4px 10px', background: 'var(--glass)', border: '1px solid var(--border)', borderRadius: '6px', fontSize: '0.8rem', fontWeight: 600 }}>{s.category}</span></td>
-                                            <td style={{ padding: '1.25rem 1.5rem' }}>
+                                            <td style={{ padding: '0.5rem 0.75rem' }}><span style={{ padding: '2px 6px', background: 'var(--glass)', border: '1px solid var(--border)', borderRadius: '5px', fontSize: '0.65rem', fontWeight: 600 }}>{s.category}</span></td>
+                                            <td style={{ padding: '0.5rem 0.75rem' }}>
                                                 <div className="flex flex-col">
-                                                    <span style={{ fontWeight: 500, fontSize: '0.9rem' }}>{s.email}</span>
-                                                    <span style={{ fontSize: '0.75rem', color: 'var(--primary)' }}>UID: {s.uid?.substring(0, 8)}</span>
+                                                    <span style={{ fontWeight: 500, fontSize: '0.7rem' }}>{s.email}</span>
+                                                    <span style={{ fontSize: '0.6rem', color: 'var(--primary)' }}>UID: {s.uid?.substring(0, 8)}</span>
                                                 </div>
                                             </td>
-                                            <td style={{ padding: '1.25rem 1.5rem' }}><span style={{ padding: '6px 12px', background: 'rgba(239, 68, 68, 0.1)', color: '#ef4444', borderRadius: '8px', fontSize: '0.8rem', fontWeight: 700 }}>REJECTED</span></td>
-                                            <td style={{ padding: '1.25rem 1.5rem' }}><span className="text-muted" style={{ fontSize: '0.85rem' }}>{s.joined}</span></td>
-                                            <td style={{ padding: '1.25rem 1.5rem', textAlign: 'center' }}>
-                                                <button className="btn btn-secondary shadow-sm" onClick={() => setSelectedSeller(s)} style={{ padding: '6px 14px', fontSize: '0.8rem', fontWeight: 700, borderRadius: '8px', gap: '6px' }}><Box size={14} /> Review Data</button>
+                                            <td style={{ padding: '0.5rem 0.75rem' }}><span style={{ padding: '4px 8px', background: 'rgba(239, 68, 68, 0.1)', color: '#ef4444', borderRadius: '5px', fontSize: '0.65rem', fontWeight: 700 }}>REJECTED</span></td>
+                                            <td style={{ padding: '0.5rem 0.75rem' }}><span className="text-muted" style={{ fontSize: '0.65rem' }}>{s.joined}</span></td>
+                                            <td style={{ padding: '0.5rem 0.75rem', textAlign: 'center' }}>
+                                                <button className="btn btn-secondary shadow-sm" onClick={() => setSelectedSeller(s)} style={{ padding: '3px 8px', fontSize: '0.65rem', fontWeight: 700, borderRadius: '5px', gap: '3px' }}><Box size={11} /> Review</button>
                                             </td>
-                                            <td style={{ padding: '1.25rem 1.5rem', textAlign: 'right' }}>
+                                            <td style={{ padding: '0.5rem 0.75rem', textAlign: 'right' }}>
                                                 <div className="flex gap-2 justify-end">
-                                                    <button className="btn btn-primary" onClick={() => handleAcceptRejectedSeller(s.uid)} style={{ padding: '6px 14px', fontSize: '0.8rem', fontWeight: 700, borderRadius: '8px', gap: '6px', background: 'var(--success)', borderColor: 'var(--success)' }}><Check size={14} /> Accept</button>
-                                                    <button className="btn" onClick={() => handleDeleteSeller(s.uid, s.shopName)} style={{ padding: '6px 14px', fontSize: '0.8rem', fontWeight: 700, borderRadius: '8px', gap: '6px', background: '#ef4444', borderColor: '#ef4444', color: 'white' }} title="Permanently delete seller and all their data"><X size={14} /> Delete</button>
+                                                    <button className="btn btn-primary" onClick={() => handleAcceptRejectedSeller(s.uid)} style={{ padding: '3px 8px', fontSize: '0.65rem', fontWeight: 700, borderRadius: '5px', gap: '3px', background: 'var(--success)', borderColor: 'var(--success)' }}><Check size={11} /> Accept</button>
+                                                    <button className="btn" onClick={() => handleDeleteSeller(s.uid, s.shopName)} style={{ padding: '3px 8px', fontSize: '0.65rem', fontWeight: 700, borderRadius: '5px', gap: '3px', background: '#ef4444', borderColor: '#ef4444', color: 'white' }} title="Permanently delete seller and all their data"><X size={11} /> Delete</button>
                                                 </div>
                                             </td>
                                         </tr>
@@ -520,21 +523,21 @@ export default function SellersTab({
                 <div style={{ height: '3rem', borderBottom: '2px solid var(--border)' }}></div>
 
                 {/* Blocked Sellers Section */}
-                <div className="flex flex-col gap-4">
+                <div className="flex flex-col" style={{ gap: '0.5rem' }}>
                     <div className="flex justify-between items-center">
-                        <h3 style={{ fontSize: '1.5rem', fontWeight: 700 }}>Blocked Sellers ({blockedSellers.length})</h3>
+                        <h3 style={{ fontSize: '1.2rem', fontWeight: 700 }}>Blocked Sellers ({blockedSellers.length})</h3>
                         <div className="flex gap-2">
-                            <input type="text" placeholder="Search blocked sellers..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} style={{ padding: '0.5rem', borderRadius: '4px', border: '1px solid var(--border)', width: '200px' }} />
-                            <select value={selectedBlockCategory} onChange={(e) => setSelectedBlockCategory(e.target.value)} style={{ padding: '0.5rem', borderRadius: '4px', border: '1px solid var(--border)', minWidth: '150px' }}>
+                            <input type="text" placeholder="Search blocked sellers..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} style={{ padding: '0.4rem 0.6rem', borderRadius: '4px', border: '1px solid var(--border)', width: '160px', fontSize: '0.8rem' }} />
+                            <select value={selectedBlockCategory} onChange={(e) => setSelectedBlockCategory(e.target.value)} style={{ padding: '0.4rem 0.6rem', borderRadius: '4px', border: '1px solid var(--border)', minWidth: '120px', fontSize: '0.8rem' }}>
                                 <option value="">All Categories</option>
                                 {[...new Set(blockedSellers.map(s => s.category).filter(Boolean))].sort().map(category => (
                                     <option key={category} value={category}>{category}</option>
                                 ))}
                             </select>
-                            <input type="date" value={selectedBlockDate} onChange={(e) => setSelectedBlockDate(e.target.value)} style={{ padding: '0.5rem', borderRadius: '4px', border: '1px solid var(--border)' }} title="Filter by date" />
-                            <button className="btn btn-secondary" onClick={() => { setSearchTerm(''); setSelectedBlockCategory(''); setSelectedBlockDate(''); }} style={{ padding: '0.5rem 1rem', fontSize: '0.85rem' }}>Clear</button>
-                            <button className="btn" onClick={handleDeleteAllBlockedSellers} style={{ padding: '0.5rem 1rem', fontSize: '0.85rem', background: '#ef4444', borderColor: '#ef4444', color: 'white', fontWeight: 700 }} title="Permanently delete all blocked sellers">Delete All Blocked</button>
-                            <button className="btn btn-secondary" onClick={fetchAllData} style={{ padding: '0.5rem 1rem', fontSize: '0.85rem' }}>Refresh</button>
+                            <input type="date" value={selectedBlockDate} onChange={(e) => setSelectedBlockDate(e.target.value)} style={{ padding: '0.4rem 0.6rem', borderRadius: '4px', border: '1px solid var(--border)', fontSize: '0.8rem' }} title="Filter by date" />
+                            <button className="btn btn-secondary" onClick={() => { setSearchTerm(''); setSelectedBlockCategory(''); setSelectedBlockDate(''); }} style={{ padding: '0.4rem 0.8rem', fontSize: '0.75rem' }}>Clear</button>
+                            <button className="btn" onClick={handleDeleteAllBlockedSellers} style={{ padding: '0.4rem 0.8rem', fontSize: '0.75rem', background: '#ef4444', borderColor: '#ef4444', color: 'white', fontWeight: 700 }} title="Permanently delete all blocked sellers">Delete All Blocked</button>
+                            <button className="btn btn-secondary" onClick={fetchAllData} style={{ padding: '0.4rem 0.8rem', fontSize: '0.75rem' }}>Refresh</button>
                         </div>
                     </div>
                     {blockedSellers.filter(s => {
@@ -545,8 +548,8 @@ export default function SellersTab({
                     }).length === 0 ? (
                         <div className="glass-card text-center p-8 text-muted">No blocked sellers.</div>
                     ) : (
-                        <div className="glass-card" style={{ padding: 0, overflowX: 'auto', overflowY: 'scroll', maxHeight: '400px', border: '1px solid var(--border)' }}>
-                            <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: '800px' }}>
+                        <div className="glass-card" style={{ padding: 0, overflowY: 'scroll', maxHeight: '400px', border: '1px solid var(--border)' }}>
+                            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                                 <thead style={{ background: 'var(--surface)', textAlign: 'left', position: 'sticky', top: 0, zIndex: 1 }}>
                                     <tr style={{ borderBottom: '2px solid var(--border)' }}>
                                         <th style={thStyle}>Shop Identity</th>
@@ -566,28 +569,28 @@ export default function SellersTab({
                                         return matchesName && matchesCategory && matchesDate;
                                     }).map(s => (
                                         <tr key={s.uid} style={{ borderBottom: '1px solid var(--border)', transition: 'background 0.2s' }} onMouseOver={(e) => e.currentTarget.style.background = 'var(--surface)'} onMouseOut={(e) => e.currentTarget.style.background = 'transparent'}>
-                                            <td style={{ padding: '1.25rem 1.5rem' }}>
+                                            <td style={{ padding: '0.5rem 0.75rem' }}>
                                                 <div className="flex flex-col">
-                                                    <span style={{ fontWeight: 700, fontSize: '1rem', color: 'var(--text)' }}>{s.shopName}</span>
-                                                    <span className="text-muted" style={{ fontSize: '0.75rem', marginTop: '2px' }}>UID: {s.uid?.substring(0, 8)}</span>
+                                                    <span style={{ fontWeight: 700, fontSize: '0.75rem', color: 'var(--text)' }}>{s.shopName}</span>
+                                                    <span className="text-muted" style={{ fontSize: '0.6rem', marginTop: '2px' }}>UID: {s.uid?.substring(0, 8)}</span>
                                                 </div>
                                             </td>
-                                            <td style={{ padding: '1.25rem 1.5rem' }}><span style={{ padding: '4px 10px', background: 'var(--glass)', border: '1px solid var(--border)', borderRadius: '6px', fontSize: '0.8rem', fontWeight: 600 }}>{s.category}</span></td>
-                                            <td style={{ padding: '1.25rem 1.5rem' }}>
+                                            <td style={{ padding: '0.5rem 0.75rem' }}><span style={{ padding: '2px 6px', background: 'var(--glass)', border: '1px solid var(--border)', borderRadius: '5px', fontSize: '0.65rem', fontWeight: 600 }}>{s.category}</span></td>
+                                            <td style={{ padding: '0.5rem 0.75rem' }}>
                                                 <div className="flex flex-col">
-                                                    <span style={{ fontWeight: 500, fontSize: '0.9rem' }}>{s.email}</span>
-                                                    <span style={{ fontSize: '0.75rem', color: 'var(--primary)' }}>UID: {s.uid?.substring(0, 8)}</span>
+                                                    <span style={{ fontWeight: 500, fontSize: '0.7rem' }}>{s.email}</span>
+                                                    <span style={{ fontSize: '0.6rem', color: 'var(--primary)' }}>UID: {s.uid?.substring(0, 8)}</span>
                                                 </div>
                                             </td>
-                                            <td style={{ padding: '1.25rem 1.5rem' }}><span style={{ padding: '6px 12px', background: 'rgba(255, 152, 0, 0.1)', color: '#ff9800', borderRadius: '8px', fontSize: '0.8rem', fontWeight: 700 }}>BLOCKED</span></td>
-                                            <td style={{ padding: '1.25rem 1.5rem' }}><span className="text-muted" style={{ fontSize: '0.85rem' }}>{s.joined}</span></td>
-                                            <td style={{ padding: '1.25rem 1.5rem', textAlign: 'center' }}>
-                                                <button className="btn btn-secondary shadow-sm" onClick={() => setSelectedSeller(s)} style={{ padding: '6px 14px', fontSize: '0.8rem', fontWeight: 700, borderRadius: '8px', gap: '6px' }}><Box size={14} /> Review Data</button>
+                                            <td style={{ padding: '0.5rem 0.75rem' }}><span style={{ padding: '4px 8px', background: 'rgba(255, 152, 0, 0.1)', color: '#ff9800', borderRadius: '5px', fontSize: '0.65rem', fontWeight: 700 }}>BLOCKED</span></td>
+                                            <td style={{ padding: '0.5rem 0.75rem' }}><span className="text-muted" style={{ fontSize: '0.65rem' }}>{s.joined}</span></td>
+                                            <td style={{ padding: '0.5rem 0.75rem', textAlign: 'center' }}>
+                                                <button className="btn btn-secondary shadow-sm" onClick={() => setSelectedSeller(s)} style={{ padding: '3px 8px', fontSize: '0.65rem', fontWeight: 700, borderRadius: '5px', gap: '3px' }}><Box size={11} /> Review</button>
                                             </td>
-                                            <td style={{ padding: '1.25rem 1.5rem', textAlign: 'right' }}>
+                                            <td style={{ padding: '0.5rem 0.75rem', textAlign: 'right' }}>
                                                 <div className="flex gap-2 justify-end">
-                                                    <button className="btn btn-primary" onClick={() => handleUnblockSeller(s.uid)} style={{ padding: '6px 14px', fontSize: '0.8rem', fontWeight: 700, borderRadius: '8px', gap: '6px', background: 'var(--success)', borderColor: 'var(--success)' }}><Check size={14} /> Unblock</button>
-                                                    <button className="btn" onClick={() => handleDeleteSeller(s.uid, s.shopName)} style={{ padding: '6px 14px', fontSize: '0.8rem', fontWeight: 700, borderRadius: '8px', gap: '6px', background: '#ef4444', borderColor: '#ef4444', color: 'white' }} title="Permanently delete seller and all their data"><X size={14} /> Delete</button>
+                                                    <button className="btn btn-primary" onClick={() => handleUnblockSeller(s.uid)} style={{ padding: '3px 8px', fontSize: '0.65rem', fontWeight: 700, borderRadius: '5px', gap: '3px', background: 'var(--success)', borderColor: 'var(--success)' }}><Check size={11} /> Unblock</button>
+                                                    <button className="btn" onClick={() => handleDeleteSeller(s.uid, s.shopName)} style={{ padding: '3px 8px', fontSize: '0.65rem', fontWeight: 700, borderRadius: '5px', gap: '3px', background: '#ef4444', borderColor: '#ef4444', color: 'white' }} title="Permanently delete seller and all their data"><X size={11} /> Delete</button>
                                                 </div>
                                             </td>
                                         </tr>
@@ -602,21 +605,21 @@ export default function SellersTab({
                 <div style={{ height: '3rem', borderBottom: '2px solid var(--border)' }}></div>
 
                 {/* Edit Seller Section */}
-                <div className="flex flex-col gap-4">
+                <div className="flex flex-col" style={{ gap: '0.5rem' }}>
                     <div className="flex justify-between items-center">
-                        <h3 style={{ fontSize: '1.5rem', fontWeight: 700 }}>Edit Seller ({sellersWithEditRequests.length})</h3>
+                        <h3 style={{ fontSize: '1.2rem', fontWeight: 700 }}>Edit Seller ({sellersWithEditRequests.length})</h3>
                         <div className="flex gap-2">
                             <input 
                                 type="text" 
                                 placeholder="Search by shop name..." 
                                 value={editSearchTerm} 
                                 onChange={(e) => setEditSearchTerm(e.target.value)} 
-                                style={{ padding: '0.5rem', borderRadius: '4px', border: '1px solid var(--border)', width: '200px' }} 
+                                style={{ padding: '0.4rem 0.6rem', borderRadius: '4px', border: '1px solid var(--border)', width: '160px', fontSize: '0.8rem' }} 
                             />
                             <select 
                                 value={editSearchCategory} 
                                 onChange={(e) => setEditSearchCategory(e.target.value)} 
-                                style={{ padding: '0.5rem', borderRadius: '4px', border: '1px solid var(--border)', minWidth: '150px' }}
+                                style={{ padding: '0.4rem 0.6rem', borderRadius: '4px', border: '1px solid var(--border)', minWidth: '120px', fontSize: '0.8rem' }}
                             >
                                 <option value="">All Categories</option>
                                 {[...new Set(sellersWithEditRequests.map(s => s.category || 'Uncategorized'))].sort().map(category => (
@@ -626,14 +629,14 @@ export default function SellersTab({
                             <button 
                                 className="btn btn-secondary" 
                                 onClick={() => { setEditSearchTerm(''); setEditSearchCategory(''); }} 
-                                style={{ padding: '0.5rem 1rem', fontSize: '0.85rem' }}
+                                style={{ padding: '0.4rem 0.8rem', fontSize: '0.75rem' }}
                             >
                                 Clear
                             </button>
                             <button 
                                 className="btn" 
                                 onClick={handleClearAllEditRequests} 
-                                style={{ padding: '0.5rem 1rem', fontSize: '0.85rem', background: '#ef4444', borderColor: '#ef4444', color: 'white', fontWeight: 700 }} 
+                                style={{ padding: '0.4rem 0.8rem', fontSize: '0.75rem', background: '#ef4444', borderColor: '#ef4444', color: 'white', fontWeight: 700 }} 
                                 title="Clear all edit requests"
                             >
                                 Clear All
@@ -642,7 +645,7 @@ export default function SellersTab({
                                 className="btn btn-secondary" 
                                 onClick={fetchSellersWithEditRequests}
                                 disabled={editRequestsLoading}
-                                style={{ padding: '0.5rem 1rem', fontSize: '0.85rem', opacity: editRequestsLoading ? 0.6 : 1 }}
+                                style={{ padding: '0.4rem 0.8rem', fontSize: '0.75rem', opacity: editRequestsLoading ? 0.6 : 1 }}
                             >
                                 {editRequestsLoading ? 'Loading...' : 'Refresh'}
                             </button>
@@ -663,12 +666,11 @@ export default function SellersTab({
                     ) : (
                         <div className="glass-card" style={{ 
                             padding: 0, 
-                            overflowX: 'auto', 
                             overflowY: 'scroll', 
                             maxHeight: '400px', 
                             border: '1px solid var(--border)' 
                         }}>
-                            <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: '800px' }}>
+                            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                                 <thead style={{ background: 'var(--surface)', textAlign: 'left', position: 'sticky', top: 0, zIndex: 1 }}>
                                     <tr style={{ borderBottom: '2px solid var(--border)' }}>
                                         <th style={thStyle}>Shop Identity</th>
@@ -689,35 +691,35 @@ export default function SellersTab({
                                         return matchesCategory && matchesName;
                                     }).map(s => (
                                         <tr key={s.requestId || s.uid} style={{ borderBottom: '1px solid var(--border)', transition: 'background 0.2s' }} onMouseOver={(e) => e.currentTarget.style.background = 'var(--surface)'} onMouseOut={(e) => e.currentTarget.style.background = 'transparent'}>
-                                            <td style={{ padding: '1.25rem 1.5rem' }}>
+                                            <td style={{ padding: '0.5rem 0.75rem' }}>
                                                 <div className="flex flex-col">
-                                                    <span style={{ fontWeight: 700, fontSize: '1rem', color: 'var(--text)' }}>{s.shopName}</span>
-                                                    <span className="text-muted" style={{ fontSize: '0.75rem', marginTop: '2px' }}>UID: {s.uid?.substring(0, 8)}</span>
+                                                    <span style={{ fontWeight: 700, fontSize: '0.75rem', color: 'var(--text)' }}>{s.shopName}</span>
+                                                    <span className="text-muted" style={{ fontSize: '0.6rem', marginTop: '2px' }}>UID: {s.uid?.substring(0, 8)}</span>
                                                 </div>
                                             </td>
-                                            <td style={{ padding: '1.25rem 1.5rem' }}>
+                                            <td style={{ padding: '0.5rem 0.75rem' }}>
                                                 <span style={{ 
-                                                    padding: '4px 10px', 
+                                                    padding: '2px 6px', 
                                                     background: 'var(--glass)', 
                                                     border: '1px solid var(--border)', 
-                                                    borderRadius: '6px', 
-                                                    fontSize: '0.8rem', 
+                                                    borderRadius: '5px', 
+                                                    fontSize: '0.65rem', 
                                                     fontWeight: 600 
                                                 }}>
                                                     {s.category || 'Uncategorized'}
                                                 </span>
                                             </td>
-                                            <td style={{ padding: '1.25rem 1.5rem' }}>
+                                            <td style={{ padding: '0.5rem 0.75rem' }}>
                                                 <div className="flex flex-col">
-                                                    <span style={{ fontWeight: 500, fontSize: '0.9rem' }}>{s.email}</span>
-                                                    <span style={{ fontSize: '0.75rem', color: 'var(--primary)' }}>{s.phone}</span>
+                                                    <span style={{ fontWeight: 500, fontSize: '0.7rem' }}>{s.email}</span>
+                                                    <span style={{ fontSize: '0.6rem', color: 'var(--primary)' }}>{s.phone}</span>
                                                 </div>
                                             </td>
-                                            <td style={{ padding: '1.25rem 1.5rem' }}>
+                                            <td style={{ padding: '0.5rem 0.75rem' }}>
                                                 <span style={{ 
-                                                    padding: '6px 12px', 
-                                                    borderRadius: '8px', 
-                                                    fontSize: '0.8rem', 
+                                                    padding: '4px 8px', 
+                                                    borderRadius: '5px', 
+                                                    fontSize: '0.65rem', 
                                                     fontWeight: 700,
                                                     background: s.status === 'APPROVED' ? 'rgba(var(--success-rgb), 0.1)' : 
                                                                s.status === 'REJECTED' ? 'rgba(239, 68, 68, 0.1)' : 
@@ -730,42 +732,42 @@ export default function SellersTab({
                                                     {s.isBlocked && ' 🚫'}
                                                 </span>
                                             </td>
-                                            <td style={{ padding: '1.25rem 1.5rem' }}>
-                                                <span className="text-muted" style={{ fontSize: '0.85rem' }}>{s.joined}</span>
+                                            <td style={{ padding: '0.5rem 0.75rem' }}>
+                                                <span className="text-muted" style={{ fontSize: '0.65rem' }}>{s.joined}</span>
                                             </td>
-                                            <td style={{ padding: '1.25rem 1.5rem', textAlign: 'center' }}>
+                                            <td style={{ padding: '0.5rem 0.75rem', textAlign: 'center' }}>
                                                 <button 
                                                     className="btn btn-secondary shadow-sm" 
                                                     onClick={() => setSelectedSeller(s)} 
                                                     style={{ 
-                                                        padding: '6px 14px', 
-                                                        fontSize: '0.8rem', 
+                                                        padding: '3px 8px', 
+                                                        fontSize: '0.65rem', 
                                                         fontWeight: 700, 
-                                                        borderRadius: '8px', 
-                                                        gap: '6px' 
+                                                        borderRadius: '5px', 
+                                                        gap: '3px' 
                                                     }}
                                                 >
-                                                    <Box size={14} /> Review Data
+                                                    <Box size={11} /> Review
                                                 </button>
                                             </td>
-                                            <td style={{ padding: '1.25rem 1.5rem', textAlign: 'right' }}>
+                                            <td style={{ padding: '0.5rem 0.75rem', textAlign: 'right' }}>
                                                 <span style={{ 
-                                                    padding: '6px 12px', 
+                                                    padding: '4px 8px', 
                                                     background: 'rgba(255, 152, 0, 0.1)', 
                                                     color: '#ff9800', 
-                                                    borderRadius: '8px', 
-                                                    fontSize: '0.8rem', 
+                                                    borderRadius: '5px', 
+                                                    fontSize: '0.65rem', 
                                                     fontWeight: 700,
                                                     display: 'flex',
                                                     alignItems: 'center',
-                                                    gap: '6px',
+                                                    gap: '3px',
                                                     justifyContent: 'center',
                                                     cursor: 'pointer'
                                                 }}
                                                 onClick={() => setEditingSeller(s)}
                                                 title="Click to edit seller details"
                                                 >
-                                                    <Edit size={14} /> Edit Pending
+                                                    <Edit size={11} /> Edit Pending
                                                 </span>
                                             </td>
                                         </tr>

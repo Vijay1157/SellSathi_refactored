@@ -322,7 +322,7 @@ export default function SellerDashboard() {
                         <SellerOrdersTab orders={orders || []} onTrackOrder={(o) => { setTrackingOrder(o); setShowTrackModal(true); }} />
                     )}
                     {activeTab === 'personal' && profile && (
-                        <SellerProfileTab profile={profile} />
+                        <SellerProfileTab profile={profile} sellerUid={sellerUid} />
                     )}
                 </div>
 
