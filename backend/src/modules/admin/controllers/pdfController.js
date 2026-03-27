@@ -353,39 +353,55 @@ const generateInvoicePDF = async (req, res) => {
         doc.fontSize(20).fillColor('#000000').font('Helvetica-Bold')
             .text('SELLER INVOICE REPORT', 50, 155, { align: 'center' });
 
+        // Date Range (if provided)
+        let sellerInfoY = 210;
+        if (fromDate && toDate) {
+            doc.fontSize(11).fillColor('#6366f1').font('Helvetica-Bold')
+                .text(`Invoice Period: ${new Date(fromDate).toLocaleDateString('en-GB')} to ${new Date(toDate).toLocaleDateString('en-GB')}`, 50, 185, { align: 'center' });
+            sellerInfoY = 220;
+        } else if (fromDate || toDate) {
+            const dateText = fromDate ? `From: ${new Date(fromDate).toLocaleDateString('en-GB')}` : `Until: ${new Date(toDate).toLocaleDateString('en-GB')}`;
+            doc.fontSize(11).fillColor('#6366f1').font('Helvetica-Bold')
+                .text(dateText, 50, 185, { align: 'center' });
+            sellerInfoY = 220;
+        }
+
         // Seller Info
-        doc.rect(50, 210, 495, 18).fillAndStroke('#f3f4f6', '#e5e7eb');
-        doc.fontSize(12).fillColor('#000000').font('Helvetica-Bold').text('SELLER INFORMATION', 55, 216);
+        doc.rect(50, sellerInfoY, 495, 18).fillAndStroke('#f3f4f6', '#e5e7eb');
+        doc.fontSize(12).fillColor('#000000').font('Helvetica-Bold').text('SELLER INFORMATION', 55, sellerInfoY + 6);
 
+        const detailsY = sellerInfoY + 35;
         doc.fontSize(11).font('Helvetica').fillColor('#000000');
-        doc.text('Shop Name:', 55, 245);
-        doc.text(sellerData.shopName || 'N/A', 180, 245);
-        doc.text('Category:', 320, 245);
-        doc.text(sellerData.category || 'N/A', 420, 245);
+        doc.text('Shop Name:', 55, detailsY);
+        doc.text(sellerData.shopName || 'N/A', 180, detailsY);
+        doc.text('Category:', 320, detailsY);
+        doc.text(sellerData.category || 'N/A', 420, detailsY);
 
-        doc.text('GST Number:', 55, 265);
-        doc.text(sellerData.gstNumber || 'N/A', 180, 265);
+        doc.text('GST Number:', 55, detailsY + 20);
+        doc.text(sellerData.gstNumber || 'N/A', 180, detailsY + 20);
 
         // Bank Details Section
-        doc.rect(50, 295, 495, 18).fillAndStroke('#f3f4f6', '#e5e7eb');
-        doc.fontSize(12).fillColor('#000000').font('Helvetica-Bold').text('BANK DETAILS', 55, 301);
+        const bankY = detailsY + 50;
+        doc.rect(50, bankY, 495, 18).fillAndStroke('#f3f4f6', '#e5e7eb');
+        doc.fontSize(12).fillColor('#000000').font('Helvetica-Bold').text('BANK DETAILS', 55, bankY + 6);
 
+        const bankDetailsY = bankY + 35;
         doc.fontSize(10).font('Helvetica').fillColor('#000000');
-        doc.text('Bank Name:', 55, 330);
-        doc.text(bankDetails.bankName, 180, 330);
-        doc.text('Account Holder:', 320, 330);
-        doc.text(bankDetails.accountHolderName, 440, 330);
+        doc.text('Bank Name:', 55, bankDetailsY);
+        doc.text(bankDetails.bankName, 180, bankDetailsY);
+        doc.text('Account Holder:', 320, bankDetailsY);
+        doc.text(bankDetails.accountHolderName, 440, bankDetailsY);
 
-        doc.text('Account Number:', 55, 350);
-        doc.text(bankDetails.accountNumber, 180, 350);
-        doc.text('IFSC Code:', 320, 350);
-        doc.text(bankDetails.ifscCode, 440, 350);
+        doc.text('Account Number:', 55, bankDetailsY + 20);
+        doc.text(bankDetails.accountNumber, 180, bankDetailsY + 20);
+        doc.text('IFSC Code:', 320, bankDetailsY + 20);
+        doc.text(bankDetails.ifscCode, 440, bankDetailsY + 20);
 
-        doc.text('UPI ID:', 55, 370);
-        doc.text(bankDetails.upiId, 180, 370);
+        doc.text('UPI ID:', 55, bankDetailsY + 40);
+        doc.text(bankDetails.upiId, 180, bankDetailsY + 40);
 
         // Summary
-        const summaryY = 400;
+        const summaryY = bankDetailsY + 70;
         doc.rect(50, summaryY, 495, 18).fillAndStroke('#f3f4f6', '#e5e7eb');
         doc.fontSize(12).fillColor('#000000').font('Helvetica-Bold').text('INVOICE SUMMARY', 55, summaryY + 6);
 

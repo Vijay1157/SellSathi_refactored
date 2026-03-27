@@ -11,7 +11,7 @@ export default function SellerEditModal({ seller, onClose, onSave }) {
         personalInfo: {
             name: '', email: '', phone: '',
             address: '', city: '', state: '', pincode: '',
-            aadhaarNumber: '', extractedName: '', age: '', gender: '',
+            aadhaarNumber: '', extractedName: '',
             emailId: '', phoneNumber: ''
         },
         businessInfo: {
@@ -222,21 +222,6 @@ export default function SellerEditModal({ seller, onClose, onSave }) {
                                     <div>
                                         <label style={labelStyle}>Aadhaar Number <span style={{ color: '#94a3b8', fontWeight: 400 }}>(read-only)</span></label>
                                         <input type="text" style={readOnlyStyle} readOnly value={formData.personalInfo.aadhaarNumber || ''} />
-                                    </div>
-                                    <div>
-                                        <label style={labelStyle}>Age</label>
-                                        <input type="text" style={inputStyle} value={formData.personalInfo.age || ''}
-                                            onChange={e => handleInputChange('personalInfo', 'age', e.target.value)} />
-                                    </div>
-                                    <div>
-                                        <label style={labelStyle}>Gender</label>
-                                        <select style={inputStyle} value={formData.personalInfo.gender || ''}
-                                            onChange={e => handleInputChange('personalInfo', 'gender', e.target.value)}>
-                                            <option value="">Select Gender</option>
-                                            <option value="Male">Male</option>
-                                            <option value="Female">Female</option>
-                                            <option value="Other">Other</option>
-                                        </select>
                                     </div>
                                     <div>
                                         <label style={labelStyle}>Phone Number</label>

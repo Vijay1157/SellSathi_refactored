@@ -180,8 +180,6 @@ export default function SellerDetailModal({ seller, onClose, onApprove, onReject
                         <Section icon={<User size={16} style={{ color: 'var(--primary)' }} />} title="Personal Identity">
                             <Field label="Full Name" value={seller.extractedName || seller.name} />
                             <Field label="UIDAI / Aadhaar Number" value={seller.aadhaarNumber} mono />
-                            <Field label="Date of Birth" value={seller.dateOfBirth} />
-                            <Field label="Age / Gender" value={`${seller.age || '—'} / ${seller.gender || '—'}`} />
                         </Section>
 
                         <Section icon={<Store size={16} style={{ color: 'var(--secondary)' }} />} title="Store Profile">
