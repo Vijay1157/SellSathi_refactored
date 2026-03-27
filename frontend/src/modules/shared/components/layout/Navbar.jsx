@@ -331,7 +331,7 @@ export default function Navbar() {
         setUser(null);
         setIsProfileOpen(false);
         window.dispatchEvent(new CustomEvent('userDataChanged'));
-        navigate('/');
+        navigate(isSellerRoute ? '/seller' : '/');
     };
 
     const handleLoginSuccess = () => {

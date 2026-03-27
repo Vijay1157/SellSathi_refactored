@@ -47,8 +47,9 @@ const SellerHeader = ({ onLoginClick, onNewSellerClick }) => {
   const profileRef = React.useRef(null);
 
   const checkUser = () => {
-    const userData = localStorage.getItem('user');
-    const loginCtx = localStorage.getItem('loginContext');
+    const isSellerTab = true; // SellerHeader is only used on seller pages
+    const userData = localStorage.getItem('seller_user');
+    const loginCtx = sessionStorage.getItem('loginContext');
     if (userData) {
       try {
         const parsed = JSON.parse(userData);
@@ -84,13 +85,20 @@ const SellerHeader = ({ onLoginClick, onNewSellerClick }) => {
     };
   }, []);
 
-  const handleSignOut = () => {
-    localStorage.removeItem('user');
-    localStorage.removeItem('userName');
-    localStorage.removeItem('loginContext');
+  const handleSignOut = async () => {
+    try {
+      await auth.signOut();
+    } catch (error) {
+      console.error('Error signing out:', error);
+    }
+    localStorage.removeItem('seller_user');
+    localStorage.removeItem('seller_userName');
+    localStorage.removeItem('seller_dob');
+    sessionStorage.removeItem('loginContext');
     setUser(null);
     window.dispatchEvent(new CustomEvent('userDataChanged'));
-    navigate('/seller');
+    window.location.href = window.location.origin + '/#/seller';
+    window.location.reload();
   };
 
   const navItems = [
