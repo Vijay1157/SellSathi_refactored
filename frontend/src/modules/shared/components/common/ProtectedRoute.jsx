@@ -85,8 +85,9 @@ export default function ProtectedRoute({ children, requiredRole = null }) {
     // Navigate to home if authorization is lost
     useEffect(() => {
         if (isAuthorized === false) {
-            console.log('Authorization lost - Navigating to home');
-            navigate('/', { replace: true });
+            const redirectPath = requiredRole === 'SELLER' ? '/seller' : '/';
+            console.log(`[ProtectedRoute] Auth lost! requiredRole: ${requiredRole}, redirecting to: ${redirectPath}`);
+            navigate(redirectPath, { replace: true });
 
             // Only trigger the login modal for general consumer routes
             if (requiredRole === 'CONSUMER' || !requiredRole) {

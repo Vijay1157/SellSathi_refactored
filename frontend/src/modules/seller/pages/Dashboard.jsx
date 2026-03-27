@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { LayoutDashboard, Package, ShoppingBag, DollarSign, Plus, Truck, Loader, AlertCircle, X, User, LogOut } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
@@ -29,6 +29,8 @@ export default function SellerDashboard() {
     const [loading, setLoading] = useState(true);
     const [sellerUid, setSellerUid] = useState(null);
     const [error, setError] = useState(null);
+    const [isProfileOpen, setIsProfileOpen] = useState(false);
+    const profileRef = React.useRef(null);
 
     // Data States
     const [stats, setStats] = useState({ totalSales: 0, totalProducts: 0, newOrders: 0, pendingOrders: 0 });
@@ -47,6 +49,16 @@ export default function SellerDashboard() {
 
     // Quota
     const [quotaExceeded, setQuotaExceeded] = useState(false);
+
+    useEffect(() => {
+        const handleClickOutside = (event) => {
+            if (profileRef.current && !profileRef.current.contains(event.target)) {
+                setIsProfileOpen(false);
+            }
+        };
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, []);
 
     useEffect(() => {
         const loadDashboard = async () => {
@@ -137,17 +149,26 @@ export default function SellerDashboard() {
     };
 
     const handleLogout = async () => {
+        console.log("[SellerDashboard] Logout button clicked. Starting signout process...");
         try {
             await auth.signOut();
         } catch (error) {
-            console.error('Error signing out:', error);
+            console.error('[SellerDashboard] Error signing out:', error);
         }
-        localStorage.removeItem('user');
-        localStorage.removeItem('userName');
-        localStorage.removeItem('dob');
-        localStorage.removeItem('loginContext');
+        localStorage.removeItem('seller_user');
+        localStorage.removeItem('seller_userName');
+        localStorage.removeItem('seller_dob');
+        sessionStorage.removeItem('loginContext');
+        
+        // Dispatch event for other potential listeners
         window.dispatchEvent(new CustomEvent('userDataChanged'));
-        navigate('/');
+        
+        // FORCE a hard redirect to the seller landing page
+        // Using window.location.href with the hash is the most reliable way to break out of the dashboard
+        window.location.href = window.location.origin + '/#/seller';
+        
+        // Optional: force reload to clear any remaining in-memory state
+        window.location.reload();
     };
 
     const handleDownloadLabel = async (orderId, awbNumber, existingLabelUrl) => {
@@ -247,9 +268,25 @@ export default function SellerDashboard() {
                             <div style={{ width: '42px', height: '42px', borderRadius: '12px', background: 'var(--primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white' }}>
                                 <LayoutDashboard size={22} />
                             </div>
-                            <h3 style={{ color: 'white', fontSize: '1.2rem', fontWeight: 700, letterSpacing: '-0.5px', margin: 0 }}>
-                                SELLER CENTER
-                            </h3>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                                <div style={{ 
+                                    width: '40px', height: '40px', borderRadius: '10px', 
+                                    background: 'rgba(255,255,255,0.1)', 
+                                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                    color: 'white', fontWeight: 800, fontSize: '1.1rem',
+                                    border: '1px solid rgba(255,255,255,0.15)'
+                                }}>
+                                    {(profile.name || 'S').charAt(0).toUpperCase()}
+                                </div>
+                                <div style={{ display: 'flex', flexDirection: 'column' }}>
+                                    <h3 style={{ color: 'white', fontSize: '1rem', fontWeight: 700, margin: 0 }}>
+                                        {profile.name || "Seller"}
+                                    </h3>
+                                    <span style={{ color: 'rgba(255,255,255,0.5)', fontSize: '0.75rem', fontWeight: 500 }}>
+                                        Supplier Account
+                                    </span>
+                                </div>
+                            </div>
                         </div>
 
                         <nav className="flex flex-col gap-3">
@@ -292,38 +329,129 @@ export default function SellerDashboard() {
                 </aside>
 
                 {/* Main Content Area */}
-                <div className="flex-1 flex flex-col" style={{ padding: '2.5rem 3rem', background: '#f8fafc', gap: '2rem', minHeight: '100vh', overflowY: 'auto' }}>
-
-                    {quotaExceeded && (
-                        <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}
-                            style={{ background: '#fff3cd', color: '#856404', padding: '1rem 1.5rem', borderRadius: '12px', border: '1px solid #ffeeba', display: 'flex', alignItems: 'center', gap: '12px', fontSize: '0.9rem' }}>
-                            <AlertCircle size={20} />
-                            <div><strong>Cloud Database Quota Exceeded.</strong> You are currently seeing limited/cached demo data. Real-time updates may be restricted until the quota resets.</div>
-                        </motion.div>
-                    )}
-
-                    <div className="flex justify-between items-center">
-                        <div>
-                            <h2 style={{ fontSize: '2rem', fontWeight: 800, color: '#1e293b', marginBottom: '0.25rem' }}>Dashboard</h2>
-                            <p style={{ color: '#64748b' }}>Welcome back, <span style={{ fontWeight: 600, color: 'var(--primary)' }}>{profile.name || "Seller"}</span></p>
+                <div className="flex-1 flex flex-col" style={{ background: '#f8fafc', minHeight: '100vh', overflowY: 'auto' }}>
+                    
+                    {/* Sticky Header */}
+                    <header style={{
+                        padding: '1.25rem 3rem',
+                        background: 'white',
+                        borderBottom: '1px solid #e2e8f0',
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                        position: 'sticky',
+                        top: 0,
+                        zIndex: 30,
+                        boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.05)'
+                    }}>
+                        <div className="flex items-center gap-4">
+                            <h2 style={{ fontSize: '1.5rem', fontWeight: 800, color: '#1e293b', margin: 0 }}>
+                                {activeTab === 'overview' ? 'Dashboard Overview' : 
+                                 activeTab === 'products' ? 'Product Management' :
+                                 activeTab === 'orders' ? 'Order Management' : 'Seller Profile'}
+                            </h2>
                         </div>
-                        <button className="btn btn-primary shadow-lg hover:shadow-xl transition-all" onClick={() => navigate('/seller/add-product')} style={{ padding: '0.75rem 1.5rem', borderRadius: '50px' }}>
-                            <Plus size={20} /> New Product
-                        </button>
-                    </div>
 
-                    {activeTab === 'overview' && statCards && (
-                        <SellerOverviewTab statCards={statCards} orders={orders || []} performanceYear={performanceYear} setPerformanceYear={setPerformanceYear} />
-                    )}
-                    {activeTab === 'products' && (
-                        <SellerProductsTab products={products || []} onViewProduct={handleViewProduct} onDeleteProduct={handleDeleteProduct} />
-                    )}
-                    {activeTab === 'orders' && (
-                        <SellerOrdersTab orders={orders || []} onTrackOrder={(o) => { setTrackingOrder(o); setShowTrackModal(true); }} />
-                    )}
-                    {activeTab === 'personal' && profile && (
-                        <SellerProfileTab profile={profile} sellerUid={sellerUid} />
-                    )}
+                        <div className="flex items-center gap-6">
+                            <div className="flex flex-col items-end hidden md:flex">
+                                <span style={{ fontSize: '0.9rem', fontWeight: 700, color: '#1e293b' }}>{profile.name || "Seller"}</span>
+                                <span style={{ fontSize: '0.75rem', color: '#64748b' }}>{profile.shopName || "Verified Seller"}</span>
+                            </div>
+
+                            <div className="relative" ref={profileRef}>
+                                <button
+                                    onClick={() => setIsProfileOpen(!isProfileOpen)}
+                                    style={{
+                                        width: '42px', height: '42px', borderRadius: '12px',
+                                        background: 'var(--primary)', color: 'white',
+                                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                        fontWeight: 800, fontSize: '1rem', border: 'none', cursor: 'pointer',
+                                        boxShadow: '0 4px 12px rgba(123, 77, 219, 0.3)'
+                                    }}
+                                >
+                                    {(profile.name || 'S').charAt(0).toUpperCase()}
+                                </button>
+
+                                {isProfileOpen && (
+                                    <div style={{
+                                        position: 'absolute', right: 0, mt: '0.75rem', top: '100%',
+                                        width: '200px', backgroundColor: 'white', borderRadius: '16px',
+                                        boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.1)',
+                                        border: '1px solid #f1f5f9', padding: '0.5rem',
+                                        marginTop: '10px'
+                                    }}>
+                                        <div style={{ padding: '0.75rem 1rem', borderBottom: '1px solid #f1f5f9', marginBottom: '0.5rem' }}>
+                                            <p style={{ margin: 0, fontSize: '0.8rem', color: '#64748b' }}>Account</p>
+                                            <p style={{ margin: 0, fontSize: '0.9rem', fontWeight: 700, color: '#1e293b', overflow: 'hidden', textOverflow: 'ellipsis' }}>{profile.name}</p>
+                                        </div>
+                                        <button
+                                            onClick={() => { setActiveTab('personal'); setIsProfileOpen(false); }}
+                                            style={{
+                                                width: '100%', display: 'flex', alignItems: 'center', gap: '8px',
+                                                padding: '0.75rem 1rem', fontSize: '0.85rem', color: '#475569',
+                                                borderRadius: '8px', border: 'none', background: 'transparent',
+                                                cursor: 'pointer', textAlign: 'left'
+                                            }}
+                                            className="hover:bg-gray-50"
+                                        >
+                                            <User size={16} /> My Profile
+                                        </button>
+                                        <button
+                                            onClick={handleLogout}
+                                            style={{
+                                                width: '100%', display: 'flex', alignItems: 'center', gap: '8px',
+                                                padding: '0.75rem 1rem', fontSize: '0.85rem', color: '#ef4444',
+                                                borderRadius: '8px', border: 'none', background: 'transparent',
+                                                cursor: 'pointer', textAlign: 'left', fontWeight: 600
+                                            }}
+                                            className="hover:bg-red-50"
+                                        >
+                                            <LogOut size={16} /> Sign Out
+                                        </button>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    </header>
+
+                    <div style={{ padding: '2.5rem 3rem', display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+                        {quotaExceeded && (
+                            <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}
+                                style={{ background: '#fff3cd', color: '#856404', padding: '1rem 1.5rem', borderRadius: '12px', border: '1px solid #ffeeba', display: 'flex', alignItems: 'center', gap: '12px', fontSize: '0.9rem' }}>
+                                <AlertCircle size={20} />
+                                <div><strong>Cloud Database Quota Exceeded.</strong> You are currently seeing limited/cached demo data. Real-time updates may be restricted until the quota resets.</div>
+                            </motion.div>
+                        )}
+
+                        <div className="flex justify-between items-center">
+                            <div>
+                                <h2 style={{ fontSize: '2rem', fontWeight: 800, color: '#1e293b', marginBottom: '0.25rem' }}>
+                                    {activeTab === 'overview' ? 'Performance Summary' : 
+                                     activeTab === 'products' ? 'Inventory' :
+                                     activeTab === 'orders' ? 'Shipments' : 'Business Credentials'}
+                                </h2>
+                                <p style={{ color: '#64748b' }}>Manage your <span style={{ fontWeight: 600, color: 'var(--primary)' }}>{activeTab}</span> activities below.</p>
+                            </div>
+                            {activeTab === 'products' && (
+                                <button className="btn btn-primary shadow-lg hover:shadow-xl transition-all" onClick={() => navigate('/seller/add-product')} style={{ padding: '0.75rem 1.5rem', borderRadius: '50px' }}>
+                                    <Plus size={20} /> New Product
+                                </button>
+                            )}
+                        </div>
+
+                        {activeTab === 'overview' && statCards && (
+                            <SellerOverviewTab statCards={statCards} orders={orders || []} performanceYear={performanceYear} setPerformanceYear={setPerformanceYear} />
+                        )}
+                        {activeTab === 'products' && (
+                            <SellerProductsTab products={products || []} onViewProduct={handleViewProduct} onDeleteProduct={handleDeleteProduct} />
+                        )}
+                        {activeTab === 'orders' && (
+                            <SellerOrdersTab orders={orders || []} onTrackOrder={(o) => { setTrackingOrder(o); setShowTrackModal(true); }} />
+                        )}
+                        {activeTab === 'personal' && profile && (
+                            <SellerProfileTab profile={profile} sellerUid={sellerUid} />
+                        )}
+                    </div>
                 </div>
 
                 {/* Modals */}
