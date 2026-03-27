@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { LayoutDashboard, Package, ShoppingBag, DollarSign, Plus, Truck, Loader, AlertCircle, X, User } from 'lucide-react';
+import { LayoutDashboard, Package, ShoppingBag, DollarSign, Plus, Truck, Loader, AlertCircle, X, User, LogOut } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { auth } from '@/modules/shared/config/firebase';
@@ -18,7 +18,7 @@ console.log("[SellerDashboard] Component Loading...");
 const getUserUid = () => {
     if (auth.currentUser) return auth.currentUser.uid;
     try {
-        const userData = JSON.parse(localStorage.getItem('user'));
+        const userData = JSON.parse(localStorage.getItem('seller_user'));
         return userData?.uid || null;
     } catch { return null; }
 };
@@ -76,7 +76,12 @@ export default function SellerDashboard() {
                 const data = await response.json();
                 console.log("[SellerDashboard] API Response Body:", data);
                 if (data.success) {
-                    setProfile(data.profile || {});
+                    const sellerProfile = data.profile || {};
+                    setProfile(sellerProfile);
+                    if (sellerProfile.name) {
+                        localStorage.setItem('userName', sellerProfile.name);
+                        window.dispatchEvent(new CustomEvent('userDataChanged', { detail: sellerProfile }));
+                    }
                     setStats(data.stats || { totalSales: 0, totalProducts: 0, newOrders: 0, pendingOrders: 0 });
                     setProducts(data.products || []);
                     setOrders(data.orders || []);
@@ -129,6 +134,20 @@ export default function SellerDashboard() {
         } catch (error) {
             console.error("Error deleting product:", error);
         }
+    };
+
+    const handleLogout = async () => {
+        try {
+            await auth.signOut();
+        } catch (error) {
+            console.error('Error signing out:', error);
+        }
+        localStorage.removeItem('user');
+        localStorage.removeItem('userName');
+        localStorage.removeItem('dob');
+        localStorage.removeItem('loginContext');
+        window.dispatchEvent(new CustomEvent('userDataChanged'));
+        navigate('/');
     };
 
     const handleDownloadLabel = async (orderId, awbNumber, existingLabelUrl) => {
@@ -252,6 +271,23 @@ export default function SellerDashboard() {
                                 </button>
                             ))}
                         </nav>
+                    </div>
+
+                    <div style={{ marginTop: 'auto', paddingTop: '1.5rem', borderTop: '1px solid rgba(255,255,255,0.08)' }}>
+                        <button
+                            onClick={handleLogout}
+                            style={{
+                                width: '100%', display: 'flex', alignItems: 'center', gap: '12px',
+                                padding: '1rem', fontSize: '0.95rem', borderRadius: '12px',
+                                transition: 'all 0.2s ease',
+                                background: 'rgba(239, 68, 68, 0.1)',
+                                color: '#f87171',
+                                fontWeight: 600, border: 'none', cursor: 'pointer'
+                            }}
+                        >
+                            <LogOut size={18} />
+                            Sign Out
+                        </button>
                     </div>
                 </aside>
 

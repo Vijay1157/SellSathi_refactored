@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Phone, ShieldCheck, User as UserIcon, Mail } from 'lucide-react';
 import { auth } from '@/modules/shared/config/firebase';
-import { RecaptchaVerifier, signInWithPhoneNumber, GoogleAuthProvider, signInWithPopup, signInWithEmailAndPassword } from 'firebase/auth';
+import { RecaptchaVerifier, signInWithPhoneNumber, GoogleAuthProvider, signInWithPopup, signInWithEmailAndPassword, createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
 import { useNavigate } from 'react-router-dom';
 import { authFetch } from '@/modules/shared/utils/api';
 import PhoneOtpForm from './PhoneOtpForm';
@@ -21,7 +21,7 @@ const TEST_CREDENTIALS = {
 function redirectByRole(data, navigate, isSellerLogin = false) {
     if (isSellerLogin) {
         // Seller Page LOGIN flow
-        localStorage.setItem('loginContext', 'SELLER');
+        sessionStorage.setItem('loginContext', 'SELLER');
         if (data.role === 'ADMIN') {
             navigate('/admin');
         } else if (data.role === 'SELLER' && (data.status === 'APPROVED' || data.sellerStatus === 'APPROVED')) {
@@ -37,17 +37,19 @@ function redirectByRole(data, navigate, isSellerLogin = false) {
     }
 
     // HOME PAGE login flow: All users (even admin/seller) stay on Home Page
-    localStorage.setItem('loginContext', 'CONSUMER');
+    sessionStorage.setItem('loginContext', 'CONSUMER');
     navigate('/');
 }
 
 /** Stores user data to localStorage and dispatches userDataChanged event */
 function persistUser(data, extras = {}) {
+    const isSeller = sessionStorage.getItem('loginContext') === 'SELLER';
+    const key = isSeller ? 'seller_user' : 'user';
     const userData = { uid: data.uid, role: data.role, ...extras };
-    localStorage.setItem('user', JSON.stringify(userData));
-    if (extras.fullName) localStorage.setItem('userName', extras.fullName);
-    if (extras.dob) localStorage.setItem('dob', extras.dob);
-    window.dispatchEvent(new CustomEvent('userDataChanged', { detail: userData }));
+    localStorage.setItem(key, JSON.stringify(userData));
+    if (extras.fullName) localStorage.setItem(isSeller ? 'seller_userName' : 'userName', extras.fullName);
+    if (extras.dob) localStorage.setItem(isSeller ? 'seller_dob' : 'dob', extras.dob);
+    window.dispatchEvent(new CustomEvent('userDataChanged', { detail: { ...userData, context: isSeller ? 'SELLER' : 'CONSUMER' } }));
 }
 
 export default function AuthModal({ isOpen, onClose, onSuccess, hideRegister, sellerLogin = false, startSellingFlow = false }) {
@@ -78,6 +80,9 @@ export default function AuthModal({ isOpen, onClose, onSuccess, hideRegister, se
 
         // Start Selling flow — special handling (Only for Login, not Register)
         if (startSellingFlow && !isRegistering) {
+            // If the account doesn't exist yet, let the flow proceed to registration
+            if (data.requiresRegistration) return true;
+
             if (data.role === 'SELLER') {
                 // Already a seller → persist and redirect to dashboard
                 persistUser(data, { fullName: data.fullName, status: data.status, sellerStatus: data.sellerStatus, shopName: data.shopName });
@@ -97,6 +102,14 @@ export default function AuthModal({ isOpen, onClose, onSuccess, hideRegister, se
                 return false;
             }
             // CONSUMER → show "already a customer" message with options
+            // Skip for NEW_USER or REGISTERED status (fresh credentials)
+            if (data.status === 'NEW_USER' || data.status === 'REGISTERED') {
+                persistUser(data, { fullName: data.fullName, status: data.status });
+                navigate('/seller/register');
+                handleClose();
+                return false;
+            }
+
             setError(
                 <span>
                     You are already a registered customer. Would you like to continue with the same credentials to become a seller?<br />
@@ -202,8 +215,8 @@ export default function AuthModal({ isOpen, onClose, onSuccess, hideRegister, se
 
         // 2. Registration fields validation (if on regular phone registration flow)
         if (isRegistering && !isEmailSignup && !isGoogleRegistration) {
-            if (!formData.fullName.trim() || !formData.dob || !formData.email.trim() || !formData.password.trim()) {
-                setError('Please fill in all registration details');
+            if (!formData.email.trim() || !formData.password.trim()) {
+                setError('Please fill in email and password');
                 return;
             }
             if (formData.password.length < 6) {
@@ -275,7 +288,7 @@ export default function AuthModal({ isOpen, onClose, onSuccess, hideRegister, se
                         return;
                     }
                 }
-                localStorage.setItem('loginContext', sellerLogin || startSellingFlow ? 'SELLER' : 'CONSUMER');
+                sessionStorage.setItem('loginContext', sellerLogin || startSellingFlow ? 'SELLER' : 'CONSUMER');
                 persistUser(data, { phone: phoneNumber, status: data.status, sellerStatus: data.sellerStatus, shopName: data.shopName, fullName: formData.fullName || data.fullName, dob: formData.dob });
                 if (isRegistering) navigate(startSellingFlow ? '/seller/register' : '/'); else redirectByRole(data, navigate, sellerLogin);
                 if (onSuccess) onSuccess(data);
@@ -296,16 +309,6 @@ export default function AuthModal({ isOpen, onClose, onSuccess, hideRegister, se
                 const allowed = await checkRoleAllowed(data);
                 if (!allowed) {
                     setLoading(false);
-                    return;
-                }
-                if (data.requiresRegistration) {
-                    // Google authenticated successfully, but user doesn't exist
-                    setFormData({ ...formData, email: data.email, fullName: data.fullName || '', isGoogleRegistration: true });
-                    setGoogleIdToken(idToken);
-                    setIsGoogleRegistration(true);
-                    setIsEmailSignup(true);
-                    setIsRegistering(true);
-                    setError('Please complete your profile to finish registration.');
                     return;
                 }
                 persistUser(data, { email: data.email, fullName: data.fullName, status: data.status, sellerStatus: data.sellerStatus, shopName: data.shopName });
@@ -337,7 +340,7 @@ export default function AuthModal({ isOpen, onClose, onSuccess, hideRegister, se
                 idToken = await cred.user.getIdToken();
             } catch (loginErr) {
                 if (loginErr.code === 'auth/user-not-found' || loginErr.code === 'auth/invalid-credential') {
-                    try { const { createUserWithEmailAndPassword } = await import('firebase/auth'); const reg = await createUserWithEmailAndPassword(auth, formData.email, formData.password); idToken = await reg.user.getIdToken(); }
+                    try { const reg = await createUserWithEmailAndPassword(auth, formData.email, formData.password); idToken = await reg.user.getIdToken(); }
                     catch (regErr) { if (regErr.code === 'auth/operation-not-allowed') isTestMode = true; else throw regErr; }
                 } else if (loginErr.code === 'auth/operation-not-allowed') isTestMode = true;
                 else throw loginErr;
@@ -366,8 +369,8 @@ export default function AuthModal({ isOpen, onClose, onSuccess, hideRegister, se
         setError('');
 
         // Basic field validation
-        if (!formData.fullName.trim() || !formData.dob || !formData.email.trim()) {
-            setError('Please fill in Name and Date of Birth');
+        if (!formData.email.trim()) {
+            setError('Please enter your email address');
             return;
         }
 
@@ -378,7 +381,7 @@ export default function AuthModal({ isOpen, onClose, onSuccess, hideRegister, se
             if (formData.password !== formData.confirmPassword) { setError('Passwords do not match'); return; }
         }
 
-        if (new Date(formData.dob) > new Date()) { setError('Date of Birth cannot be in the future'); return; }
+
         if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) { setError('Please enter a valid email address'); return; }
 
         setLoading(true);
@@ -388,9 +391,8 @@ export default function AuthModal({ isOpen, onClose, onSuccess, hideRegister, se
 
             if (!isGoogleRegistration) {
                 try {
-                    const { createUserWithEmailAndPassword, updateProfile } = await import('firebase/auth');
                     const cred = await createUserWithEmailAndPassword(auth, formData.email, formData.password);
-                    await updateProfile(cred.user, { displayName: formData.fullName });
+                    await updateProfile(cred.user, { displayName: "User" });
                     idToken = await cred.user.getIdToken();
                 } catch (fbErr) {
                     if (fbErr.code === 'auth/operation-not-allowed') isTestMode = true;
@@ -426,7 +428,7 @@ export default function AuthModal({ isOpen, onClose, onSuccess, hideRegister, se
                     fullName: formData.fullName,
                     dob: formData.dob
                 });
-                localStorage.setItem('loginContext', sellerLogin || startSellingFlow ? 'SELLER' : 'CONSUMER');
+                sessionStorage.setItem('loginContext', sellerLogin || startSellingFlow ? 'SELLER' : 'CONSUMER');
                 navigate(startSellingFlow ? '/seller/register' : '/');
                 if (onSuccess) onSuccess(data);
                 handleClose();

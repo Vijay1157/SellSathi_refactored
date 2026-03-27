@@ -7,9 +7,14 @@ export default function VerificationStep({ sellerData, updateSellerData, nextSte
     sellerData.productCategory?.startsWith('other:') ? sellerData.productCategory.slice(6) : ''
   );
 
+  const ifscRegex = /^[A-Z]{4}0[A-Z0-9]{6}$/;
+  const upiRegex = /^[a-zA-Z0-9._-]{2,256}@[a-zA-Z]{2,64}$/;
+  const isUpiValid = !sellerData.upiId || upiRegex.test(sellerData.upiId);
+
   const isFormValid = sellerData.bankAccountName &&
     sellerData.accountNumber &&
-    sellerData.ifscCode &&
+    ifscRegex.test(sellerData.ifscCode) &&
+    isUpiValid &&
     sellerData.supplierName &&
     sellerData.businessType &&
     sellerData.productCategory &&
@@ -64,6 +69,9 @@ export default function VerificationStep({ sellerData, updateSellerData, nextSte
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#7B4DDB] focus:border-[#7B4DDB]"
                 placeholder="Enter 11-char IFSC code"
               />
+              {sellerData.ifscCode && !ifscRegex.test(sellerData.ifscCode) && (
+                <p className="text-red-500 text-xs mt-1 font-medium italic">Invalid IFSC. Example: ABCD0123456</p>
+              )}
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -76,6 +84,9 @@ export default function VerificationStep({ sellerData, updateSellerData, nextSte
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#7B4DDB] focus:border-[#7B4DDB]"
                 placeholder="e.g. name@bank"
               />
+              {sellerData.upiId && !upiRegex.test(sellerData.upiId) && (
+                <p className="text-red-500 text-xs mt-1 font-medium italic">Invalid UPI ID format.</p>
+              )}
             </div>
           </div>
         </div>

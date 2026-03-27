@@ -13,6 +13,14 @@ const SellerOnboarding = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const formRef = React.useRef(null);
+
+  // Scroll to top when step changes
+  useEffect(() => {
+    if (formRef.current) {
+      formRef.current.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  }, [step]);
 
   // Enhanced seller data state
   const [sellerData, setSellerData] = useState({
@@ -310,7 +318,7 @@ const SellerOnboarding = () => {
         </div>
 
         {/* Scrollable Form Body */}
-        <div className="flex-1 overflow-y-auto custom-scrollbar">
+        <div className="flex-1 overflow-y-auto custom-scrollbar" ref={formRef}>
           <div className="w-full pb-12">
             <div className="bg-white p-6 border-b border-gray-100 min-h-screen">
               {error && (

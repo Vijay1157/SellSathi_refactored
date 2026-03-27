@@ -31,15 +31,14 @@ import '@/modules/shared/utils/clearOldData';
 function AppContent() {
   const location = useLocation();
   // Hide navbar for seller landing, registration, and onboarding flows (they have their own SellerHeader)
-  const isSellerPage = location.pathname === '/seller' ||
-    location.pathname.startsWith('/seller/register') ||
-    location.pathname.startsWith('/seller/onboarding');
+  const isSellerPage = location.pathname.startsWith('/seller');
 
   // Routes where footer should be hidden
   const hideFooterRoutes = [
     "/seller",
     "/seller/register",
-    "/seller/onboarding"
+    "/seller/onboarding",
+    "/seller/dashboard"
   ];
 
   return (
@@ -135,7 +134,7 @@ function AppContent() {
           } />
         </Routes>
       </main>
-      {!hideFooterRoutes.includes(location.pathname) && <Footer />}
+      {!hideFooterRoutes.some(route => location.pathname.startsWith(route)) && <Footer />}
     </div>
   );
 }

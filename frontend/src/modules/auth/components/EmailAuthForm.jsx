@@ -62,34 +62,7 @@ export default function EmailAuthForm({
         </div>
     );
 
-    const registrationOnlyFields = (
-        <>
-            <div className="auth-input-group">
-                <UserIcon size={18} className="auth-field-icon" />
-                <input
-                    type="text"
-                    placeholder="Full Name"
-                    value={formData.fullName}
-                    onChange={e => setFormData({ ...formData, fullName: e.target.value })}
-                    required
-                />
-            </div>
-
-            <div className="auth-input-group date-input-wrapper">
-                <Calendar size={18} className="auth-field-icon" />
-                {!formData.dob && !dobFocused && <span className="date-placeholder">DOB</span>}
-                <input
-                    type="date"
-                    value={formData.dob}
-                    onChange={e => setFormData({ ...formData, dob: e.target.value })}
-                    onFocus={() => setDobFocused(true)}
-                    onBlur={() => setDobFocused(false)}
-                    max={dateMax}
-                    required
-                />
-            </div>
-        </>
-    );
+    const registrationOnlyFields = null;
 
     if (isEmailLogin) {
         return (

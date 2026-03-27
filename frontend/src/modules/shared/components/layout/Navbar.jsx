@@ -249,12 +249,14 @@ export default function Navbar() {
 
     useEffect(() => {
         const checkUser = () => {
-            const userData = localStorage.getItem('user');
-            const loginCtx = localStorage.getItem('loginContext');
+            const isSellerRoute = location.pathname.startsWith('/seller');
+            const loginCtx = sessionStorage.getItem('loginContext');
+            const key = isSellerRoute ? 'seller_user' : 'user';
+            const userData = localStorage.getItem(key);
+            
             if (userData) {
                 try {
                     const parsed = JSON.parse(userData);
-                    const isSellerRoute = location.pathname.startsWith('/seller');
                     
                     if (loginCtx === 'SELLER' && !isSellerRoute) {
                         setUser(null);
@@ -306,15 +308,26 @@ export default function Navbar() {
         return () => document.removeEventListener('mousedown', handleClickOutside);
     }, []);
 
-    const handleSignOut = async () => {
+    const handleLogout = async () => {
         try {
             await auth.signOut();
         } catch (error) {
             console.error('Error signing out from Firebase:', error);
         }
-        localStorage.removeItem('user');
-        localStorage.removeItem('userName');
-        localStorage.removeItem('dob');
+        
+        const isSellerRoute = location.pathname.startsWith('/seller');
+        if (isSellerRoute) {
+            localStorage.removeItem('seller_user');
+            localStorage.removeItem('seller_userName');
+            localStorage.removeItem('seller_dob');
+            sessionStorage.removeItem('loginContext');
+        } else {
+            localStorage.removeItem('user');
+            localStorage.removeItem('userName');
+            localStorage.removeItem('dob');
+            sessionStorage.removeItem('loginContext');
+        }
+        
         setUser(null);
         setIsProfileOpen(false);
         window.dispatchEvent(new CustomEvent('userDataChanged'));
@@ -446,7 +459,7 @@ export default function Navbar() {
                                             <div className="menu-header">
                                                 <div className="avatar">{(user.fullName || 'U').charAt(0).toUpperCase()}</div>
                                                 <div className="info">
-                                                    <p className="name">{localStorage.getItem('userName') || user.fullName || 'User'}</p>
+                                                    <p className="name">{localStorage.getItem(location.pathname.startsWith('/seller') ? 'seller_userName' : 'userName') || user.fullName || 'User'}</p>
                                                     <p className="email">{user.phone ? (user.phone.startsWith('+') ? user.phone : '+91' + user.phone) : ''}</p>
                                                 </div>
                                             </div>
@@ -462,7 +475,7 @@ export default function Navbar() {
                                                 <button onClick={() => { setIsLoginModalOpen(true); setIsProfileOpen(false); }}>
                                                     <User size={16} /> Switch Account
                                                 </button>
-                                                <button onClick={handleSignOut} className="signout-btn">
+                                                <button onClick={handleLogout} className="signout-btn">
                                                     <LogOut size={16} /> Sign Out
                                                 </button>
                                             </div>
