@@ -159,10 +159,16 @@ export default function SellerDashboard() {
         localStorage.removeItem('seller_userName');
         localStorage.removeItem('seller_dob');
         sessionStorage.removeItem('loginContext');
+        
+        // Dispatch event for other potential listeners
         window.dispatchEvent(new CustomEvent('userDataChanged'));
         
-        // Use a hard redirect to ensure it breaks out of the dashboard
-        window.location.hash = '/seller';
+        // FORCE a hard redirect to the seller landing page
+        // Using window.location.href with the hash is the most reliable way to break out of the dashboard
+        window.location.href = window.location.origin + '/#/seller';
+        
+        // Optional: force reload to clear any remaining in-memory state
+        window.location.reload();
     };
 
     const handleDownloadLabel = async (orderId, awbNumber, existingLabelUrl) => {
