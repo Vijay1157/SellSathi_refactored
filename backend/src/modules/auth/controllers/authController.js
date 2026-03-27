@@ -47,14 +47,22 @@ const login = async (req, res) => {
         const userSnap = await userRef.get();
 
         if (!userSnap.exists) {
-            // If they are logging in from Google but don't exist yet, we require them to complete registration
-            // We distinguish Google logins by the presence of both decodedToken.firebase.sign_in_provider === 'google.com'
+            // If they are logging in from Google but don't exist yet, we automatically create them
+            // This skips the "complete profile" step on the frontend
             if (decodedToken && decodedToken.firebase && decodedToken.firebase.sign_in_provider === 'google.com') {
+                await userRef.set({
+                    uid,
+                    phone: phoneNumber,
+                    email,
+                    fullName: fullName || "User",
+                    role: "CONSUMER",
+                    isActive: true,
+                    createdAt: admin.firestore.FieldValue.serverTimestamp(),
+                });
+
                 return res.status(200).json({
-                    success: true,
-                    requiresRegistration: true,
-                    email: email,
-                    fullName: fullName
+                    success: true, uid, role: "CONSUMER", fullName: fullName || "User", status: "NEW_USER",
+                    message: "New user created via Google",
                 });
             }
 

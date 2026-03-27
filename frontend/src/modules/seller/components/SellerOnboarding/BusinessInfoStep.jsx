@@ -11,6 +11,7 @@ export default function BusinessInfoStep({ sellerData, updateSellerData, nextSte
 
   const availableCities = CITY_DATA[sellerData.pickupState] || [];
   const inp = "w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#7B4DDB] focus:border-[#7B4DDB] text-sm";
+  const gstRegex = /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/;
 
   const isFormValid = () => {
     // 1. Business basic info
@@ -19,7 +20,8 @@ export default function BusinessInfoStep({ sellerData, updateSellerData, nextSte
 
     // 2. GST validation if 'yes'
     if (sellerData.hasGST === 'yes') {
-      if (sellerData.gstNumber?.length !== 15) return false;
+      const gstRegex = /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/;
+      if (!gstRegex.test(sellerData.gstNumber)) return false;
     }
 
     // 3. Pickup Address validation
@@ -124,6 +126,9 @@ export default function BusinessInfoStep({ sellerData, updateSellerData, nextSte
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#7B4DDB] focus:border-[#7B4DDB]"
                 placeholder="Enter 15-character GST number"
               />
+              {sellerData.gstNumber && !gstRegex.test(sellerData.gstNumber) && (
+                <p className="text-red-500 text-xs mt-1 font-medium">Invalid GST format. Enter valid 15-character GST.</p>
+              )}
             </div>
           )}
 

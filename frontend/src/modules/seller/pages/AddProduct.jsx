@@ -92,7 +92,7 @@ export default function AddProduct() {
                 const user = auth.currentUser;
                 let uid = user?.uid;
                 if (!uid) {
-                    try { uid = JSON.parse(localStorage.getItem('user'))?.uid; } catch { uid = null; }
+                    try { uid = JSON.parse(localStorage.getItem('seller_user'))?.uid; } catch { uid = null; }
                 }
                 if (uid) {
                     const res = await authFetch(`/seller/${uid}/dashboard-data`);
@@ -199,7 +199,7 @@ export default function AddProduct() {
         const user = auth.currentUser;
         let sellerId = user?.uid || null;
         if (!sellerId) {
-            try { sellerId = JSON.parse(localStorage.getItem('user'))?.uid; } catch { sellerId = null; }
+            try { sellerId = JSON.parse(localStorage.getItem('seller_user'))?.uid; } catch { sellerId = null; }
         }
         if (!sellerId) { alert("Please login first"); return; }
 

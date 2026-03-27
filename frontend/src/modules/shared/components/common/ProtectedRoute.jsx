@@ -9,7 +9,8 @@ export default function ProtectedRoute({ children, requiredRole = null }) {
 
     useEffect(() => {
         const checkAuthorization = () => {
-            const user = localStorage.getItem('user');
+            const key = requiredRole === 'SELLER' ? 'seller_user' : 'user';
+            const user = localStorage.getItem(key);
 
             if (!user) {
                 console.log('No user in localStorage - Unauthorized');
