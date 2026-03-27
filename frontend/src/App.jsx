@@ -11,6 +11,11 @@ import NewArrivals from '@/modules/marketplace/pages/NewArrivals';
 import Trending from '@/modules/marketplace/pages/Trending';
 import CategoryPage from '@/modules/marketplace/pages/CategoryPage';
 import Wishlist from '@/modules/marketplace/pages/Wishlist';
+import FAQ from '@/modules/marketplace/pages/FAQ';
+import TermsOfUse from '@/modules/marketplace/pages/TermsOfUse';
+import CancellationReturns from '@/modules/marketplace/pages/CancellationReturns';
+import Privacy from '@/modules/marketplace/pages/Privacy';
+import Security from '@/modules/marketplace/pages/Security';
 import SellerRegistration from '@/modules/seller/pages/Registration';
 import SellerPageWithAuth from '@/modules/seller/pages/SellerPageWithAuth';
 import SellerOnboarding from '@/modules/seller/pages/SellerOnboarding';
@@ -68,6 +73,11 @@ function AppContent() {
             }
           />
           <Route path="/track" element={<OrderTracking />} />
+          <Route path="/faq" element={<FAQ />} />
+          <Route path="/terms-of-use" element={<TermsOfUse />} />
+          <Route path="/cancellation-returns" element={<CancellationReturns />} />
+          <Route path="/privacy" element={<Privacy />} />
+          <Route path="/security" element={<Security />} />
           <Route path="/invoice" element={<Invoice />} />
           <Route path="/deals" element={<Deals />} />
           <Route path="/new-arrivals" element={<NewArrivals />} />

@@ -74,7 +74,16 @@ export default function Footer() {
                             <ul style={{ listStyle: 'none' }} className="flex flex-col gap-3">
                                 <li><Link to="/faq" className="text-muted" style={{ textDecoration: 'none', fontSize: '0.9rem', fontWeight: 600 }}>FAQ</Link></li>
                                 <li><Link to="/contact" className="text-muted" style={{ textDecoration: 'none', fontSize: '0.9rem', fontWeight: 600 }}>Contact Us</Link></li>
-                                <li><Link to="/terms" className="text-muted" style={{ textDecoration: 'none', fontSize: '0.9rem', fontWeight: 600 }}>Terms of Service</Link></li>
+                            </ul>
+                        </div>
+
+                        <div>
+                            <h4 style={{ fontWeight: 800, marginBottom: '1.5rem' }}>Consumer Policy</h4>
+                            <ul style={{ listStyle: 'none' }} className="flex flex-col gap-3">
+                                <li><Link to="/cancellation-returns" className="text-muted" style={{ textDecoration: 'none', fontSize: '0.9rem', fontWeight: 600 }}>Cancellation &amp; Returns</Link></li>
+                                <li><Link to="/terms-of-use" className="text-muted" style={{ textDecoration: 'none', fontSize: '0.9rem', fontWeight: 600 }}>Terms of Use</Link></li>
+                                <li><Link to="/security" className="text-muted" style={{ textDecoration: 'none', fontSize: '0.9rem', fontWeight: 600 }}>Security</Link></li>
+                                <li><Link to="/privacy" className="text-muted" style={{ textDecoration: 'none', fontSize: '0.9rem', fontWeight: 600 }}>Privacy</Link></li>
                             </ul>
                         </div>
 
