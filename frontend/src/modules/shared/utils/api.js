@@ -32,10 +32,12 @@ export async function authFetch(path, options = {}) {
         headers['Content-Type'] = 'application/json';
     }
 
-    // Read stored user from localStorage
+    // Read stored user from localStorage using context-aware key
     let localUser = null;
     try {
-        localUser = JSON.parse(localStorage.getItem('user'));
+        const loginCtx = sessionStorage.getItem('loginContext');
+        const storageKey = loginCtx === 'SELLER' ? 'seller_user' : 'user';
+        localUser = JSON.parse(localStorage.getItem(storageKey));
     } catch (_) { /* ignore parse errors */ }
 
     // ── PATH 1: Test-login user ───────────────────────────────────────────────
@@ -49,15 +51,15 @@ export async function authFetch(path, options = {}) {
 
     // ── PATH 2: Real Firebase Auth session ────────────────────────────────────
     const currentUser = auth.currentUser;
-    if (currentUser) {
+    // Only use Firebase Auth token if it matches our tab's local user context
+    if (currentUser && localUser?.uid === currentUser.uid) {
         try {
             const idToken = await currentUser.getIdToken(true);
             headers['Authorization'] = `Bearer ${idToken}`;
+            return fetch(url, { ...options, headers });
         } catch (err) {
             console.warn('[authFetch] Token refresh failed, falling back to X-Test-UID:', err.message);
-            if (localUser?.uid) headers['X-Test-UID'] = localUser.uid;
         }
-        return fetch(url, { ...options, headers });
     }
 
     // ── PATH 3: No Firebase session — use stored UID ──────────────────────────

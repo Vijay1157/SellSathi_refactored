@@ -42,8 +42,8 @@ function redirectByRole(data, navigate, isSellerLogin = false) {
 }
 
 /** Stores user data to localStorage and dispatches userDataChanged event */
-function persistUser(data, extras = {}) {
-    const isSeller = sessionStorage.getItem('loginContext') === 'SELLER';
+function persistUser(data, extras = {}, forceIsSeller = null) {
+    const isSeller = forceIsSeller !== null ? forceIsSeller : (sessionStorage.getItem('loginContext') === 'SELLER');
     const key = isSeller ? 'seller_user' : 'user';
     const userData = { uid: data.uid, role: data.role, ...extras };
     localStorage.setItem(key, JSON.stringify(userData));
@@ -85,7 +85,7 @@ export default function AuthModal({ isOpen, onClose, onSuccess, hideRegister, se
 
             if (data.role === 'SELLER') {
                 // Already a seller → persist and redirect to dashboard
-                persistUser(data, { fullName: data.fullName, status: data.status, sellerStatus: data.sellerStatus, shopName: data.shopName });
+                persistUser(data, { fullName: data.fullName, status: data.status, sellerStatus: data.sellerStatus, shopName: data.shopName }, true);
                 localStorage.setItem('loginContext', 'SELLER');
                 if (data.status === 'APPROVED' || data.sellerStatus === 'APPROVED') {
                     navigate('/seller/dashboard');
@@ -104,7 +104,7 @@ export default function AuthModal({ isOpen, onClose, onSuccess, hideRegister, se
             // CONSUMER → show "already a customer" message with options
             // Skip for NEW_USER or REGISTERED status (fresh credentials)
             if (data.status === 'NEW_USER' || data.status === 'REGISTERED') {
-                persistUser(data, { fullName: data.fullName, status: data.status });
+                persistUser(data, { fullName: data.fullName, status: data.status }, true);
                 navigate('/seller/register');
                 handleClose();
                 return false;
@@ -114,7 +114,7 @@ export default function AuthModal({ isOpen, onClose, onSuccess, hideRegister, se
                 <span>
                     You are already a registered customer. Would you like to continue with the same credentials to become a seller?<br />
                     <button style={{ ...linkStyle, marginTop: '8px', padding: '6px 16px', background: 'var(--primary)', color: '#fff', borderRadius: '6px', textDecoration: 'none' }} onClick={() => {
-                        persistUser(data, { fullName: data.fullName, status: data.status });
+                        persistUser(data, { fullName: data.fullName, status: data.status }, true);
                         handleClose();
                         navigate('/seller/register');
                     }}>Continue with existing credentials</button>
@@ -311,7 +311,8 @@ export default function AuthModal({ isOpen, onClose, onSuccess, hideRegister, se
                     setLoading(false);
                     return;
                 }
-                persistUser(data, { email: data.email, fullName: data.fullName, status: data.status, sellerStatus: data.sellerStatus, shopName: data.shopName });
+                const isSellerSession = sellerLogin || startSellingFlow;
+                persistUser(data, { email: data.email, fullName: data.fullName, status: data.status, sellerStatus: data.sellerStatus, shopName: data.shopName }, isSellerSession);
                 localStorage.setItem('userName', data.fullName || '');
                 redirectByRole(data, navigate, sellerLogin);
                 if (onSuccess) onSuccess(data);
@@ -353,8 +354,9 @@ export default function AuthModal({ isOpen, onClose, onSuccess, hideRegister, se
                     setLoading(false);
                     return;
                 }
-                persistUser(data, { email: formData.email, fullName: data.fullName || formData.fullName, dob: formData.dob });
-                redirectByRole(data, navigate, sellerLogin);
+                const isSellerSession = sellerLogin || startSellingFlow;
+                persistUser(data, { email: formData.email, fullName: data.fullName || formData.fullName, dob: formData.dob }, isSellerSession);
+                redirectByRole(data, navigate, sellerLogin || startSellingFlow);
                 if (onSuccess) onSuccess(data);
                 handleClose();
             } else setError(data.message || 'Login failed');
@@ -419,7 +421,7 @@ export default function AuthModal({ isOpen, onClose, onSuccess, hideRegister, se
                 })
             });
 
-            const data = await response.json();
+            const isSellerSession = sellerLogin || startSellingFlow;
             if (data.success) {
                 persistUser(data, {
                     phone: phone ? `+91${phone}` : null,
@@ -427,7 +429,7 @@ export default function AuthModal({ isOpen, onClose, onSuccess, hideRegister, se
                     isDevMode: isTestMode,
                     fullName: formData.fullName,
                     dob: formData.dob
-                });
+                }, isSellerSession);
                 sessionStorage.setItem('loginContext', sellerLogin || startSellingFlow ? 'SELLER' : 'CONSUMER');
                 navigate(startSellingFlow ? '/seller/register' : '/');
                 if (onSuccess) onSuccess(data);
