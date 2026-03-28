@@ -650,15 +650,21 @@ const getSellersWithEditRequests = async (req, res) => {
 const updateSellerDetails = async (req, res) => {
     try {
         const { uid } = req.params;
-        const { personalInfo, businessInfo, bankDetails, adminNotes } = req.body;
+        const { personalInfo, businessInfo, bankDetails, pickupInfo, adminNotes } = req.body;
 
-        console.log(`[UpdateSellerDetails] Updating seller ${uid}`);
+        console.log(`[UpdateSellerDetails] ========== START UPDATE ==========`);
+        console.log(`[UpdateSellerDetails] Seller UID: ${uid}`);
+        console.log(`[UpdateSellerDetails] Personal Info:`, JSON.stringify(personalInfo, null, 2));
+        console.log(`[UpdateSellerDetails] Business Info:`, JSON.stringify(businessInfo, null, 2));
+        console.log(`[UpdateSellerDetails] Bank Details:`, JSON.stringify(bankDetails, null, 2));
+        console.log(`[UpdateSellerDetails] Pickup Info:`, JSON.stringify(pickupInfo, null, 2));
 
         // Update seller document
         const sellerRef = db.collection("sellers").doc(uid);
         const sellerDoc = await sellerRef.get();
         
         if (!sellerDoc.exists) {
+            console.error(`[UpdateSellerDetails] Seller ${uid} NOT FOUND in sellers collection`);
             return res.status(404).json({ success: false, message: 'Seller not found' });
         }
 
@@ -667,49 +673,51 @@ const updateSellerDetails = async (req, res) => {
         const userDoc = await userRef.get();
         
         if (!userDoc.exists) {
+            console.error(`[UpdateSellerDetails] User ${uid} NOT FOUND in users collection`);
             return res.status(404).json({ success: false, message: 'User not found' });
         }
 
-        const { pickupInfo } = req.body;
         const sellerData = sellerDoc.data();
+        console.log(`[UpdateSellerDetails] Current seller data - shopName: ${sellerData.shopName}, category: ${sellerData.category}`);
 
         // Prepare updates — all registration fields
         const sellerUpdates = {
             // Personal info
-            name: personalInfo.name || '',
-            address: personalInfo.address || '',
-            city: personalInfo.city || '',
-            state: personalInfo.state || '',
-            pincode: personalInfo.pincode || '',
-            age: personalInfo.age || '',
-            gender: personalInfo.gender || '',
-            emailId: personalInfo.emailId || personalInfo.email || '',
-            phoneNumber: personalInfo.phoneNumber || personalInfo.phone || '',
+            name: personalInfo?.name || sellerData.name || '',
+            fullName: personalInfo?.name || sellerData.fullName || '',
+            address: personalInfo?.address || sellerData.address || '',
+            shopAddress: personalInfo?.address || sellerData.shopAddress || '',
+            city: personalInfo?.city || sellerData.city || '',
+            state: personalInfo?.state || sellerData.state || '',
+            pincode: personalInfo?.pincode || sellerData.pincode || '',
+            emailId: personalInfo?.emailId || personalInfo?.email || sellerData.emailId || '',
+            phoneNumber: personalInfo?.phoneNumber || personalInfo?.phone || sellerData.phoneNumber || '',
+            extractedName: personalInfo?.extractedName || sellerData.extractedName || '',
 
             // Business info
-            shopName: businessInfo.shopName || '',
-            supplierName: businessInfo.supplierName || '',
-            businessType: businessInfo.businessType || '',
-            gstNumber: businessInfo.gstNumber || '',
-            panNumber: businessInfo.panNumber || '',
-            category: businessInfo.category || businessInfo.productCategory || sellerData.category || 'Uncategorized',
-            productCategory: businessInfo.productCategory || businessInfo.category || '',
-            shopCategory: businessInfo.productCategory || businessInfo.category || '',
-            contactEmail: businessInfo.contactEmail || '',
+            shopName: businessInfo?.shopName || sellerData.shopName || '',
+            supplierName: businessInfo?.supplierName || sellerData.supplierName || '',
+            businessType: businessInfo?.businessType || sellerData.businessType || '',
+            gstNumber: businessInfo?.gstNumber || sellerData.gstNumber || '',
+            panNumber: businessInfo?.panNumber || sellerData.panNumber || '',
+            category: businessInfo?.category || businessInfo?.productCategory || sellerData.category || 'Uncategorized',
+            productCategory: businessInfo?.productCategory || businessInfo?.category || sellerData.productCategory || '',
+            shopCategory: businessInfo?.productCategory || businessInfo?.category || sellerData.shopCategory || '',
+            contactEmail: businessInfo?.contactEmail || sellerData.contactEmail || '',
 
             // Pickup address
-            pickupAddress: (pickupInfo || {}).pickupAddress || '',
-            pickupCity: (pickupInfo || {}).pickupCity || '',
-            pickupState: (pickupInfo || {}).pickupState || '',
-            pickupPincode: (pickupInfo || {}).pickupPincode || '',
+            pickupAddress: pickupInfo?.pickupAddress || sellerData.pickupAddress || '',
+            pickupCity: pickupInfo?.pickupCity || sellerData.pickupCity || '',
+            pickupState: pickupInfo?.pickupState || sellerData.pickupState || '',
+            pickupPincode: pickupInfo?.pickupPincode || sellerData.pickupPincode || '',
 
             // Bank details
-            accountNumber: bankDetails.accountNumber || '',
-            ifscCode: bankDetails.ifscCode || '',
-            bankName: bankDetails.bankName || '',
-            accountHolderName: bankDetails.accountHolderName || bankDetails.bankAccountName || '',
-            bankAccountName: bankDetails.bankAccountName || bankDetails.accountHolderName || '',
-            upiId: bankDetails.upiId || '',
+            accountNumber: bankDetails?.accountNumber || sellerData.accountNumber || '',
+            ifscCode: bankDetails?.ifscCode || sellerData.ifscCode || '',
+            bankName: bankDetails?.bankName || sellerData.bankName || '',
+            accountHolderName: bankDetails?.accountHolderName || bankDetails?.bankAccountName || sellerData.accountHolderName || '',
+            bankAccountName: bankDetails?.bankAccountName || bankDetails?.accountHolderName || sellerData.bankAccountName || '',
+            upiId: bankDetails?.upiId || sellerData.upiId || '',
 
             // Clear edit request
             hasEditRequest: false,
@@ -730,22 +738,54 @@ const updateSellerDetails = async (req, res) => {
         };
 
         const userUpdates = {
-            email: personalInfo.email || personalInfo.emailId || '',
-            phone: personalInfo.phone || personalInfo.phoneNumber || ''
+            email: personalInfo?.email || personalInfo?.emailId || '',
+            phone: personalInfo?.phone || personalInfo?.phoneNumber || '',
+            fullName: personalInfo?.name || ''
         };
+
+        console.log(`[UpdateSellerDetails] Seller updates to apply:`, JSON.stringify(sellerUpdates, null, 2));
+        console.log(`[UpdateSellerDetails] User updates to apply:`, JSON.stringify(userUpdates, null, 2));
+
+        // Check if there are actual changes (compare with existing data)
+        let hasChanges = false;
+        const fieldsToCheck = ['name', 'shopName', 'email', 'phone', 'address', 'city', 'state', 'pincode', 
+                               'gstNumber', 'panNumber', 'category', 'accountNumber', 'ifscCode', 'bankName'];
+        
+        for (const field of fieldsToCheck) {
+            if (sellerUpdates[field] && sellerUpdates[field] !== sellerData[field]) {
+                hasChanges = true;
+                console.log(`[UpdateSellerDetails] Change detected in field: ${field}`);
+                console.log(`  Old: ${sellerData[field]}`);
+                console.log(`  New: ${sellerUpdates[field]}`);
+                break;
+            }
+        }
+
+        if (!hasChanges) {
+            console.log(`[UpdateSellerDetails] ⚠️ No actual changes detected, skipping notification`);
+            // Remove notification from updates if no changes
+            delete sellerUpdates.adminUpdateNotification;
+        } else {
+            console.log(`[UpdateSellerDetails] ✅ Changes detected, will create notification`);
+        }
 
         // Perform updates
         await sellerRef.update(sellerUpdates);
+        console.log(`[UpdateSellerDetails] ✅ Seller document updated in Firebase`);
+        
         await userRef.update(userUpdates);
+        console.log(`[UpdateSellerDetails] ✅ User document updated in Firebase`);
 
         // Clear all relevant caches
-        cache.invalidate('allSellers', 'pendingSellers', `sellerDash_${uid}`);
+        cache.invalidate('allSellers', 'pendingSellers', `sellerDash_${uid}`, 'adminStats');
+        console.log(`[UpdateSellerDetails] ✅ Caches invalidated: allSellers, pendingSellers, sellerDash_${uid}, adminStats`);
 
-        console.log(`[UpdateSellerDetails] Successfully updated seller ${uid}`);
+        console.log(`[UpdateSellerDetails] ========== UPDATE COMPLETE ==========`);
         res.json({ success: true, message: 'Seller details updated successfully' });
 
     } catch (error) {
-        console.error('[UpdateSellerDetails] Error:', error);
+        console.error('[UpdateSellerDetails] ❌ ERROR:', error);
+        console.error('[UpdateSellerDetails] Error stack:', error.stack);
         res.status(500).json({ success: false, message: 'Failed to update seller details' });
     }
 };
@@ -882,6 +922,14 @@ const resolveEditRequest = async (req, res) => {
 module.exports = {
     getPendingSellers,
     getAllSellers,
+    approveSeller,
+    rejectSeller,
+    acceptRejectedSeller,
+    blockSeller,
+    unblockSeller,
+    deleteSeller,
+    deleteAllBlockedSellers,
+    deleteAllRejectedSellers,
     getSellersWithEditRequests,
     updateSellerDetails,
     getSellerForEdit,

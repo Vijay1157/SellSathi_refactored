@@ -181,8 +181,13 @@ export default function TrackOrderModal({ show, trackingOrder, onClose, onDownlo
                                             <p className="text-muted" style={{ margin: '0.1rem 0 0 0', fontSize: '0.8rem' }}>Qty: {item.quantity}</p>
                                         </div>
                                         <div style={{ textAlign: 'right' }}>
-                                            <p style={{ margin: 0, fontWeight: 700 }}>₹{(item.price * item.quantity).toFixed(2)}</p>
-                                            <p className="text-muted" style={{ margin: '0.1rem 0 0 0', fontSize: '0.75rem' }}>₹{item.price} each</p>
+                                            {item.originalPrice && item.originalPrice > (item.priceWithGST || item.price) && (
+                                                <p className="text-muted" style={{ margin: 0, fontSize: '0.75rem', textDecoration: 'line-through' }}>
+                                                    ₹{(item.originalPrice * item.quantity).toFixed(2)}
+                                                </p>
+                                            )}
+                                            <p style={{ margin: 0, fontWeight: 700 }}>₹{((item.priceWithGST || item.price) * item.quantity).toFixed(2)}*</p>
+                                            <p className="text-muted" style={{ margin: '0.1rem 0 0 0', fontSize: '0.75rem' }}>₹{(item.priceWithGST || item.price).toFixed(2)} each</p>
                                         </div>
                                     </div>
                                 ))

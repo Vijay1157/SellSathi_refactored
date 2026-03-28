@@ -15,9 +15,11 @@ import {
 import { motion, AnimatePresence } from 'framer-motion';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { listenToCart, removeFromCart, updateCartItemQuantity } from '@/modules/shared/utils/cartUtils';
-import { getProductPricing } from '@/modules/shared/utils/priceUtils';
+import { getProductPricingWithGST } from '@/modules/shared/utils/priceUtils';
 import { auth } from '@/modules/shared/config/firebase';
 import { authFetch } from '@/modules/shared/utils/api';
+import { validateGST, cleanGST, getGSTError } from '@/modules/shared/utils/gstValidation';
+import { calculateOrderTotalsWithGSTInclusive } from '@/modules/shared/utils/platformFeeUtils';
 import PriceDisplay from '@/modules/shared/components/common/PriceDisplay';
 import ConfirmationAnimation from '@/modules/shared/components/common/ConfirmationAnimation';
 import AddressStep from '../components/Checkout/AddressStep';
@@ -77,8 +79,20 @@ export default function Checkout() {
     const [couponError, setCouponError] = useState('');
     const [applyingCoupon, setApplyingCoupon] = useState(false);
     const [validationError, setValidationError] = useState(''); // Add inline validation error
+    
+    // GST Number states
+    const [hasGST, setHasGST] = useState(false);
+    const [gstNumber, setGstNumber] = useState('');
+    const [gstError, setGstError] = useState('');
+    
     const [adminConfig, setAdminConfig] = useState({
-        defaultPlatformFeePercent: 7,
+        platformFeeBreakdown: {
+            digitalSecurityFee: 1.2,
+            merchantVerification: 1.0,
+            transitCare: 0.8,
+            platformMaintenance: 0.5
+        },
+        defaultPlatformFeePercent: 3.5,
         defaultGstPercent: 18,
         defaultShippingHandlingPercent: 0
     });
@@ -94,18 +108,28 @@ export default function Checkout() {
     const [saveBillingForFuture, setSaveBillingForFuture] = useState(false);
     const [setBillingAsDefault, setSetBillingAsDefault] = useState(false);
     
-    // Computed: Filter saved addresses by type
-    const savedBillingAddresses = savedAddresses.filter(addr => addr.type === 'billing');
+    // Computed: Filter saved addresses by type (include addresses without type for backward compatibility)
+    const savedBillingAddresses = savedAddresses.filter(addr => !addr.type || addr.type === 'billing' || addr.type === 'both');
 
     // Fetch admin config for default charges
     useEffect(() => {
         const fetchAdminConfig = async () => {
             try {
-                const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5001'}/admin/config/public`);
+                const API_BASE = import.meta.env.PROD
+                    ? (import.meta.env.VITE_API_BASE_URL || 'https://sellsathi-refactored.onrender.com')
+                    : 'http://localhost:5000';
+                const response = await fetch(`${API_BASE}/admin/config/public`);
                 const data = await response.json();
                 if (data.success && data.config) {
                     setAdminConfig({
-                        defaultPlatformFeePercent: data.config.defaultPlatformFeePercent ?? 7,
+                        platformFeeBreakdown: data.config.platformFeeBreakdown || {
+                            digitalSecurityFee: 1.2,
+                            merchantVerification: 1.0,
+                            transitCare: 0.8,
+                            platformMaintenance: 0.5,
+                            qualityHandling: 0.0
+                        },
+                        defaultPlatformFeePercent: data.config.defaultPlatformFeePercent ?? 3.5,
                         defaultGstPercent: data.config.defaultGstPercent ?? 18,
                         defaultShippingHandlingPercent: data.config.defaultShippingHandlingPercent ?? 0
                     });
@@ -134,23 +158,13 @@ export default function Checkout() {
                     // Find default billing address
                     const defaultBilling = addresses.find(addr => addr.type === 'billing' && addr.isDefault === true);
                     
-                    // Set shipping address
-                    if (defaultShipping) {
-                        const shippingIndex = addresses.indexOf(defaultShipping);
-                        setSelectedAddressIndex(shippingIndex);
-                        setShippingAddress(defaultShipping);
+                    // Set shipping address - DON'T auto-select, let user choose from dropdown
+                    if (addresses.length > 0) {
                         setAddressMode('saved');
+                        // Don't auto-select - leave selectedAddressIndex as null
+                        // User must select from dropdown
                     } else {
-                        // Fallback to first shipping address
-                        const firstShipping = addresses.find(addr => addr.type === 'shipping');
-                        if (firstShipping) {
-                            const shippingIndex = addresses.indexOf(firstShipping);
-                            setSelectedAddressIndex(shippingIndex);
-                            setShippingAddress(firstShipping);
-                            setAddressMode('saved');
-                        } else {
-                            setAddressMode('new');
-                        }
+                        setAddressMode('new');
                     }
                     
                     // Set billing address
@@ -176,15 +190,23 @@ export default function Checkout() {
         
         // If Buy Now product is provided, use it directly without cart
         if (buyNowProduct) {
-            const { finalPrice, strikethroughPrice } = getProductPricing(buyNowProduct, buyNowProduct.selections || {});
+            const { finalPrice, strikethroughPrice, gstPercent, basePrice } = getProductPricingWithGST(buyNowProduct, buyNowProduct.selections || {});
             
             const buyNowCartItem = {
                 id: `buynow_${buyNowProduct.id}_${Date.now()}`,
                 productId: buyNowProduct.id,
                 sellerId: buyNowProduct.sellerId || null,
                 name: buyNowProduct.name || buyNowProduct.title,
-                price: finalPrice,
+                // Store BOTH base price and product pricing fields for consistency
+                price: buyNowProduct.price, // Original product price field (for PriceDisplay)
+                discountPrice: buyNowProduct.discountPrice, // Original discount price (for PriceDisplay)
+                oldPrice: buyNowProduct.oldPrice, // Original old price (for PriceDisplay)
+                pricingType: buyNowProduct.pricingType, // Pricing type (uniform/varied)
+                sizePrices: buyNowProduct.sizePrices, // Size-specific prices
+                basePrice: basePrice, // Base price for backend calculations
+                priceWithGST: finalPrice, // GST-inclusive price for display
                 originalPrice: strikethroughPrice,
+                gstPercent: gstPercent,
                 imageUrl: buyNowProduct.imageUrl || buyNowProduct.image,
                 quantity: buyNowProduct.quantity || 1,
                 category: buyNowProduct.category,
@@ -210,15 +232,23 @@ export default function Checkout() {
             
             if (buyNowProduct) {
                 // Buy Now flow: Create temporary cart item for Buy Now product
-                const { finalPrice, strikethroughPrice } = getProductPricing(buyNowProduct, buyNowProduct.selections || {});
+                const { finalPrice, strikethroughPrice, gstPercent, basePrice } = getProductPricingWithGST(buyNowProduct, buyNowProduct.selections || {});
                 
                 const buyNowCartItem = {
                     id: `buynow_${buyNowProduct.id}_${Date.now()}`,
                     productId: buyNowProduct.id,
                     sellerId: buyNowProduct.sellerId || null,
                     name: buyNowProduct.name || buyNowProduct.title,
-                    price: finalPrice,
+                    // Store BOTH base price and product pricing fields for consistency
+                    price: buyNowProduct.price, // Original product price field (for PriceDisplay)
+                    discountPrice: buyNowProduct.discountPrice, // Original discount price (for PriceDisplay)
+                    oldPrice: buyNowProduct.oldPrice, // Original old price (for PriceDisplay)
+                    pricingType: buyNowProduct.pricingType, // Pricing type (uniform/varied)
+                    sizePrices: buyNowProduct.sizePrices, // Size-specific prices
+                    basePrice: basePrice, // Base price for backend calculations
+                    priceWithGST: finalPrice, // GST-inclusive price for display
                     originalPrice: strikethroughPrice,
+                    gstPercent: gstPercent,
                     imageUrl: buyNowProduct.imageUrl || buyNowProduct.image,
                     quantity: buyNowProduct.quantity || 1,
                     category: buyNowProduct.category,
@@ -303,7 +333,8 @@ export default function Checkout() {
                 email: user?.email || '',
                 phone: user?.phoneNumber || user?.phone || shippingAddress.phone || '',
                 shippingAddress: shippingAddress,
-                billingAddress: finalBillingAddress
+                billingAddress: finalBillingAddress,
+                gstNumber: hasGST ? cleanGST(gstNumber) : null
             };
 
             const createOrderResponse = await authFetch('/payment/create-order', {
@@ -353,7 +384,8 @@ export default function Checkout() {
                                 email: user?.email || '',
                                 phone: user?.phoneNumber || user?.phone || shippingAddress.phone || '',
                                 shippingAddress: shippingAddress,
-                                billingAddress: finalBillingAddress
+                                billingAddress: finalBillingAddress,
+                                gstNumber: hasGST ? cleanGST(gstNumber) : null
                             };
                             
                             const verifyResponse = await authFetch('/payment/verify', {
@@ -381,17 +413,42 @@ export default function Checkout() {
                                     selectedCartItems.forEach(item => removeFromCart(item.id || item.productId));
                                 }
                                 
+                                // Save shipping address if requested
                                 if (addressMode === 'new' && saveAddressForFuture && user) {
                                     try {
-                                        const newAddress = { ...shippingAddress, isDefault: setAsDefault };
+                                        const newAddress = { 
+                                            ...shippingAddress, 
+                                            isDefault: setAsDefault,
+                                            type: 'shipping',
+                                            id: Date.now().toString()
+                                        };
                                         await authFetch(`/consumer/${user.uid}/addresses`, {
                                             method: 'POST',
                                             body: JSON.stringify({ address: newAddress })
                                         });
                                     } catch (error) {
-                                        console.error("Error saving address:", error);
+                                        console.error("Error saving shipping address:", error);
                                     }
                                 }
+                                
+                                // Save billing address if requested and different from shipping
+                                if (!sameAsBilling && billingAddressMode === 'new' && saveBillingForFuture && user) {
+                                    try {
+                                        const newBillingAddress = { 
+                                            ...billingAddress, 
+                                            isDefault: setBillingAsDefault,
+                                            type: 'billing',
+                                            id: (Date.now() + 1).toString()
+                                        };
+                                        await authFetch(`/consumer/${user.uid}/addresses`, {
+                                            method: 'POST',
+                                            body: JSON.stringify({ address: newBillingAddress })
+                                        });
+                                    } catch (error) {
+                                        console.error("Error saving billing address:", error);
+                                    }
+                                }
+                                
                                 setOrderId(verifyResult.orderId);
                                 setShowAnimation(true);
                             } else {
@@ -445,7 +502,8 @@ export default function Checkout() {
                 email: user?.email || '',
                 phone: user?.phoneNumber || user?.phone || shippingAddress.phone || '',
                 shippingAddress: shippingAddress,
-                billingAddress: finalBillingAddress
+                billingAddress: finalBillingAddress,
+                gstNumber: hasGST ? cleanGST(gstNumber) : null
             };
 
             const currentUser = auth.currentUser;
@@ -471,6 +529,7 @@ export default function Checkout() {
             const result = await response.json();
 
             if (result.success) {
+                // Save shipping address if requested
                 if (addressMode === 'new' && saveAddressForFuture && user) {
                     try {
                         const newAddress = { 
@@ -485,7 +544,26 @@ export default function Checkout() {
                             body: JSON.stringify({ address: newAddress })
                         });
                     } catch (error) {
-                        console.error("Error saving address:", error);
+                        console.error("Error saving shipping address:", error);
+                    }
+                }
+                
+                // Save billing address if requested and different from shipping
+                if (!sameAsBilling && billingAddressMode === 'new' && saveBillingForFuture && user) {
+                    try {
+                        const newBillingAddress = { 
+                            ...billingAddress, 
+                            isDefault: setBillingAsDefault,
+                            type: 'billing',
+                            id: (Date.now() + 1).toString()
+                        };
+                        await authFetch(`/consumer/${user.uid}/addresses`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ address: newBillingAddress })
+                        });
+                    } catch (error) {
+                        console.error("Error saving billing address:", error);
                     }
                 }
                 
@@ -518,6 +596,17 @@ export default function Checkout() {
         if (!shippingAddress.city.trim()) newErrors.city = 'City is required';
         if (!shippingAddress.state.trim()) newErrors.state = 'State is required';
         if (!/^\d{6}$/.test(shippingAddress.pincode)) newErrors.pincode = 'Pincode must be exactly 6 digits';
+        
+        // Validate GST number if checkbox is checked
+        if (hasGST) {
+            const gstValidationError = getGSTError(gstNumber);
+            if (gstValidationError) {
+                newErrors.gstNumber = gstValidationError;
+                setGstError(gstValidationError);
+            } else {
+                setGstError('');
+            }
+        }
         
         // Validate billing address if different from shipping
         if (!sameAsBilling) {
@@ -601,38 +690,27 @@ export default function Checkout() {
         selectedItems.has(item.id || item.productId)
     );
 
-    const subtotal = selectedCheckoutItems.reduce((acc, item) => acc + (item.price * item.quantity), 0);
+    // Calculate order totals using the SAME utility as Order Summary for consistency
+    const couponDiscount = appliedCoupon ? 0 : 0; // Will be calculated properly below
+    const orderTotals = calculateOrderTotalsWithGSTInclusive(selectedCheckoutItems, {
+        adminConfig,
+        couponDiscount: 0, // Calculate after we get product total
+        shippingFee: 0
+    });
     
-    // Calculate dynamic fees
-    const calculateFees = () => {
-        let totalPlatformFee = 0;
-        let totalGST = 0;
-        let shippingFee = 0; // Will be dynamic from Shiprocket later
-        
-        selectedCheckoutItems.forEach(item => {
-            const itemTotal = (item.price || 0) * (item.quantity || 1);
-            
-            // Platform Fee (use product-specific or admin default)
-            const platformFeePercent = item.platformFeePercent ?? adminConfig.defaultPlatformFeePercent;
-            totalPlatformFee += (itemTotal * platformFeePercent) / 100;
-            
-            // GST (use product-specific or admin default)
-            const gstPercent = item.gstPercent ?? adminConfig.defaultGstPercent;
-            totalGST += (itemTotal * gstPercent) / 100;
-        });
-        
-        return {
-            platformFee: totalPlatformFee,
-            gst: totalGST,
-            shipping: shippingFee
-        };
-    };
+    // Calculate coupon discount on product pricing total
+    const actualCouponDiscount = appliedCoupon ? (orderTotals.productPricingTotal * appliedCoupon.discountPercent / 100) : 0;
     
-    const fees = calculateFees();
+    // Recalculate with actual coupon discount
+    const finalOrderTotals = calculateOrderTotalsWithGSTInclusive(selectedCheckoutItems, {
+        adminConfig,
+        couponDiscount: actualCouponDiscount,
+        shippingFee: 0
+    });
     
-    // Calculate discount from coupon
-    const couponDiscount = appliedCoupon ? (subtotal * appliedCoupon.discountPercent / 100) : 0;
-    const finalTotal = subtotal + fees.platformFee + fees.gst + fees.shipping - couponDiscount;
+    // Use the final total from order totals calculation
+    const finalTotal = finalOrderTotals.total;
+    const subtotal = orderTotals.basePrice; // Base price for backend
 
     // Apply coupon function
     const handleApplyCoupon = async () => {
@@ -717,24 +795,30 @@ export default function Checkout() {
     return (
         <div className="bg-gray-50/20 min-h-screen">
             <div className="container px-4 py-6 max-w-7xl mx-auto">
-                <div className="mb-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
-                    <div>
-                        <h1 className="text-3xl font-black text-gray-900 tracking-tight">
-                            Checkout <span className="text-gray-400 font-light">Process</span>
-                        </h1>
-                        <p className="text-gray-500 font-medium mt-1">Securely complete your purchase at Sellsathi</p>
+                {/* Sticky Header */}
+                <div className="sticky top-[70px] z-40 bg-white/95 backdrop-blur-sm border-b border-gray-200 -mx-4 px-4 py-4 mb-6 shadow-sm">
+                    <div className="max-w-7xl mx-auto flex items-center justify-between gap-4">
+                        {/* Left: Back to Shopping Button */}
+                        <Link
+                            to="/"
+                            className="flex items-center gap-2 px-5 py-3 bg-white border border-gray-200 rounded-xl font-bold text-gray-600 hover:bg-gray-50 hover:border-primary/20 hover:text-primary transition-all shadow-sm"
+                        >
+                            <ArrowLeft size={18} />
+                            Back to Shopping
+                        </Link>
+                        
+                        {/* Right: Title and Subtitle */}
+                        <div className="text-right">
+                            <h1 className="text-2xl font-black text-gray-900 tracking-tight">
+                                Checkout <span className="text-gray-400 font-light">Process</span>
+                            </h1>
+                            <p className="text-sm text-gray-500 font-medium mt-0.5">Securely complete your purchase at Sellsathi</p>
+                        </div>
                     </div>
-                    <Link
-                        to="/"
-                        className="flex items-center justify-center gap-2 px-5 py-3 bg-white border border-gray-100 rounded-xl font-bold text-gray-600 hover:bg-gray-50 hover:border-primary/20 hover:text-primary transition-all shadow-sm md:self-start"
-                    >
-                        <ArrowLeft size={18} />
-                        Back to Shopping
-                    </Link>
                 </div>
 
                 <div className="grid grid-cols-1 xl:grid-cols-12 gap-6 items-start">
-                    <div className="xl:col-span-8 space-y-4">
+                    <div className="xl:col-span-7 space-y-4">
                         {/* Cart Items List */}
                         <section className="bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden">
                             <div className="p-6 border-b border-gray-50">
@@ -785,21 +869,26 @@ export default function Checkout() {
                                                     )}
                                                 </div>
                                                 {/* Variant Info */}
-                                                {(item.selectedColor || item.selectedSize || item.selectedStorage) && (
+                                                {(item.selectedColor || item.selectedSize || item.selectedStorage || item.selections?.storage || item.selections?.memory) && (
                                                     <div className="flex gap-1 text-xs text-gray-600 flex-wrap">
-                                                        {item.selectedColor && (
+                                                        {(item.selectedColor || item.selections?.color) && (
                                                             <span className="px-1.5 py-0.5 bg-gray-100 rounded text-xs">
-                                                                {item.selectedColor}
+                                                                {item.selectedColor || item.selections?.color}
                                                             </span>
                                                         )}
-                                                        {item.selectedSize && (
+                                                        {(item.selectedSize || item.selections?.size) && (
                                                             <span className="px-1.5 py-0.5 bg-gray-100 rounded text-xs">
-                                                                {item.selectedSize}
+                                                                {item.selectedSize || item.selections?.size}
                                                             </span>
                                                         )}
-                                                        {item.selectedStorage && (
+                                                        {(item.selectedStorage || item.selections?.storage) && (
                                                             <span className="px-1.5 py-0.5 bg-gray-100 rounded text-xs">
-                                                                {item.selectedStorage}
+                                                                {item.selectedStorage || item.selections?.storage?.label || item.selections?.storage}
+                                                            </span>
+                                                        )}
+                                                        {(item.selectedMemory || item.selections?.memory) && (
+                                                            <span className="px-1.5 py-0.5 bg-gray-100 rounded text-xs">
+                                                                {item.selectedMemory || item.selections?.memory?.label || item.selections?.memory}
                                                             </span>
                                                         )}
                                                     </div>
@@ -820,7 +909,7 @@ export default function Checkout() {
                                                 </div>
                                             </div>
                                             <div className="flex flex-col items-end gap-2 flex-shrink-0">
-                                                <PriceDisplay product={{ ...item, price: item.originalPrice || item.price, discountPrice: item.price }} size="sm" showBadge={false} />
+                                                <PriceDisplay product={item} size="sm" showBadge={false} />
                                                 {!isBuyNowItem && (
                                                     <button onClick={() => handleRemove(itemId)} className="p-1.5 text-gray-300 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all" title="Remove">
                                                         <Trash2 size={14} />
@@ -900,6 +989,12 @@ export default function Checkout() {
                             setSaveBillingForFuture={setSaveBillingForFuture}
                             setBillingAsDefault={setBillingAsDefault}
                             setSetBillingAsDefault={setSetBillingAsDefault}
+                            hasGST={hasGST}
+                            setHasGST={setHasGST}
+                            gstNumber={gstNumber}
+                            setGstNumber={setGstNumber}
+                            gstError={gstError}
+                            setGstError={setGstError}
                         />
 
                         {/* Coupon Section - Between Items and Shipping */}
@@ -974,7 +1069,7 @@ export default function Checkout() {
                     {/* Order Summary Sidebar */}
                     <CheckoutOrderSummary 
                         subtotal={subtotal} 
-                        couponDiscount={couponDiscount}
+                        couponDiscount={actualCouponDiscount}
                         finalTotal={finalTotal}
                         selectedItems={selectedCheckoutItems}
                         adminConfig={adminConfig}

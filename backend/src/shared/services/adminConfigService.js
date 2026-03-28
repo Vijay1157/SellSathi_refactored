@@ -14,8 +14,11 @@ const getAdminConfig = async () => {
         // Check cache first
         const cached = cache.get(ADMIN_CONFIG_CACHE_KEY);
         if (cached) {
+            console.log('[AdminConfig] Returning cached config');
             return cached;
         }
+
+        console.log('[AdminConfig] Cache miss, fetching from database');
 
         // Get the first admin user — check both "ADMIN" and "admin" role values
         let usersSnap = await db.collection("users")
@@ -43,6 +46,12 @@ const getAdminConfig = async () => {
         const adminProfileDoc = await db.collection("adminProfiles").doc(adminUid).get();
         const adminProfile = adminProfileDoc.exists ? adminProfileDoc.data() : {};
 
+        console.log('[AdminConfig] Fetched admin profile from database:', {
+            platformFeeBreakdown: adminProfile.platformFeeBreakdown,
+            defaultShippingHandlingPercent: adminProfile.defaultShippingHandlingPercent,
+            categoryGstRatesCount: adminProfile.categoryGstRates ? Object.keys(adminProfile.categoryGstRates).length : 0
+        });
+
         const DEFAULT_CATEGORY_GST = {
             "Fashion (Men)": 5, "Fashion (Women)": 5, "Kids & Baby": 12,
             "Electronics": 18, "Home & Living": 18, "Handicrafts": 5,
@@ -54,6 +63,20 @@ const getAdminConfig = async () => {
             "Sustainability & Eco-Friendly": 12, "Others": 18
         };
 
+        // Platform fee breakdown (new structure)
+        const DEFAULT_PLATFORM_FEE_BREAKDOWN = {
+            digitalSecurityFee: 1.2,
+            merchantVerification: 1.0,
+            transitCare: 0.8,
+            platformMaintenance: 0.5,
+            qualityHandling: 0.0
+        };
+
+        const platformFeeBreakdown = adminProfile.platformFeeBreakdown || DEFAULT_PLATFORM_FEE_BREAKDOWN;
+        
+        // Calculate total platform fee from breakdown
+        const calculatedPlatformFee = Object.values(platformFeeBreakdown).reduce((sum, val) => sum + val, 0);
+
         const config = {
             name: adminProfile.name || userData.name || userData.fullName || 'Admin',
             email: adminProfile.adminEmail || userData.email || 'admin@sellsathi.com',
@@ -63,7 +86,8 @@ const getAdminConfig = async () => {
             websiteInfo: adminProfile.websiteInfo || 'Your Trusted E-Commerce Platform',
             profileImage: adminProfile.profileImage || null,
             platformChargeRate: adminProfile.platformChargeRate ?? 0.10,
-            defaultPlatformFeePercent: adminProfile.defaultPlatformFeePercent ?? 7,
+            platformFeeBreakdown: platformFeeBreakdown,
+            defaultPlatformFeePercent: calculatedPlatformFee, // Computed from breakdown
             defaultGstPercent: adminProfile.defaultGstPercent ?? 18,
             defaultShippingHandlingPercent: adminProfile.defaultShippingHandlingPercent ?? 0,
             categoryGstRates: adminProfile.categoryGstRates || DEFAULT_CATEGORY_GST,
@@ -84,6 +108,16 @@ const getAdminConfig = async () => {
  * Get default admin configuration
  */
 const getDefaultConfig = () => {
+    const DEFAULT_PLATFORM_FEE_BREAKDOWN = {
+        digitalSecurityFee: 1.2,
+        merchantVerification: 1.0,
+        transitCare: 0.8,
+        platformMaintenance: 0.5,
+        qualityHandling: 0.0
+    };
+    
+    const calculatedPlatformFee = Object.values(DEFAULT_PLATFORM_FEE_BREAKDOWN).reduce((sum, val) => sum + val, 0);
+    
     return {
         name: 'Admin',
         email: 'admin@sellsathi.com',
@@ -92,7 +126,8 @@ const getDefaultConfig = () => {
         websiteName: 'SellSathi',
         websiteInfo: 'Your Trusted E-Commerce Platform',
         profileImage: null,
-        defaultPlatformFeePercent: 7,
+        platformFeeBreakdown: DEFAULT_PLATFORM_FEE_BREAKDOWN,
+        defaultPlatformFeePercent: calculatedPlatformFee, // 3.5%
         defaultGstPercent: 18,
         defaultShippingHandlingPercent: 0,
         categoryGstRates: {

@@ -1,7 +1,10 @@
 import { useNavigate } from 'react-router-dom';
-import { Heart, Package } from 'lucide-react';
+import { Heart, ShoppingCart, Eye } from 'lucide-react';
+import { motion } from 'framer-motion';
+import Rating from '@/modules/shared/components/common/Rating';
+import PriceDisplay from '@/modules/shared/components/common/PriceDisplay';
 
-export default function ConsumerWishlistTab({ wishlist, onRemoveFromWishlist }) {
+export default function ConsumerWishlistTab({ wishlist, onRemoveFromWishlist, productReviews = {}, handleAddToCart, openQuickView }) {
     const navigate = useNavigate();
 
     return (
@@ -21,38 +24,123 @@ export default function ConsumerWishlistTab({ wishlist, onRemoveFromWishlist }) 
                 </div>
             ) : (
                 <div className="p-6">
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                        {wishlist.map((item) => (
-                            <div key={item.id} className="border border-gray-200 rounded-lg overflow-hidden hover:shadow-md transition-shadow">
-                                <div className="aspect-square bg-gray-100 relative">
-                                    {item.imageUrl || item.image ? (
-                                        <img src={item.imageUrl || item.image} alt={item.name} className="w-full h-full object-cover" />
-                                    ) : (
-                                        <div className="w-full h-full flex items-center justify-center">
-                                            <Package size={48} className="text-gray-300" />
-                                        </div>
-                                    )}
-                                    <button onClick={() => onRemoveFromWishlist(item.id)}
-                                        className="absolute top-2 right-2 w-8 h-8 bg-white rounded-full flex items-center justify-center shadow-md hover:bg-red-50 transition-colors">
-                                        <Heart size={16} className="text-red-500 fill-red-500" />
-                                    </button>
-                                </div>
-                                <div className="p-4">
-                                    <h3 className="font-semibold text-gray-900 mb-1 truncate">{item.name}</h3>
-                                    <p className="text-sm text-gray-500 mb-2 line-clamp-2">{item.description}</p>
-                                    <div className="flex items-center justify-between">
-                                        <span className="text-lg font-bold text-primary">₹{item.price?.toLocaleString()}</span>
-                                        <button onClick={() => navigate('/products')}
-                                            className="px-4 py-2 bg-primary text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors">
-                                            View
+                    <div className="product-uniform-grid">
+                        {wishlist.map((product, index) => (
+                            <motion.div
+                                key={product.id}
+                                className="product-card-premium"
+                                whileHover={{ y: -8 }}
+                                onClick={() => {
+                                    const recentlyViewed = JSON.parse(localStorage.getItem('recentlyViewed') || '[]');
+                                    const filtered = recentlyViewed.filter(item => item.id !== product.id);
+                                    const updated = [product, ...filtered].slice(0, 8);
+                                    localStorage.setItem('recentlyViewed', JSON.stringify(updated));
+                                    navigate("/product/" + product.id);
+                                }}
+                                initial={{ opacity: 0, y: 20 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ delay: index * 0.05 }}
+                            >
+                                <div className="card-media">
+                                    {product.discount && <span className="discount-badge">{product.discount}</span>}
+                                    <img src={product.image || product.imageUrl} alt={product.name} />
+                                    <div className="overlay-tools">
+                                        <button
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                onRemoveFromWishlist(product.id);
+                                            }}
+                                            className="tool-btn active"
+                                            title="Remove from Wishlist"
+                                        >
+                                            <Heart
+                                                size={18}
+                                                fill="#ef4444"
+                                                color="#ef4444"
+                                            />
                                         </button>
+                                        {openQuickView && (
+                                            <button
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    openQuickView(e, product);
+                                                }}
+                                                className="tool-btn"
+                                                title="Quick View"
+                                            >
+                                                <Eye size={18} />
+                                            </button>
+                                        )}
                                     </div>
                                 </div>
-                            </div>
+                                <div className="card-info">
+                                    <div className="category-row">
+                                        <span className="category">{product.category || 'Product'}</span>
+                                    </div>
+                                    <h3 className="title">{product.name}</h3>
+
+                                    <div className="rating-row">
+                                        <Rating
+                                            averageRating={productReviews[product.id]?.stats?.averageRating || 0}
+                                            totalReviews={productReviews[product.id]?.stats?.totalReviews || 0}
+                                            size={12}
+                                            showCount={true}
+                                            className="home-product-rating"
+                                        />
+                                    </div>
+
+                                    <div className="info-bottom">
+                                        <PriceDisplay product={product} size="sm" showGSTIndicator={false} />
+                                        {handleAddToCart && (
+                                            <button
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    handleAddToCart(e, product);
+                                                }}
+                                                className="add-to-cart-simple"
+                                                title="Add to Cart"
+                                                disabled={product.stock === 0 || product.status === 'Out of Stock'}
+                                                style={product.stock === 0 || product.status === 'Out of Stock' ? { opacity: 0.5, cursor: 'not-allowed', background: '#94a3b8' } : {}}
+                                            >
+                                                <ShoppingCart size={18} />
+                                            </button>
+                                        )}
+                                    </div>
+                                </div>
+                            </motion.div>
                         ))}
                     </div>
                 </div>
             )}
+            
+            <style>{`
+                /* Professional Grid System - 5 columns desktop, compact spacing */
+                .product-uniform-grid { 
+                    display: grid; 
+                    grid-template-columns: repeat(5, 1fr); 
+                    gap: 16px; 
+                }
+                
+                @media (max-width: 1024px) {
+                    .product-uniform-grid {
+                        grid-template-columns: repeat(3, 1fr);
+                        gap: 12px;
+                    }
+                }
+                
+                @media (max-width: 768px) {
+                    .product-uniform-grid {
+                        grid-template-columns: repeat(2, 1fr);
+                        gap: 8px;
+                    }
+                }
+                
+                @media (max-width: 480px) {
+                    .product-uniform-grid {
+                        grid-template-columns: 1fr;
+                    }
+                }
+            `}</style>
         </div>
     );
 }

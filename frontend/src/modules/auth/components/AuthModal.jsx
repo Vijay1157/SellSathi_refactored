@@ -287,7 +287,33 @@ export default function AuthModal({ isOpen, onClose, onSuccess, hideRegister, se
                 }
                 sessionStorage.setItem('loginContext', sellerLogin || startSellingFlow ? 'SELLER' : 'CONSUMER');
                 persistUser(data, { phone: phoneNumber, status: data.status, sellerStatus: data.sellerStatus, shopName: data.shopName, fullName: formData.fullName || data.fullName, dob: formData.dob });
-                if (isRegistering) navigate(startSellingFlow ? '/seller/register' : '/'); else redirectByRole(data, navigate, sellerLogin);
+                
+                // Check if there's a pending Buy Now - redirect to checkout immediately
+                const pendingBuyNow = localStorage.getItem('pendingBuyNow');
+                if (pendingBuyNow && !sellerLogin && !startSellingFlow) {
+                    try {
+                        const buyNowItem = JSON.parse(pendingBuyNow);
+                        localStorage.removeItem('pendingBuyNow');
+                        if (onSuccess) onSuccess(data);
+                        handleClose();
+                        // Navigate after modal closes
+                        setTimeout(() => {
+                            navigate('/checkout', { state: { buyNowProduct: buyNowItem } });
+                        }, 100);
+                        return;
+                    } catch (error) {
+                        console.error('Error parsing pending Buy Now:', error);
+                        localStorage.removeItem('pendingBuyNow');
+                    }
+                }
+                
+                // Normal flow - no pending Buy Now
+                if (isRegistering && !startSellingFlow) {
+                    navigate('/');
+                } else {
+                    redirectByRole(data, navigate, sellerLogin);
+                }
+                
                 if (onSuccess) onSuccess(data);
                 handleClose();
             } else setError(data.message || 'Verification failed');
@@ -310,7 +336,33 @@ export default function AuthModal({ isOpen, onClose, onSuccess, hideRegister, se
                 }
                 const isSellerSession = sellerLogin || startSellingFlow;
                 persistUser(data, { email: data.email, fullName: data.fullName, status: data.status, sellerStatus: data.sellerStatus, shopName: data.shopName }, isSellerSession);
+<<<<<<< HEAD
+=======
+                localStorage.setItem('userName', data.fullName || '');
+                
+                // Check if there's a pending Buy Now - redirect to checkout immediately
+                const pendingBuyNow = localStorage.getItem('pendingBuyNow');
+                if (pendingBuyNow && !sellerLogin && !startSellingFlow) {
+                    try {
+                        const buyNowItem = JSON.parse(pendingBuyNow);
+                        localStorage.removeItem('pendingBuyNow');
+                        if (onSuccess) onSuccess(data);
+                        handleClose();
+                        // Navigate after modal closes
+                        setTimeout(() => {
+                            navigate('/checkout', { state: { buyNowProduct: buyNowItem } });
+                        }, 100);
+                        return;
+                    } catch (error) {
+                        console.error('Error parsing pending Buy Now:', error);
+                        localStorage.removeItem('pendingBuyNow');
+                    }
+                }
+                
+                // Normal flow - no pending Buy Now
+>>>>>>> 54a05fa5126e612ec95987946a815ca9b27d48f6
                 redirectByRole(data, navigate, sellerLogin);
+                
                 if (onSuccess) onSuccess(data);
                 handleClose();
             } else setError(data.message || 'Google authentication failed');
@@ -352,7 +404,29 @@ export default function AuthModal({ isOpen, onClose, onSuccess, hideRegister, se
                 }
                 const isSellerSession = sellerLogin || startSellingFlow;
                 persistUser(data, { email: formData.email, fullName: data.fullName || formData.fullName, dob: formData.dob }, isSellerSession);
+                
+                // Check if there's a pending Buy Now - redirect to checkout immediately
+                const pendingBuyNow = localStorage.getItem('pendingBuyNow');
+                if (pendingBuyNow && !sellerLogin && !startSellingFlow) {
+                    try {
+                        const buyNowItem = JSON.parse(pendingBuyNow);
+                        localStorage.removeItem('pendingBuyNow');
+                        if (onSuccess) onSuccess(data);
+                        handleClose();
+                        // Navigate after modal closes
+                        setTimeout(() => {
+                            navigate('/checkout', { state: { buyNowProduct: buyNowItem } });
+                        }, 100);
+                        return;
+                    } catch (error) {
+                        console.error('Error parsing pending Buy Now:', error);
+                        localStorage.removeItem('pendingBuyNow');
+                    }
+                }
+                
+                // Normal flow - no pending Buy Now
                 redirectByRole(data, navigate, sellerLogin || startSellingFlow);
+                
                 if (onSuccess) onSuccess(data);
                 handleClose();
             } else setError(data.message || 'Login failed');
@@ -428,7 +502,29 @@ export default function AuthModal({ isOpen, onClose, onSuccess, hideRegister, se
                     dob: formData.dob
                 }, isSellerSession);
                 sessionStorage.setItem('loginContext', sellerLogin || startSellingFlow ? 'SELLER' : 'CONSUMER');
+                
+                // Check if there's a pending Buy Now - redirect to checkout immediately
+                const pendingBuyNow = localStorage.getItem('pendingBuyNow');
+                if (pendingBuyNow && !sellerLogin && !startSellingFlow) {
+                    try {
+                        const buyNowItem = JSON.parse(pendingBuyNow);
+                        localStorage.removeItem('pendingBuyNow');
+                        if (onSuccess) onSuccess(data);
+                        handleClose();
+                        // Navigate after modal closes
+                        setTimeout(() => {
+                            navigate('/checkout', { state: { buyNowProduct: buyNowItem } });
+                        }, 100);
+                        return;
+                    } catch (error) {
+                        console.error('Error parsing pending Buy Now:', error);
+                        localStorage.removeItem('pendingBuyNow');
+                    }
+                }
+                
+                // Normal flow - no pending Buy Now
                 navigate(startSellingFlow ? '/seller/register' : '/');
+                
                 if (onSuccess) onSuccess(data);
                 handleClose();
             } else setError(data.message || 'Registration failed');

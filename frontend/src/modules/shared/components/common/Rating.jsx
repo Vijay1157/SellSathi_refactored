@@ -63,26 +63,26 @@ const Rating = ({
         return stars;
     };
 
-    // Format display text
+    // Format display text - Amazon style
     const getDisplayText = () => {
         if (totalReviews === 0 && showNoReviewsText) {
-            return "No reviews yet";
+            return <span style={{ fontSize: '0.75rem', color: '#565959' }}>No reviews yet</span>;
         }
         
         if (totalReviews === 0) {
             return "";
         }
         
-        return `${averageRating.toFixed(1)} (${totalReviews} review${totalReviews === 1 ? '' : 's'})`;
+        return <span style={{ fontSize: '0.75rem', color: '#007185', fontWeight: 400 }}>({totalReviews.toLocaleString()})</span>;
     };
 
     return (
         <div className={`rating-component flex flex-row items-center gap-1 ${className}`}>
-            <div className="rating-stars flex flex-row items-center gap-0.5">
+            <div className="rating-stars flex flex-row items-center" style={{ gap: '2px' }}>
                 {renderStars()}
             </div>
             {showCount && (
-                <span className="rating-text">
+                <span className="rating-text" style={{ marginLeft: '4px' }}>
                     {getDisplayText()}
                 </span>
             )}

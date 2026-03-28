@@ -1,7 +1,8 @@
 ﻿import { useState, useEffect } from 'react';
-import { Settings, Save, Loader, RefreshCw, Percent, Truck, Tag } from 'lucide-react';
+import { Settings, Save, Loader, RefreshCw, Percent, Truck, Tag, DollarSign } from 'lucide-react';
 import { authFetch } from '@/modules/shared/utils/api';
 import { SELLER_CATEGORIES } from '@/modules/shared/config/categories';
+import { PLATFORM_FEE_BREAKDOWN, calculateTotalPlatformFeePercent, validatePlatformFeeBreakdown } from '@/modules/shared/utils/platformFeeUtils';
 
 const DEFAULT_GST = {
     "Fashion (Men)": 5, "Fashion (Women)": 5, "Kids & Baby": 12,
@@ -21,11 +22,12 @@ export default function PlatformSettingsTab() {
     const [saving, setSaving] = useState(false);
     const [hasChanges, setHasChanges] = useState(false);
     const [catSearch, setCatSearch] = useState('');
-    const [formData, setFormData] = useState({ defaultPlatformFeePercent: 7, defaultShippingHandlingPercent: 0 });
+    const [formData, setFormData] = useState({ defaultShippingHandlingPercent: 0 });
     const [categoryGstRates, setCategoryGstRates] = useState(DEFAULT_GST);
     const [customCategories, setCustomCategories] = useState([]);
     const [customCatName, setCustomCatName] = useState('');
     const [customCatGst, setCustomCatGst] = useState('');
+    const [platformFeeBreakdown, setPlatformFeeBreakdown] = useState(PLATFORM_FEE_BREAKDOWN);
 
     useEffect(() => { fetchConfig(); }, []);
 
@@ -35,10 +37,26 @@ export default function PlatformSettingsTab() {
             const res = await authFetch('/admin/config/public');
             const data = await res.json();
             if (data.success && data.config) {
-                setFormData({ defaultPlatformFeePercent: data.config.defaultPlatformFeePercent ?? 7, defaultShippingHandlingPercent: data.config.defaultShippingHandlingPercent ?? 0 });
+                setFormData({ defaultShippingHandlingPercent: data.config.defaultShippingHandlingPercent ?? 0 });
                 if (data.config.categoryGstRates) {
                     setCategoryGstRates({ ...DEFAULT_GST, ...data.config.categoryGstRates });
                     setCustomCategories(Object.keys(data.config.categoryGstRates).filter(k => !SELLER_CATEGORIES.includes(k)));
+                }
+                if (data.config.platformFeeBreakdown) {
+                    // Convert from backend format to frontend format
+                    const breakdown = {};
+                    Object.entries(data.config.platformFeeBreakdown).forEach(([key, percent]) => {
+                        const defaultItem = PLATFORM_FEE_BREAKDOWN[key];
+                        breakdown[key] = {
+                            label: defaultItem?.label || key,
+                            description: defaultItem?.description || '',
+                            percent: percent
+                        };
+                    });
+                    setPlatformFeeBreakdown(breakdown);
+                } else {
+                    // Use default breakdown if not in config
+                    setPlatformFeeBreakdown(PLATFORM_FEE_BREAKDOWN);
                 }
             }
         } catch (err) { console.error(err); }
@@ -49,7 +67,51 @@ export default function PlatformSettingsTab() {
     const handleGstChange = (cat, value) => { const val = parseFloat(value); if (isNaN(val) || val < 0 || val > 100) return; setCategoryGstRates(prev => ({ ...prev, [cat]: val })); setHasChanges(true); };
     const handleAddCustom = () => { const name = customCatName.trim(); const gst = parseFloat(customCatGst); if (!name) { alert('Enter a category name.'); return; } if (isNaN(gst) || gst < 0 || gst > 100) { alert('Enter a valid GST % (0-100).'); return; } if (categoryGstRates[name] !== undefined) { alert('Category already exists.'); return; } setCategoryGstRates(prev => ({ ...prev, [name]: gst })); setCustomCategories(prev => [...prev, name]); setCustomCatName(''); setCustomCatGst(''); setHasChanges(true); };
     const handleRemoveCustom = (name) => { setCategoryGstRates(prev => { const n = { ...prev }; delete n[name]; return n; }); setCustomCategories(prev => prev.filter(c => c !== name)); setHasChanges(true); };
-    const handleSave = async () => { setSaving(true); try { const res = await authFetch('/admin/profile', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ...formData, categoryGstRates }) }); const data = await res.json(); if (data.success) { alert('Platform settings saved!'); setHasChanges(false); await fetchConfig(); } else { alert('Failed: ' + (data.message || 'Unknown error')); } } catch (err) { alert('Error: ' + err.message); } finally { setSaving(false); } };
+    const handlePlatformFeeChange = (key, value) => { const val = parseFloat(value); if (isNaN(val) || val < 0 || val > 10) return; setPlatformFeeBreakdown(prev => ({ ...prev, [key]: { ...prev[key], percent: val } })); setHasChanges(true); };
+    const handleSave = async () => { 
+        // Validate platform fee breakdown
+        const validation = validatePlatformFeeBreakdown(platformFeeBreakdown);
+        if (!validation.valid) {
+            alert('Platform Fee Error: ' + validation.error);
+            return;
+        }
+        
+        setSaving(true); 
+        try { 
+            // Convert platform fee breakdown to backend format
+            const breakdownForBackend = {};
+            Object.entries(platformFeeBreakdown).forEach(([key, value]) => {
+                breakdownForBackend[key] = value.percent;
+            });
+            
+            const payload = { 
+                ...formData, 
+                categoryGstRates,
+                platformFeeBreakdown: breakdownForBackend
+            };
+            
+            const res = await authFetch('/admin/profile', { 
+                method: 'PUT', 
+                headers: { 'Content-Type': 'application/json' }, 
+                body: JSON.stringify(payload) 
+            }); 
+            
+            const data = await res.json(); 
+            
+            if (data.success) { 
+                alert('Platform settings saved successfully!'); 
+                setHasChanges(false); 
+                await fetchConfig(); 
+            } else { 
+                alert('Failed to save: ' + (data.message || 'Unknown error')); 
+            } 
+        } catch (err) { 
+            console.error('Save error:', err);
+            alert('Error saving settings: ' + err.message); 
+        } finally { 
+            setSaving(false); 
+        } 
+    };
 
     const allCategories = [...SELLER_CATEGORIES, ...customCategories.filter(c => !SELLER_CATEGORIES.includes(c))];
     const displayCategories = allCategories.filter(c => !catSearch || c.toLowerCase().includes(catSearch.toLowerCase()));
@@ -69,9 +131,66 @@ export default function PlatformSettingsTab() {
                 </div>
             </div>
             <div className="glass-card" style={{ padding: '2rem' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', paddingBottom: '0.75rem', marginBottom: '1.75rem', borderBottom: '2px solid var(--border)' }}><Percent size={16} style={{ color: 'var(--primary)' }} /><span style={{ fontWeight: 700, fontSize: '0.85rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Default Platform Charges</span></div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', paddingBottom: '0.75rem', marginBottom: '1.75rem', borderBottom: '2px solid var(--border)' }}><DollarSign size={16} style={{ color: 'var(--primary)' }} /><span style={{ fontWeight: 700, fontSize: '0.85rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Platform Fee Breakdown</span></div>
+                
+                <div style={{ marginBottom: '1.5rem', padding: '1rem', background: 'rgba(99,102,241,0.05)', borderRadius: '10px', border: '1px solid rgba(99,102,241,0.2)' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <span style={{ fontSize: '0.9rem', fontWeight: 600, color: 'var(--text)' }}>Total Platform Fee</span>
+                        <span style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--primary)' }}>
+                            {calculateTotalPlatformFeePercent(platformFeeBreakdown).toFixed(2)}%
+                        </span>
+                    </div>
+                    <p style={{ margin: '0.5rem 0 0 0', fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                        Sum of all components below (max 20%)
+                    </p>
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '1.25rem' }}>
+                    {Object.entries(platformFeeBreakdown).map(([key, value]) => (
+                        <div key={key} style={{ 
+                            display: 'flex', 
+                            flexDirection: 'column', 
+                            gap: '0.5rem',
+                            padding: '1rem',
+                            background: 'var(--surface)',
+                            borderRadius: '10px',
+                            border: '1px solid var(--border)'
+                        }}>
+                            <label style={{ ...lStyle, marginBottom: '0.25rem' }}>{value.label}</label>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                <input 
+                                    type="number" 
+                                    value={value.percent} 
+                                    onChange={e => handlePlatformFeeChange(key, e.target.value)} 
+                                    min="0" 
+                                    max="10" 
+                                    step="0.1" 
+                                    style={{ ...iStyle, flex: 1 }} 
+                                />
+                                <span style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--text-muted)' }}>%</span>
+                            </div>
+                            <p style={{ margin: 0, fontSize: '0.75rem', color: 'var(--text-muted)', lineHeight: 1.4 }}>
+                                {value.description}
+                            </p>
+                        </div>
+                    ))}
+                </div>
+
+                <div style={{ marginTop: '1.5rem', padding: '1rem', background: 'rgba(245,158,11,0.05)', borderRadius: '10px', border: '1px solid rgba(245,158,11,0.2)' }}>
+                    <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.75rem' }}>
+                        <span style={{ color: '#d97706', fontWeight: 700, fontSize: '1rem', lineHeight: 1, marginTop: '2px' }}>ℹ️</span>
+                        <div style={{ flex: 1 }}>
+                            <p style={{ margin: 0, fontSize: '0.85rem', color: '#92400e', lineHeight: 1.6, fontWeight: 500 }}>
+                                Platform fee breakdown is shown to sellers when adding products and to consumers during checkout. Each component must be between 0-10%, and total cannot exceed 20%.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div className="glass-card" style={{ padding: '2rem' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', paddingBottom: '0.75rem', marginBottom: '1.75rem', borderBottom: '2px solid var(--border)' }}><Percent size={16} style={{ color: 'var(--primary)' }} /><span style={{ fontWeight: 700, fontSize: '0.85rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Other Charges</span></div>
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '2rem', maxWidth: '600px' }}>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}><label style={lStyle}>Platform Fee (%)</label><input type="number" name="defaultPlatformFeePercent" value={formData.defaultPlatformFeePercent} onChange={handleChange} min="0" max="100" step="0.1" style={iStyle} /><p style={{ margin: 0, fontSize: '0.8rem', color: 'var(--text-muted)' }}>Commission charged on each sale</p></div>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}><label style={lStyle}>Shipping and Handling (%)</label><input type="number" name="defaultShippingHandlingPercent" value={formData.defaultShippingHandlingPercent} onChange={handleChange} min="0" max="100" step="0.1" style={iStyle} /><p style={{ margin: 0, fontSize: '0.8rem', color: 'var(--text-muted)' }}>{formData.defaultShippingHandlingPercent === 0 ? 'FREE shipping' : formData.defaultShippingHandlingPercent + '% shipping charge'}</p></div>
                 </div>
             </div>

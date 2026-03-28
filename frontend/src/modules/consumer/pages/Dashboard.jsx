@@ -195,36 +195,88 @@ export default function ConsumerDashboard() {
     const saveAddress = async () => {
         try {
             const addressToSave = editingAddress;
+            
+            // Validate required fields
+            if (!addressToSave.firstName || !addressToSave.lastName || !addressToSave.addressLine || 
+                !addressToSave.city || !addressToSave.state || !addressToSave.pincode || !addressToSave.phone) {
+                alert('Please fill in all required fields');
+                return;
+            }
+            
+            // Validate pincode
+            if (addressToSave.pincode.length !== 6) {
+                alert('Pincode must be 6 digits');
+                return;
+            }
+            
             const response = await authFetch(`/consumer/${user.uid}/address`, {
                 method: 'POST', headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ address: addressToSave })
             });
             const data = await response.json();
             if (data.success) {
-                await fetchAddresses(user.uid);
+                // Update local state immediately with returned addresses
+                if (data.addresses) {
+                    setAddresses(data.addresses);
+                } else {
+                    await fetchAddresses(user.uid);
+                }
                 setEditingAddress(null);
+                alert('Address saved successfully');
+            } else {
+                alert(data.message || 'Failed to save address');
             }
-        } catch (error) { console.error('Error saving address:', error); }
+        } catch (error) { 
+            console.error('Error saving address:', error);
+            alert('Failed to save address. Please try again.');
+        }
     };
 
     const setAsDefaultAddress = async (addressIndex) => {
         try {
-            const addressToUpdate = { ...addresses[addressIndex], id: addressIndex, isDefault: true };
+            const addressToUpdate = { ...addresses[addressIndex], isDefault: true };
             const response = await authFetch(`/consumer/${user.uid}/address`, {
                 method: 'POST', headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ address: addressToUpdate })
             });
             const data = await response.json();
-            if (data.success) await fetchAddresses(user.uid);
-        } catch (error) { console.error('Error setting default address:', error); }
+            if (data.success) {
+                // Update local state immediately with returned addresses
+                if (data.addresses) {
+                    setAddresses(data.addresses);
+                } else {
+                    await fetchAddresses(user.uid);
+                }
+                alert('Default address updated successfully');
+            } else {
+                alert(data.message || 'Failed to set default address');
+            }
+        } catch (error) { 
+            console.error('Error setting default address:', error);
+            alert('Failed to set default address. Please try again.');
+        }
     };
 
     const deleteAddress = async (addressId) => {
+        if (!window.confirm('Are you sure you want to delete this address?')) return;
         try {
             const response = await authFetch(`/consumer/${user.uid}/address/${addressId}`, { method: 'DELETE' });
             const data = await response.json();
-            if (data.success) await fetchAddresses(user.uid);
-        } catch (error) { console.error('Error deleting address:', error); }
+            if (data.success) {
+                // Update local state immediately with returned addresses
+                if (data.addresses) {
+                    setAddresses(data.addresses);
+                } else {
+                    await fetchAddresses(user.uid);
+                }
+                alert('Address deleted successfully');
+            } else {
+                alert(data.message || 'Failed to delete address');
+            }
+        } catch (error) { 
+            console.error('Error deleting address:', error);
+            alert('Failed to delete address. Please try again.');
+        }
     };
 
     const handleDownloadInvoice = async (orderId) => {
@@ -379,29 +431,12 @@ export default function ConsumerDashboard() {
 
     return (
         <div className="min-h-screen bg-gray-50">
-            {/* Header */}
-            <div className="bg-white border-b border-gray-200 sticky top-0 z-10">
-                <div className="max-w-full mx-auto px-3 py-4">
-                    <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-4">
-                            <button onClick={() => navigate('/')} className="flex items-center gap-2 text-gray-600 hover:text-primary text-sm font-medium">
-                                <ArrowLeft size={16} /> Back
-                            </button>
-                        </div>
-                        <div className="flex items-center gap-2 text-sm">
-                            <User size={16} className="text-gray-400" />
-                            <span className="text-gray-700 font-medium">{userName || user.email}</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
             {/* Main Content */}
             <div className="max-w-full mx-auto px-3 py-6">
                 <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
                     {/* Sidebar */}
                     <div className="lg:col-span-1">
-                        <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden sticky top-24">
+                        <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden sticky top-20">
                             {/* User Profile */}
                             <div className="p-4 bg-gradient-to-r from-blue-50 to-indigo-50 border-b border-gray-200">
                                 <div className="flex flex-col items-center text-center">
@@ -487,7 +522,13 @@ export default function ConsumerDashboard() {
                             />
                         )}
                         {activeTab === 'wishlist' && (
-                            <ConsumerWishlistTab wishlist={wishlist} onRemoveFromWishlist={removeFromWishlist} />
+                            <ConsumerWishlistTab 
+                                wishlist={wishlist} 
+                                onRemoveFromWishlist={removeFromWishlist}
+                                productReviews={productReviews}
+                                handleAddToCart={handleAddToCart}
+                                openQuickView={openQuickView}
+                            />
                         )}
                         {activeTab === 'address' && (
                             <ConsumerAddressTab

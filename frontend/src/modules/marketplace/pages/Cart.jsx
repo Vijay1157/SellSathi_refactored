@@ -73,7 +73,11 @@ export default function Cart() {
     };
 
     const selectedCartItems = cartItems.filter(item => selectedItems.has(item.id || item.productId));
-    const subtotal = selectedCartItems.reduce((acc, item) => acc + (item.price * item.quantity), 0);
+    // Calculate subtotal using GST-inclusive prices
+    const subtotal = selectedCartItems.reduce((acc, item) => {
+        const priceToUse = item.priceWithGST || item.price; // Use GST-inclusive price if available
+        return acc + (priceToUse * item.quantity);
+    }, 0);
     const shipping = subtotal > 500 ? 0 : 50;
     const total = subtotal + shipping;
 
@@ -248,13 +252,10 @@ export default function Cart() {
                                                 <div className="flex justify-between items-end mt-auto">
                                                     <div>
                                                         <PriceDisplay
-                                                            product={{
-                                                                ...item,
-                                                                price: item.originalPrice || item.price,
-                                                                discountPrice: item.price
-                                                            }}
+                                                            product={item}
                                                             size="sm"
                                                             showBadge={false}
+                                                            showGSTIndicator={false}
                                                         />
                                                     </div>
 
