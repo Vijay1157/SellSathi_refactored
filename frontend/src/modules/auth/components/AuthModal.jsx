@@ -336,10 +336,6 @@ export default function AuthModal({ isOpen, onClose, onSuccess, hideRegister, se
                 }
                 const isSellerSession = sellerLogin || startSellingFlow;
                 persistUser(data, { email: data.email, fullName: data.fullName, status: data.status, sellerStatus: data.sellerStatus, shopName: data.shopName }, isSellerSession);
-<<<<<<< HEAD
-=======
-                localStorage.setItem('userName', data.fullName || '');
-                
                 // Check if there's a pending Buy Now - redirect to checkout immediately
                 const pendingBuyNow = localStorage.getItem('pendingBuyNow');
                 if (pendingBuyNow && !sellerLogin && !startSellingFlow) {
@@ -360,7 +356,6 @@ export default function AuthModal({ isOpen, onClose, onSuccess, hideRegister, se
                 }
                 
                 // Normal flow - no pending Buy Now
->>>>>>> 54a05fa5126e612ec95987946a815ca9b27d48f6
                 redirectByRole(data, navigate, sellerLogin);
                 
                 if (onSuccess) onSuccess(data);
