@@ -45,6 +45,8 @@ const verifyPayment = async (req, res) => {
             email: customerInfo?.email || "", phone: customerInfo?.phone || "",
             shippingAddress: customerInfo?.shippingAddress || customerInfo?.address || {},
             billingAddress: customerInfo?.billingAddress || customerInfo?.address || {},
+            customerInfo: customerInfo, // Store full customerInfo including GST
+            gstNumber: customerInfo?.gstNumber || null, // Store GST at top level for easy access
             items: cartItems || [],
             total: amount || 0, paymentMethod: "RAZORPAY", paymentId: razorpay_payment_id,
             status: "Processing", createdAt: admin.firestore.FieldValue.serverTimestamp(),
@@ -101,6 +103,8 @@ const codOrder = async (req, res) => {
             phone: customerInfo?.phone || "",
             shippingAddress: customerInfo?.shippingAddress || customerInfo?.address || {},
             billingAddress: customerInfo?.billingAddress || customerInfo?.address || {},
+            customerInfo: customerInfo, // Store full customerInfo including GST
+            gstNumber: customerInfo?.gstNumber || null, // Store GST at top level for easy access
             items: cartItems || [],
             total: amount || 0,
             paymentMethod: "COD",

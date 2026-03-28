@@ -1,6 +1,7 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Shield } from 'lucide-react';
+import PriceDisplay from '@/modules/shared/components/common/PriceDisplay';
 
 export default function RelatedProducts({
     product,
@@ -94,7 +95,9 @@ export default function RelatedProducts({
                                             <span className="no-rating">No reviews</span>
                                         </div>
                                     </div>
-                                    <span className="p-price">₹{(p.price || 0).toLocaleString()}</span>
+                                    <div className="p-price">
+                                        <PriceDisplay product={p} size="xs" showGSTIndicator={false} />
+                                    </div>
                                 </div>
                             ))}
                             <div className="fbt-total-row">
@@ -131,7 +134,7 @@ export default function RelatedProducts({
                                 <div className="rating">
                                     <span className="no-rating">No reviews</span>
                                 </div>
-                                <span className="price">₹{(p.price || 0).toLocaleString()}</span>
+                                <PriceDisplay product={p} size="sm" showGSTIndicator={false} />
                             </div>
                         ))}
                     </div>
@@ -160,7 +163,7 @@ export default function RelatedProducts({
                                 <div className="rating">
                                     <span className="no-rating">No reviews</span>
                                 </div>
-                                <span className="price">₹{(p.price || 0).toLocaleString()}</span>
+                                <PriceDisplay product={p} size="sm" showGSTIndicator={false} />
                             </div>
                         ))}
                     </div>

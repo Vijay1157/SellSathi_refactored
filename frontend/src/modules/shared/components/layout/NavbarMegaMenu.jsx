@@ -1,6 +1,7 @@
 import { Link, useNavigate } from 'react-router-dom';
 import { ArrowRight } from 'lucide-react';
 import { SUBCATEGORIES, ALL_SUBCATEGORIES } from '@/modules/shared/config/categories';
+import PriceDisplay from '@/modules/shared/components/common/PriceDisplay';
 
 /**
  * NavbarMegaMenu — the full-width dropdown panel rendered beneath the category row.
@@ -109,16 +110,14 @@ export default function NavbarMegaMenu({
                                                         margin: 0,
                                                         padding: 0
                                                     }}>{item.name || item.title || 'Product'}</h5>
-                                                    <p style={{ 
-                                                        display: 'block', 
-                                                        visibility: 'visible', 
-                                                        opacity: 1,
-                                                        fontSize: '15px',
-                                                        fontWeight: 700,
-                                                        color: '#2563EB',
-                                                        margin: 0,
-                                                        padding: 0
-                                                    }}>₹{item.price?.toLocaleString()}</p>
+                                                    <div style={{ marginTop: '4px' }}>
+                                                        <PriceDisplay 
+                                                            product={item} 
+                                                            size="xs" 
+                                                            showGSTIndicator={false}
+                                                            showBadge={true}
+                                                        />
+                                                    </div>
                                                 </div>
                                             </div>
                                         ))}

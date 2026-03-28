@@ -411,7 +411,9 @@ export default function OrderTracking() {
                                             <h4 style={{ margin: 0, fontSize: '0.9rem' }}>{item.name || 'Product'}</h4>
                                             <p className="text-muted" style={{ fontSize: '0.8rem', margin: 0 }}>Qty: {item.quantity || 1}</p>
                                         </div>
-                                        <span style={{ fontWeight: 'BOLD' }}>₹{(item.price * (item.quantity || 1)).toLocaleString('en-IN')}</span>
+                                        <span style={{ fontWeight: 'BOLD' }}>
+                                            ₹{((item.priceWithGST || item.price) * (item.quantity || 1)).toLocaleString('en-IN')}*
+                                        </span>
                                     </div>
                                 ))
                             ) : (

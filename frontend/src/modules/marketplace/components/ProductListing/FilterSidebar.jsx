@@ -16,6 +16,8 @@ export default function FilterSidebar({
     setPriceRange,
     sortBy,
     setSortBy,
+    stockFilter,
+    setStockFilter,
     clearAllFilters
 }) {
     const navigate = useNavigate();
@@ -86,12 +88,9 @@ export default function FilterSidebar({
 
     return (
         <aside className="filters-sidebar-pro glass-card">
-            <div className="sidebar-header">
-                <div className="sidebar-title">
-                    <SlidersHorizontal size={20} />
-                    <h3>Filters</h3>
-                </div>
-                {(selectedCategory !== 'All' || selectedSubcategories.length > 0 || priceRange < 200000) && (
+            <div className="sidebar-header-compact">
+                <h3 className="sidebar-title">Categories</h3>
+                {(selectedCategory !== 'All' || selectedSubcategories.length > 0 || priceRange < 200000 || stockFilter !== 'all') && (
                     <button className="clear-filters-btn" onClick={clearAllFilters}>
                         Clear All
                     </button>
@@ -100,7 +99,6 @@ export default function FilterSidebar({
 
             {/* Categories Section with Collapsible Subcategories */}
             <div className="filter-section">
-                <h4 className="filter-section-title">Categories</h4>
                 <div className="category-list-pro">
                     <button
                         className={selectedCategory === 'All' ? 'active' : ''}
@@ -150,7 +148,7 @@ export default function FilterSidebar({
 
             {/* Price Range Section */}
             <div className="filter-section">
-                <h4 className="filter-section-title">Price Range</h4>
+                <h4 className="filter-section-title">PRICE RANGE</h4>
                 <div className="price-filter-pro">
                     <input
                         type="range"
@@ -170,7 +168,7 @@ export default function FilterSidebar({
 
             {/* Sort By Section */}
             <div className="filter-section">
-                <h4 className="filter-section-title">Sort By</h4>
+                <h4 className="filter-section-title">SORT BY</h4>
                 <div className="sort-options-pro">
                     <label className="radio-label">
                         <input type="radio" name="sort" value="newest" checked={sortBy === 'newest'} onChange={(e) => setSortBy(e.target.value)} />
@@ -183,6 +181,25 @@ export default function FilterSidebar({
                     <label className="radio-label">
                         <input type="radio" name="sort" value="priceHigh" checked={sortBy === 'priceHigh'} onChange={(e) => setSortBy(e.target.value)} />
                         <span>Price: High to Low</span>
+                    </label>
+                </div>
+            </div>
+
+            {/* Stock Availability Section */}
+            <div className="filter-section">
+                <h4 className="filter-section-title">AVAILABILITY</h4>
+                <div className="sort-options-pro">
+                    <label className="radio-label">
+                        <input type="radio" name="stock" value="all" checked={stockFilter === 'all'} onChange={(e) => setStockFilter(e.target.value)} />
+                        <span>All Products</span>
+                    </label>
+                    <label className="radio-label">
+                        <input type="radio" name="stock" value="inStock" checked={stockFilter === 'inStock'} onChange={(e) => setStockFilter(e.target.value)} />
+                        <span>In Stock</span>
+                    </label>
+                    <label className="radio-label">
+                        <input type="radio" name="stock" value="outOfStock" checked={stockFilter === 'outOfStock'} onChange={(e) => setStockFilter(e.target.value)} />
+                        <span>Out of Stock</span>
                     </label>
                 </div>
             </div>

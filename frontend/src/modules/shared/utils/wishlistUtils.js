@@ -57,8 +57,13 @@ export const addToWishlist = async (product) => {
         const productToAdd = {
             id: product.id,
             name: product.name,
+            // Store complete pricing structure for PriceDisplay
             price: Number(product.price),
+            discountPrice: product.discountPrice ? Number(product.discountPrice) : null,
             oldPrice: product.oldPrice ? Number(product.oldPrice) : null,
+            pricingType: product.pricingType || 'uniform',
+            sizePrices: product.sizePrices || null,
+            gstPercent: product.gstPercent || 18,
             image: product.image || product.imageUrl || (product.images && product.images[0]),
             category: product.category || 'Uncategorized',
             description: product.description || '',

@@ -20,6 +20,7 @@ export default function ProductListing() {
     const [selectedSubcategories, setSelectedSubcategories] = useState([]);
     const [priceRange, setPriceRange] = useState(200000);
     const [sortBy, setSortBy] = useState('newest');
+    const [stockFilter, setStockFilter] = useState('all'); // New stock filter state
     const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
     const [selectedProduct, setSelectedProduct] = useState(null);
     const [isQuickViewOpen, setIsQuickViewOpen] = useState(false);
@@ -29,6 +30,14 @@ export default function ProductListing() {
 
     const location = useLocation();
     const navigate = useNavigate();
+
+    // Add class to body for footer styling
+    useEffect(() => {
+        document.body.classList.add('product-listing-page');
+        return () => {
+            document.body.classList.remove('product-listing-page');
+        };
+    }, []);
 
     // Parse query params and handle subcategory selection
     useEffect(() => {
@@ -146,11 +155,18 @@ export default function ProductListing() {
 
         result = result.filter(p => p.price <= priceRange);
 
+        // Apply stock filter
+        if (stockFilter === 'inStock') {
+            result = result.filter(p => p.stock > 0 && p.status !== 'Out of Stock');
+        } else if (stockFilter === 'outOfStock') {
+            result = result.filter(p => p.stock === 0 || p.status === 'Out of Stock');
+        }
+
         if (sortBy === 'priceLow') result.sort((a, b) => a.price - b.price);
         else if (sortBy === 'priceHigh') result.sort((a, b) => b.price - a.price);
 
         setFilteredProducts(result);
-    }, [products, selectedCategory, selectedSubcategories, priceRange, sortBy, location.search]);
+    }, [products, selectedCategory, selectedSubcategories, priceRange, sortBy, stockFilter, location.search]);
 
     useEffect(() => {
         const unsubscribe = listenToWishlist((items) => {
@@ -183,6 +199,7 @@ export default function ProductListing() {
         setSelectedSubcategories([]);
         setPriceRange(200000);
         setSortBy('newest');
+        setStockFilter('all'); // Reset stock filter
         navigate('/products');
     };
 
@@ -199,6 +216,8 @@ export default function ProductListing() {
                         setPriceRange={setPriceRange}
                         sortBy={sortBy}
                         setSortBy={setSortBy}
+                        stockFilter={stockFilter}
+                        setStockFilter={setStockFilter}
                         clearAllFilters={clearAllFilters}
                     />
 
