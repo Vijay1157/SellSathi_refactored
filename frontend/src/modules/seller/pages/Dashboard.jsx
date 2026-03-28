@@ -91,7 +91,7 @@ export default function SellerDashboard() {
                     const sellerProfile = data.profile || {};
                     setProfile(sellerProfile);
                     if (sellerProfile.name) {
-                        localStorage.setItem('userName', sellerProfile.name);
+                        localStorage.setItem('seller_userName', sellerProfile.name);
                         window.dispatchEvent(new CustomEvent('userDataChanged', { detail: sellerProfile }));
                     }
                     setStats(data.stats || { totalSales: 0, totalProducts: 0, newOrders: 0, pendingOrders: 0 });
