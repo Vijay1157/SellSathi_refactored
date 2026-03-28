@@ -56,9 +56,15 @@ export default function ConsumerDashboard() {
 
         const unsubscribe = auth.onAuthStateChanged(async (currentUser) => {
             if (!mounted) return;
-            if (currentUser) {
+            
+            const localUser = JSON.parse(localStorage.getItem('user') || 'null');
+            const expectedUid = localUser?.uid;
+
+            // Isolation Guard: Only use Firebase user if it matches our consumer session UID
+            const isMatch = currentUser && expectedUid && currentUser.uid === expectedUid;
+
+            if (isMatch) {
                 setUser(currentUser);
-                const localUser = JSON.parse(localStorage.getItem('user') || '{}');
                 const name = localUser.fullName || localUser.name || currentUser.displayName || 'User';
                 setUserName(name);
                 setUserPhoto(localUser.photoURL || currentUser.photoURL || null);
@@ -69,15 +75,7 @@ export default function ConsumerDashboard() {
                 });
 
                 try {
-                    const [profileRes, _] = await Promise.race([
-                        Promise.all([
-                            authFetch(`/consumer/${currentUser.uid}/profile`),
-                            fetchOrders(currentUser.uid),
-                            fetchAddresses(currentUser.uid),
-                            fetchReviewableOrders(currentUser.uid)
-                        ]),
-                        new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), 8000))
-                    ]);
+                    const profileRes = await authFetch(`/consumer/${currentUser.uid}/profile`);
 
                     if (profileRes && profileRes.ok) {
                         const profileDataJson = await profileRes.json();
@@ -92,24 +90,24 @@ export default function ConsumerDashboard() {
                                 phone: p.phone || ''
                             });
                             
-                            // Sync with Navbar and LocalStorage
+                            // Sync with Navbar and LocalStorage — SAFELY because we matched UIDs
                             localStorage.setItem('userName', name);
-                            const localUser = JSON.parse(localStorage.getItem('user') || '{}');
-                            localUser.fullName = name;
-                            localUser.photoURL = p.photoURL;
-                            localStorage.setItem('user', JSON.stringify(localUser));
+                            const currentLocalUser = JSON.parse(localStorage.getItem('user') || '{}');
+                            currentLocalUser.fullName = name;
+                            currentLocalUser.photoURL = p.photoURL;
+                            localStorage.setItem('user', JSON.stringify(currentLocalUser));
                             window.dispatchEvent(new CustomEvent('userDataChanged'));
                         }
                     } else {
                         // Fallback to local user data if profile fetch fails
-                        const localUser = JSON.parse(localStorage.getItem('user') || '{}');
-                        const name = localUser.fullName || localUser.name || currentUser.displayName || 'User';
+                        const currentLocalUser = JSON.parse(localStorage.getItem('user') || '{}');
+                        const name = currentLocalUser.fullName || currentLocalUser.name || currentUser.displayName || 'User';
                         setUserName(name);
-                        setUserPhoto(localUser.photoURL || currentUser.photoURL || null);
+                        setUserPhoto(currentLocalUser.photoURL || currentUser.photoURL || null);
                         setProfileData({
                             fullName: name,
-                            email: localUser.email || currentUser.email || '',
-                            phone: localUser.phone || localUser.phoneNumber || ''
+                            email: currentLocalUser.email || currentUser.email || '',
+                            phone: currentLocalUser.phone || currentLocalUser.phoneNumber || ''
                         });
                     }
                 } catch (error) {
@@ -118,32 +116,29 @@ export default function ConsumerDashboard() {
 
                 wishlistUnsubscribe = listenToWishlist((items) => { if (mounted) setWishlist(items); });
                 if (mounted) setLoading(false);
+            } else if (localUser && localUser.uid) {
+                // User is logged in via test mode OR Firebase auth doesn't match this tab's session
+                // We use the local session data instead of the active Firebase user
+                setUser({ uid: localUser.uid, displayName: localUser.fullName || localUser.name || 'User' });
+                const name = localUser.fullName || localUser.name || 'User';
+                setUserName(name);
+                setUserPhoto(localUser.photoURL || null);
+                setProfileData({
+                    fullName: name,
+                    email: localUser.email || '',
+                    phone: localUser.phone || localUser.phoneNumber || ''
+                });
+                try {
+                    await Promise.all([
+                        fetchOrders(localUser.uid),
+                        fetchAddresses(localUser.uid),
+                        fetchReviewableOrders(localUser.uid)
+                    ]);
+                } catch (err) { console.error('Error loading dashboard data:', err); }
+                wishlistUnsubscribe = listenToWishlist((items) => { if (mounted) setWishlist(items); });
+                if (mounted) setLoading(false);
             } else {
-                // Firebase auth is null — check if user is logged in via test/phone (localStorage)
-                const localUser = JSON.parse(localStorage.getItem('user') || 'null');
-                if (localUser && localUser.uid) {
-                    // User is logged in via test mode — load data from localStorage
-                    setUser({ uid: localUser.uid, displayName: localUser.fullName || localUser.name || 'User' });
-                    const name = localUser.fullName || localUser.name || 'User';
-                    setUserName(name);
-                    setUserPhoto(localUser.photoURL || null);
-                    setProfileData({
-                        fullName: name,
-                        email: localUser.email || '',
-                        phone: localUser.phone || localUser.phoneNumber || ''
-                    });
-                    try {
-                        await Promise.all([
-                            fetchOrders(localUser.uid),
-                            fetchAddresses(localUser.uid),
-                            fetchReviewableOrders(localUser.uid)
-                        ]);
-                    } catch (err) { console.error('Error loading dashboard data:', err); }
-                    wishlistUnsubscribe = listenToWishlist((items) => { if (mounted) setWishlist(items); });
-                    if (mounted) setLoading(false);
-                } else {
-                    navigate('/');
-                }
+                navigate('/');
             }
         });
 
