@@ -250,7 +250,6 @@ export default function Navbar() {
     useEffect(() => {
         const checkUser = () => {
             const isSellerRoute = location.pathname.startsWith('/seller');
-            const loginCtx = sessionStorage.getItem('loginContext');
             const key = isSellerRoute ? 'seller_user' : 'user';
             const userData = localStorage.getItem(key);
             
@@ -258,13 +257,22 @@ export default function Navbar() {
                 try {
                     const parsed = JSON.parse(userData);
                     
-                    if (loginCtx === 'SELLER' && !isSellerRoute) {
-                        setUser(null);
-                    } else if (loginCtx === 'CONSUMER' && isSellerRoute) {
-                        setUser(null);
-                    } else {
-                        setUser(parsed);
+                    // Sync loginContext if it's missing or contradictory
+                    const currentCtx = sessionStorage.getItem('loginContext');
+                    if (isSellerRoute && currentCtx !== 'SELLER') {
+                        sessionStorage.setItem('loginContext', 'SELLER');
+                    } else if (!isSellerRoute && currentCtx === 'SELLER') {
+                        // If we are on a consumer route but context is SELLER, 
+                        // check if we have a consumer user to show.
+                        const consumerData = localStorage.getItem('user');
+                        if (consumerData) {
+                            sessionStorage.setItem('loginContext', 'CONSUMER');
+                            setUser(JSON.parse(consumerData));
+                            return;
+                        }
                     }
+
+                    setUser(parsed);
                 } catch (error) {
                     console.error('Error parsing user data:', error);
                     setUser(null);
