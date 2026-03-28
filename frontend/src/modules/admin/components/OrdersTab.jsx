@@ -52,28 +52,28 @@ export default function OrdersTab({ orders, fetchAllData }) {
     return (
         <div className="animate-fade-in flex flex-col gap-4">
             <div className="flex justify-between items-center">
-                <h3 style={{ fontSize: '1.5rem', fontWeight: 700 }}>Global Orders ({filteredOrdersList.length})</h3>
+                <h3 style={{ fontSize: '1.2rem', fontWeight: 700 }}>Global Orders ({filteredOrdersList.length})</h3>
                 <div className="flex gap-2">
-                    <input type="text" placeholder="Search by Order ID or Customer..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} style={{ padding: '0.5rem', borderRadius: '4px', border: '1px solid var(--border)', width: '250px' }} />
-                    <input type="date" value={selectedDate} onChange={(e) => setSelectedDate(e.target.value)} style={{ padding: '0.5rem', borderRadius: '4px', border: '1px solid var(--border)' }} title="Filter by date" />
+                    <input type="text" placeholder="Search by Order ID or Customer..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} style={{ padding: '0.4rem 0.6rem', borderRadius: '4px', border: '1px solid var(--border)', width: '200px', fontSize: '0.8rem' }} />
+                    <input type="date" value={selectedDate} onChange={(e) => setSelectedDate(e.target.value)} style={{ padding: '0.4rem 0.6rem', borderRadius: '4px', border: '1px solid var(--border)', fontSize: '0.8rem' }} title="Filter by date" />
                     {(searchTerm || selectedDate) && (
-                        <button className="btn btn-secondary" onClick={() => { setSearchTerm(''); setSelectedDate(''); }} style={{ padding: '0.5rem 1rem' }}>Clear</button>
+                        <button className="btn btn-secondary" onClick={() => { setSearchTerm(''); setSelectedDate(''); }} style={{ padding: '0.4rem 0.8rem', fontSize: '0.75rem' }}>Clear</button>
                     )}
-                    <button className="btn btn-secondary" onClick={() => { setSearchTerm(''); setSelectedDate(''); fetchAllData(); }}>Refresh</button>
+                    <button className="btn btn-secondary" onClick={() => { setSearchTerm(''); setSelectedDate(''); fetchAllData(); }} style={{ padding: '0.4rem 0.8rem', fontSize: '0.75rem' }}>Refresh</button>
                 </div>
             </div>
-            <div id="orders-table-container" className="glass-card" style={{ padding: 0, overflowX: 'auto', overflowY: 'auto', maxHeight: '600px' }}>
+            <div id="orders-table-container" className="glass-card" style={{ padding: 0, overflowY: 'auto', maxHeight: '600px' }}>
                 <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                     <thead style={{ background: 'var(--surface)', textAlign: 'left', position: 'sticky', top: 0, zIndex: 1 }}>
                         <tr style={{ borderBottom: '2px solid var(--border)' }}>
                             {['Order ID', 'Customer', 'Total', 'Status', 'Date'].map(h => (
-                                <th key={h} style={{ padding: '1.25rem 1.5rem', fontWeight: 600, fontSize: '0.85rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', background: 'var(--surface)' }}>{h}</th>
+                                <th key={h} style={{ padding: '0.5rem 0.75rem', fontWeight: 600, fontSize: '0.65rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', background: 'var(--surface)' }}>{h}</th>
                             ))}
                         </tr>
                     </thead>
                     <tbody>
                         {filteredOrdersList.length === 0 ? (
-                            <tr><td colSpan="5" style={{ padding: '3rem', textAlign: 'center', color: 'var(--text-muted)' }}>{searchTerm || selectedDate ? 'No orders found matching your search criteria.' : 'No orders yet.'}</td></tr>
+                            <tr><td colSpan="5" style={{ padding: '2rem', textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.85rem' }}>{searchTerm || selectedDate ? 'No orders found matching your search criteria.' : 'No orders yet.'}</td></tr>
                         ) : (
                             filteredOrdersList.map(o => {
                                 if (!o) return null;
@@ -81,11 +81,11 @@ export default function OrdersTab({ orders, fetchAllData }) {
                                 const statusStyle = getStatusStyle(normalizedStatus);
                                 return (
                                     <tr key={o.id || Math.random()} style={{ borderBottom: '1px solid var(--border)', transition: 'background 0.2s' }} onMouseOver={(e) => e.currentTarget.style.background = 'var(--surface)'} onMouseOut={(e) => e.currentTarget.style.background = 'transparent'}>
-                                        <td style={{ padding: '1.25rem 1.5rem' }}><strong style={{ fontFamily: 'monospace', fontSize: '0.9rem' }}>{o.orderId || 'N/A'}</strong></td>
-                                        <td style={{ padding: '1.25rem 1.5rem' }}><span style={{ fontWeight: 500 }}>{o.customer || 'Guest Customer'}</span></td>
-                                        <td style={{ padding: '1.25rem 1.5rem' }}><span style={{ fontWeight: 700, fontSize: '1rem' }}>₹{(o.total || 0).toLocaleString()}</span></td>
-                                        <td style={{ padding: '1.25rem 1.5rem' }}><span style={{ background: statusStyle.bg, color: statusStyle.color, padding: '6px 12px', borderRadius: '6px', fontSize: '0.8rem', fontWeight: 700 }}>{normalizedStatus}</span></td>
-                                        <td style={{ padding: '1.25rem 1.5rem' }}><span style={{ fontSize: '0.9rem' }}>{o.date || 'N/A'}</span></td>
+                                        <td style={{ padding: '0.5rem 0.75rem' }}><strong style={{ fontFamily: 'monospace', fontSize: '0.7rem' }}>{o.orderId || 'N/A'}</strong></td>
+                                        <td style={{ padding: '0.5rem 0.75rem' }}><span style={{ fontWeight: 500, fontSize: '0.7rem' }}>{o.customer || 'Guest Customer'}</span></td>
+                                        <td style={{ padding: '0.5rem 0.75rem' }}><span style={{ fontWeight: 700, fontSize: '0.75rem' }}>₹{(o.total || 0).toLocaleString()}</span></td>
+                                        <td style={{ padding: '0.5rem 0.75rem' }}><span style={{ background: statusStyle.bg, color: statusStyle.color, padding: '4px 8px', borderRadius: '5px', fontSize: '0.65rem', fontWeight: 700 }}>{normalizedStatus}</span></td>
+                                        <td style={{ padding: '0.5rem 0.75rem' }}><span style={{ fontSize: '0.7rem' }}>{o.date || 'N/A'}</span></td>
                                     </tr>
                                 );
                             })

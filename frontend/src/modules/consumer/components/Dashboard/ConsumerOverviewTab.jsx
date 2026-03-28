@@ -3,6 +3,7 @@ import {
     ShoppingBag, Clock, CheckCircle2, Package, TrendingUp,
     Download, RotateCcw, Bookmark
 } from 'lucide-react';
+import PriceDisplay from '@/modules/shared/components/common/PriceDisplay';
 
 const formatDate = (timestamp) => {
     if (!timestamp) return 'N/A';
@@ -27,22 +28,20 @@ export default function ConsumerOverviewTab({
 
     return (
         <div>
-            {/* Stats Cards */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+            {/* Stats Cards - Centered */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
                 {[
-                    { label: 'Total Orders', value: stats.total, icon: <ShoppingBag size={20} className="text-blue-600" />, bg: 'bg-blue-100' },
-                    { label: 'Pending Orders', value: stats.pending, icon: <Clock size={20} className="text-orange-600" />, bg: 'bg-orange-100' },
-                    { label: 'Delivered', value: stats.delivered, icon: <CheckCircle2 size={20} className="text-green-600" />, bg: 'bg-green-100' },
-                    { label: 'Total Spent', value: `₹${stats.totalSpent}`, icon: <TrendingUp size={20} className="text-purple-600" />, bg: 'bg-purple-100' }
+                    { label: 'Total Orders', value: stats.total, icon: <ShoppingBag size={18} className="text-blue-600" />, bg: 'bg-blue-100' },
+                    { label: 'Pending Orders', value: stats.pending, icon: <Clock size={18} className="text-orange-600" />, bg: 'bg-orange-100' },
+                    { label: 'Delivered', value: stats.delivered, icon: <CheckCircle2 size={18} className="text-green-600" />, bg: 'bg-green-100' },
+                    { label: 'Total Spent', value: `₹${stats.totalSpent.toLocaleString('en-IN')}`, icon: <TrendingUp size={18} className="text-purple-600" />, bg: 'bg-purple-100' }
                 ].map((s, i) => (
-                    <div key={i} className="bg-white p-4 rounded-lg border border-gray-200 hover:shadow-md transition-shadow">
-                        <div className="flex items-center gap-3 mb-2">
-                            <div className={`w-10 h-10 ${s.bg} rounded-lg flex items-center justify-center`}>{s.icon}</div>
-                            <div>
-                                <p className="text-xs text-gray-500">{s.label}</p>
-                                <p className="text-2xl font-bold text-gray-900">{s.value}</p>
-                            </div>
+                    <div key={i} className="bg-white p-3 rounded-lg border border-gray-200 hover:shadow-md transition-shadow">
+                        <div className="flex items-center gap-2 mb-1">
+                            <div className={`w-8 h-8 ${s.bg} rounded-lg flex items-center justify-center flex-shrink-0`}>{s.icon}</div>
                         </div>
+                        <p className="text-xs text-gray-500 mb-0.5">{s.label}</p>
+                        <p className="text-xl font-bold text-gray-900">{s.value}</p>
                     </div>
                 ))}
             </div>
@@ -126,7 +125,7 @@ export default function ConsumerOverviewTab({
                                             </div>
                                             <p className="text-xs text-gray-700 font-medium truncate">{product.name}</p>
                                             <div className="flex items-center justify-between mt-1">
-                                                <p className="text-sm font-bold text-gray-900">₹{product.price?.toLocaleString()}</p>
+                                                <PriceDisplay product={product} size="xs" showGSTIndicator={false} />
                                             </div>
                                         </div>
                                     ))}
@@ -161,7 +160,7 @@ export default function ConsumerOverviewTab({
                                             </div>
                                             <p className="text-xs text-gray-700 font-medium truncate">{product.name}</p>
                                             <div className="flex items-center justify-between mt-1">
-                                                <p className="text-sm font-bold text-gray-900">₹{product.price?.toLocaleString()}</p>
+                                                <PriceDisplay product={product} size="xs" showGSTIndicator={false} />
                                             </div>
                                         </div>
                                     ))}
@@ -172,10 +171,10 @@ export default function ConsumerOverviewTab({
                 </div>
 
                 {/* Order Details Sidebar */}
-                <div className="lg:col-span-1 space-y-6">
+                <div className="lg:col-span-1 space-y-2">
                     {selectedOrder && (
-                        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-5">
-                            <div className="flex items-center justify-between mb-4">
+                        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+                            <div className="flex items-center justify-between mb-3">
                                 <h3 className="text-base font-semibold text-gray-900">Order Details</h3>
                                 <span className={`px-2 py-1 rounded-full text-xs font-medium ${selectedOrder.status === 'Delivered' ? 'bg-green-100 text-green-700' : 'bg-orange-100 text-orange-700'}`}>
                                     ● {selectedOrder.status || 'Pending'}
@@ -183,7 +182,7 @@ export default function ConsumerOverviewTab({
                             </div>
 
                             {/* Timeline */}
-                            <div className="space-y-3 mb-6">
+                            <div className="space-y-2 mb-4">
                                 {[
                                     { label: 'Order Placed', icon: <CheckCircle2 size={14} />, active: !!selectedOrder.status, color: 'green', date: formatDate(selectedOrder.createdAt) },
                                     { label: 'Processing', icon: <Clock size={14} />, active: ['Processing','Shipped','Delivered'].includes(selectedOrder.status), color: 'orange' },
@@ -192,37 +191,37 @@ export default function ConsumerOverviewTab({
                                     { label: 'Delivered', icon: <CheckCircle2 size={14} />, active: selectedOrder.status === 'Delivered', color: 'green' }
                                 ].map((step, idx, arr) => (
                                     <div key={step.label}>
-                                        <div className="flex items-start gap-3">
-                                            <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${step.active ? `bg-${step.color}-500 text-white` : 'bg-gray-200 text-gray-400'}`}>
+                                        <div className="flex items-start gap-2">
+                                            <div className={`w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 ${step.active ? `bg-${step.color}-500 text-white` : 'bg-gray-200 text-gray-400'}`}>
                                                 {step.icon}
                                             </div>
-                                            <div className="flex-1 pt-1">
-                                                <p className="font-medium text-sm text-gray-900">{step.label}</p>
-                                                {step.date && <p className="text-xs text-gray-500">{step.date}</p>}
+                                            <div className="flex-1">
+                                                <p className="font-medium text-sm text-gray-900 leading-tight">{step.label}</p>
+                                                {step.date && <p className="text-xs text-gray-500 leading-tight mt-0.5">{step.date}</p>}
                                             </div>
                                         </div>
-                                        {idx < arr.length - 1 && <div className="ml-4 w-0.5 h-4 bg-gray-200"></div>}
+                                        {idx < arr.length - 1 && <div className="ml-3.5 w-0.5 h-3 bg-gray-200"></div>}
                                     </div>
                                 ))}
                             </div>
 
                             {/* Order Items */}
                             {selectedOrder.items && selectedOrder.items.length > 0 && (
-                                <div className="mb-6 pb-6 border-b border-gray-200">
-                                    <h4 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-3">Order Items</h4>
-                                    <div className="space-y-2 max-h-48 overflow-y-auto">
+                                <div className="mb-4 pb-4 border-b border-gray-200">
+                                    <h4 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Order Items</h4>
+                                    <div className="space-y-2 max-h-32 overflow-y-auto">
                                         {selectedOrder.items.map((item, idx) => (
-                                            <div key={idx} className="flex items-center gap-3 p-2 bg-gray-50 rounded-lg">
+                                            <div key={idx} className="flex items-center gap-2 p-2 bg-gray-50 rounded">
                                                 {item.imageUrl && (
-                                                    <div className="w-12 h-12 rounded-lg overflow-hidden flex-shrink-0">
+                                                    <div className="w-12 h-12 rounded overflow-hidden flex-shrink-0">
                                                         <img src={item.imageUrl} alt={item.name} className="w-full h-full object-cover" />
                                                     </div>
                                                 )}
                                                 <div className="flex-1 min-w-0">
-                                                    <p className="text-xs font-bold text-gray-900 truncate">{item.name}</p>
-                                                    <p className="text-xs text-gray-500">Qty: {item.quantity} × ₹{item.price}</p>
+                                                    <p className="text-sm font-bold text-gray-900 truncate leading-tight">{item.name}</p>
+                                                    <p className="text-xs text-gray-500 leading-tight mt-0.5">Qty: {item.quantity} × ₹{item.price}</p>
                                                 </div>
-                                                <p className="text-xs font-black text-primary">₹{(item.price * item.quantity).toLocaleString()}</p>
+                                                <p className="text-sm font-black text-primary">₹{(item.price * item.quantity).toLocaleString()}</p>
                                             </div>
                                         ))}
                                     </div>
@@ -231,9 +230,9 @@ export default function ConsumerOverviewTab({
 
                             {/* Shipping Address */}
                             {selectedOrder.shippingAddress && (
-                                <div className="mb-6 pb-6 border-b border-gray-200">
+                                <div className="mb-4 pb-4 border-b border-gray-200">
                                     <h4 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Delivery Address</h4>
-                                    <div className="p-3 bg-gray-50 rounded-lg text-xs text-gray-700">
+                                    <div className="p-2 bg-gray-50 rounded text-sm text-gray-700 leading-relaxed">
                                         <p className="font-bold text-gray-900">{selectedOrder.shippingAddress.firstName} {selectedOrder.shippingAddress.lastName}</p>
                                         <p className="mt-1">{selectedOrder.shippingAddress.addressLine}</p>
                                         <p>{selectedOrder.shippingAddress.city}, {selectedOrder.shippingAddress.pincode}</p>
@@ -243,11 +242,11 @@ export default function ConsumerOverviewTab({
 
                             {/* Payment Method */}
                             {selectedOrder.paymentMethod && (
-                                <div className="mb-6">
+                                <div className="mb-4">
                                     <h4 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Payment Method</h4>
-                                    <div className="p-3 bg-gray-50 rounded-lg">
-                                        <p className="text-xs font-bold text-gray-900 uppercase">{selectedOrder.paymentMethod}</p>
-                                        {selectedOrder.paymentId && <p className="text-xs text-gray-500 mt-1">Payment ID: {selectedOrder.paymentId}</p>}
+                                    <div className="p-2 bg-gray-50 rounded">
+                                        <p className="text-sm font-bold text-gray-900 uppercase leading-tight">{selectedOrder.paymentMethod}</p>
+                                        {selectedOrder.paymentId && <p className="text-xs text-gray-500 mt-1 leading-tight">Payment ID: {selectedOrder.paymentId}</p>}
                                     </div>
                                 </div>
                             )}
@@ -255,14 +254,14 @@ export default function ConsumerOverviewTab({
                             {/* Action Buttons */}
                             <div className="space-y-2">
                                 <button onClick={() => navigate(`/track?orderId=${selectedOrder.orderId || selectedOrder.id}`)}
-                                    className="w-full px-4 py-2.5 bg-primary text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors">Track Order</button>
+                                    className="w-full px-3 py-2 bg-primary text-white rounded text-sm font-medium hover:bg-blue-700 transition-colors">Track Order</button>
                                 <button onClick={() => onDownloadInvoice(selectedOrder.orderId || selectedOrder.id)}
-                                    className="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-sm font-medium hover:bg-gray-50 transition-colors flex items-center justify-center gap-2">
+                                    className="w-full px-3 py-2 border border-gray-300 rounded text-sm font-medium hover:bg-gray-50 transition-colors flex items-center justify-center gap-2">
                                     <Download size={16} /> Download Invoice
                                 </button>
                                 {['Placed', 'Pending', 'Processing'].includes(selectedOrder.status) && (
                                     <button onClick={() => onCancelOrder(selectedOrder.id)}
-                                        className="w-full px-4 py-2.5 border border-red-200 text-red-600 rounded-lg text-sm font-medium hover:bg-red-50 transition-colors">
+                                        className="w-full px-3 py-2 border border-red-200 text-red-600 rounded text-sm font-medium hover:bg-red-50 transition-colors">
                                         Cancel Order
                                     </button>
                                 )}
@@ -271,12 +270,12 @@ export default function ConsumerOverviewTab({
                     )}
 
                     {/* Quick Actions */}
-                    <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-5">
-                        <h3 className="text-base font-semibold text-gray-900 mb-4">Quick Actions</h3>
+                    <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+                        <h3 className="text-base font-semibold text-gray-900 mb-3">Quick Actions</h3>
                         <div className="space-y-2">
                             <button 
                                 onClick={() => navigate('/products')} 
-                                className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-blue-50 transition-colors text-left border border-transparent hover:border-blue-200"
+                                className="w-full flex items-center gap-2 px-3 py-2 rounded hover:bg-blue-50 transition-colors text-left border border-transparent hover:border-blue-200"
                             >
                                 <ShoppingBag size={18} className="text-blue-600" />
                                 <span className="text-sm font-medium text-gray-700">Buy Again</span>
@@ -288,7 +287,6 @@ export default function ConsumerOverviewTab({
                                         return;
                                     }
                                     if (selectedOrder.status === 'Delivered') {
-                                        // Navigate to a return page or show return modal
                                         alert('Return request initiated for Order #' + (selectedOrder.orderId || selectedOrder.id) + '. Our team will contact you within 24 hours.');
                                     } else if (selectedOrder.status === 'Cancelled') {
                                         alert('This order has already been cancelled.');
@@ -296,7 +294,7 @@ export default function ConsumerOverviewTab({
                                         alert('Only delivered orders can be returned. This order is currently: ' + selectedOrder.status);
                                     }
                                 }} 
-                                className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-orange-50 transition-colors text-left border border-transparent hover:border-orange-200"
+                                className="w-full flex items-center gap-2 px-3 py-2 rounded hover:bg-orange-50 transition-colors text-left border border-transparent hover:border-orange-200"
                                 disabled={!selectedOrder}
                                 style={{ opacity: !selectedOrder ? 0.5 : 1, cursor: !selectedOrder ? 'not-allowed' : 'pointer' }}
                             >
@@ -305,7 +303,7 @@ export default function ConsumerOverviewTab({
                             </button>
                             <button 
                                 onClick={() => onSwitchTab('wishlist')} 
-                                className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-red-50 transition-colors text-left border border-transparent hover:border-red-200"
+                                className="w-full flex items-center gap-2 px-3 py-2 rounded hover:bg-red-50 transition-colors text-left border border-transparent hover:border-red-200"
                             >
                                 <Bookmark size={18} className="text-red-600" />
                                 <span className="text-sm font-medium text-gray-700">Saved Items</span>

@@ -1,5 +1,6 @@
 import React from 'react';
-import { MapPin, CheckCircle2 } from 'lucide-react';
+import { MapPin, CheckCircle2, FileText } from 'lucide-react';
+import { validateGST, formatGST, cleanGST } from '@/modules/shared/utils/gstValidation';
 
 export default function AddressStep({
     step,
@@ -33,7 +34,13 @@ export default function AddressStep({
     saveBillingForFuture,
     setSaveBillingForFuture,
     setBillingAsDefault,
-    setSetBillingAsDefault
+    setSetBillingAsDefault,
+    hasGST,
+    setHasGST,
+    gstNumber,
+    setGstNumber,
+    gstError,
+    setGstError
 }) {
     return (
         <section className={`bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden transition-all ${step > 1 ? 'opacity-80' : ''}`}>
@@ -116,21 +123,10 @@ export default function AddressStep({
                     </div>
                 )}
                 
-                {/* Descriptive text for shipping address */}
-                {step === 1 && (
-                    <div className="mb-4 p-3 bg-blue-50 border border-blue-100 rounded-lg">
-                        <p className="text-sm text-blue-900 font-medium flex items-center gap-2">
-                            <svg className="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
-                            </svg>
-                            Where should we deliver your order?
-                        </p>
-                    </div>
-                )}
-                
+                {/* Saved Address / New Address Toggle - Always show if user has addresses */}
                 {step === 1 && savedAddresses.length > 0 && (
                     <div className="mb-4">
-                        <div className="flex gap-2 mb-4">
+                        <div className="flex gap-2">
                             <button
                                 onClick={() => {
                                     setAddressMode('saved');
@@ -154,7 +150,9 @@ export default function AddressStep({
                                         addressLine: '',
                                         city: '',
                                         state: '',
-                                        pincode: ''
+                                        pincode: '',
+                                        phone: '',
+                                        type: 'shipping'
                                     });
                                 }}
                                 className={`flex-1 py-2 px-3 rounded-lg text-sm font-semibold transition-all ${addressMode === 'new'
@@ -194,6 +192,7 @@ export default function AddressStep({
                             }}
                             className="w-full px-4 py-2.5 bg-gray-50 border-none rounded-lg text-sm font-medium focus:ring-2 ring-primary/20 transition-all outline-none"
                         >
+                            <option value="" disabled hidden>Choose a shipping address</option>
                             {savedAddresses
                                 .filter(addr => !addr.type || addr.type === 'shipping')
                                 .map((addr, index) => {
@@ -285,20 +284,22 @@ export default function AddressStep({
                         {/* Billing Address Form - Shows when checkbox is unchecked */}
                         {!sameAsBilling && (
                             <div className="mt-3 p-3 bg-white border border-gray-200 rounded-lg space-y-3">
-                                <div className="flex items-center gap-2 mb-2">
+                                <div className="flex items-center gap-2 mb-3">
                                     <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                                     </svg>
                                     <h4 className="text-sm font-bold text-gray-900">Billing Address</h4>
                                 </div>
-                                <p className="text-xs text-gray-600 mb-2">Enter the address for invoice and billing purposes</p>
                                 
-                                {/* Saved/New Address Toggle for Billing */}
-                                {savedBillingAddresses.length > 0 && (
+                                {/* Saved/New Address Toggle for Billing - Show if user has any addresses */}
+                                {savedAddresses.length > 0 && (
                                     <div className="flex gap-2 mb-3">
                                         <button
-                                            onClick={() => setBillingAddressMode('saved')}
-                                            className={`flex-1 py-2 px-3 rounded-lg text-xs font-semibold transition-all ${billingAddressMode === 'saved'
+                                            onClick={() => {
+                                                setBillingAddressMode('saved');
+                                                // Don't auto-select, let user choose from dropdown
+                                            }}
+                                            className={`flex-1 py-2 px-3 rounded-lg text-sm font-semibold transition-all ${billingAddressMode === 'saved'
                                                 ? 'bg-primary text-white'
                                                 : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                                                 }`}
@@ -308,6 +309,7 @@ export default function AddressStep({
                                         <button
                                             onClick={() => {
                                                 setBillingAddressMode('new');
+                                                setSelectedBillingAddressIndex(null);
                                                 setBillingAddress({
                                                     firstName: '',
                                                     lastName: '',
@@ -319,7 +321,7 @@ export default function AddressStep({
                                                     type: 'billing'
                                                 });
                                             }}
-                                            className={`flex-1 py-2 px-3 rounded-lg text-xs font-semibold transition-all ${billingAddressMode === 'new'
+                                            className={`flex-1 py-2 px-3 rounded-lg text-sm font-semibold transition-all ${billingAddressMode === 'new'
                                                 ? 'bg-primary text-white'
                                                 : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                                                 }`}
@@ -330,7 +332,7 @@ export default function AddressStep({
                                 )}
                                 
                                 {/* Saved Billing Address Selector */}
-                                {billingAddressMode === 'saved' && savedBillingAddresses.length > 0 ? (
+                                {billingAddressMode === 'saved' && savedAddresses.length > 0 ? (
                                     <div className="space-y-2">
                                         <select
                                             value={selectedBillingAddressIndex !== null ? selectedBillingAddressIndex : ''}
@@ -351,12 +353,12 @@ export default function AddressStep({
                                                 } else {
                                                     const index = parseInt(value);
                                                     setSelectedBillingAddressIndex(index);
-                                                    setBillingAddress(savedBillingAddresses[index]);
+                                                    setBillingAddress(savedAddresses[index]);
                                                 }
                                             }}
                                             className="w-full px-3 py-2 bg-gray-50 border-none rounded-lg text-sm font-medium focus:ring-2 ring-primary/20 transition-all outline-none"
                                         >
-                                            <option value="">Select a billing address</option>
+                                            <option value="" disabled hidden>Select a billing address</option>
                                             {savedBillingAddresses.map((addr, index) => {
                                                 const originalIndex = savedAddresses.indexOf(addr);
                                                 return (
@@ -497,8 +499,88 @@ export default function AddressStep({
                                 )}
                             </div>
                         )}
+                        
+                        {/* GST Number Section */}
+                        <div className="mt-4 pt-4 border-t border-gray-100">
+                            <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-xl p-4">
+                                <div className="flex items-start gap-3">
+                                    <FileText className="w-5 h-5 text-blue-600 mt-0.5 flex-shrink-0" />
+                                    <div className="flex-1">
+                                        <label className="flex items-center gap-2 cursor-pointer group">
+                                            <input 
+                                                type="checkbox" 
+                                                checked={hasGST} 
+                                                onChange={(e) => {
+                                                    setHasGST(e.target.checked);
+                                                    if (!e.target.checked) {
+                                                        setGstNumber('');
+                                                        setGstError('');
+                                                    }
+                                                }} 
+                                                className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500" 
+                                            />
+                                            <span className="text-sm font-semibold text-gray-900 group-hover:text-blue-600 transition-colors">
+                                                I have a GST Number
+                                            </span>
+                                        </label>
+                                        <p className="text-xs text-gray-600 mt-1 ml-6">
+                                            Add your GST number for business purchases (optional)
+                                        </p>
+                                        
+                                        {hasGST && (
+                                            <div className="mt-3 ml-6 space-y-2">
+                                                <div>
+                                                    <input
+                                                        type="text"
+                                                        value={gstNumber}
+                                                        onChange={(e) => {
+                                                            const value = e.target.value.toUpperCase().replace(/\s/g, '');
+                                                            setGstNumber(value);
+                                                            if (value && !validateGST(value)) {
+                                                                setGstError('Invalid GST format. Example: 29ABCDE1234F1Z5');
+                                                            } else {
+                                                                setGstError('');
+                                                            }
+                                                        }}
+                                                        placeholder="Enter GST Number (e.g., 29ABCDE1234F1Z5)"
+                                                        className={`w-full px-4 py-2.5 bg-white border rounded-lg text-sm font-medium focus:ring-2 transition-all outline-none ${
+                                                            gstError 
+                                                                ? 'border-red-300 focus:ring-red-200' 
+                                                                : gstNumber && validateGST(gstNumber)
+                                                                ? 'border-green-300 focus:ring-green-200'
+                                                                : 'border-gray-300 focus:ring-blue-200'
+                                                        }`}
+                                                        maxLength={15}
+                                                    />
+                                                    {gstError && (
+                                                        <p className="text-xs text-red-600 font-medium mt-1 flex items-center gap-1">
+                                                            <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                                                                <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                                                            </svg>
+                                                            {gstError}
+                                                        </p>
+                                                    )}
+                                                    {gstNumber && validateGST(gstNumber) && (
+                                                        <p className="text-xs text-green-600 font-medium mt-1 flex items-center gap-1">
+                                                            <CheckCircle2 className="w-3 h-3" />
+                                                            Valid GST Number
+                                                        </p>
+                                                    )}
+                                                </div>
+                                                <div className="bg-blue-50 border border-blue-200 rounded-lg p-2">
+                                                    <p className="text-xs text-blue-800 font-medium">
+                                                        <span className="font-bold">Format:</span> 2 digits (state code) + 5 letters (PAN) + 4 digits + 1 letter + 1 letter/digit + Z + 1 letter/digit
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
                         <button
-                            className="w-full px-6 py-3 bg-primary text-white rounded-xl font-semibold hover:bg-primary/90 transition-all text-sm mt-2"
+                            className="w-full px-6 py-3 bg-primary text-white rounded-xl font-semibold hover:bg-primary/90 transition-all text-sm mt-4"
                             onClick={handleContinue}
                             disabled={fetchingSavedAddress}
                         >

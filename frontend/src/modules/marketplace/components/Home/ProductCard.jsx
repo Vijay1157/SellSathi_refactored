@@ -60,7 +60,6 @@ export default function ProductCard({
             <div className="card-info">
                 <div className="category-row">
                     <span className="category">{product.category || 'Product'}</span>
-                    {product.subCategory && <span className="sub-category">• {product.subCategory}</span>}
                 </div>
                 <h3 className="title">{product.name}</h3>
 
@@ -68,14 +67,14 @@ export default function ProductCard({
                     <Rating
                         averageRating={productReviews[product.id]?.stats?.averageRating || 0}
                         totalReviews={productReviews[product.id]?.stats?.totalReviews || 0}
-                        size={14}
+                        size={12}
                         showCount={true}
                         className="home-product-rating"
                     />
                 </div>
 
                 <div className="info-bottom">
-                    <PriceDisplay product={product} size="sm" />
+                    <PriceDisplay product={product} size="sm" showGSTIndicator={false} />
                     <button
                         onClick={(e) => handleAddToCart(e, product)}
                         className="add-to-cart-simple"

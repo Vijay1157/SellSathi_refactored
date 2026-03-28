@@ -216,13 +216,18 @@ export default function AdminDashboard() {
     };
 
     const fetchAllData = async () => {
-        // Clear cache to force fresh data
-        const cacheKey = 'allSellers';
+        // Force refresh current tab data
+        console.log('[fetchAllData] Force refreshing tab:', activeTab);
+        
+        // Clear the loaded tabs cache to force refetch
+        setLoadedTabs(new Set());
         
         await Promise.all([
             fetchStats(),
-            activeTab !== 'home' ? fetchTabData(activeTab, true) : Promise.resolve()
+            fetchTabData(activeTab, true) // Force refresh
         ]);
+        
+        console.log('[fetchAllData] Refresh complete');
     };
 
     const handleDownloadPDF = async (url, filename) => {
@@ -268,7 +273,18 @@ export default function AdminDashboard() {
     ];
 
     return (
-        <div className="flex" style={{ minHeight: 'calc(100vh - 80px)', width: '100%', gap: '2rem', padding: '2rem' }}>
+        <div style={{ 
+            minHeight: '100vh',
+            width: '100%',
+            background: 'linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%)',
+            padding: '2rem'
+        }}>
+            <div className="flex" style={{ 
+                width: '100%', 
+                maxWidth: '1800px',
+                margin: '0 auto',
+                gap: '2rem'
+            }}>
             {selectedAnalyticsSeller ? (
                 <SellerAnalyticsModal
                     seller={selectedAnalyticsSeller}
@@ -292,42 +308,90 @@ export default function AdminDashboard() {
             ) : (
                 <>
                     {/* Sidebar */}
-                    <aside className="glass-card flex flex-col justify-between" style={{ width: '280px', height: 'calc(100vh - 120px)', padding: '1.5rem', position: 'sticky', top: '2rem' }}>
+                    <aside style={{ 
+                        width: '260px', 
+                        minWidth: '260px',
+                        height: 'fit-content',
+                        padding: '1.5rem', 
+                        position: 'sticky', 
+                        top: '2rem',
+                        background: 'white',
+                        borderRadius: '20px',
+                        boxShadow: '0 2px 8px rgba(0, 0, 0, 0.08)'
+                    }}>
                         <div>
-                            <div className="flex items-center gap-2" style={{ marginBottom: '2rem', color: 'var(--primary)', paddingBottom: '1rem', borderBottom: '1px solid var(--border)' }}>
-                                <ShieldCheck size={28} />
-                                <h3 style={{ fontSize: '1.5rem', margin: 0 }}>Admin Panel</h3>
+                            <div className="flex items-center gap-2" style={{ 
+                                marginBottom: '1.5rem', 
+                                color: 'var(--primary)', 
+                                paddingBottom: '1.25rem', 
+                                borderBottom: '1px solid #f1f5f9'
+                            }}>
+                                <ShieldCheck size={26} />
+                                <h3 style={{ fontSize: '1.5rem', margin: 0, fontWeight: 700 }}>Admin Panel</h3>
                             </div>
                             <nav className="flex flex-col gap-2">
                                 {tabs.map(t => (
                                     <button
                                         key={t.key}
                                         className={`btn ${activeTab === t.key ? 'btn-primary' : 'btn-secondary'}`}
-                                        style={{ width: '100%', justifyContent: 'flex-start', padding: '1rem', fontSize: '1rem' }}
+                                        style={{ 
+                                            width: '100%', 
+                                            justifyContent: 'flex-start', 
+                                            padding: '0.875rem 1.25rem', 
+                                            fontSize: '0.95rem',
+                                            fontWeight: activeTab === t.key ? 600 : 500,
+                                            borderRadius: '14px',
+                                            border: activeTab === t.key ? 'none' : '1px solid #f1f5f9',
+                                            background: activeTab === t.key ? 'linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%)' : 'white',
+                                            color: activeTab === t.key ? 'white' : '#334155',
+                                            transition: 'all 0.2s ease',
+                                            boxShadow: activeTab === t.key ? '0 4px 12px rgba(123, 77, 219, 0.25)' : 'none',
+                                            whiteSpace: 'nowrap',
+                                            overflow: 'hidden',
+                                            textOverflow: 'ellipsis'
+                                        }}
                                         onClick={() => { setActiveTab(t.key); setSearchTerm(''); }}
+                                        onMouseEnter={(e) => {
+                                            if (activeTab !== t.key) {
+                                                e.target.style.background = '#f8fafc';
+                                                e.target.style.borderColor = '#e2e8f0';
+                                            }
+                                        }}
+                                        onMouseLeave={(e) => {
+                                            if (activeTab !== t.key) {
+                                                e.target.style.background = 'white';
+                                                e.target.style.borderColor = '#f1f5f9';
+                                            }
+                                        }}
                                     >
                                         {t.icon} {t.label}
                                     </button>
                                 ))}
                             </nav>
                         </div>
-                        <div style={{ marginTop: 'auto', padding: '1rem', background: 'var(--surface)', borderRadius: 'var(--radius-md)' }}>
-                            <small className="text-muted">System Status</small>
-                            <div className="flex items-center gap-2" style={{ marginTop: '0.5rem', color: 'var(--success)', fontSize: '0.9rem' }}>
-                                <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: 'var(--success)' }}></div>
-                                Online
-                            </div>
-                        </div>
                     </aside>
 
                     {/* Main Content */}
-                    <div className="flex-1 flex flex-col" style={{ height: '100%', gap: '2rem' }}>
+                    <div className="flex-1" style={{ minWidth: 0 }}>
                         {loading ? (
-                            <div className="flex justify-center p-12 glass-card flex-1"><Loader className="animate-spin" /></div>
+                            <div style={{ 
+                                background: 'white', 
+                                borderRadius: '20px', 
+                                padding: '3rem', 
+                                textAlign: 'center',
+                                boxShadow: '0 2px 8px rgba(0, 0, 0, 0.08)'
+                            }}>
+                                <Loader className="animate-spin" />
+                            </div>
                         ) : (
-                            <div className="glass-card flex-1" ref={contentRef} style={{ padding: activeTab === 'home' ? '2rem' : '0', display: 'flex', flexDirection: 'column', overflow: 'auto' }}>
-                                <div style={{ padding: activeTab === 'home' ? '0' : '1.5rem', borderBottom: activeTab === 'home' ? 'none' : '1px solid var(--border)' }}>
-                                    {activeTab === 'home' && <OverviewTab stats={stats} loading={loading} setActiveTab={setActiveTab} setSearchTerm={setSearchTerm} setSelectedProductDate={setSelectedProductDate} />}
+                            <div ref={contentRef} style={{ 
+                                padding: activeTab === 'home' ? '0' : '1.5rem', 
+                                background: activeTab === 'home' ? 'transparent' : 'white',
+                                borderRadius: activeTab === 'home' ? '0' : '20px',
+                                boxShadow: activeTab === 'home' ? 'none' : '0 2px 8px rgba(0, 0, 0, 0.08)',
+                                minHeight: activeTab === 'home' ? 'auto' : '600px'
+                            }}>
+                                {activeTab === 'home' && <OverviewTab stats={stats} loading={loading} setActiveTab={setActiveTab} setSearchTerm={setSearchTerm} setSelectedProductDate={setSelectedProductDate} />}
                                     {activeTab === 'sellers' && <SellersTab sellers={sellers} allSellers={allSellers} orders={orders} loading={loading} fetchAllData={fetchAllData} scrollToTop={() => { if (contentRef.current) contentRef.current.scrollTop = 0; }} />}
                                     {activeTab === 'products' && <ProductsTab products={products} fetchAllData={fetchAllData} />}
                                     {activeTab === 'orders' && <OrdersTab orders={orders} fetchAllData={fetchAllData} />}
@@ -335,12 +399,12 @@ export default function AdminDashboard() {
                                     {activeTab === 'payout' && <PayoutsTab analytics={analytics} setSelectedAnalyticsSeller={setSelectedAnalyticsSeller} fetchAllData={fetchAllData} />}
                                     {activeTab === 'invoice' && <InvoicesTab allSellers={allSellers} setSelectedInvoiceSeller={setSelectedInvoiceSeller} fetchAllData={fetchAllData} />}
                                     {activeTab === 'settings' && <PlatformSettingsTab />}
-                                </div>
                             </div>
                         )}
                     </div>
                 </>
             )}
+            </div>
         </div>
     );
 }

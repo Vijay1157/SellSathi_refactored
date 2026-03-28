@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { User, Store, MapPin, CreditCard, Package, CheckCircle, AlertCircle, ImageIcon, Edit3, Send, Loader, X } from 'lucide-react';
 import { authFetch } from '@/modules/shared/utils/api';
 
-export default function SellerProfileTab({ profile }) {
+export default function SellerProfileTab({ profile, sellerUid }) {
     const [personalTab, setPersonalTab] = useState('personal');
     const [showEditModal, setShowEditModal] = useState(false);
     const [correctionMessage, setCorrectionMessage] = useState('');
@@ -13,17 +13,29 @@ export default function SellerProfileTab({ profile }) {
 
     useEffect(() => {
         // Check for unseen admin update notification
+        // Only show if it's recent (within last 7 days) and not seen
         if (profile?.adminUpdateNotification?.seen === false) {
-            setAdminNotification(profile.adminUpdateNotification);
+            const notificationDate = new Date(profile.adminUpdateNotification.updatedAt);
+            const now = new Date();
+            const daysDiff = (now - notificationDate) / (1000 * 60 * 60 * 24);
+            
+            // Only show if notification is less than 7 days old
+            if (daysDiff <= 7) {
+                setAdminNotification(profile.adminUpdateNotification);
+            } else {
+                // Auto-dismiss old notifications
+                if (sellerUid) {
+                    authFetch(`/seller/${sellerUid}/notification-seen`, { method: 'PUT' }).catch(console.error);
+                }
+            }
         }
-    }, [profile]);
+    }, [profile, sellerUid]);
 
     const dismissNotification = async () => {
         setAdminNotification(null);
         try {
-            const userData = JSON.parse(localStorage.getItem('user') || '{}');
-            if (userData.uid) {
-                await authFetch(`/seller/${userData.uid}/notification-seen`, { method: 'PUT' });
+            if (sellerUid) {
+                await authFetch(`/seller/${sellerUid}/notification-seen`, { method: 'PUT' });
             }
         } catch (e) {
             console.error('Failed to mark notification seen:', e);
@@ -35,15 +47,22 @@ export default function SellerProfileTab({ profile }) {
             setRequestError('Please describe the changes you need.');
             return;
         }
+        
+        if (!sellerUid) {
+            setRequestError('Unable to identify your account. Please log out and log in again.');
+            return;
+        }
+        
         setSendingRequest(true);
         setRequestError('');
         try {
-            const userData = JSON.parse(localStorage.getItem('user') || '{}');
+            console.log('Sending correction request with UID:', sellerUid);
+            
             const response = await authFetch('/seller/correction-request', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    sellerUid: userData.uid,
+                    sellerUid: sellerUid,
                     sellerName: profile.fullName || profile.name || 'Unknown Seller',
                     shopName: profile.shopName || profile.supplierName || 'Unknown Shop',
                     message: correctionMessage.trim()

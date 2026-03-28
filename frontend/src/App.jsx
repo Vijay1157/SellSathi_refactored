@@ -35,6 +35,7 @@ import '@/modules/shared/utils/clearOldData';
 
 function AppContent() {
   const location = useLocation();
+  const isAdminPage = location.pathname.startsWith('/admin');
   // Hide navbar for seller landing, registration, and onboarding flows (they have their own SellerHeader)
   const isSellerPage = location.pathname.startsWith('/seller');
 
@@ -43,13 +44,14 @@ function AppContent() {
     "/seller",
     "/seller/register",
     "/seller/onboarding",
-    "/seller/dashboard"
+    "/seller/dashboard",
+    "/admin"
   ];
 
   return (
     <div className="app-container">
       <ScrollToTop />
-      {!isSellerPage && <Navbar />}
+      {!isSellerPage && !isAdminPage && <Navbar />}
       <main className="main-content">
         <Routes>
           {/* Marketplace Routes */}
