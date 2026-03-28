@@ -16,11 +16,18 @@ console.log("[SellerDashboard] Component Loading...");
 
 // Helper to get current user UID (works for both Firebase and test login)
 const getUserUid = () => {
-    if (auth.currentUser) return auth.currentUser.uid;
     try {
         const userData = JSON.parse(localStorage.getItem('seller_user'));
-        return userData?.uid || null;
-    } catch { return null; }
+        if (userData?.uid) {
+            // Priority 1: Current seller session in localStorage
+            return userData.uid;
+        }
+    } catch (e) { console.error("[SellerDashboard] Storage error:", e); }
+
+    // Priority 2: Firebase auth (global)
+    if (auth.currentUser) return auth.currentUser.uid;
+    
+    return null;
 };
 
 export default function SellerDashboard() {

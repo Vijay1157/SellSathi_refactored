@@ -285,8 +285,16 @@ export default function AuthModal({ isOpen, onClose, onSuccess, hideRegister, se
                         return;
                     }
                 }
-                sessionStorage.setItem('loginContext', sellerLogin || startSellingFlow ? 'SELLER' : 'CONSUMER');
-                persistUser(data, { phone: phoneNumber, status: data.status, sellerStatus: data.sellerStatus, shopName: data.shopName, fullName: formData.fullName || data.fullName, dob: formData.dob });
+                const isSellerSession = sellerLogin || startSellingFlow;
+                sessionStorage.setItem('loginContext', isSellerSession ? 'SELLER' : 'CONSUMER');
+                persistUser(data, { 
+                    phone: phoneNumber, 
+                    status: data.status, 
+                    sellerStatus: data.sellerStatus, 
+                    shopName: data.shopName, 
+                    fullName: formData.fullName || data.fullName, 
+                    dob: formData.dob 
+                }, isSellerSession);
                 
                 // Check if there's a pending Buy Now - redirect to checkout immediately
                 const pendingBuyNow = localStorage.getItem('pendingBuyNow');
@@ -311,7 +319,7 @@ export default function AuthModal({ isOpen, onClose, onSuccess, hideRegister, se
                 if (isRegistering && !startSellingFlow) {
                     navigate('/');
                 } else {
-                    redirectByRole(data, navigate, sellerLogin);
+                    redirectByRole(data, navigate, isSellerSession);
                 }
                 
                 if (onSuccess) onSuccess(data);
@@ -356,7 +364,7 @@ export default function AuthModal({ isOpen, onClose, onSuccess, hideRegister, se
                 }
                 
                 // Normal flow - no pending Buy Now
-                redirectByRole(data, navigate, sellerLogin);
+                redirectByRole(data, navigate, isSellerSession);
                 
                 if (onSuccess) onSuccess(data);
                 handleClose();
