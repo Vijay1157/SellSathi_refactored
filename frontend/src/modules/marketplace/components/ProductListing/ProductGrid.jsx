@@ -86,53 +86,109 @@ export default function ProductGrid({
                                 <div className="card-media">
                                     {p.discount && <span className="discount-badge">{p.discount}</span>}
                                     <img src={p.imageUrl || p.image} alt={p.name} />
-                                    <div className="overlay-tools">
-                                        <button
-                                            onClick={(e) => toggleWishlist(e, p)}
-                                            className={`tool-btn ${wishlist.some(item => item.id === p.id) ? 'active' : ''}`}
-                                            title="Save to Wishlist"
-                                        >
-                                            <Heart
-                                                size={18}
-                                                fill={wishlist.some(item => item.id === p.id) ? "#E11D48" : "none"}
-                                                color={wishlist.some(item => item.id === p.id) ? "#E11D48" : "currentColor"}
-                                            />
-                                        </button>
-                                        <button className="tool-btn" title="View Details" onClick={(e) => {
-                                            e.stopPropagation();
-                                            setSelectedQuickProduct(p);
-                                            setIsQuickViewOpen(true);
-                                        }}><Eye size={18} /></button>
-                                    </div>
+                                    {viewMode === 'grid' && (
+                                        <div className="overlay-tools">
+                                            <button
+                                                onClick={(e) => toggleWishlist(e, p)}
+                                                className={`tool-btn ${wishlist.some(item => item.id === p.id) ? 'active' : ''}`}
+                                                title="Save to Wishlist"
+                                            >
+                                                <Heart
+                                                    size={18}
+                                                    fill={wishlist.some(item => item.id === p.id) ? "#E11D48" : "none"}
+                                                    color={wishlist.some(item => item.id === p.id) ? "#E11D48" : "currentColor"}
+                                                />
+                                            </button>
+                                            <button className="tool-btn" title="View Details" onClick={(e) => {
+                                                e.stopPropagation();
+                                                setSelectedQuickProduct(p);
+                                                setIsQuickViewOpen(true);
+                                            }}><Eye size={18} /></button>
+                                        </div>
+                                    )}
                                 </div>
                                 <div className="product-details">
-                                    <p className="p-cat">{p.category}</p>
-                                    <h3 className="p-name">{p.name}</h3>
-                                    <div className="p-rating">
-                                        <Rating
-                                            averageRating={productReviews[p.id]?.stats?.averageRating || 0}
-                                            totalReviews={productReviews[p.id]?.stats?.totalReviews || 0}
-                                            size={14}
-                                            showCount={true}
-                                            className="product-card-rating"
-                                        />
-                                    </div>
-                                    <div className="p-footer">
-                                        <div className="p-price-group">
-                                            <PriceDisplay product={p} size="sm" />
-                                        </div>
-                                        {(p.stock === 0 || p.status === 'Out of Stock') && (
-                                            <span style={{ color: '#ef4444', fontSize: '0.65rem', fontWeight: 900, marginRight: '0.5rem', textTransform: 'uppercase' }}>OUT OF STOCK</span>
-                                        )}
-                                        <button
-                                            onClick={(e) => { e.stopPropagation(); handleAddToCart(p); }}
-                                            className="add-to-cart-simple"
-                                            disabled={p.stock === 0 || p.status === 'Out of Stock'}
-                                            style={p.stock === 0 || p.status === 'Out of Stock' ? { background: '#94a3b8', cursor: 'not-allowed', opacity: 0.7 } : {}}
-                                        >
-                                            <ShoppingCart size={18} />
-                                        </button>
-                                    </div>
+                                    {viewMode === 'list' ? (
+                                        <>
+                                            <div className="product-info-top">
+                                                <p className="p-cat">{p.category}</p>
+                                                <h3 className="p-name">{p.name}</h3>
+                                                <div className="p-rating">
+                                                    <Rating
+                                                        averageRating={productReviews[p.id]?.stats?.averageRating || 0}
+                                                        totalReviews={productReviews[p.id]?.stats?.totalReviews || 0}
+                                                        size={14}
+                                                        showCount={true}
+                                                        className="product-card-rating"
+                                                    />
+                                                </div>
+                                            </div>
+                                            <div className="product-info-bottom">
+                                                <div className="p-price-group">
+                                                    <PriceDisplay product={p} size="lg" showGSTIndicator={false} />
+                                                    {(p.stock === 0 || p.status === 'Out of Stock') && (
+                                                        <span style={{ color: '#ef4444', fontSize: '0.75rem', fontWeight: 900, textTransform: 'uppercase' }}>OUT OF STOCK</span>
+                                                    )}
+                                                </div>
+                                                <div className="product-actions">
+                                                    <button
+                                                        onClick={(e) => toggleWishlist(e, p)}
+                                                        className={`tool-btn ${wishlist.some(item => item.id === p.id) ? 'active' : ''}`}
+                                                        title="Save to Wishlist"
+                                                    >
+                                                        <Heart
+                                                            size={18}
+                                                            fill={wishlist.some(item => item.id === p.id) ? "#E11D48" : "none"}
+                                                            color={wishlist.some(item => item.id === p.id) ? "#E11D48" : "currentColor"}
+                                                        />
+                                                    </button>
+                                                    <button className="tool-btn" title="View Details" onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        setSelectedQuickProduct(p);
+                                                        setIsQuickViewOpen(true);
+                                                    }}><Eye size={18} /></button>
+                                                    <button
+                                                        onClick={(e) => { e.stopPropagation(); handleAddToCart(p); }}
+                                                        className="add-to-cart-simple"
+                                                        disabled={p.stock === 0 || p.status === 'Out of Stock'}
+                                                        style={p.stock === 0 || p.status === 'Out of Stock' ? { background: '#94a3b8', cursor: 'not-allowed', opacity: 0.7 } : {}}
+                                                    >
+                                                        <ShoppingCart size={18} />
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <p className="p-cat">{p.category}</p>
+                                            <h3 className="p-name">{p.name}</h3>
+                                            <div className="p-rating">
+                                                <Rating
+                                                    averageRating={productReviews[p.id]?.stats?.averageRating || 0}
+                                                    totalReviews={productReviews[p.id]?.stats?.totalReviews || 0}
+                                                    size={12}
+                                                    showCount={true}
+                                                    className="product-card-rating"
+                                                />
+                                            </div>
+                                            <div className="p-footer">
+                                                <div className="p-price-group">
+                                                    <PriceDisplay product={p} size="sm" showGSTIndicator={false} />
+                                                </div>
+                                                {(p.stock === 0 || p.status === 'Out of Stock') && (
+                                                    <span style={{ color: '#ef4444', fontSize: '0.65rem', fontWeight: 900, marginRight: '0.5rem', textTransform: 'uppercase' }}>OUT OF STOCK</span>
+                                                )}
+                                                <button
+                                                    onClick={(e) => { e.stopPropagation(); handleAddToCart(p); }}
+                                                    className="add-to-cart-simple"
+                                                    disabled={p.stock === 0 || p.status === 'Out of Stock'}
+                                                    style={p.stock === 0 || p.status === 'Out of Stock' ? { background: '#94a3b8', cursor: 'not-allowed', opacity: 0.7 } : {}}
+                                                >
+                                                    <ShoppingCart size={18} />
+                                                </button>
+                                            </div>
+                                        </>
+                                    )}
                                 </div>
                             </motion.div>
                         ))}

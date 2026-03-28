@@ -1,7 +1,7 @@
 
 import { auth } from '@/modules/shared/config/firebase';
 import { authFetch } from './api';
-import { getProductPricing } from './priceUtils';
+import { getProductPricingWithGST } from './priceUtils';
 
 // Helper to get current user UID (consistent with wishlist)
 // Helper to get current user UID (syncs with Navbar state and prevents ghost sessions)
@@ -35,7 +35,8 @@ export const addToCart = async (product, selections = {}) => {
             return { success: false, message: "Sellers cannot purchase products. Please create a user account to buy.", triggerLogin: true };
         }
 
-        const { finalPrice, strikethroughPrice } = getProductPricing(product, selections);
+        // Use GST-inclusive pricing
+        const { finalPrice, strikethroughPrice, basePrice, gstPercent, gstAmount } = getProductPricingWithGST(product, selections);
 
         const variantKey = Object.values(selections).filter(Boolean).join('_');
         const cartItemId = variantKey ? `${product.id}_${variantKey.replace(/\s+/g, '')}` : product.id;
@@ -45,16 +46,25 @@ export const addToCart = async (product, selections = {}) => {
             id: cartItemId,
             sellerId: product.sellerId || null,
             name: product.name || product.title,
-            price: finalPrice,
-            originalPrice: strikethroughPrice,
+            // Store BOTH base price and product pricing fields for consistency
+            price: product.price, // Original product price field (for PriceDisplay)
+            discountPrice: product.discountPrice, // Original discount price (for PriceDisplay)
+            oldPrice: product.oldPrice, // Original old price (for PriceDisplay)
+            pricingType: product.pricingType, // Pricing type (uniform/varied)
+            sizePrices: product.sizePrices, // Size-specific prices
+            basePrice: basePrice, // Base price for backend calculations
+            priceWithGST: finalPrice, // GST-inclusive price for display
+            originalPrice: strikethroughPrice, // Strikethrough price with GST
+            gstPercent: gstPercent, // Store GST percentage
+            gstAmount: gstAmount, // Store GST amount
             imageUrl: product.imageUrl || product.image,
             quantity: 1,
             category: product.category,
             selections: {
                 color: selections.color || null,
                 size: selections.size || null,
-                storage: selections.storage?.label || selections.storage || null,
-                memory: selections.memory?.label || selections.memory || null
+                storage: selections.storage || null,  // Store complete object with priceOffset
+                memory: selections.memory || null     // Store complete object with priceOffset
             }
         };
 
@@ -90,7 +100,73 @@ export const listenToCart = (callback) => {
                 const response = await authFetch(`/consumer/${uid}/cart`);
                 const data = await response.json();
                 if (data.success) {
-                    callback(data.cart || []);
+                    const cart = data.cart || [];
+                    
+                    // Migrate old cart items to new structure
+                    const migratedCart = await Promise.all(cart.map(async (item) => {
+                        // Check if item has complete product structure
+                        const needsMigration = !item.discountPrice && !item.pricingType && !item.sizePrices;
+                        const needsSelectionFix = item.selections && (
+                            (typeof item.selections.storage === 'string') ||
+                            (typeof item.selections.memory === 'string')
+                        );
+                        
+                        if (needsMigration || needsSelectionFix) {
+                            // Fetch fresh product data
+                            try {
+                                const API_BASE = import.meta.env.PROD
+                                    ? (import.meta.env.VITE_API_BASE_URL || 'https://sellsathi-refactored.onrender.com')
+                                    : 'http://localhost:5000';
+                                const productRes = await fetch(`${API_BASE}/products/${item.productId}`);
+                                const productData = await productRes.json();
+                                
+                                if (productData.success && productData.product) {
+                                    const product = productData.product;
+                                    
+                                    // Fix selections if needed
+                                    let fixedSelections = { ...item.selections };
+                                    if (needsSelectionFix) {
+                                        // Convert string selections back to objects with priceOffset
+                                        if (typeof fixedSelections.storage === 'string' && product.storageOptions) {
+                                            const storageOption = product.storageOptions.find(opt => 
+                                                opt.label === fixedSelections.storage || opt.value === fixedSelections.storage
+                                            );
+                                            if (storageOption) {
+                                                fixedSelections.storage = storageOption;
+                                            }
+                                        }
+                                        if (typeof fixedSelections.memory === 'string' && product.memoryOptions) {
+                                            const memoryOption = product.memoryOptions.find(opt => 
+                                                opt.label === fixedSelections.memory || opt.value === fixedSelections.memory
+                                            );
+                                            if (memoryOption) {
+                                                fixedSelections.memory = memoryOption;
+                                            }
+                                        }
+                                    }
+                                    
+                                    // Merge with fresh product data
+                                    return {
+                                        ...item,
+                                        price: product.price,
+                                        discountPrice: product.discountPrice,
+                                        oldPrice: product.oldPrice,
+                                        pricingType: product.pricingType,
+                                        sizePrices: product.sizePrices,
+                                        gstPercent: product.gstPercent || 18,
+                                        storageOptions: product.storageOptions,
+                                        memoryOptions: product.memoryOptions,
+                                        selections: fixedSelections
+                                    };
+                                }
+                            } catch (error) {
+                                console.error('Error migrating cart item:', error);
+                            }
+                        }
+                        return item;
+                    }));
+                    
+                    callback(migratedCart);
                 } else {
                     callback([]);
                 }

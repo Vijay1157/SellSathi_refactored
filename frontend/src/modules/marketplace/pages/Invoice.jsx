@@ -217,6 +217,9 @@ export default function Invoice() {
                             <p style={{ color: '#000', lineHeight: '1.6', margin: 0 }}>
                                 {order.billingAddress?.addressLine || order.shippingAddress?.addressLine || order.address?.addressLine || 'N/A'}<br />
                                 {order.billingAddress?.city || order.shippingAddress?.city || order.address?.city || 'N/A'}, {order.billingAddress?.state || order.shippingAddress?.state || order.address?.state || 'Karnataka'} - {order.billingAddress?.pincode || order.shippingAddress?.pincode || order.address?.pincode || 'N/A'}<br />
+                                {(order.customerInfo?.gstNumber || order.gstNumber) && (
+                                    <><span style={{ fontWeight: '700', color: '#000' }}>GSTIN:</span> {order.customerInfo?.gstNumber || order.gstNumber}<br /></>
+                                )}
                                 <span style={{ fontWeight: '700', color: '#000' }}>State:</span> {order.billingAddress?.state || order.shippingAddress?.state || order.address?.state || 'Karnataka'}<br />
                                 <span style={{ fontWeight: '700', color: '#000' }}>State Code:</span> IN-KA<br />
                                 <span style={{ fontWeight: '700', color: '#000' }}>Place of Supply:</span> {(order.billingAddress?.state || order.shippingAddress?.state || order.address?.state || 'KARNATAKA').toUpperCase()}
@@ -329,35 +332,12 @@ export default function Invoice() {
                     </tbody>
                 </table>
 
-                {/* Details of Goods Transported */}
-                <div style={{ marginBottom: '1.5rem', paddingTop: '1rem', borderTop: '1px solid #000' }}>
-                    <h3 style={{ fontSize: '10px', fontWeight: '700', color: '#000', textAlign: 'center', marginBottom: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                        Details of Goods Transported by GTA Supplier
-                    </h3>
-                    <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '10px', border: '1px solid #000' }}>
-                        <thead>
-                            <tr style={{ borderBottom: '1px solid #000', background: '#f9fafb' }}>
-                                <th style={{ textAlign: 'left', padding: '0.5rem', color: '#000', fontWeight: '700', fontSize: '10px', border: '1px solid #000' }}>Description of<br/>Goods</th>
-                                <th style={{ textAlign: 'center', padding: '0.5rem', color: '#000', fontWeight: '700', fontSize: '10px', border: '1px solid #000' }}>Qty</th>
-                                <th style={{ textAlign: 'center', padding: '0.5rem', color: '#000', fontWeight: '700', fontSize: '10px', border: '1px solid #000' }}>Gross Weight of<br/>Consignment</th>
-                                <th style={{ textAlign: 'right', padding: '0.5rem', color: '#000', fontWeight: '700', fontSize: '10px', border: '1px solid #000' }}>Value of goods</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {order.items && order.items.map((item, index) => (
-                                <tr key={index} style={{ borderBottom: '1px solid #000' }}>
-                                    <td style={{ padding: '0.5rem', color: '#000', border: '1px solid #000' }}>{item.name || item.title || 'Product'}</td>
-                                    <td style={{ textAlign: 'center', padding: '0.5rem', color: '#000', border: '1px solid #000' }}>{(item.quantity || 1).toFixed(1)}</td>
-                                    <td style={{ textAlign: 'center', padding: '0.5rem', color: '#000', border: '1px solid #000' }}>5000.0 grams</td>
-                                    <td style={{ textAlign: 'right', padding: '0.5rem', color: '#000', border: '1px solid #000' }}>₹{((item.price || 0) * (item.quantity || 1)).toFixed(2)}</td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
-                </div>
-
                 {/* Footer */}
                 <div style={{ marginTop: '2rem', paddingTop: '1rem', borderTop: '2px solid #000', fontSize: '11px' }}>
+                    <p style={{ fontStyle: 'italic', color: '#666666', fontSize: '10px', textAlign: 'center', marginBottom: '1rem' }}>
+                        This is a computer generated invoice, no need for digital signature
+                    </p>
+                    
                     <p style={{ fontWeight: '700', marginBottom: '0.3rem', color: '#000' }}>Thank you for Shopping!</p>
                     <p style={{ color: '#000', fontSize: '10px', marginBottom: '1rem' }}>Please contact support if you have any questions.</p>
 

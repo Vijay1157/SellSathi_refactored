@@ -1,11 +1,12 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowLeft, Info, Tag, AlertCircle, Percent } from 'lucide-react';
+import { ArrowLeft, Info, Tag, AlertCircle, Percent, ChevronDown, ChevronUp } from 'lucide-react';
 import { auth } from '@/modules/shared/config/firebase';
 import { authFetch } from '@/modules/shared/utils/api';
 import { VARIANT_CONFIGS } from '@/modules/shared/config/productVariants';
 import { SELLER_CATEGORIES, getSubcategories } from '@/modules/shared/config/categories';
+import { calculatePlatformFeeBreakdown, formatPlatformFeeBreakdown, getPlatformFeeBreakdownFromConfig, calculateTotalPlatformFeePercent } from '@/modules/shared/utils/platformFeeUtils';
 
 // Extracted Components
 import ImageUploader from '../components/AddProduct/ImageUploader';
@@ -47,8 +48,16 @@ export default function AddProduct() {
     });
 
     // Fee constants
-    const PLATFORM_FEE_PERCENT = 7;
     const USER_FEE_PERCENT = 3;
+    
+    // Platform fee breakdown state
+    const [platformFeeBreakdown, setPlatformFeeBreakdown] = useState(null);
+    const [showFeeBreakdown, setShowFeeBreakdown] = useState(false);
+    
+    // Calculate platform fee percent from breakdown (default 3.5%)
+    const PLATFORM_FEE_PERCENT = platformFeeBreakdown 
+        ? calculateTotalPlatformFeePercent(platformFeeBreakdown) 
+        : 3.5;
 
     // Seller GST status
     const [sellerHasGST, setSellerHasGST] = useState(false);
@@ -78,12 +87,17 @@ export default function AddProduct() {
 
     const [categoryGstRates, setCategoryGstRates] = useState(CATEGORY_GST_RATES_DEFAULT);
 
-    // Load seller profile to check GST status + fetch admin category GST rates
+    // Load seller profile to check GST status + fetch admin category GST rates + platform fee breakdown
     useEffect(() => {
-        // Fetch admin-configured GST rates
+        // Fetch admin-configured GST rates and platform fee breakdown
         import('@/modules/shared/utils/api').then(({ authFetch }) => {
             authFetch('/admin/config/public').then(r => r.json()).then(d => {
-                if (d.success && d.config?.categoryGstRates) setCategoryGstRates(d.config.categoryGstRates);
+                if (d.success && d.config) {
+                    if (d.config.categoryGstRates) setCategoryGstRates(d.config.categoryGstRates);
+                    if (d.config.platformFeeBreakdown) {
+                        setPlatformFeeBreakdown(getPlatformFeeBreakdownFromConfig(d.config));
+                    }
+                }
             }).catch(() => {});
         });
 
@@ -383,37 +397,137 @@ export default function AddProduct() {
                                     </div>
                                 </div>
 
-                                {/* GST, Platform Row */}
-                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginTop: '1.5rem' }}>
-                                        <div>
-                                            <label style={sty.label}>
-                                                <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                                                    <Percent size={14} /> GST Percent (%) <span style={{ color: 'red' }}>*</span>
-                                                </span>
-                                            </label>
-                                            <div style={{ position: 'relative' }}>
-                                                <input type="number" placeholder="e.g. 18" required min="0" max="100" style={sty.priceInput}
-                                                    value={product.gstPercent} onChange={e => setProduct({ ...product, gstPercent: e.target.value })} 
-                                                    readOnly={!sellerHasGST} />
-                                                <span style={{ position: 'absolute', right: '0.75rem', top: '50%', transform: 'translateY(-50%)', fontWeight: 'bold', color: '#94a3b8', fontSize: '0.85rem' }}>%</span>
-                                            </div>
-                                            <p style={{ fontSize: '0.72rem', color: '#94a3b8', marginTop: '0.25rem' }}>{sellerHasGST ? 'Enter applicable GST manually' : 'Applied automatically (No GST ID linked)'}</p>
-                                        </div>
-                                    <div>
-                                        <label style={sty.label}>
-                                            <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                                                Platform Fee
-                                            </span>
-                                        </label>
-                                        <div style={{
-                                            padding: '0.7rem 1rem', border: '1.5px solid #e2e8f0',
-                                            borderRadius: '10px', background: '#f8fafc', color: '#475569',
-                                            fontWeight: 600, fontSize: '0.9rem'
-                                        }}>
-                                            {PLATFORM_FEE_PERCENT}% <span style={{ fontSize: '0.75rem', color: '#94a3b8', fontWeight: 400 }}>(fixed)</span>
-                                        </div>
-                                        <p style={{ fontSize: '0.72rem', color: '#94a3b8', marginTop: '0.25rem' }}>SellSathi platform charges</p>
+                                {/* GST Row */}
+                                <div style={{ marginTop: '1.5rem' }}>
+                                    <label style={sty.label}>
+                                        <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                            <Percent size={14} /> GST Percent (%) <span style={{ color: 'red' }}>*</span>
+                                        </span>
+                                    </label>
+                                    <div style={{ position: 'relative' }}>
+                                        <input type="number" placeholder="e.g. 18" required min="0" max="100" style={sty.priceInput}
+                                            value={product.gstPercent} onChange={e => setProduct({ ...product, gstPercent: e.target.value })} 
+                                            readOnly={!sellerHasGST} />
+                                        <span style={{ position: 'absolute', right: '0.75rem', top: '50%', transform: 'translateY(-50%)', fontWeight: 'bold', color: '#94a3b8', fontSize: '0.85rem' }}>%</span>
                                     </div>
+                                    <p style={{ fontSize: '0.72rem', color: '#94a3b8', marginTop: '0.25rem' }}>{sellerHasGST ? 'Enter applicable GST manually' : 'Applied automatically (No GST ID linked)'}</p>
+                                </div>
+
+                                {/* Platform Fee Breakdown */}
+                                <div style={{ marginTop: '1.5rem' }}>
+                                    <div 
+                                        onClick={() => setShowFeeBreakdown(!showFeeBreakdown)}
+                                        style={{
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'space-between',
+                                            padding: '0.85rem 1rem',
+                                            border: '1.5px solid #e2e8f0',
+                                            borderRadius: '10px',
+                                            background: '#f8fafc',
+                                            cursor: 'pointer',
+                                            transition: 'all 0.2s'
+                                        }}
+                                    >
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                            <Tag size={16} style={{ color: 'var(--primary)' }} />
+                                            <span style={{ fontWeight: 600, fontSize: '0.9rem', color: '#475569' }}>
+                                                Platform Fee Breakdown
+                                            </span>
+                                        </div>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                                            <span style={{ fontWeight: 700, fontSize: '0.95rem', color: 'var(--primary)' }}>
+                                                {PLATFORM_FEE_PERCENT}%
+                                            </span>
+                                            {showFeeBreakdown ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
+                                        </div>
+                                    </div>
+                                    
+                                    <AnimatePresence>
+                                        {showFeeBreakdown && platformFeeBreakdown && product.price && (
+                                            <motion.div
+                                                initial={{ opacity: 0, height: 0 }}
+                                                animate={{ opacity: 1, height: 'auto' }}
+                                                exit={{ opacity: 0, height: 0 }}
+                                                style={{
+                                                    marginTop: '0.75rem',
+                                                    padding: '1rem',
+                                                    border: '1px solid #e2e8f0',
+                                                    borderRadius: '10px',
+                                                    background: 'white'
+                                                }}
+                                            >
+                                                <p style={{ fontSize: '0.75rem', color: '#94a3b8', marginBottom: '0.75rem', fontWeight: 500 }}>
+                                                    Based on product price: ₹{Number(product.price).toLocaleString()}
+                                                </p>
+                                                {(() => {
+                                                    const basePrice = parseFloat(product.price) || 0;
+                                                    const breakdown = calculatePlatformFeeBreakdown(basePrice, platformFeeBreakdown);
+                                                    const items = formatPlatformFeeBreakdown(breakdown);
+                                                    
+                                                    return (
+                                                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                                                            {items.map((item) => (
+                                                                <div key={item.key} style={{
+                                                                    display: 'flex',
+                                                                    justifyContent: 'space-between',
+                                                                    alignItems: 'center',
+                                                                    padding: '0.5rem 0.75rem',
+                                                                    background: '#f8fafc',
+                                                                    borderRadius: '6px'
+                                                                }}>
+                                                                    <div style={{ flex: 1 }}>
+                                                                        <div style={{ fontSize: '0.82rem', fontWeight: 600, color: '#334155' }}>
+                                                                            {item.label}
+                                                                        </div>
+                                                                        <div style={{ fontSize: '0.7rem', color: '#94a3b8', marginTop: '2px' }}>
+                                                                            {item.description}
+                                                                        </div>
+                                                                    </div>
+                                                                    <div style={{ textAlign: 'right', marginLeft: '1rem' }}>
+                                                                        <div style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--primary)' }}>
+                                                                            ₹{item.amount.toFixed(2)}
+                                                                        </div>
+                                                                        <div style={{ fontSize: '0.7rem', color: '#94a3b8' }}>
+                                                                            {item.percent}%
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+                                                            ))}
+                                                            <div style={{
+                                                                display: 'flex',
+                                                                justifyContent: 'space-between',
+                                                                alignItems: 'center',
+                                                                padding: '0.75rem',
+                                                                background: 'rgba(99,102,241,0.08)',
+                                                                borderRadius: '6px',
+                                                                marginTop: '0.25rem',
+                                                                borderTop: '2px solid var(--primary)'
+                                                            }}>
+                                                                <span style={{ fontSize: '0.88rem', fontWeight: 700, color: '#334155' }}>
+                                                                    Total Platform Fee
+                                                                </span>
+                                                                <div style={{ textAlign: 'right' }}>
+                                                                    <div style={{ fontSize: '0.95rem', fontWeight: 700, color: 'var(--primary)' }}>
+                                                                        ₹{breakdown.total.amount.toFixed(2)}
+                                                                    </div>
+                                                                    <div style={{ fontSize: '0.72rem', color: '#94a3b8' }}>
+                                                                        {breakdown.total.percent}%
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    );
+                                                })()}
+                                            </motion.div>
+                                        )}
+                                    </AnimatePresence>
+                                    
+                                    {!product.price && (
+                                        <p style={{ fontSize: '0.72rem', color: '#94a3b8', marginTop: '0.5rem' }}>
+                                            Enter product price to see fee breakdown
+                                        </p>
+                                    )}
                                 </div>
                             </div>
 

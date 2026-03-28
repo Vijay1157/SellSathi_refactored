@@ -51,7 +51,7 @@ const getAdminProfile = async (req, res) => {
 const updateAdminProfile = async (req, res) => {
     try {
         const uid = req.user.uid;
-        const { name, dateOfBirth, address, websiteName, websiteInfo, adminEmail, phone, defaultPlatformFeePercent, defaultGstPercent, defaultShippingHandlingPercent, categoryGstRates } = req.body;
+        const { name, dateOfBirth, address, websiteName, websiteInfo, adminEmail, phone, defaultPlatformFeePercent, defaultGstPercent, defaultShippingHandlingPercent, categoryGstRates, platformFeeBreakdown } = req.body;
         
         // Validate required fields — name only required for profile updates, not settings-only updates
         if (name !== undefined && (!name || !name.trim())) {
@@ -63,6 +63,25 @@ const updateAdminProfile = async (req, res) => {
             const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
             if (!emailRegex.test(adminEmail.trim())) {
                 return res.status(400).json({ success: false, message: "Invalid email format" });
+            }
+        }
+        
+        // Validate platform fee breakdown if provided
+        if (platformFeeBreakdown && typeof platformFeeBreakdown === 'object') {
+            const breakdown = {};
+            let total = 0;
+            
+            for (const [key, percent] of Object.entries(platformFeeBreakdown)) {
+                const val = parseFloat(percent);
+                if (isNaN(val) || val < 0 || val > 10) {
+                    return res.status(400).json({ success: false, message: `${key} must be between 0 and 10` });
+                }
+                breakdown[key] = val;
+                total += val;
+            }
+            
+            if (total > 20) {
+                return res.status(400).json({ success: false, message: "Total platform fee cannot exceed 20%" });
             }
         }
         
@@ -99,6 +118,20 @@ const updateAdminProfile = async (req, res) => {
         if (websiteInfo !== undefined) updateData.websiteInfo = websiteInfo || 'Your Trusted E-Commerce Platform';
         if (adminEmail !== undefined) updateData.adminEmail = adminEmail ? adminEmail.trim() : '';
         
+        // Add platform fee breakdown if provided
+        // IMPORTANT: We always set this field to replace it completely (not merge)
+        if (platformFeeBreakdown !== undefined && typeof platformFeeBreakdown === 'object') {
+            const validated = {};
+            for (const [key, percent] of Object.entries(platformFeeBreakdown)) {
+                const val = parseFloat(percent);
+                if (!isNaN(val) && val >= 0 && val <= 10) {
+                    validated[key] = val;
+                }
+            }
+            // Always set it, even if empty, to replace the field completely
+            updateData.platformFeeBreakdown = validated;
+        }
+        
         // Add default charges if provided
         if (defaultPlatformFeePercent !== undefined) {
             updateData.defaultPlatformFeePercent = parseFloat(defaultPlatformFeePercent);
@@ -109,25 +142,37 @@ const updateAdminProfile = async (req, res) => {
         if (defaultShippingHandlingPercent !== undefined) {
             updateData.defaultShippingHandlingPercent = parseFloat(defaultShippingHandlingPercent);
         }
-        if (categoryGstRates && typeof categoryGstRates === 'object') {
+        // Add category GST rates if provided
+        // IMPORTANT: We always set this field to replace it completely (not merge)
+        if (categoryGstRates !== undefined && typeof categoryGstRates === 'object') {
             // Validate all values are numbers between 0-100
             const validated = {};
             for (const [cat, rate] of Object.entries(categoryGstRates)) {
                 const r = parseFloat(rate);
                 if (!isNaN(r) && r >= 0 && r <= 100) validated[cat] = r;
             }
-            if (Object.keys(validated).length > 0) updateData.categoryGstRates = validated;
+            // Always set it, even if empty, to replace the field completely
+            updateData.categoryGstRates = validated;
         }
         
         // Update or create admin profile
-        // Use set with merge for most fields, but categoryGstRates needs direct replacement
-        if (categoryGstRates && typeof categoryGstRates === 'object') {
-            // First set the other fields with merge
-            await db.collection("adminProfiles").doc(uid).set(updateData, { merge: true });
-            // Then explicitly replace categoryGstRates (not merge)
-            await db.collection("adminProfiles").doc(uid).update({ categoryGstRates: updateData.categoryGstRates });
+        // Check if document exists first
+        const adminDocRef = db.collection("adminProfiles").doc(uid);
+        const adminDocSnap = await adminDocRef.get();
+        
+        console.log(`[UpdateAdminProfile] Saving data for admin ${uid}:`, {
+            exists: adminDocSnap.exists,
+            platformFeeBreakdown: updateData.platformFeeBreakdown,
+            categoryGstRates: updateData.categoryGstRates,
+            defaultShippingHandlingPercent: updateData.defaultShippingHandlingPercent
+        });
+        
+        if (adminDocSnap.exists) {
+            // Document exists, use update to replace fields completely
+            await adminDocRef.update(updateData);
         } else {
-            await db.collection("adminProfiles").doc(uid).set(updateData, { merge: true });
+            // Document doesn't exist, create it
+            await adminDocRef.set(updateData);
         }
 
         // Update phone in users collection if provided
@@ -138,7 +183,14 @@ const updateAdminProfile = async (req, res) => {
         // Invalidate admin config cache so changes reflect immediately
         invalidateAdminConfig();
         
-        console.log(`[UpdateAdminProfile] Profile updated for admin ${uid}`);
+        // Verify the data was saved by reading it back
+        const verifyDoc = await adminDocRef.get();
+        const savedData = verifyDoc.data();
+        console.log(`[UpdateAdminProfile] Verified saved data:`, {
+            platformFeeBreakdown: savedData.platformFeeBreakdown,
+            categoryGstRates: savedData.categoryGstRates ? Object.keys(savedData.categoryGstRates).length + ' categories' : 'none',
+            defaultShippingHandlingPercent: savedData.defaultShippingHandlingPercent
+        });
         
         return res.status(200).json({ 
             success: true, 

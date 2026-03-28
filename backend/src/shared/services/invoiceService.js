@@ -121,6 +121,8 @@ exports.generateInvoice = async (order) => {
             // Billed To (Customer - Billing Address)
             yPos = 215;
             const billingAddr = order.billingAddress || order.shippingAddress || {};
+            const customerGST = order.customerInfo?.gstNumber || order.gstNumber || null;
+            
             doc.fontSize(9).font('Helvetica-Bold').text('Billed To', col2, yPos);
             yPos += 15;
             doc.fontSize(8).font('Helvetica-Bold').text(getNameFromAddress(billingAddr), col2, yPos);
@@ -130,6 +132,13 @@ exports.generateInvoice = async (order) => {
             yPos += 10;
             doc.text(`${billingAddr.city || 'N/A'}, ${billingAddr.state || 'N/A'} - ${billingAddr.pincode || 'N/A'}`, col2, yPos, { width: 240 });
             yPos += 12;
+            
+            // Add GST Number if available
+            if (customerGST) {
+                doc.font('Helvetica-Bold').text(`GSTIN : ${customerGST}`, col2, yPos);
+                yPos += 10;
+            }
+            
             doc.font('Helvetica-Bold').text(`State : ${billingAddr.state || 'Karnataka'}`, col2, yPos);
             yPos += 10;
             doc.text(`State Code : IN-KA`, col2, yPos);
@@ -137,7 +146,7 @@ exports.generateInvoice = async (order) => {
             doc.text(`Place of Supply : ${(billingAddr.state || 'KARNATAKA').toUpperCase()}`, col2, yPos);
 
             // Shipped From and Shipped To Section
-            yPos = 330;
+            yPos = 345; // Increased from 330 to give more space
             doc.moveTo(30, yPos).lineTo(565, yPos).strokeColor('#cccccc').lineWidth(0.5).stroke();
             yPos += 10;
 
@@ -155,7 +164,7 @@ exports.generateInvoice = async (order) => {
             doc.text(`India - ${sellerAddr.pincode || '580011'}`, col1, yPos);
 
             // Shipped To (Customer - Shipping Address)
-            yPos = 345;
+            yPos = 360; // Adjusted to match Shipped From
             const shippingAddr = order.shippingAddress || billingAddr;
             doc.fontSize(9).font('Helvetica-Bold').text('Shipped To', col2, yPos);
             yPos += 15;
@@ -169,7 +178,7 @@ exports.generateInvoice = async (order) => {
             doc.text(`India - ${shippingAddr.pincode || 'N/A'}`, col2, yPos);
 
             // Items Table
-            yPos = 430;
+            yPos = 450; // Increased from 430 to give more space after addresses
             doc.moveTo(30, yPos).lineTo(565, yPos).strokeColor('#000000').lineWidth(1).stroke();
             yPos += 8;
 
@@ -249,38 +258,27 @@ exports.generateInvoice = async (order) => {
             yPos += 15;
             doc.moveTo(30, yPos).lineTo(565, yPos).strokeColor('#000000').lineWidth(1).stroke();
 
-            // Details of Goods Transported Section
-            yPos += 15;
-            doc.fontSize(9).font('Helvetica-Bold').text('DETAILS OF GOODS TRANSPORTED BY GTA SUPPLIER', 30, yPos, { align: 'center', width: 535 });
+            // Footer Section
+            yPos += 20;
+            
+            // Computer Generated Invoice Message
+            doc.fontSize(7).font('Helvetica-Oblique')
+                .fillColor('#666666')
+                .text('This is a computer generated invoice, no need for digital signature', 30, yPos, { align: 'center', width: 535 });
             
             yPos += 20;
-            doc.moveTo(30, yPos).lineTo(565, yPos).strokeColor('#000000').lineWidth(0.5).stroke();
-            yPos += 8;
-
-            doc.fontSize(8).font('Helvetica-Bold');
-            doc.text('Description of', 35, yPos);
-            doc.text('Qty', 220, yPos);
-            doc.text('Gross Weight of', 280, yPos);
-            doc.text('Value of goods', 460, yPos);
+            doc.fillColor('#000000'); // Reset color
+            doc.fontSize(8).font('Helvetica-Bold').text('Thank you for Shopping!', 30, yPos);
+            yPos += 15;
+            doc.fontSize(7).font('Helvetica').text('Please contact support if you have any questions.', 30, yPos);
+            
+            // Company footer
+            yPos += 30;
+            doc.fontSize(7).font('Helvetica-Bold').text(`${COMPANY_INFO.name} - Empowering Local Sellers`, 30, yPos, { align: 'center', width: 535 });
+            yPos += 12;
+            doc.fontSize(6).font('Helvetica').text(`${COMPANY_INFO.addressLine1}, ${COMPANY_INFO.city}, ${COMPANY_INFO.state} - ${COMPANY_INFO.pincode}`, 30, yPos, { align: 'center', width: 535 });
             yPos += 10;
-            doc.text('Goods', 35, yPos);
-            doc.text('Consignment', 280, yPos);
-
-            yPos += 8;
-            doc.moveTo(30, yPos).lineTo(565, yPos).strokeColor('#000000').lineWidth(0.5).stroke();
-
-            // Goods description
-            items.forEach((item) => {
-                yPos += 10;
-                doc.fontSize(7).font('Helvetica');
-                doc.text(item.name || item.title || 'Product', 35, yPos, { width: 180 });
-                doc.text((item.quantity || 1).toFixed(1), 220, yPos);
-                doc.text('5000.0 grams', 280, yPos);
-                doc.text(((item.price || 0) * (item.quantity || 1)).toFixed(1), 460, yPos);
-                yPos += 15;
-            });
-
-            doc.moveTo(30, yPos).lineTo(565, yPos).strokeColor('#000000').lineWidth(0.5).stroke();
+            doc.text(`GSTIN: ${COMPANY_INFO.gstin} | PAN: ${COMPANY_INFO.pan}`, 30, yPos, { align: 'center', width: 535 });
 
             doc.end();
 

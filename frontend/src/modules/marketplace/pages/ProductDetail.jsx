@@ -13,7 +13,7 @@ import ProductGallery from '../components/ProductDetail/ProductGallery';
 import ProductInfo from '../components/ProductDetail/ProductInfo';
 import ProductReviews from '../components/ProductDetail/ProductReviews';
 import RelatedProducts from '../components/ProductDetail/RelatedProducts';
-import { getProductPricing } from '@/modules/shared/utils/priceUtils';
+import { getProductPricingWithGST } from '@/modules/shared/utils/priceUtils';
 import { fetchProductReviews, calculateRatingStats } from '@/modules/shared/utils/reviewUtils';
 import { getFrequentlyBoughtTogether, getSimilarProducts } from '@/modules/shared/utils/recommendationUtils';
 
@@ -49,7 +49,7 @@ export default function ProductDetail() {
 
     // Consolidated Price Calculation
     const productPriceInfo = useMemo(() => {
-        return getProductPricing(product, {
+        return getProductPricingWithGST(product, {
             size: selectedSize,
             storage: selectedStorage,
             memory: selectedMemory,
@@ -330,6 +330,9 @@ export default function ProductDetail() {
         };
     }, [id]);
 
+    // Note: Buy Now redirect after login is handled by AuthModal.jsx
+    // No need for duplicate logic here
+
 
     const calculateStats = (revs) => {
         const stats = calculateRatingStats(revs);
@@ -425,6 +428,40 @@ export default function ProductDetail() {
         let localUser = null;
         try { localUser = JSON.parse(localStorage.getItem('user')); } catch (e) {}
 
+        // Check if user is logged in
+        if (!localUser && !auth.currentUser) {
+            // Store Buy Now product data in localStorage before showing login modal
+            const selections = {
+                color: selectedColor,
+                size: selectedSize,
+                storage: selectedStorage,
+                memory: selectedMemory,
+                purchaseOption: purchaseOption
+            };
+
+            const { finalPrice, strikethroughPrice, basePrice, gstPercent } = getProductPricingWithGST(product, selections);
+
+            const buyNowItem = {
+                ...product,
+                id: product.id,
+                productId: product.id,
+                sellerId: product.sellerId || null,
+                name: product.name || product.title,
+                price: finalPrice,
+                originalPrice: strikethroughPrice,
+                quantity: 1,
+                imageUrl: product.image || product.imageUrl,
+                selections: selections
+            };
+
+            // Store in localStorage
+            localStorage.setItem('pendingBuyNow', JSON.stringify(buyNowItem));
+            
+            // Trigger login modal
+            window.dispatchEvent(new Event('openLoginModal'));
+            return;
+        }
+
         if (localUser && (localUser.role === 'SELLER' || localUser.role === 'ADMIN')) {
             alert("Sellers and Admins cannot purchase products. Please create a user account to buy.");
             return;
@@ -439,7 +476,7 @@ export default function ProductDetail() {
         };
 
         // Calculate correct prices based on selections (same as addToCart)
-        const { finalPrice, strikethroughPrice } = getProductPricing(product, selections);
+        const { finalPrice, strikethroughPrice, basePrice, gstPercent } = getProductPricingWithGST(product, selections);
 
         // Create a temporary cart item for Buy Now (don't add to actual cart)
         const buyNowItem = {

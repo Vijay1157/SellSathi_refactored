@@ -115,11 +115,18 @@ const saveAddress = async (req, res) => {
             });
         }
 
-        // Add or update address
-        const existingIdx = addresses.findIndex(a => a.id === address.id);
-        if (existingIdx > -1) {
-            addresses[existingIdx] = address;
+        // Check if this is an update (has id) or new address
+        if (address.id !== undefined && address.id !== null) {
+            // Update existing address
+            const existingIdx = addresses.findIndex(a => String(a.id) === String(address.id));
+            if (existingIdx > -1) {
+                addresses[existingIdx] = { ...address };
+            } else {
+                // ID not found, add as new
+                addresses.push({ ...address, id: Date.now().toString() });
+            }
         } else {
+            // New address - generate ID
             addresses.push({ ...address, id: Date.now().toString() });
         }
 
@@ -153,17 +160,23 @@ const getWishlist = async (req, res) => {
                     const productData = productDoc.data();
                     // Skip admin-removed products
                     if (productData.adminRemoved) continue;
-                    // Merge wishlist item with fresh product data (prioritize fresh data)
+                    // Merge wishlist item with fresh product data (prioritize fresh data for pricing)
                     items.push({
                         id: doc.id,
                         ...wishlistItem,
-                        // Update with fresh data - always use database rating, not wishlist cache
+                        // Update with fresh pricing data - COMPLETE structure for PriceDisplay
+                        price: productData.price || wishlistItem.price,
+                        discountPrice: productData.discountPrice !== undefined ? productData.discountPrice : wishlistItem.discountPrice,
+                        oldPrice: productData.oldPrice || wishlistItem.oldPrice,
+                        pricingType: productData.pricingType || wishlistItem.pricingType || 'uniform',
+                        sizePrices: productData.sizePrices || wishlistItem.sizePrices,
+                        gstPercent: productData.gstPercent || wishlistItem.gstPercent || 18,
+                        // Update other fresh data
                         rating: productData.rating !== undefined ? productData.rating : 0,
                         reviewCount: productData.reviewCount || 0,
-                        price: productData.price || wishlistItem.price,
-                        oldPrice: productData.oldPrice || wishlistItem.oldPrice,
                         stock: productData.stock,
-                        status: productData.status
+                        status: productData.status,
+                        discount: productData.discount || wishlistItem.discount
                     });
                 } else {
                     // Product no longer exists, keep wishlist item as is
@@ -232,12 +245,17 @@ const deleteAddress = async (req, res) => {
         const doc = await userRef.get();
         let addresses = doc.data()?.addresses || [];
 
-        addresses = addresses.filter(a => a.id !== Number(addressId) && a.id !== addressId);
+        // Filter out the address by id (string or number comparison)
+        addresses = addresses.filter(a => {
+            // Compare both as strings and numbers to handle different ID formats
+            return String(a.id) !== String(addressId) && a.id !== Number(addressId) && a.id !== addressId;
+        });
         
         await userRef.update({ addresses });
         cache.invalidate(`addresses_${uid}`);
-        return res.json({ success: true, message: "Address deleted" });
+        return res.json({ success: true, message: "Address deleted", addresses });
     } catch (error) {
+        console.error('Error deleting address:', error);
         return res.status(500).json({ success: false, message: "Failed to delete address" });
     }
 };
