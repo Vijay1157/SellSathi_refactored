@@ -3,7 +3,7 @@ const { db } = require('../../config/firebase');
 const cache = require('../../utils/cache');
 
 const ADMIN_CONFIG_CACHE_KEY = 'adminConfig';
-const ADMIN_CONFIG_CACHE_TTL = 30 * 60 * 1000; // 30 minutes
+const ADMIN_CONFIG_CACHE_TTL = 5 * 60 * 1000; // 5 minutes (reduced from 30 for faster updates)
 
 /**
  * Get admin configuration
@@ -73,6 +73,8 @@ const getAdminConfig = async () => {
         }
 
         console.log('[AdminConfig] Fetched admin profile from database:', {
+            exists: adminProfileDoc.exists,
+            hasplatformFeeBreakdown: !!adminProfile.platformFeeBreakdown,
             platformFeeBreakdown: adminProfile.platformFeeBreakdown,
             defaultShippingHandlingPercent: adminProfile.defaultShippingHandlingPercent,
             categoryGstRatesCount: adminProfile.categoryGstRates ? Object.keys(adminProfile.categoryGstRates).length : 0

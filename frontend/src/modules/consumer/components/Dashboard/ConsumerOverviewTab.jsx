@@ -240,12 +240,31 @@ export default function ConsumerOverviewTab({
                                 </div>
                             )}
 
-                            {/* Payment Method */}
+                            {/* Payment Method & Status */}
                             {selectedOrder.paymentMethod && (
                                 <div className="mb-4">
-                                    <h4 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Payment Method</h4>
+                                    <h4 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Payment Details</h4>
                                     <div className="p-2 bg-gray-50 rounded">
-                                        <p className="text-sm font-bold text-gray-900 uppercase leading-tight">{selectedOrder.paymentMethod}</p>
+                                        <div className="flex justify-between items-center mb-1">
+                                            <p className="text-xs text-gray-500 leading-tight">Method:</p>
+                                            <p className="text-sm font-bold text-gray-900 uppercase leading-tight">{selectedOrder.paymentMethod}</p>
+                                        </div>
+                                        <div className="flex justify-between items-center">
+                                            <p className="text-xs text-gray-500 leading-tight">Status:</p>
+                                            <p className={`text-sm font-bold leading-tight ${
+                                                selectedOrder.paymentStatus === 'Completed' || selectedOrder.paymentStatus === 'Collected' 
+                                                    ? 'text-green-600' 
+                                                    : 'text-amber-600'
+                                            }`}>
+                                                {selectedOrder.paymentStatus === 'Completed' 
+                                                    ? 'Paid Online' 
+                                                    : selectedOrder.paymentStatus === 'Collected'
+                                                    ? 'Payment Collected'
+                                                    : selectedOrder.paymentMethod === 'COD' 
+                                                    ? 'Pay on Delivery' 
+                                                    : 'Paid Online'}
+                                            </p>
+                                        </div>
                                         {selectedOrder.paymentId && <p className="text-xs text-gray-500 mt-1 leading-tight">Payment ID: {selectedOrder.paymentId}</p>}
                                     </div>
                                 </div>

@@ -334,6 +334,50 @@ export default function Invoice() {
 
                 {/* Footer */}
                 <div style={{ marginTop: '2rem', paddingTop: '1rem', borderTop: '2px solid #000', fontSize: '11px' }}>
+                    {/* Payment Information */}
+                    <div style={{ 
+                        padding: '1rem', 
+                        background: order.paymentStatus === 'Completed' || order.paymentStatus === 'Collected' 
+                            ? 'rgba(16, 185, 129, 0.1)' 
+                            : 'rgba(245, 158, 11, 0.1)',
+                        border: `1px solid ${
+                            order.paymentStatus === 'Completed' || order.paymentStatus === 'Collected'
+                                ? 'rgba(16, 185, 129, 0.3)' 
+                                : 'rgba(245, 158, 11, 0.3)'
+                        }`,
+                        borderRadius: '8px',
+                        marginBottom: '1rem',
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center'
+                    }}>
+                        <div>
+                            <p style={{ margin: 0, fontSize: '10px', color: '#666', fontWeight: '600' }}>PAYMENT METHOD</p>
+                            <p style={{ margin: '0.25rem 0 0 0', fontSize: '12px', fontWeight: '700', color: '#000', textTransform: 'uppercase' }}>
+                                {order.paymentMethod || 'N/A'}
+                            </p>
+                        </div>
+                        <div style={{ textAlign: 'right' }}>
+                            <p style={{ margin: 0, fontSize: '10px', color: '#666', fontWeight: '600' }}>PAYMENT STATUS</p>
+                            <p style={{ 
+                                margin: '0.25rem 0 0 0', 
+                                fontSize: '12px', 
+                                fontWeight: '700',
+                                color: order.paymentStatus === 'Completed' || order.paymentStatus === 'Collected' 
+                                    ? '#059669' 
+                                    : '#d97706'
+                            }}>
+                                {order.paymentStatus === 'Completed' 
+                                    ? 'PAID ONLINE' 
+                                    : order.paymentStatus === 'Collected'
+                                    ? 'PAYMENT COLLECTED'
+                                    : order.paymentMethod === 'COD' 
+                                    ? 'PAY ON DELIVERY' 
+                                    : 'PAID ONLINE'}
+                            </p>
+                        </div>
+                    </div>
+                    
                     <p style={{ fontStyle: 'italic', color: '#666666', fontSize: '10px', textAlign: 'center', marginBottom: '1rem' }}>
                         This is a computer generated invoice, no need for digital signature
                     </p>

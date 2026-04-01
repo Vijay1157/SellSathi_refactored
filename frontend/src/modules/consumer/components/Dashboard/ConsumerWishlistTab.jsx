@@ -1,10 +1,9 @@
 import { useNavigate } from 'react-router-dom';
-import { Heart, ShoppingCart, Eye } from 'lucide-react';
+import { Heart } from 'lucide-react';
 import { motion } from 'framer-motion';
-import Rating from '@/modules/shared/components/common/Rating';
 import PriceDisplay from '@/modules/shared/components/common/PriceDisplay';
 
-export default function ConsumerWishlistTab({ wishlist, onRemoveFromWishlist, productReviews = {}, handleAddToCart, openQuickView }) {
+export default function ConsumerWishlistTab({ wishlist, onRemoveFromWishlist }) {
     const navigate = useNavigate();
 
     return (
@@ -59,18 +58,6 @@ export default function ConsumerWishlistTab({ wishlist, onRemoveFromWishlist, pr
                                                 color="#ef4444"
                                             />
                                         </button>
-                                        {openQuickView && (
-                                            <button
-                                                onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    openQuickView(e, product);
-                                                }}
-                                                className="tool-btn"
-                                                title="Quick View"
-                                            >
-                                                <Eye size={18} />
-                                            </button>
-                                        )}
                                     </div>
                                 </div>
                                 <div className="card-info">
@@ -79,32 +66,8 @@ export default function ConsumerWishlistTab({ wishlist, onRemoveFromWishlist, pr
                                     </div>
                                     <h3 className="title">{product.name}</h3>
 
-                                    <div className="rating-row">
-                                        <Rating
-                                            averageRating={productReviews[product.id]?.stats?.averageRating || 0}
-                                            totalReviews={productReviews[product.id]?.stats?.totalReviews || 0}
-                                            size={12}
-                                            showCount={true}
-                                            className="home-product-rating"
-                                        />
-                                    </div>
-
                                     <div className="info-bottom">
                                         <PriceDisplay product={product} size="sm" showGSTIndicator={false} />
-                                        {handleAddToCart && (
-                                            <button
-                                                onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    handleAddToCart(e, product);
-                                                }}
-                                                className="add-to-cart-simple"
-                                                title="Add to Cart"
-                                                disabled={product.stock === 0 || product.status === 'Out of Stock'}
-                                                style={product.stock === 0 || product.status === 'Out of Stock' ? { opacity: 0.5, cursor: 'not-allowed', background: '#94a3b8' } : {}}
-                                            >
-                                                <ShoppingCart size={18} />
-                                            </button>
-                                        )}
                                     </div>
                                 </div>
                             </motion.div>
