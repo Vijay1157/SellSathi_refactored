@@ -37,24 +37,31 @@ const getAdminConfig = async () => {
         }
 
         // Find the admin who has an adminProfiles document with actual settings
+        // Prefer the most recently updated profile
         let adminUid = null;
         let adminProfile = {};
         let userData = {};
+        let latestUpdate = null;
 
         for (const doc of usersSnap.docs) {
             const uid = doc.id;
             const profileDoc = await db.collection("adminProfiles").doc(uid).get();
             if (profileDoc.exists) {
                 const profileData = profileDoc.data();
-                // Prefer the admin that has actual settings saved
-                if (profileData.platformFeeBreakdown || profileData.categoryGstRates || profileData.defaultShippingHandlingPercent !== undefined) {
+                const updatedAt = profileData.updatedAt?.toMillis?.() || 0;
+                
+                // Prefer the admin that has actual settings saved AND is most recently updated
+                const hasSettings = profileData.platformFeeBreakdown || profileData.categoryGstRates || profileData.defaultShippingHandlingPercent !== undefined;
+                
+                if (hasSettings && (latestUpdate === null || updatedAt > latestUpdate)) {
                     adminUid = uid;
                     adminProfile = profileData;
                     userData = doc.data();
-                    console.log(`[AdminConfig] Found admin with settings: ${uid}`);
-                    break;
+                    latestUpdate = updatedAt;
+                    console.log(`[AdminConfig] Found admin with settings: ${uid}, updatedAt: ${updatedAt}`);
                 }
-                // Fall back to first admin with any profile
+                
+                // Fall back to first admin with any profile if none found yet
                 if (!adminUid) {
                     adminUid = uid;
                     adminProfile = profileData;
