@@ -68,8 +68,21 @@ const getUserOrders = async (req, res) => {
         if (cached) return res.status(200).json({ success: true, orders: cached });
 
         const snapshot = await db.collection("orders").where("userId", "==", uid).get();
-        const orders = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-        orders.sort((a, b) => (b.createdAt?.toDate?.() || 0) - (a.createdAt?.toDate?.() || 0));
+        const orders = snapshot.docs.map(doc => {
+            const data = doc.data();
+            // Convert Firestore Timestamps to ISO strings
+            return {
+                id: doc.id,
+                ...data,
+                createdAt: data.createdAt?.toDate?.() ? data.createdAt.toDate().toISOString() : data.createdAt,
+                updatedAt: data.updatedAt?.toDate?.() ? data.updatedAt.toDate().toISOString() : data.updatedAt,
+                deliveredAt: data.deliveredAt?.toDate?.() ? data.deliveredAt.toDate().toISOString() : data.deliveredAt,
+                cancelledAt: data.cancelledAt?.toDate?.() ? data.cancelledAt.toDate().toISOString() : data.cancelledAt,
+                paymentCollectedAt: data.paymentCollectedAt?.toDate?.() ? data.paymentCollectedAt.toDate().toISOString() : data.paymentCollectedAt,
+                shiprocketCreatedAt: data.shiprocketCreatedAt?.toDate?.() ? data.shiprocketCreatedAt.toDate().toISOString() : data.shiprocketCreatedAt
+            };
+        });
+        orders.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
 
         cache.set(cacheKey, orders, ORDERS_CACHE_TTL);
         return res.status(200).json({ success: true, orders });
@@ -94,9 +107,29 @@ const getOrderById = async (req, res) => {
         if (!doc.exists) {
             const query = await db.collection("orders").where("orderId", "==", orderId).limit(1).get();
             if (query.empty) return res.status(404).json({ success: false, message: "Order not found" });
-            order = { id: query.docs[0].id, ...query.docs[0].data() };
+            const data = query.docs[0].data();
+            order = {
+                id: query.docs[0].id,
+                ...data,
+                createdAt: data.createdAt?.toDate?.() ? data.createdAt.toDate().toISOString() : data.createdAt,
+                updatedAt: data.updatedAt?.toDate?.() ? data.updatedAt.toDate().toISOString() : data.updatedAt,
+                deliveredAt: data.deliveredAt?.toDate?.() ? data.deliveredAt.toDate().toISOString() : data.deliveredAt,
+                cancelledAt: data.cancelledAt?.toDate?.() ? data.cancelledAt.toDate().toISOString() : data.cancelledAt,
+                paymentCollectedAt: data.paymentCollectedAt?.toDate?.() ? data.paymentCollectedAt.toDate().toISOString() : data.paymentCollectedAt,
+                shiprocketCreatedAt: data.shiprocketCreatedAt?.toDate?.() ? data.shiprocketCreatedAt.toDate().toISOString() : data.shiprocketCreatedAt
+            };
         } else {
-            order = { id: doc.id, ...doc.data() };
+            const data = doc.data();
+            order = {
+                id: doc.id,
+                ...data,
+                createdAt: data.createdAt?.toDate?.() ? data.createdAt.toDate().toISOString() : data.createdAt,
+                updatedAt: data.updatedAt?.toDate?.() ? data.updatedAt.toDate().toISOString() : data.updatedAt,
+                deliveredAt: data.deliveredAt?.toDate?.() ? data.deliveredAt.toDate().toISOString() : data.deliveredAt,
+                cancelledAt: data.cancelledAt?.toDate?.() ? data.cancelledAt.toDate().toISOString() : data.cancelledAt,
+                paymentCollectedAt: data.paymentCollectedAt?.toDate?.() ? data.paymentCollectedAt.toDate().toISOString() : data.paymentCollectedAt,
+                shiprocketCreatedAt: data.shiprocketCreatedAt?.toDate?.() ? data.shiprocketCreatedAt.toDate().toISOString() : data.shiprocketCreatedAt
+            };
         }
 
         cache.set(cacheKey, order);
