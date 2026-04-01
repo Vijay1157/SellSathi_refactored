@@ -20,16 +20,14 @@ const getAdminConfig = async () => {
 
         console.log('[AdminConfig] Cache miss, fetching from database');
 
-        // Get the first admin user — check both "ADMIN" and "admin" role values
+        // Get ALL admin users (no limit) to find the one with settings
         let usersSnap = await db.collection("users")
             .where("role", "==", "ADMIN")
-            .limit(1)
             .get();
 
         if (usersSnap.empty) {
             usersSnap = await db.collection("users")
                 .where("role", "==", "admin")
-                .limit(1)
                 .get();
         }
 
@@ -38,13 +36,41 @@ const getAdminConfig = async () => {
             return getDefaultConfig();
         }
 
-        const adminUser = usersSnap.docs[0];
-        const adminUid = adminUser.id;
-        const userData = adminUser.data();
+        // Find the admin who has an adminProfiles document with actual settings
+        let adminUid = null;
+        let adminProfile = {};
+        let userData = {};
 
-        // Get admin profile
-        const adminProfileDoc = await db.collection("adminProfiles").doc(adminUid).get();
-        const adminProfile = adminProfileDoc.exists ? adminProfileDoc.data() : {};
+        for (const doc of usersSnap.docs) {
+            const uid = doc.id;
+            const profileDoc = await db.collection("adminProfiles").doc(uid).get();
+            if (profileDoc.exists) {
+                const profileData = profileDoc.data();
+                // Prefer the admin that has actual settings saved
+                if (profileData.platformFeeBreakdown || profileData.categoryGstRates || profileData.defaultShippingHandlingPercent !== undefined) {
+                    adminUid = uid;
+                    adminProfile = profileData;
+                    userData = doc.data();
+                    console.log(`[AdminConfig] Found admin with settings: ${uid}`);
+                    break;
+                }
+                // Fall back to first admin with any profile
+                if (!adminUid) {
+                    adminUid = uid;
+                    adminProfile = profileData;
+                    userData = doc.data();
+                }
+            }
+        }
+
+        // If no profile found at all, use first admin user
+        if (!adminUid) {
+            const firstAdmin = usersSnap.docs[0];
+            adminUid = firstAdmin.id;
+            userData = firstAdmin.data();
+            adminProfile = {};
+            console.log(`[AdminConfig] No profile found, using first admin: ${adminUid}`);
+        }
 
         console.log('[AdminConfig] Fetched admin profile from database:', {
             platformFeeBreakdown: adminProfile.platformFeeBreakdown,
