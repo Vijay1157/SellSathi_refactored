@@ -348,23 +348,27 @@ export default function AdminDashboard() {
                                             boxShadow: activeTab === t.key ? '0 4px 12px rgba(123, 77, 219, 0.25)' : 'none',
                                             whiteSpace: 'nowrap',
                                             overflow: 'hidden',
-                                            textOverflow: 'ellipsis'
+                                            textOverflow: 'ellipsis',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            gap: '0.6rem'
                                         }}
                                         onClick={() => { setActiveTab(t.key); setSearchTerm(''); }}
                                         onMouseEnter={(e) => {
                                             if (activeTab !== t.key) {
-                                                e.target.style.background = '#f8fafc';
-                                                e.target.style.borderColor = '#e2e8f0';
+                                                e.currentTarget.style.background = '#f8fafc';
+                                                e.currentTarget.style.borderColor = '#e2e8f0';
                                             }
                                         }}
                                         onMouseLeave={(e) => {
                                             if (activeTab !== t.key) {
-                                                e.target.style.background = 'white';
-                                                e.target.style.borderColor = '#f1f5f9';
+                                                e.currentTarget.style.background = 'white';
+                                                e.currentTarget.style.borderColor = '#f1f5f9';
                                             }
                                         }}
                                     >
-                                        {t.icon} {t.label}
+                                        <span style={{ display: 'flex', alignItems: 'center', flexShrink: 0 }}>{t.icon}</span>
+                                        <span>{t.label}</span>
                                     </button>
                                 ))}
                             </nav>
