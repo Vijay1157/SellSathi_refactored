@@ -15,10 +15,19 @@ exports.handleShiprocketWebhook = async (req, res) => {
         if (ordersSnap.empty) return res.status(404).json({ success: false, message: "Order not found" });
 
         const orderRef = ordersSnap.docs[0].ref;
+        const orderData = ordersSnap.docs[0].data();
+        const mappedStatus = shiprocketService.mapShiprocketStatus(current_status);
+        
         const updateData = {
-            shippingStatus: shiprocketService.mapShiprocketStatus(current_status),
+            shippingStatus: mappedStatus,
             shiprocketUpdatedAt: admin.firestore.FieldValue.serverTimestamp()
         };
+
+        // Update payment status for COD orders when delivered
+        if (mappedStatus === 'DELIVERED' && orderData.paymentMethod === 'COD') {
+            updateData.paymentStatus = 'Collected';
+            updateData.paymentCollectedAt = admin.firestore.FieldValue.serverTimestamp();
+        }
 
         if (estimated_delivery_date) updateData.estimatedDelivery = estimated_delivery_date;
         if (tracking_data) updateData.trackingEvents = admin.firestore.FieldValue.arrayUnion(...tracking_data);

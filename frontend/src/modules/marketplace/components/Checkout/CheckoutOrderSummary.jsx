@@ -19,7 +19,10 @@ export default function CheckoutOrderSummary({
         defaultPlatformFeePercent: 3.5, 
         defaultGstPercent: 18, 
         defaultShippingHandlingPercent: 0 
-    }
+    },
+    shippingFee = 0,
+    estimatingShipping = false,
+    estimatedDeliveryDays = ''
 }) {
     const [showPlatformFeeBreakdown, setShowPlatformFeeBreakdown] = useState(false);
     
@@ -27,7 +30,7 @@ export default function CheckoutOrderSummary({
     const orderTotals = calculateOrderTotalsWithGSTInclusive(selectedItems, {
         adminConfig,
         couponDiscount,
-        shippingFee: 0 // Free shipping for now
+        shippingFee: shippingFee // Use passed shipping fee
     });
     
     // Format platform fee breakdown for display
@@ -136,9 +139,23 @@ export default function CheckoutOrderSummary({
                         {/* Shipping Fee */}
                         <div className="flex justify-between items-center gap-6">
                             <span className="text-sm text-gray-500 font-medium">Shipping Fee</span>
-                            <span className="text-lg text-green-600 font-bold uppercase tracking-wide flex-shrink-0">
-                                {orderTotals.shippingFee > 0 ? `₹${Math.round(orderTotals.shippingFee).toLocaleString('en-IN')}` : 'FREE'}
-                            </span>
+                            {estimatingShipping ? (
+                                <span className="text-sm text-gray-400 italic flex items-center gap-2">
+                                    <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-primary"></div>
+                                    Calculating...
+                                </span>
+                            ) : (
+                                <div className="flex flex-col items-end">
+                                    <span className={`text-lg font-bold uppercase tracking-wide flex-shrink-0 ${shippingFee > 0 ? 'text-gray-900' : 'text-green-600'}`}>
+                                        {shippingFee > 0 ? `₹${Math.round(shippingFee).toLocaleString('en-IN')}` : 'FREE'}
+                                    </span>
+                                    {estimatedDeliveryDays && (
+                                        <span className="text-xs text-gray-400 mt-1">
+                                            Delivery: {estimatedDeliveryDays}
+                                        </span>
+                                    )}
+                                </div>
+                            )}
                         </div>
                         
                         {/* Coupon Discount */}

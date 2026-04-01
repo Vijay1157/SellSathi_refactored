@@ -49,6 +49,9 @@ const verifyPayment = async (req, res) => {
             gstNumber: customerInfo?.gstNumber || null, // Store GST at top level for easy access
             items: cartItems || [],
             total: amount || 0, paymentMethod: "RAZORPAY", paymentId: razorpay_payment_id,
+            estimatedShippingCharge: customerInfo?.estimatedShippingCharge || 0, // Store estimated charge shown to user
+            actualShippingCharge: null, // Will be updated with Shiprocket's actual charge
+            paymentStatus: "Completed", // Razorpay payment is completed immediately
             status: "Processing", createdAt: admin.firestore.FieldValue.serverTimestamp(),
         };
 
@@ -69,7 +72,16 @@ const verifyPayment = async (req, res) => {
         try {
             const shipmentResult = await shiprocketService.createShipment({ ...orderData, orderId: orderData.orderId });
             if (shipmentResult.success) {
-                await orderRef.update({ shiprocketOrderId: shipmentResult.shiprocketOrderId, shipmentId: shipmentResult.shipmentId, awbNumber: shipmentResult.awbNumber, courierName: shipmentResult.courierName, shiprocketCreatedAt: admin.firestore.FieldValue.serverTimestamp() });
+                await orderRef.update({ 
+                    shiprocketOrderId: shipmentResult.shiprocketOrderId, 
+                    shipmentId: shipmentResult.shipmentId, 
+                    awbNumber: shipmentResult.awbNumber, 
+                    courierName: shipmentResult.courierName,
+                    courierRate: shipmentResult.courierRate || null,
+                    actualShippingCharge: shipmentResult.courierRate || null, // Store actual Shiprocket charge
+                    estimatedDeliveryDays: shipmentResult.estimatedDeliveryDays || null,
+                    shiprocketCreatedAt: admin.firestore.FieldValue.serverTimestamp() 
+                });
             }
         } catch (e) {
             console.error("Shiprocket shipment logic error:", e.message);
@@ -107,7 +119,10 @@ const codOrder = async (req, res) => {
             gstNumber: customerInfo?.gstNumber || null, // Store GST at top level for easy access
             items: cartItems || [],
             total: amount || 0,
+            estimatedShippingCharge: customerInfo?.estimatedShippingCharge || 0, // Store estimated charge shown to user
+            actualShippingCharge: null, // Will be updated with Shiprocket's actual charge
             paymentMethod: "COD",
+            paymentStatus: "Pending", // COD payment is pending until delivery
             status: "Processing",
             createdAt: admin.firestore.FieldValue.serverTimestamp(),
         };
@@ -134,6 +149,9 @@ const codOrder = async (req, res) => {
                     shipmentId: shipmentResult.shipmentId,
                     awbNumber: shipmentResult.awbNumber,
                     courierName: shipmentResult.courierName,
+                    courierRate: shipmentResult.courierRate || null,
+                    actualShippingCharge: shipmentResult.courierRate || null, // Store actual Shiprocket charge
+                    estimatedDeliveryDays: shipmentResult.estimatedDeliveryDays || null,
                     shiprocketCreatedAt: admin.firestore.FieldValue.serverTimestamp()
                 });
             }

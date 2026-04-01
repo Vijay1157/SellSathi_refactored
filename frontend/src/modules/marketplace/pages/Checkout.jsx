@@ -90,12 +90,19 @@ export default function Checkout() {
             digitalSecurityFee: 1.2,
             merchantVerification: 1.0,
             transitCare: 0.8,
-            platformMaintenance: 0.5
+            platformMaintenance: 0.5,
+            qualityHandling: 0.0
         },
         defaultPlatformFeePercent: 3.5,
         defaultGstPercent: 18,
         defaultShippingHandlingPercent: 0
     });
+    
+    // Shipping estimation states
+    const [shippingFee, setShippingFee] = useState(0);
+    const [estimatingShipping, setEstimatingShipping] = useState(false);
+    const [shippingEstimated, setShippingEstimated] = useState(false);
+    const [estimatedDeliveryDays, setEstimatedDeliveryDays] = useState('');
 
     // Address selection states
     const [addressMode, setAddressMode] = useState('saved');
@@ -133,6 +140,7 @@ export default function Checkout() {
                         defaultGstPercent: data.config.defaultGstPercent ?? 18,
                         defaultShippingHandlingPercent: data.config.defaultShippingHandlingPercent ?? 0
                     });
+                    console.log('[Checkout] Admin config loaded:', data.config.platformFeeBreakdown);
                 }
             } catch (error) {
                 console.error('Failed to fetch admin config:', error);
@@ -305,6 +313,92 @@ export default function Checkout() {
             setErrors(prev => ({ ...prev, [name]: '' }));
         }
     };
+    
+    // Estimate shipping charges when address is complete
+    const estimateShippingCharges = async (address, items) => {
+        console.log('🚀 estimateShippingCharges called with:', { address, items });
+        
+        // Check if address has required fields
+        if (!address.pincode || address.pincode.length !== 6) {
+            console.log('❌ Invalid pincode:', address.pincode);
+            return;
+        }
+        
+        if (!items || items.length === 0) {
+            console.log('❌ No items:', items);
+            return;
+        }
+        
+        console.log('✅ Starting shipping estimation API call...');
+        setEstimatingShipping(true);
+        try {
+            const requestBody = {
+                shippingAddress: address,
+                cartItems: items,
+                totalWeight: items.length * 0.5 // Estimate 0.5kg per item
+            };
+            console.log('📤 Request body:', requestBody);
+            
+            const response = await authFetch('/shipping/estimate', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(requestBody)
+            });
+            
+            const data = await response.json();
+            console.log('📥 API Response:', data);
+            
+            if (data.success) {
+                setShippingFee(data.shippingCharge || 0);
+                setEstimatedDeliveryDays(data.estimatedDeliveryDays || '');
+                setShippingEstimated(true);
+                console.log('✅ Shipping estimated successfully:', {
+                    shippingCharge: data.shippingCharge,
+                    estimatedDeliveryDays: data.estimatedDeliveryDays
+                });
+            } else {
+                console.error('❌ Shipping estimation failed:', data.message);
+                setShippingFee(0);
+                setShippingEstimated(false);
+            }
+        } catch (error) {
+            console.error('❌ Error estimating shipping:', error);
+            setShippingFee(0);
+            setShippingEstimated(false);
+        } finally {
+            setEstimatingShipping(false);
+            console.log('🏁 Shipping estimation complete');
+        }
+    };
+    
+    // Trigger shipping estimation when address changes OR items load
+    useEffect(() => {
+        // Filter selected items
+        const selectedItems_filtered = checkoutItems.filter(item => 
+            selectedItems.has(item.id || item.productId)
+        );
+        
+        console.log('Shipping estimation check:', {
+            pincode: shippingAddress.pincode,
+            pincodeLength: shippingAddress.pincode?.length,
+            checkoutItemsCount: checkoutItems.length,
+            selectedItemsSize: selectedItems.size,
+            filteredItemsCount: selectedItems_filtered.length,
+            address: shippingAddress
+        });
+        
+        if (shippingAddress.pincode && shippingAddress.pincode.length === 6 && selectedItems_filtered.length > 0) {
+            console.log('✅ Triggering shipping estimation');
+            estimateShippingCharges(shippingAddress, selectedItems_filtered);
+        } else {
+            console.log('❌ Shipping estimation not triggered');
+            // Reset shipping if conditions not met
+            if (shippingFee > 0) {
+                setShippingFee(0);
+                setShippingEstimated(false);
+            }
+        }
+    }, [shippingAddress, checkoutItems, selectedItems]);
 
     const handleBillingAddressChange = (e) => {
         const { name, value } = e.target;
@@ -334,7 +428,8 @@ export default function Checkout() {
                 phone: user?.phoneNumber || user?.phone || shippingAddress.phone || '',
                 shippingAddress: shippingAddress,
                 billingAddress: finalBillingAddress,
-                gstNumber: hasGST ? cleanGST(gstNumber) : null
+                gstNumber: hasGST ? cleanGST(gstNumber) : null,
+                estimatedShippingCharge: shippingFee // Pass estimated shipping to backend
             };
 
             const createOrderResponse = await authFetch('/payment/create-order', {
@@ -385,7 +480,8 @@ export default function Checkout() {
                                 phone: user?.phoneNumber || user?.phone || shippingAddress.phone || '',
                                 shippingAddress: shippingAddress,
                                 billingAddress: finalBillingAddress,
-                                gstNumber: hasGST ? cleanGST(gstNumber) : null
+                                gstNumber: hasGST ? cleanGST(gstNumber) : null,
+                                estimatedShippingCharge: shippingFee // Pass estimated shipping to backend
                             };
                             
                             const verifyResponse = await authFetch('/payment/verify', {
@@ -503,7 +599,8 @@ export default function Checkout() {
                 phone: user?.phoneNumber || user?.phone || shippingAddress.phone || '',
                 shippingAddress: shippingAddress,
                 billingAddress: finalBillingAddress,
-                gstNumber: hasGST ? cleanGST(gstNumber) : null
+                gstNumber: hasGST ? cleanGST(gstNumber) : null,
+                estimatedShippingCharge: shippingFee // Pass estimated shipping to backend
             };
 
             const currentUser = auth.currentUser;
@@ -695,7 +792,7 @@ export default function Checkout() {
     const orderTotals = calculateOrderTotalsWithGSTInclusive(selectedCheckoutItems, {
         adminConfig,
         couponDiscount: 0, // Calculate after we get product total
-        shippingFee: 0
+        shippingFee: shippingFee // Use estimated shipping fee
     });
     
     // Calculate coupon discount on product pricing total
@@ -705,7 +802,7 @@ export default function Checkout() {
     const finalOrderTotals = calculateOrderTotalsWithGSTInclusive(selectedCheckoutItems, {
         adminConfig,
         couponDiscount: actualCouponDiscount,
-        shippingFee: 0
+        shippingFee: shippingFee // Use estimated shipping fee
     });
     
     // Use the final total from order totals calculation
@@ -1073,6 +1170,9 @@ export default function Checkout() {
                         finalTotal={finalTotal}
                         selectedItems={selectedCheckoutItems}
                         adminConfig={adminConfig}
+                        shippingFee={shippingFee}
+                        estimatingShipping={estimatingShipping}
+                        estimatedDeliveryDays={estimatedDeliveryDays}
                     />
                 </div>
             </div>

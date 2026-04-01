@@ -261,6 +261,51 @@ exports.generateInvoice = async (order) => {
             // Footer Section
             yPos += 20;
             
+            // Payment Information Box
+            const paymentBoxY = yPos;
+            const paymentBoxHeight = 35;
+            
+            // Determine payment status and color
+            const paymentStatus = order.paymentStatus || (order.paymentMethod === 'COD' ? 'Pending' : 'Completed');
+            const isPaymentComplete = paymentStatus === 'Completed' || paymentStatus === 'Collected';
+            
+            // Draw payment info box background
+            if (isPaymentComplete) {
+                doc.rect(30, paymentBoxY, 535, paymentBoxHeight)
+                   .fillAndStroke('rgba(16, 185, 129, 0.1)', 'rgba(16, 185, 129, 0.3)');
+            } else {
+                doc.rect(30, paymentBoxY, 535, paymentBoxHeight)
+                   .fillAndStroke('rgba(245, 158, 11, 0.1)', 'rgba(245, 158, 11, 0.3)');
+            }
+            
+            // Payment Method (Left)
+            doc.fillColor('#666666').fontSize(7).font('Helvetica-Bold')
+               .text('PAYMENT METHOD', 40, paymentBoxY + 8, { width: 250 });
+            doc.fillColor('#000000').fontSize(9).font('Helvetica-Bold')
+               .text((order.paymentMethod || 'N/A').toUpperCase(), 40, paymentBoxY + 18, { width: 250 });
+            
+            // Payment Status (Right)
+            let statusText;
+            if (paymentStatus === 'Completed') {
+                statusText = 'PAID ONLINE';
+            } else if (paymentStatus === 'Collected') {
+                statusText = 'PAYMENT COLLECTED';
+            } else if (order.paymentMethod === 'COD') {
+                statusText = 'PAY ON DELIVERY';
+            } else {
+                statusText = 'PAID ONLINE';
+            }
+            
+            const statusColor = isPaymentComplete ? '#059669' : '#d97706';
+            
+            doc.fillColor('#666666').fontSize(7).font('Helvetica-Bold')
+               .text('PAYMENT STATUS', 320, paymentBoxY + 8, { width: 235, align: 'right' });
+            doc.fillColor(statusColor).fontSize(9).font('Helvetica-Bold')
+               .text(statusText, 320, paymentBoxY + 18, { width: 235, align: 'right' });
+            
+            yPos += paymentBoxHeight + 15;
+            doc.fillColor('#000000'); // Reset color
+            
             // Computer Generated Invoice Message
             doc.fontSize(7).font('Helvetica-Oblique')
                 .fillColor('#666666')

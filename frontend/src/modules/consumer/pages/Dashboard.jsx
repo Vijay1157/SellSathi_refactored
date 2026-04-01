@@ -75,6 +75,13 @@ export default function ConsumerDashboard() {
                 });
 
                 try {
+                    // Fetch all dashboard data
+                    await Promise.all([
+                        fetchOrders(currentUser.uid),
+                        fetchAddresses(currentUser.uid),
+                        fetchReviewableOrders(currentUser.uid)
+                    ]);
+
                     const profileRes = await authFetch(`/consumer/${currentUser.uid}/profile`);
 
                     if (profileRes && profileRes.ok) {
@@ -520,9 +527,6 @@ export default function ConsumerDashboard() {
                             <ConsumerWishlistTab 
                                 wishlist={wishlist} 
                                 onRemoveFromWishlist={removeFromWishlist}
-                                productReviews={productReviews}
-                                handleAddToCart={handleAddToCart}
-                                openQuickView={openQuickView}
                             />
                         )}
                         {activeTab === 'address' && (
