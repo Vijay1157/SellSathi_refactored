@@ -10,7 +10,7 @@ export default function ConsumerAddressTab({ addresses, editingAddress, setEditi
             <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
                 <h2 className="text-lg font-semibold text-gray-900">Address Book</h2>
                 <button onClick={() => setEditingAddress({ label: 'Home', firstName: '', lastName: '', addressLine: '', city: '', state: '', pincode: '', phone: '', type: 'shipping' })}
-                    className="px-4 py-2 bg-primary text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors">
+                    className="px-4 py-2 bg-primary text-white rounded-lg text-sm font-medium hover:bg-[#120085] transition-colors">
                     Add New Address
                 </button>
             </div>
@@ -71,7 +71,7 @@ export default function ConsumerAddressTab({ addresses, editingAddress, setEditi
                             </div>
                         </div>
                         <div className="flex gap-3 mt-4">
-                            <button onClick={onSaveAddress} className="px-6 py-2 bg-primary text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors">Save Address</button>
+                            <button onClick={onSaveAddress} className="px-6 py-2 bg-primary text-white rounded-lg text-sm font-medium hover:bg-[#120085] transition-colors">Save Address</button>
                             <button onClick={() => setEditingAddress(null)} className="px-6 py-2 border border-gray-300 rounded-lg text-sm font-medium hover:bg-gray-50 transition-colors">Cancel</button>
                         </div>
                     </div>
@@ -82,7 +82,7 @@ export default function ConsumerAddressTab({ addresses, editingAddress, setEditi
                         <MapPin size={48} className="text-gray-300 mx-auto mb-4" />
                         <p className="text-gray-500 mb-4">No saved addresses</p>
                         <button onClick={() => setEditingAddress({ label: 'Home', firstName: '', lastName: '', addressLine: '', city: '', state: '', pincode: '', phone: '', type: 'shipping' })}
-                            className="px-6 py-2 bg-primary text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors">
+                            className="px-6 py-2 bg-primary text-white rounded-lg text-sm font-medium hover:bg-[#120085] transition-colors">
                             Add Your First Address
                         </button>
                     </div>
@@ -91,7 +91,7 @@ export default function ConsumerAddressTab({ addresses, editingAddress, setEditi
                         {/* Shipping Addresses Section */}
                         <div>
                             <div className="flex items-center gap-2 mb-4">
-                                <Package size={20} className="text-blue-600" />
+                                <Package size={20} className="text-[#3B7CF1]" />
                                 <h3 className="text-base font-bold text-gray-900">Shipping Addresses</h3>
                                 <span className="text-xs text-gray-500">({shippingAddresses.length})</span>
                             </div>
@@ -108,7 +108,7 @@ export default function ConsumerAddressTab({ addresses, editingAddress, setEditi
                                             <div key={index} className={`border rounded-lg p-4 transition-colors ${address.isDefault ? 'border-blue-500 bg-blue-50/30' : 'border-gray-200 hover:border-primary'}`}>
                                                 <div className="flex items-start justify-between mb-3">
                                                     <div className="flex items-center gap-2">
-                                                        <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center"><Package size={16} className="text-blue-600" /></div>
+                                                        <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center"><Package size={16} className="text-[#3B7CF1]" /></div>
                                                         <div className="flex items-center gap-2">
                                                             <span className="font-semibold text-gray-900">{address.label}</span>
                                                             {address.isDefault && (
@@ -202,3 +202,5 @@ export default function ConsumerAddressTab({ addresses, editingAddress, setEditi
         </div>
     );
 }
+
+

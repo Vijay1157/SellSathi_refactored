@@ -78,7 +78,7 @@ export default function PersonalInfoStep({ sellerData, updateSellerData, nextSte
     sellerData.streetLocality &&
     Object.keys(validationErrors).length === 0;
 
-  const inp = "w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#7B4DDB] focus:border-[#7B4DDB] text-sm";
+  const inp = "w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#3B7CF1] focus:border-[#3B7CF1] text-sm";
 
   return (
     <div className="bg-white">
@@ -138,7 +138,7 @@ export default function PersonalInfoStep({ sellerData, updateSellerData, nextSte
         <div className="border-t pt-5">
           <h3 className="text-base font-semibold text-gray-900 mb-1">PAN & Identity Details</h3>
           <div className="bg-blue-50 text-blue-800 text-xs p-3 rounded-lg border border-blue-100 mb-4 flex gap-2">
-            <CheckCircle2 size={16} className="shrink-0 text-blue-600 mt-0.5" />
+            <CheckCircle2 size={16} className="shrink-0 text-[#3B7CF1] mt-0.5" />
             <p>Identity data (EID) allows tax-exempt selling without a GST certificate.</p>
           </div>
           <div className="grid grid-cols-2 gap-4">
@@ -265,7 +265,7 @@ export default function PersonalInfoStep({ sellerData, updateSellerData, nextSte
             <ArrowLeft size={16} /> Back
           </button>
           <button onClick={nextStep} disabled={!isFormValid}
-            style={{ backgroundColor: '#7B4DDB' }}
+            style={{ backgroundColor: '#3B7CF1' }}
             className="px-8 py-3 text-white font-bold rounded-xl shadow-md hover:brightness-110 transition-all active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed text-sm">
             Next Step →
           </button>
@@ -274,3 +274,8 @@ export default function PersonalInfoStep({ sellerData, updateSellerData, nextSte
     </div>
   );
 }
+
+
+
+
+

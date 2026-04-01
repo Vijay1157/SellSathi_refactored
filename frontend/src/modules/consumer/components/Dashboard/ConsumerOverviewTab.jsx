@@ -31,10 +31,10 @@ export default function ConsumerOverviewTab({
             {/* Stats Cards - Centered */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
                 {[
-                    { label: 'Total Orders', value: stats.total, icon: <ShoppingBag size={18} className="text-blue-600" />, bg: 'bg-blue-100' },
+                    { label: 'Total Orders', value: stats.total, icon: <ShoppingBag size={18} className="text-[#3B7CF1]" />, bg: 'bg-blue-100' },
                     { label: 'Pending Orders', value: stats.pending, icon: <Clock size={18} className="text-orange-600" />, bg: 'bg-orange-100' },
                     { label: 'Delivered', value: stats.delivered, icon: <CheckCircle2 size={18} className="text-green-600" />, bg: 'bg-green-100' },
-                    { label: 'Total Spent', value: `₹${stats.totalSpent.toLocaleString('en-IN')}`, icon: <TrendingUp size={18} className="text-purple-600" />, bg: 'bg-purple-100' }
+                    { label: 'Total Spent', value: `₹${stats.totalSpent.toLocaleString('en-IN')}`, icon: <TrendingUp size={18} className="text-[#3B7CF1]" />, bg: 'bg-blue-100' }
                 ].map((s, i) => (
                     <div key={i} className="bg-white p-3 rounded-lg border border-gray-200 hover:shadow-md transition-shadow">
                         <div className="flex items-center gap-2 mb-1">
@@ -254,7 +254,7 @@ export default function ConsumerOverviewTab({
                             {/* Action Buttons */}
                             <div className="space-y-2">
                                 <button onClick={() => navigate(`/track?orderId=${selectedOrder.orderId || selectedOrder.id}`)}
-                                    className="w-full px-3 py-2 bg-primary text-white rounded text-sm font-medium hover:bg-blue-700 transition-colors">Track Order</button>
+                                    className="w-full px-3 py-2 bg-primary text-white rounded text-sm font-medium hover:bg-[#120085] transition-colors">Track Order</button>
                                 <button onClick={() => onDownloadInvoice(selectedOrder.orderId || selectedOrder.id)}
                                     className="w-full px-3 py-2 border border-gray-300 rounded text-sm font-medium hover:bg-gray-50 transition-colors flex items-center justify-center gap-2">
                                     <Download size={16} /> Download Invoice
@@ -277,7 +277,7 @@ export default function ConsumerOverviewTab({
                                 onClick={() => navigate('/products')} 
                                 className="w-full flex items-center gap-2 px-3 py-2 rounded hover:bg-blue-50 transition-colors text-left border border-transparent hover:border-blue-200"
                             >
-                                <ShoppingBag size={18} className="text-blue-600" />
+                                <ShoppingBag size={18} className="text-[#3B7CF1]" />
                                 <span className="text-sm font-medium text-gray-700">Buy Again</span>
                             </button>
                             <button 
@@ -315,3 +315,6 @@ export default function ConsumerOverviewTab({
         </div>
     );
 }
+
+
+

@@ -40,7 +40,7 @@ export default function VariantsEditor({
             {config.hasSizes && config.defaultSizes && (
                 <div style={sty.card}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1.5rem' }}>
-                        <div style={sty.sectionIcon('#8b5cf6')}><Ruler size={20} /></div>
+                        <div style={sty.sectionIcon('#5BB8FF')}><Ruler size={20} /></div>
                         <div>
                             <h3 style={{ margin: 0 }}>Size Options</h3>
                             <p style={{ margin: 0, fontSize: '0.8rem', color: '#64748b' }}>Select available sizes for this product</p>
@@ -285,4 +285,7 @@ export default function VariantsEditor({
         </motion.div>
     );
 }
+
+
+
 

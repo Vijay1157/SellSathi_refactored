@@ -208,13 +208,13 @@ export default function SellerRegistration() {
 
             <div className="min-h-screen bg-white flex flex-col lg:flex-row overflow-hidden">
                 {/* Left Side - Branding & Info (Full Height) */}
-                <div className="lg:w-1/2 bg-[#6A3FD8] p-8 lg:p-16 text-white flex flex-col justify-center relative min-h-[40vh] lg:min-h-screen">
+                <div className="lg:w-1/2 bg-[#120085] p-8 lg:p-16 text-white flex flex-col justify-center relative min-h-[40vh] lg:min-h-screen">
                     {/* Clean background with subtle gradient */}
-                    <div className="absolute inset-0 bg-gradient-to-br from-[#7B4DDB] to-[#5A32C8] opacity-50" />
+                    <div className="absolute inset-0 bg-gradient-to-br from-[#3B7CF1] to-[#0D0070] opacity-50" />
 
                     <div className="relative z-10">
                         <Link to="/seller" className="inline-flex items-center gap-2 text-white/80 hover:text-white mb-12 transition-colors">
-                            <ArrowLeft size={20} /> Back to SellSathi
+                            <ArrowLeft size={20} /> Back to GudKart
                         </Link>
 
                         <div className="flex items-center gap-3 mb-12">
@@ -223,12 +223,12 @@ export default function SellerRegistration() {
                             </div>
                             <div>
                                 <h3 className="text-xl font-bold">Seller Center</h3>
-                                <p className="text-white/60 text-sm">SellSathi for Business</p>
+                                <p className="text-white/60 text-sm">GudKart for Business</p>
                             </div>
                         </div>
 
                         <h1 className="text-5xl lg:text-6xl font-bold leading-tight mb-8">
-                            Grow your business with SellSathi
+                            Grow your business with GudKart
                         </h1>
                         <p className="text-xl text-white/80 max-w-md mb-12">
                             Reach millions of customers and scale your brand with powerful selling tools.
@@ -252,7 +252,7 @@ export default function SellerRegistration() {
 
                     <div className="relative z-10 pt-12">
                         <p className="text-sm text-white/60">
-                            By logging in, you agree to SellSathi's Seller <Link to="#" className="underline">Terms of Service</Link>
+                            By logging in, you agree to GudKart's Seller <Link to="#" className="underline">Terms of Service</Link>
                         </p>
                     </div>
                 </div>
@@ -282,7 +282,7 @@ export default function SellerRegistration() {
                                 </p>
                                 <Link
                                     to="/seller"
-                                    className="inline-flex items-center justify-center gap-2 bg-[#7B4DDB] text-white px-8 py-4 rounded-2xl font-bold hover:brightness-110 transition-all shadow-lg"
+                                    className="inline-flex items-center justify-center gap-2 bg-[#3B7CF1] text-white px-8 py-4 rounded-2xl font-bold hover:brightness-110 transition-all shadow-lg"
                                 >
                                     <ArrowLeft size={18} /> Back to Seller Page
                                 </Link>
@@ -300,7 +300,7 @@ export default function SellerRegistration() {
                                 </p>
                                 <Link
                                     to="/seller"
-                                    className="inline-flex items-center justify-center gap-2 bg-[#7B4DDB] text-white px-8 py-4 rounded-2xl font-bold hover:brightness-110 transition-all shadow-lg"
+                                    className="inline-flex items-center justify-center gap-2 bg-[#3B7CF1] text-white px-8 py-4 rounded-2xl font-bold hover:brightness-110 transition-all shadow-lg"
                                 >
                                     <ArrowLeft size={18} /> Back to Seller Page
                                 </Link>
@@ -318,19 +318,19 @@ export default function SellerRegistration() {
                                     <label className="block">
                                         <div
                                             className="w-full h-48 rounded-3xl border-2 border-dashed flex flex-col items-center justify-center cursor-pointer transition-all group"
-                                            style={{ borderColor: '#7B4DDB', backgroundColor: 'rgba(123, 77, 219, 0.05)' }}
+                                            style={{ borderColor: '#3B7CF1', backgroundColor: 'rgba(123, 77, 219, 0.05)' }}
                                         >
                                             {isExtracting ? (
                                                 <div className="flex flex-col items-center">
-                                                    <Loader className="animate-spin mb-2" style={{ color: '#7B4DDB' }} size={32} />
-                                                    <p className="font-bold" style={{ color: '#7B4DDB' }}>Extracting...</p>
+                                                    <Loader className="animate-spin mb-2" style={{ color: '#3B7CF1' }} size={32} />
+                                                    <p className="font-bold" style={{ color: '#3B7CF1' }}>Extracting...</p>
                                                 </div>
                                             ) : (
                                                 <>
-                                                    <div className="w-16 h-16 rounded-full bg-white flex items-center justify-center mb-4 shadow-sm group-hover:scale-110 transition-transform" style={{ color: '#7B4DDB' }}>
+                                                    <div className="w-16 h-16 rounded-full bg-white flex items-center justify-center mb-4 shadow-sm group-hover:scale-110 transition-transform" style={{ color: '#3B7CF1' }}>
                                                         <Upload size={28} />
                                                     </div>
-                                                    <p className="font-bold" style={{ color: '#7B4DDB' }}>Upload Aadhaar Card</p>
+                                                    <p className="font-bold" style={{ color: '#3B7CF1' }}>Upload Aadhaar Card</p>
                                                     <p className="text-xs text-gray-400 mt-2">Supports JPG, PNG, PDF</p>
                                                 </>
                                             )}
@@ -356,7 +356,7 @@ export default function SellerRegistration() {
                                     <button
                                         onClick={handleManualEntry}
                                         disabled={isExtracting}
-                                        style={{ borderColor: '#7B4DDB', color: '#7B4DDB' }}
+                                        style={{ borderColor: '#3B7CF1', color: '#3B7CF1' }}
                                         className="w-full rounded-2xl border-2 py-4 font-bold hover:bg-opacity-5 transition-all disabled:opacity-50"
                                     >
                                         Enter Details Manually
@@ -381,7 +381,7 @@ export default function SellerRegistration() {
                                                 value={formData.fullName}
                                                 onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
                                                 className="w-full rounded-xl border border-gray-200 px-4 py-3 focus:outline-none focus:ring-2 transition-all shadow-sm"
-                                                style={{ '--tw-ring-color': '#7B4DDB33', borderColor: 'var(--focus-border)' }}
+                                                style={{ '--tw-ring-color': '#3B7CF133', borderColor: 'var(--focus-border)' }}
                                             />
                                         </div>
                                         <div className="space-y-2">
@@ -394,7 +394,7 @@ export default function SellerRegistration() {
                                                 onChange={(e) => setFormData({ ...formData, phoneNumber: e.target.value })}
                                                 placeholder="Enter phone number"
                                                 className="w-full rounded-xl border border-gray-200 px-4 py-3 focus:outline-none focus:ring-2 transition-all shadow-sm"
-                                                style={{ '--tw-ring-color': '#7B4DDB33' }}
+                                                style={{ '--tw-ring-color': '#3B7CF133' }}
                                             />
                                         </div>
                                         <div className="space-y-2">
@@ -444,7 +444,7 @@ export default function SellerRegistration() {
                                                 onChange={(e) => setFormData({ ...formData, shopName: e.target.value })}
                                                 placeholder="e.g. Rahul's Gadgets"
                                                 className="w-full rounded-xl border border-gray-200 px-4 py-3 focus:outline-none focus:ring-2 transition-all shadow-sm"
-                                                style={{ '--tw-ring-color': '#7B4DDB33' }}
+                                                style={{ '--tw-ring-color': '#3B7CF133' }}
                                             />
                                         </div>
                                         <div className="space-y-2">
@@ -455,7 +455,7 @@ export default function SellerRegistration() {
                                                 value={formData.shopCategory}
                                                 onChange={(e) => setFormData({ ...formData, shopCategory: e.target.value })}
                                                 className="w-full rounded-xl border border-gray-200 px-4 py-3 focus:outline-none focus:ring-2 transition-all bg-white shadow-sm"
-                                                style={{ '--tw-ring-color': '#7B4DDB33' }}
+                                                style={{ '--tw-ring-color': '#3B7CF133' }}
                                             >
                                                 <option value="">Select Category</option>
                                                 {SELLER_CATEGORIES.map(category => (
@@ -485,7 +485,7 @@ export default function SellerRegistration() {
                                     <button
                                         type="submit"
                                         disabled={loading}
-                                        style={{ backgroundColor: '#7B4DDB' }}
+                                        style={{ backgroundColor: '#3B7CF1' }}
                                         className="w-full rounded-2xl py-4 font-bold text-white shadow-xl hover:brightness-110 transition-all active:scale-[0.98] disabled:opacity-50 mt-4"
                                     >
                                         {loading ? (
@@ -509,3 +509,8 @@ export default function SellerRegistration() {
     </>
     );
 }
+
+
+
+
+

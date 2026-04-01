@@ -113,8 +113,12 @@ const SellerHeader = ({ onLoginClick, onNewSellerClick }) => {
     <header className="sticky top-0 z-50 w-full border-b border-gray-100 bg-white/90 backdrop-blur-md">
       <div className="container mx-auto flex h-20 items-center justify-between px-4 sm:px-6 lg:px-8">
         <div className="flex items-center gap-8">
-          <Link to="/" className="text-2xl font-bold tracking-tight text-[#6C63FF]">
-            SellSathi <span className="text-xs font-medium text-gray-400 align-top ml-1">Supplier</span>
+          <Link to="/" className="flex items-center gap-1.5">
+            <img src="/gudkart-logo.png" alt="" style={{ height: '36px', width: '36px', objectFit: 'contain' }} />
+            <span style={{ lineHeight: 1 }}>
+              <span style={{ fontSize: '1.4rem', fontWeight: 900, color: '#1800AD' }}>Gud</span><span style={{ fontSize: '1.4rem', fontWeight: 400, color: '#5BB8FF' }}>kart</span>
+            </span>
+            <span className="text-xs font-medium text-gray-400 ml-1">Supplier</span>
           </Link>
           <nav className="hidden lg:flex items-center gap-6">
             {navItems.map((item) => (
@@ -122,13 +126,13 @@ const SellerHeader = ({ onLoginClick, onNewSellerClick }) => {
                 key={item.id}
                 onClick={() => scrollToSection(item.id)}
                 className={`text-sm font-medium transition-colors relative ${activeSection === item.id
-                  ? 'text-[#6C63FF]'
+                  ? 'text-[#3B7CF1]'
                   : 'text-gray-600 hover:text-brand'
                   }`}
               >
                 {item.label}
                 {activeSection === item.id && (
-                  <span className="absolute -bottom-[31px] left-0 right-0 h-0.5 bg-[#6C63FF]" />
+                  <span className="absolute -bottom-[31px] left-0 right-0 h-0.5 bg-[#1800AD]" />
                 )}
               </button>
             ))}
@@ -149,14 +153,14 @@ const SellerHeader = ({ onLoginClick, onNewSellerClick }) => {
                     navigate('/seller/register');
                   }
                 }}
-                className="rounded-xl border border-[#6C63FF] px-5 py-2.5 text-sm font-semibold text-[#6C63FF] hover:bg-purple-50 transition-all font-sans"
+                className="rounded-xl border border-[#1800AD] px-5 py-2.5 text-sm font-semibold text-[#3B7CF1] hover:bg-blue-50 transition-all font-sans"
               >
                 Go to Dashboard
               </button>
               <div className="relative">
                 <button
                   onClick={() => setIsProfileOpen(!isProfileOpen)}
-                  className="w-10 h-10 rounded-full bg-[#6C63FF] text-white flex items-center justify-center font-bold"
+                  className="w-10 h-10 rounded-full bg-[#1800AD] text-white flex items-center justify-center font-bold"
                 >
                   {(user.fullName || 'S').charAt(0).toUpperCase()}
                 </button>
@@ -181,10 +185,10 @@ const SellerHeader = ({ onLoginClick, onNewSellerClick }) => {
               <button
                 onClick={onLoginClick}
                 style={{
-                  color: '#6C63FF',
+                  color: '#1800AD',
                   padding: '8px 18px',
                   borderRadius: '6px',
-                  border: '1px solid #6C63FF',
+                  border: '1px solid #1800AD',
                   fontWeight: '500',
                   display: 'inline-block',
                   textDecoration: 'none',
@@ -198,7 +202,7 @@ const SellerHeader = ({ onLoginClick, onNewSellerClick }) => {
               <button
                 onClick={onNewSellerClick}
                 style={{
-                  backgroundColor: '#6C63FF',
+                  backgroundColor: '#3B7CF1',
                   color: 'white',
                   padding: '8px 18px',
                   borderRadius: '6px',
@@ -220,3 +224,8 @@ const SellerHeader = ({ onLoginClick, onNewSellerClick }) => {
 };
 
 export default SellerHeader;
+
+
+
+
+

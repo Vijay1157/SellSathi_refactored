@@ -56,7 +56,12 @@ export default function Footer() {
                 <div className="container">
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '2rem' }}>
                         <div>
-                            <h3 className="gradient-text" style={{ marginBottom: '1rem', fontWeight: 900, fontSize: '1.5rem', letterSpacing: '-1px' }}>SELLSATHI</h3>
+                            <div style={{ marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                <img src="/gudkart-logo.png" alt="" style={{ height: '40px', width: '40px', objectFit: 'contain' }} />
+                                <span style={{ lineHeight: 1 }}>
+                                    <span style={{ fontSize: '1.5rem', fontWeight: 900, color: '#1800AD' }}>Gud</span><span style={{ fontSize: '1.5rem', fontWeight: 400, color: '#5BB8FF' }}>kart</span>
+                                </span>
+                            </div>
                             <p className="text-muted" style={{ lineHeight: 1.6 }}>The future of global marketplace. Fast, secure, and seller-friendly.</p>
                         </div>
 
@@ -156,7 +161,7 @@ export default function Footer() {
                                                     fontSize: '0.9rem',
                                                     fontWeight: 700,
                                                     borderRadius: '99px',
-                                                    background: '#2563eb',
+                                                    background: '#3B7CF1',
                                                     border: 'none',
                                                     color: 'white'
                                                 }}
@@ -172,7 +177,7 @@ export default function Footer() {
                     </div>
 
                     <div style={{ marginTop: '4rem', paddingTop: '2rem', borderTop: '1px solid var(--border)', textAlign: 'center' }}>
-                        <p className="text-muted" style={{ fontSize: '0.85rem', fontWeight: 500 }}>&copy; 2026 SELLSATHI Inc. All rights reserved.</p>
+                        <p className="text-muted" style={{ fontSize: '0.85rem', fontWeight: 500 }}>&copy; 2026 GudKart Inc. All rights reserved.</p>
                     </div>
                 </div>
             </footer>
@@ -181,3 +186,7 @@ export default function Footer() {
         </>
     );
 }
+
+
+
+

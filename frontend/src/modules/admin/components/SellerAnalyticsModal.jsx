@@ -122,7 +122,7 @@ export default function SellerAnalyticsModal({ seller, onClose, onDownloadPDF, i
                         icon={<Box size={24} />}
                         value={seller.metrics.totalProducts}
                         label="Total Products"
-                        color="rgba(99, 102, 241, 0.1)"
+                        color="rgba(24, 0, 173, 0.1)"
                         iconColor="var(--primary)"
                         onClick={() => scrollToSection('all-products-section')}
                     />
@@ -245,6 +245,8 @@ function StatCardClickable({ icon, value, label, color, iconColor, onClick }) {
         </div>
     );
 }
+
+
 
 
 

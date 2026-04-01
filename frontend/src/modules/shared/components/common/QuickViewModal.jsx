@@ -292,10 +292,10 @@ export default function QuickViewModal({ isOpen, onClose, product, navigate }) {
                         
                         .qv-purchase-options { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; margin-bottom: 1.5rem; }
                         .qv-opt-card { border: 2px solid #e2e8f0; border-radius: 12px; padding: 0.75rem; cursor: pointer; transition: 0.2s; display: flex; flex-direction: column; }
-                        .qv-opt-card.active { border-color: #4f46e5; background: #f5f3ff; }
+                        .qv-opt-card.active { border-color: #3B7CF1; background: #EBF0FF; }
                         .qv-opt-card .p { font-size: 1.1rem; font-weight: 800; color: #1e293b; }
                         .qv-opt-card .l { font-size: 0.75rem; color: #64748b; }
-                        .qv-opt-card.active .p { color: #4f46e5; }
+                        .qv-opt-card.active .p { color: #3B7CF1; }
 
                         .qv-pill-group {
                             display: flex;
@@ -316,14 +316,14 @@ export default function QuickViewModal({ isOpen, onClose, product, navigate }) {
                             justify-content: center;
                         }
                         .qv-pill:hover {
-                            border-color: #4f46e5;
-                            color: #4f46e5;
+                            border-color: #3B7CF1;
+                            color: #3B7CF1;
                         }
                         .qv-pill.active {
-                            background: #EEF2FF;
-                            color: #4f46e5;
-                            border-color: #4f46e5;
-                            box-shadow: 0 0 0 1px #4f46e5;
+                            background: #EBF0FF;
+                            color: #3B7CF1;
+                            border-color: #3B7CF1;
+                            box-shadow: 0 0 0 1px #3B7CF1;
                         }
                         .variant-pill {
                             flex-direction: column;
@@ -347,7 +347,7 @@ export default function QuickViewModal({ isOpen, onClose, product, navigate }) {
                         }
                         .qv-view-btn {
                             flex: 1;
-                            background: #4f46e5;
+                            background: #3B7CF1;
                             color: white;
                             border: none;
                             padding: 1rem;
@@ -406,3 +406,6 @@ export default function QuickViewModal({ isOpen, onClose, product, navigate }) {
         </AnimatePresence>
     );
 }
+
+
+

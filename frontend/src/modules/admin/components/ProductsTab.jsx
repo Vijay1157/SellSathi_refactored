@@ -446,3 +446,4 @@ export default function ProductsTab({ products, fetchAllData }) {
         </div>
     );
 }
+

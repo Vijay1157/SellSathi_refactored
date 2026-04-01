@@ -30,7 +30,7 @@ export default function ConsumerReviewsTab({ reviewableOrders, onWriteReview }) 
                                         <h3 className="font-semibold text-gray-900 text-sm mb-1">{item.productName}</h3>
                                         <p className="text-xs text-gray-500 mb-2">Delivered on {item.deliveredDate}</p>
                                         <button onClick={() => onWriteReview(item)}
-                                            className="px-4 py-2 bg-primary text-white rounded-lg text-xs font-medium hover:bg-blue-700 transition-colors flex items-center gap-2">
+                                            className="px-4 py-2 bg-primary text-white rounded-lg text-xs font-medium hover:bg-[#120085] transition-colors flex items-center gap-2">
                                             <Star size={14} /> Write Review
                                         </button>
                                     </div>
@@ -43,3 +43,4 @@ export default function ConsumerReviewsTab({ reviewableOrders, onWriteReview }) 
         </div>
     );
 }
+

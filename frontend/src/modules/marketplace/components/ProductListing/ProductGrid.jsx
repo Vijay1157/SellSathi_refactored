@@ -198,3 +198,4 @@ export default function ProductGrid({
         </main>
     );
 }
+

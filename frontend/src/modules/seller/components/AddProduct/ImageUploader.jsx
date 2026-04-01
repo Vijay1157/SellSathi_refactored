@@ -29,7 +29,7 @@ export default function ImageUploader({
             {/* Main Product Image Upload */}
             <div style={sty.card}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1.5rem' }}>
-                    <div style={sty.sectionIcon('#a855f7')}><ImageIcon size={20} /></div>
+                    <div style={sty.sectionIcon('#5BB8FF')}><ImageIcon size={20} /></div>
                     <h3 style={{ margin: 0 }}>Product Media</h3>
                 </div>
                 <div style={{
@@ -196,3 +196,6 @@ export default function ImageUploader({
         </div>
     );
 }
+
+
+

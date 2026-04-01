@@ -1,5 +1,5 @@
 /**
- * SellSathi Design System
+ * GudKart Design System
  * Professional E-commerce UI Standards
  * Following Amazon, Flipkart, Shopify best practices
  */
@@ -37,15 +37,15 @@
      2. COLOR SYSTEM
      ============================================ */
   /* Primary Colors */
-  --primary: #2563EB;
-  --primary-hover: #1D4ED8;
-  --primary-light: #DBEAFE;
-  --primary-dark: #1E40AF;
+  --primary: #3B7CF1;
+  --primary-hover: #3B7CF1;
+  --primary-light: #EBF0FF;
+  --primary-dark: #3B7CF1;
 
   /* Secondary Colors */
-  --secondary: #6366F1;
-  --secondary-hover: #4F46E5;
-  --secondary-light: #E0E7FF;
+  --secondary: #5BB8FF;
+  --secondary-hover: #3B7CF1;
+  --secondary-light: #E8F4FF;
 
   /* Neutral Colors */
   --white: #FFFFFF;
@@ -527,3 +527,4 @@
     display: block;
   }
 }
+

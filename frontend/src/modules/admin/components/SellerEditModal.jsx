@@ -398,3 +398,4 @@ export default function SellerEditModal({ seller, onClose, onSave }) {
         </div>
     );
 }
+

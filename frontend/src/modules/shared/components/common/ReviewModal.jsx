@@ -229,7 +229,7 @@ export default function ReviewModal({ isOpen, onClose, productId, productName, o
                             }
 
                             .submit-review-btn:hover:not(:disabled) {
-                                background: #1D4ED8;
+                                background: #120085;
                                 transform: translateY(-2px);
                                 box-shadow: 0 8px 16px rgba(37, 99, 235, 0.25);
                             }
@@ -252,3 +252,5 @@ export default function ReviewModal({ isOpen, onClose, productId, productName, o
         </AnimatePresence>
     );
 }
+
+

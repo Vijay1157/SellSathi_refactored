@@ -37,7 +37,7 @@ export default function VerificationStep({ sellerData, updateSellerData, nextSte
               type="text"
               value={sellerData.bankAccountName}
               onChange={(e) => updateSellerData('bankAccountName', e.target.value)}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#7B4DDB] focus:border-[#7B4DDB]"
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#3B7CF1] focus:border-[#3B7CF1]"
               placeholder="Enter account holder name"
             />
           </div>
@@ -51,7 +51,7 @@ export default function VerificationStep({ sellerData, updateSellerData, nextSte
               maxLength={18}
               value={sellerData.accountNumber}
               onChange={(e) => updateSellerData('accountNumber', e.target.value.replace(/\D/g, ''))}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#7B4DDB] focus:border-[#7B4DDB]"
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#3B7CF1] focus:border-[#3B7CF1]"
               placeholder="Enter account number"
             />
           </div>
@@ -66,7 +66,7 @@ export default function VerificationStep({ sellerData, updateSellerData, nextSte
                 maxLength={11}
                 value={sellerData.ifscCode}
                 onChange={(e) => updateSellerData('ifscCode', e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, ''))}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#7B4DDB] focus:border-[#7B4DDB]"
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#3B7CF1] focus:border-[#3B7CF1]"
                 placeholder="Enter 11-char IFSC code"
               />
               {sellerData.ifscCode && !ifscRegex.test(sellerData.ifscCode) && (
@@ -81,7 +81,7 @@ export default function VerificationStep({ sellerData, updateSellerData, nextSte
                 type="text"
                 value={sellerData.upiId}
                 onChange={(e) => updateSellerData('upiId', e.target.value.replace(/[^a-zA-Z0-9.\-@]/g, '').toLowerCase())}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#7B4DDB] focus:border-[#7B4DDB]"
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#3B7CF1] focus:border-[#3B7CF1]"
                 placeholder="e.g. name@bank"
               />
               {sellerData.upiId && !upiRegex.test(sellerData.upiId) && (
@@ -106,7 +106,7 @@ export default function VerificationStep({ sellerData, updateSellerData, nextSte
               type="text"
               value={sellerData.supplierName}
               onChange={(e) => updateSellerData('supplierName', e.target.value)}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#7B4DDB] focus:border-[#7B4DDB]"
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#3B7CF1] focus:border-[#3B7CF1]"
               placeholder="Enter supplier name"
             />
           </div>
@@ -118,7 +118,7 @@ export default function VerificationStep({ sellerData, updateSellerData, nextSte
             <select
               value={sellerData.businessType}
               onChange={(e) => updateSellerData('businessType', e.target.value)}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#7B4DDB] focus:border-[#7B4DDB]"
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#3B7CF1] focus:border-[#3B7CF1]"
             >
               <option value="">Select Business Type</option>
               <option value="proprietorship">Proprietorship</option>
@@ -145,7 +145,7 @@ export default function VerificationStep({ sellerData, updateSellerData, nextSte
                   updateSellerData('productCategory', val);
                 }
               }}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#7B4DDB] focus:border-[#7B4DDB]"
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#3B7CF1] focus:border-[#3B7CF1]"
             >
               <option value="">Select Category</option>
               {SELLER_CATEGORIES.filter(cat => cat !== 'Others').map(category => (
@@ -161,7 +161,7 @@ export default function VerificationStep({ sellerData, updateSellerData, nextSte
                   setCustomProductCategory(e.target.value);
                   updateSellerData('productCategory', `other:${e.target.value}`);
                 }}
-                className="w-full mt-2 px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#7B4DDB] focus:border-[#7B4DDB]"
+                className="w-full mt-2 px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#3B7CF1] focus:border-[#3B7CF1]"
                 placeholder="Please specify your product category"
               />
             )}
@@ -175,7 +175,7 @@ export default function VerificationStep({ sellerData, updateSellerData, nextSte
               type="email"
               value={sellerData.contactEmail}
               onChange={(e) => updateSellerData('contactEmail', e.target.value)}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#7B4DDB] focus:border-[#7B4DDB]"
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#3B7CF1] focus:border-[#3B7CF1]"
               placeholder="Enter contact email"
             />
           </div>
@@ -193,7 +193,7 @@ export default function VerificationStep({ sellerData, updateSellerData, nextSte
         <button
           onClick={nextStep}
           disabled={!isFormValid || loading}
-          style={{ backgroundColor: '#7B4DDB' }}
+          style={{ backgroundColor: '#3B7CF1' }}
           className="px-8 py-4 text-white font-bold rounded-2xl shadow-lg shadow-brand/20 hover:brightness-110 transition-all active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
         >
           {loading ? (
@@ -209,3 +209,7 @@ export default function VerificationStep({ sellerData, updateSellerData, nextSte
     </div>
   );
 }
+
+
+
+

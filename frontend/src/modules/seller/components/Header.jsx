@@ -10,8 +10,11 @@ export const Header = () => {
       <header className="sticky top-0 z-50 w-full border-b border-gray-100 bg-white/80 backdrop-blur-md">
         <div className="container mx-auto flex h-16 items-center justify-between px-4 sm:px-6 lg:px-8">
           <div className="flex items-center gap-2">
-            <Link to="/" className="text-2xl font-bold tracking-tight text-brand">
-              SellSathi
+            <Link to="/" className="flex items-center gap-1.5">
+              <img src="/gudkart-logo.png" alt="" style={{ height: '36px', width: '36px', objectFit: 'contain' }} />
+              <span style={{ lineHeight: 1 }}>
+                <span style={{ fontSize: '1.4rem', fontWeight: 900, color: '#1800AD' }}>Gud</span><span style={{ fontSize: '1.4rem', fontWeight: 400, color: '#5BB8FF' }}>kart</span>
+              </span>
             </Link>
           </div>
           
@@ -41,3 +44,7 @@ export const Header = () => {
     </>
   );
 };
+
+
+
+

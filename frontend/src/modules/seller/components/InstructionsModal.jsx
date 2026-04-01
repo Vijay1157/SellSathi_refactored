@@ -6,7 +6,7 @@ export default function InstructionsModal({ onClose }) {
         {
             id: 1,
             icon: User,
-            iconColor: 'text-blue-600',
+            iconColor: 'text-[#3B7CF1]',
             iconBg: 'bg-blue-100',
             title: "Step 1: Provide Your Personal Information",
             description: "Enter your full name, phone number, email address, and Aadhaar number for identity verification. This ensures account authenticity and secure onboarding.",
@@ -34,8 +34,8 @@ export default function InstructionsModal({ onClose }) {
         {
             id: 3,
             icon: Building,
-            iconColor: 'text-purple-600',
-            iconBg: 'bg-purple-100',
+            iconColor: 'text-[#3B7CF1]',
+            iconBg: 'bg-blue-100',
             title: "Step 3: Enter Your Business Details",
             description: "Provide your company name, business contact details, and official email to establish store identity on the platform.",
             fields: [
@@ -120,7 +120,7 @@ export default function InstructionsModal({ onClose }) {
                                 margin: '0 0 1rem 0',
                                 lineHeight: '1.2'
                             }}>
-                                Complete Guide to Becoming a Seller on SellSathi
+                                Complete Guide to Becoming a Seller on GudKart
                             </h2>
                             <p style={{ 
                                 fontSize: '1rem', 
@@ -174,7 +174,7 @@ export default function InstructionsModal({ onClose }) {
                                         </div>
                                         <div className="flex-1">
                                             <div className="flex items-center gap-3 mb-2">
-                                                <span className="flex items-center justify-center w-8 h-8 rounded-full bg-purple-600 text-white text-sm font-bold">
+                                                <span className="flex items-center justify-center w-8 h-8 rounded-full bg-[#3B7CF1] text-white text-sm font-bold">
                                                     {step.id}
                                                 </span>
                                                 <h3 style={{ 
@@ -203,8 +203,8 @@ export default function InstructionsModal({ onClose }) {
                                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                                 {step.fields.map((field, fieldIndex) => (
                                                     <div key={fieldIndex} className="flex items-start gap-3">
-                                                        <div className="flex items-center justify-center w-6 h-6 rounded-full bg-purple-100 mt-0.5">
-                                                            <div className="w-2 h-2 rounded-full bg-purple-600"></div>
+                                                        <div className="flex items-center justify-center w-6 h-6 rounded-full bg-blue-100 mt-0.5">
+                                                            <div className="w-2 h-2 rounded-full bg-[#3B7CF1]"></div>
                                                         </div>
                                                         <div className="flex-1">
                                                             <div style={{ 
@@ -274,19 +274,19 @@ export default function InstructionsModal({ onClose }) {
                     {/* Additional Info Section */}
                     <div className="mt-8 p-6 bg-blue-50 rounded-xl border border-blue-200">
                         <div className="flex items-start gap-3">
-                            <AlertCircle className="text-blue-600 mt-1" size={20} />
+                            <AlertCircle className="text-[#3B7CF1] mt-1" size={20} />
                             <div>
                                 <h4 style={{ 
                                     fontSize: '1rem', 
                                     fontWeight: 700, 
-                                    color: '#1e40af',
+                                    color: '#0D0070',
                                     marginBottom: '0.5rem'
                                 }}>
                                     Important Notes
                                 </h4>
                                 <ul style={{ 
                                     fontSize: '0.875rem', 
-                                    color: '#1e40af',
+                                    color: '#0D0070',
                                     margin: 0,
                                     paddingLeft: '1.25rem',
                                     lineHeight: '1.6'
@@ -330,6 +330,10 @@ export default function InstructionsModal({ onClose }) {
         </div>
     );
 }
+
+
+
+
 
 
 

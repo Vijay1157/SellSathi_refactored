@@ -65,7 +65,7 @@ export default function Invoice() {
         const element = document.getElementById('invoice-card');
         const opt = {
             margin: 0,
-            filename: `Sellsathi_Invoice_${order.orderId || order.id}.pdf`,
+            filename: `GudKart_Invoice_${order.orderId || order.id}.pdf`,
             image: { type: 'jpeg', quality: 0.98 },
             html2canvas: { scale: 2, useCORS: true, logging: false },
             jsPDF: { unit: 'in', format: 'a4', orientation: 'portrait' }
@@ -200,7 +200,7 @@ export default function Invoice() {
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem', marginTop: '1rem', fontSize: '11px' }}>
                         <div>
                             <label style={{ color: '#000', fontSize: '11px', fontWeight: '700', textTransform: 'uppercase', display: 'block', marginBottom: '0.4rem', letterSpacing: '0.5px' }}>Billed From</label>
-                            <p style={{ fontWeight: '700', fontSize: '12px', marginBottom: '0.2rem', color: '#000' }}>Sellsathi Private Limited</p>
+                            <p style={{ fontWeight: '700', fontSize: '12px', marginBottom: '0.2rem', color: '#000' }}>GudKart Private Limited</p>
                             <p style={{ color: '#000', lineHeight: '1.6', margin: 0 }}>
                                 No. 123, MG Road, Koramangala<br />
                                 Bangalore, Karnataka, India<br />
@@ -342,10 +342,10 @@ export default function Invoice() {
                     <p style={{ color: '#000', fontSize: '10px', marginBottom: '1rem' }}>Please contact support if you have any questions.</p>
 
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <p style={{ fontWeight: '700', color: '#000', fontSize: '11px', margin: 0 }}>Sellsathi Private Limited - Empowering Local Sellers</p>
+                        <p style={{ fontWeight: '700', color: '#000', fontSize: '11px', margin: 0 }}>GudKart Private Limited - Empowering Local Sellers</p>
                         <div style={{ display: 'flex', gap: '1rem', color: '#000', fontSize: '10px' }}>
                             <span style={{ display: 'flex', alignItems: 'center', gap: '0.3rem' }}><Phone size={12} /> +91 98765 43210</span>
-                            <span style={{ display: 'flex', alignItems: 'center', gap: '0.3rem' }}><Mail size={12} /> support@sellsathi.com</span>
+                            <span style={{ display: 'flex', alignItems: 'center', gap: '0.3rem' }}><Mail size={12} /> support@GudKart.com</span>
                         </div>
                     </div>
                 </div>
@@ -370,3 +370,4 @@ export default function Invoice() {
         </div>
     );
 }
+

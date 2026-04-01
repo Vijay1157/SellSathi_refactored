@@ -159,12 +159,12 @@ export default function CheckoutOrderSummary({
                     <div className="space-y-2">
                         <div className="flex justify-between items-center gap-6">
                             <span className="text-lg text-gray-900 font-bold">Total Amount</span>
-                            <span className="text-4xl font-black text-blue-600 flex-shrink-0">
+                            <span className="text-4xl font-black text-[#3B7CF1] flex-shrink-0">
                                 ₹{actualTotal.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                             </span>
                         </div>
                         <p className="text-xs text-green-600 font-bold text-right uppercase tracking-wide">
-                            Save with Sellsathi Premium
+                            Save with GudKart Premium
                         </p>
                     </div>
                     
@@ -177,8 +177,8 @@ export default function CheckoutOrderSummary({
                     
                     {/* Security Badge */}
                     <div className="pt-3">
-                        <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-4 rounded-2xl border border-blue-200 flex gap-3 items-center">
-                            <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center text-blue-600 shadow-sm flex-shrink-0">
+                        <div className="bg-gradient-to-r from-blue-50 to-blue-50 p-4 rounded-2xl border border-blue-200 flex gap-3 items-center">
+                            <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center text-[#3B7CF1] shadow-sm flex-shrink-0">
                                 <Shield size={20} />
                             </div>
                             <div>
@@ -192,3 +192,7 @@ export default function CheckoutOrderSummary({
         </div>
     );
 }
+
+
+
+

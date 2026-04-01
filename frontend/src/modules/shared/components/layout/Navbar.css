@@ -35,17 +35,15 @@
     font-size: 28px; 
     font-weight: 900; 
     letter-spacing: -0.5px;
-    background: linear-gradient(135deg, #2563EB 0%, #1D4ED8 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
     transition: all 300ms;
     text-decoration: none;
+    -webkit-text-fill-color: unset;
+    background: none;
 }
 
 .brand-logo:hover {
-    transform: scale(1.05);
-    filter: brightness(1.2);
+    transform: scale(1.02);
+    opacity: 0.9;
 }
 
 .nav-location {
@@ -271,8 +269,8 @@
 }
 
 .sub-nav-link:hover, .sub-nav-link.active {
-    color: #2563EB;
-    background: #EFF6FF;
+    color: #3B7CF1;
+    background: #EBF0FF;
 }
 
 .sub-nav-link.active {
@@ -284,20 +282,20 @@
     background: #F3F4F6;
     border: 1px solid #E5E7EB;
     font-weight: 700;
-    color: #2563EB;
+    color: #3B7CF1;
     font-size: 12px;
     padding: 5px 10px;
     margin-left: auto;
 }
 
 .more-categories-btn:hover {
-    background: #EFF6FF;
+    background: #EBF0FF;
     border-color: #93C5FD;
 }
 
 /* All Categories Button - Amazon Style */
 .all-categories-btn {
-    background: linear-gradient(135deg, #2563EB 0%, #1D4ED8 100%);
+    background: linear-gradient(135deg, #3B7CF1 0%, #120085 100%);
     color: #FFFFFF;
     font-weight: 700;
     font-size: 12px;
@@ -311,7 +309,7 @@
 }
 
 .all-categories-btn:hover {
-    background: linear-gradient(135deg, #1D4ED8 0%, #1E40AF 100%);
+    background: linear-gradient(135deg, #120085 0%, #0D0070 100%);
     color: #FFFFFF;
     transform: translateY(-1px);
     box-shadow: 0 4px 8px rgba(37, 99, 235, 0.3);
@@ -330,13 +328,13 @@
 }
 
 .sub-nav-link:hover, .sub-nav-link.active {
-    color: #2563EB;
-    background: #EFF6FF;
+    color: #3B7CF1;
+    background: #EBF0FF;
 }
 
 .sub-nav-link.special-category:hover,
 .sub-nav-link.special-category.active {
-    background: #DBEAFE;
+    background: #EBF0FF;
     border-color: #93C5FD;
 }
 
@@ -348,7 +346,7 @@
     transform: translateX(-50%);
     width: 60%;
     height: 2px;
-    background: linear-gradient(90deg, transparent, #2563EB, transparent);
+    background: linear-gradient(90deg, transparent, #3B7CF1, transparent);
     border-radius: 2px;
 }
 
@@ -465,20 +463,20 @@
     margin-top: 6px;
     border-top: 1px solid #E5E7EB;
     padding-top: 12px;
-    color: #2563EB;
+    color: #3B7CF1;
     font-weight: 700;
 }
 
 .sidebar-items button:hover {
-    background: #DBEAFE;
-    color: #2563EB;
+    background: #EBF0FF;
+    color: #3B7CF1;
 }
 
 .sidebar-items button.active {
     background: #FFFFFF;
     box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.08);
-    color: #2563EB;
-    border: 1px solid #DBEAFE;
+    color: #3B7CF1;
+    border: 1px solid #EBF0FF;
 }
 
 .sidebar-items .arrow {
@@ -544,7 +542,7 @@
 }
 
 .other-subcategory-item:hover {
-    background: linear-gradient(135deg, #2563EB 0%, #1D4ED8 100%);
+    background: linear-gradient(135deg, #3B7CF1 0%, #120085 100%);
     color: #FFFFFF;
     border-color: transparent;
     transform: translateY(-2px);
@@ -626,7 +624,7 @@
     font-weight: 700 !important;
     margin: 0 !important;
     padding: 0 !important;
-    color: #2563EB !important;
+    color: #3B7CF1 !important;
     visibility: visible !important;
     opacity: 1 !important;
     display: block !important;
@@ -661,7 +659,7 @@
 }
 
 .popular-tags .tag:hover {
-    color: #2563EB;
+    color: #3B7CF1;
 }
 
 .explore-link {
@@ -699,7 +697,7 @@
 }
 
 .mega-empty-state .btn-primary {
-    background: linear-gradient(135deg, #2563EB 0%, #1D4ED8 100%);
+    background: linear-gradient(135deg, #3B7CF1 0%, #120085 100%);
     color: #FFFFFF;
     padding: 14px 32px;
     border-radius: 10px;
@@ -715,7 +713,7 @@
 }
 
 .mega-empty-state .btn-primary:hover {
-    background: linear-gradient(135deg, #1D4ED8 0%, #1E40AF 100%);
+    background: linear-gradient(135deg, #120085 0%, #0D0070 100%);
     transform: translateY(-3px);
     box-shadow: 0 8px 20px rgba(37, 99, 235, 0.35);
 }
@@ -802,7 +800,7 @@
 
 .btn-seller {
     padding: 10px 20px;
-    background: linear-gradient(135deg, #2563EB 0%, #1D4ED8 100%);
+    background: linear-gradient(135deg, #3B7CF1 0%, #120085 100%);
     color: #FFFFFF;
     font-weight: 700;
     font-size: 14px;
@@ -815,7 +813,7 @@
 }
 
 .btn-seller:hover {
-    background: linear-gradient(135deg, #1D4ED8 0%, #1E40AF 100%);
+    background: linear-gradient(135deg, #120085 0%, #0D0070 100%);
     transform: translateY(-2px);
     box-shadow: 0 4px 12px rgba(37, 99, 235, 0.35);
 }
@@ -923,3 +921,6 @@
 .signout-btn { 
     color: var(--error) !important; 
 }
+
+
+

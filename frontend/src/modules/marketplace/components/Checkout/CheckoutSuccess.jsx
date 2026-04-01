@@ -66,3 +66,4 @@ export default function CheckoutSuccess({ orderId, shippingAddress, paymentMetho
         </div>
     );
 }
+

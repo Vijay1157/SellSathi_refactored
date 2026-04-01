@@ -224,7 +224,7 @@ export default function CategoryPage() {
                     font-weight: 850;
                     margin-bottom: 2.5rem;
                     letter-spacing: -1px;
-                    background: linear-gradient(135deg, #2563EB 0%, #1D4ED8 100%);
+                    background: linear-gradient(135deg, #3B7CF1 0%, #120085 100%);
                     -webkit-background-clip: text;
                     -webkit-text-fill-color: transparent;
                     background-clip: text;
@@ -393,7 +393,7 @@ export default function CategoryPage() {
                     gap: 0.5rem;
                     font-weight: 800;
                     color: var(--white);
-                    background: linear-gradient(135deg, #2563EB 0%, #1D4ED8 100%);
+                    background: linear-gradient(135deg, #3B7CF1 0%, #120085 100%);
                     font-size: 1rem;
                     padding: 0.75rem 1.5rem;
                     border-radius: 10px;
@@ -424,3 +424,7 @@ export default function CategoryPage() {
         </div>
     );
 }
+
+
+
+

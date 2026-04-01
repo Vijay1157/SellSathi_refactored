@@ -253,11 +253,11 @@ const SellerOnboarding = () => {
       {/* 1. Branding Side (Left 50%) */}
       <div
         className="lg:w-1/2 p-12 lg:p-20 text-white flex flex-col justify-center relative z-10 min-h-[40vh] lg:min-h-screen"
-        style={{ background: 'linear-gradient(135deg, #7B4DDB, #5A32C8)' }}
+        style={{ background: 'linear-gradient(135deg, #3B7CF1, #0D0070)' }}
       >
         <div className="relative z-10">
           <Link to="/" className="inline-flex items-center gap-2 text-white/60 hover:text-white mb-12 transition-colors">
-            <ArrowLeft size={20} /> Back to SellSathi
+            <ArrowLeft size={20} /> Back to GudKart
           </Link>
 
           <div className="flex items-center gap-3 mb-12">
@@ -266,12 +266,12 @@ const SellerOnboarding = () => {
             </div>
             <div>
               <h3 className="text-xl font-bold">Seller Center</h3>
-              <p className="text-white/60 text-sm">SellSathi for Business</p>
+              <p className="text-white/60 text-sm">GudKart for Business</p>
             </div>
           </div>
 
           <h1 className="text-4xl lg:text-6xl font-bold leading-tight mb-8">
-            Grow your business with SellSathi
+            Grow your business with GudKart
           </h1>
           <p className="text-xl text-white/80 max-w-md mb-12">
             Reach millions of customers and scale your brand with powerful selling tools.
@@ -299,7 +299,7 @@ const SellerOnboarding = () => {
                     className={`flex items-center px-4 py-2 rounded-full transition-all ${step === stepItem.id ? 'text-white font-semibold' :
                       step > stepItem.id ? 'text-white' : 'text-gray-400'
                       }`}
-                    style={step >= stepItem.id ? { backgroundColor: '#7B4DDB' } : {}}
+                    style={step >= stepItem.id ? { backgroundColor: '#3B7CF1' } : {}}
                   >
                     <span className="text-xs font-bold leading-none">
                       {step > stepItem.id ? '✓' : stepItem.id}
@@ -309,7 +309,7 @@ const SellerOnboarding = () => {
                     </span>
                   </div>
                   {index < steps.length - 1 && (
-                    <div className={`w-4 h-0.5 mx-1 ${step > stepItem.id ? 'bg-[#7B4DDB]' : 'bg-gray-200'}`} />
+                    <div className={`w-4 h-0.5 mx-1 ${step > stepItem.id ? 'bg-[#3B7CF1]' : 'bg-gray-200'}`} />
                   )}
                 </React.Fragment>
               ))}
@@ -336,7 +336,7 @@ const SellerOnboarding = () => {
                   <p className="text-gray-600 mb-10 text-lg leading-relaxed">{success}</p>
                   <Link
                     to="/seller"
-                    className="inline-flex items-center justify-center gap-2 bg-[#7B4DDB] text-white px-10 py-4 rounded-2xl font-bold hover:brightness-110 transition-all shadow-xl"
+                    className="inline-flex items-center justify-center gap-2 bg-[#3B7CF1] text-white px-10 py-4 rounded-2xl font-bold hover:brightness-110 transition-all shadow-xl"
                   >
                     <ArrowLeft size={20} /> Back to Seller Page
                   </Link>
@@ -353,3 +353,8 @@ const SellerOnboarding = () => {
 };
 
 export default SellerOnboarding;
+
+
+
+
+

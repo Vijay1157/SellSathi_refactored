@@ -10,7 +10,7 @@ export default function BusinessInfoStep({ sellerData, updateSellerData, nextSte
   const handleGSTSelection = (hasGST) => updateSellerData('hasGST', hasGST);
 
   const availableCities = CITY_DATA[sellerData.pickupState] || [];
-  const inp = "w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#7B4DDB] focus:border-[#7B4DDB] text-sm";
+  const inp = "w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#3B7CF1] focus:border-[#3B7CF1] text-sm";
   const gstRegex = /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/;
 
   const isFormValid = () => {
@@ -51,7 +51,7 @@ export default function BusinessInfoStep({ sellerData, updateSellerData, nextSte
               type="text"
               value={sellerData.shopName}
               onChange={(e) => updateSellerData('shopName', e.target.value)}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#7B4DDB] focus:border-[#7B4DDB]"
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#3B7CF1] focus:border-[#3B7CF1]"
               placeholder="Enter your shop name"
             />
           </div>
@@ -69,7 +69,7 @@ export default function BusinessInfoStep({ sellerData, updateSellerData, nextSte
                   updateSellerData('shopCategory', val);
                 }
               }}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#7B4DDB] focus:border-[#7B4DDB]"
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#3B7CF1] focus:border-[#3B7CF1]"
             >
               <option value="">Select Category</option>
               {SELLER_CATEGORIES.filter(cat => cat !== 'Others').map(category => (
@@ -85,7 +85,7 @@ export default function BusinessInfoStep({ sellerData, updateSellerData, nextSte
                   setCustomShopCategory(e.target.value);
                   updateSellerData('shopCategory', `other:${e.target.value}`);
                 }}
-                className="w-full mt-2 px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#7B4DDB] focus:border-[#7B4DDB]"
+                className="w-full mt-2 px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#3B7CF1] focus:border-[#3B7CF1]"
                 placeholder="Please specify your shop category"
               />
             )}
@@ -100,7 +100,7 @@ export default function BusinessInfoStep({ sellerData, updateSellerData, nextSte
               onClick={() => handleGSTSelection('yes')}
               className={`px-8 py-3 rounded-xl font-bold transition-all ${sellerData.hasGST === 'yes' ? 'text-white' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
                 }`}
-              style={sellerData.hasGST === 'yes' ? { backgroundColor: '#7B4DDB' } : {}}
+              style={sellerData.hasGST === 'yes' ? { backgroundColor: '#3B7CF1' } : {}}
             >
               Yes
             </button>
@@ -108,7 +108,7 @@ export default function BusinessInfoStep({ sellerData, updateSellerData, nextSte
               onClick={() => handleGSTSelection('no')}
               className={`px-8 py-3 rounded-xl font-bold transition-all ${sellerData.hasGST === 'no' ? 'text-white' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
                 }`}
-              style={sellerData.hasGST === 'no' ? { backgroundColor: '#7B4DDB' } : {}}
+              style={sellerData.hasGST === 'no' ? { backgroundColor: '#3B7CF1' } : {}}
             >
               No
             </button>
@@ -123,7 +123,7 @@ export default function BusinessInfoStep({ sellerData, updateSellerData, nextSte
                 maxLength={15}
                 value={sellerData.gstNumber}
                 onChange={(e) => updateSellerData('gstNumber', e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, ''))}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#7B4DDB] focus:border-[#7B4DDB]"
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#3B7CF1] focus:border-[#3B7CF1]"
                 placeholder="Enter 15-character GST number"
               />
               {sellerData.gstNumber && !gstRegex.test(sellerData.gstNumber) && (
@@ -135,7 +135,7 @@ export default function BusinessInfoStep({ sellerData, updateSellerData, nextSte
           {sellerData.hasGST === 'no' && (
             <div className="space-y-6 pt-4 border-t border-gray-100 animate-in slide-in-from-bottom-4 duration-300">
               <div className="bg-blue-50 text-blue-800 text-sm p-4 rounded-xl border border-blue-100 mb-6 flex items-center justify-center gap-3">
-                <CheckCircle2 size={24} className="shrink-0 text-blue-600" />
+                <CheckCircle2 size={24} className="shrink-0 text-[#3B7CF1]" />
                 <p>Tax-exempt flow. PAN verified in previous step.</p>
               </div>
             </div>
@@ -224,7 +224,7 @@ export default function BusinessInfoStep({ sellerData, updateSellerData, nextSte
           <button
             onClick={nextStep}
             disabled={!isFormValid()}
-            style={{ backgroundColor: '#7B4DDB' }}
+            style={{ backgroundColor: '#3B7CF1' }}
             className="px-8 py-4 text-white font-bold rounded-2xl shadow-lg shadow-brand/20 hover:brightness-110 transition-all active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed"
           >
             Next Step
@@ -234,3 +234,8 @@ export default function BusinessInfoStep({ sellerData, updateSellerData, nextSte
     </div>
   );
 }
+
+
+
+
+

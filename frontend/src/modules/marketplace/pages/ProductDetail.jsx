@@ -110,7 +110,7 @@ export default function ProductDetail() {
                     const s = data.seller;
                     setSeller({
                         name: s.name || "Verified Seller",
-                        shopName: s.shopName || "SellSathi Partner",
+                        shopName: s.shopName || "GudKart Partner",
                         companyName: s.shopName || "Registered Hub",
                         city: s.city || "India",
                         category: s.category || "General",
@@ -144,7 +144,7 @@ export default function ProductDetail() {
                     }
                     setSeller({
                         name: uData.fullName || sData.extractedName || "Verified Seller",
-                        shopName: sData.shopName || "SellSathi Partner",
+                        shopName: sData.shopName || "GudKart Partner",
                         companyName: sData.shopName || "Registered Hub",
                         city, category: sData.category || "General",
                         joinedAt: sData.approvedAt ?
@@ -608,7 +608,7 @@ export default function ProductDetail() {
                             <div className="share-link-section">
                                 <div className="link-box">
                                     <div className="link-info">
-                                        <span className="domain">Sellsathi.com</span>
+                                        <span className="domain">GudKart.com</span>
                                         <span className="full-url">{window.location.href}</span>
                                     </div>
                                     <button className="copy-btn" onClick={copyToClipboard}>
@@ -650,4 +650,5 @@ export default function ProductDetail() {
         </div >
     );
 }
+
 

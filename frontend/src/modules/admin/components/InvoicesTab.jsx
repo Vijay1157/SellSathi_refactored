@@ -123,3 +123,4 @@ export default function InvoicesTab({ allSellers, setSelectedInvoiceSeller, fetc
         </div>
     );
 }
+

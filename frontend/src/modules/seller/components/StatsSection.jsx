@@ -4,7 +4,7 @@ import { motion } from 'framer-motion';
 const stats = [
   {
     value: "11 Lakhs+",
-    label: "Sellers trust SellSathi to sell online"
+    label: "Sellers trust GudKart to sell online"
   },
   {
     value: "15 Crores+",
@@ -45,3 +45,5 @@ const StatsSection = () => {
 };
 
 export default StatsSection;
+
+

@@ -46,3 +46,4 @@ export default function ConfirmationAnimation({ onComplete }) {
     </motion.div>
   );
 }
+
