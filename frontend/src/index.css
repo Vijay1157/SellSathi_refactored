@@ -7,13 +7,13 @@
 @tailwind utilities;
 
 :root {
-  --primary: #7B4DDB;
-  --secondary: #6A3FD8;
-  --accent: #5A32C8;
-  --primary-rgb: 123, 77, 219;
+  --primary: #3B7CF1;
+  --secondary: #5BB8FF;
+  --accent: #94C7FD;
+  --primary-rgb: 59, 124, 241;
   --background: #ffffff;
   --surface: #ffffff;
-  --surface-hover: #f8fafc;
+  --surface-hover: #f0f5ff;
   --text: #1e293b;
   --text-muted: #64748b;
   --error: #ef4444;
@@ -29,8 +29,8 @@
   --radius-md: 0.5rem;
   --radius-lg: 0.75rem;
   --radius-full: 9999px;
-  --brand: #7B4DDB;
-  --brand-hover: #6A3FD8;
+  --brand: #3B7CF1;
+  --brand-hover: #3B7CF1;
 }
 
 * {
@@ -188,7 +188,7 @@ h4 {
 }
 
 .gradient-text {
-  background: linear-gradient(135deg, var(--primary), var(--secondary));
+  background: linear-gradient(135deg, #3B7CF1 0%, #5BB8FF 100%);
   background-clip: text;
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
@@ -509,7 +509,7 @@ h4 {
 
 /* Gradient Text */
 .gradient-text {
-  background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+  background: linear-gradient(135deg, #3B7CF1 0%, #5BB8FF 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -807,7 +807,7 @@ h4 {
 .date-input:focus {
   outline: none !important;
   border-color: var(--primary) !important;
-  box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1) !important;
+  box-shadow: 0 0 0 3px rgba(24, 0, 173, 0.1) !important;
 }
 
 .react-datepicker-wrapper {
@@ -975,3 +975,5 @@ h4 {
   color: white !important;
   font-weight: 700 !important;
 }
+
+

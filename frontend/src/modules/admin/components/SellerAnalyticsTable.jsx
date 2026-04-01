@@ -308,3 +308,4 @@ export default function SellerAnalyticsTable({ seller, onDownloadPDF }) {
         </div>
     );
 }
+

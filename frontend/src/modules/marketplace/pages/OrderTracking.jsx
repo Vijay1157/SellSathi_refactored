@@ -434,8 +434,8 @@ export default function OrderTracking() {
                             width: '100%',
                             padding: '1.25rem',
                             borderRadius: '16px',
-                            background: 'linear-gradient(135deg, #6366f1 0%, #a855f7 100%)',
-                            boxShadow: '0 10px 20px -5px rgba(99, 102, 241, 0.4)',
+                            background: 'linear-gradient(135deg, #3B7CF1 0%, #5BB8FF 100%)',
+                            boxShadow: '0 10px 20px -5px rgba(24, 0, 173, 0.4)',
                             fontWeight: '700',
                             fontSize: '1rem'
                         }}
@@ -536,7 +536,7 @@ export default function OrderTracking() {
                                             alignItems: 'center',
                                             gap: '0.75rem',
                                             padding: '0.75rem 1rem',
-                                            background: cancellationReason === reason ? 'rgba(99, 102, 241, 0.1)' : 'var(--surface)',
+                                            background: cancellationReason === reason ? 'rgba(24, 0, 173, 0.1)' : 'var(--surface)',
                                             border: `2px solid ${cancellationReason === reason ? 'var(--primary)' : 'var(--border)'}`,
                                             borderRadius: '12px',
                                             cursor: 'pointer',
@@ -659,3 +659,6 @@ export default function OrderTracking() {
         </div>
     );
 }
+
+
+

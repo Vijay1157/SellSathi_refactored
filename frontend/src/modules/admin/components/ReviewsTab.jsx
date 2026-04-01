@@ -179,3 +179,4 @@ export default function ReviewsTab({ reviews, fetchAllData }) {
         </div>
     );
 }
+

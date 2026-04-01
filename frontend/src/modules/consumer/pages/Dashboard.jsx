@@ -433,7 +433,7 @@ export default function ConsumerDashboard() {
                     <div className="lg:col-span-1">
                         <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden sticky top-20">
                             {/* User Profile */}
-                            <div className="p-4 bg-gradient-to-r from-blue-50 to-indigo-50 border-b border-gray-200">
+                            <div className="p-4 bg-gradient-to-r from-blue-50 to-blue-50 border-b border-gray-200">
                                 <div className="flex flex-col items-center text-center">
                                     {userPhoto ? (
                                         <div className="w-16 h-16 rounded-full mb-2 overflow-hidden border-2 border-primary">
@@ -572,3 +572,4 @@ export default function ConsumerDashboard() {
         </div>
     );
 }
+

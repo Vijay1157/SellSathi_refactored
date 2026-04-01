@@ -232,3 +232,4 @@ export default function SellerDetailModal({ seller, onClose, onApprove, onReject
             )}        </>
     );
 }
+

@@ -20,7 +20,7 @@ export default function OrderOverviewCard({ stats, loading }) {
             label: 'Total Orders',
             value: stats.totalOrders || 0,
             icon: ShoppingBag,
-            color: 'text-blue-600',
+            color: 'text-[#3B7CF1]',
             bg: 'bg-blue-50',
             borderColor: 'border-blue-100'
         },
@@ -44,9 +44,9 @@ export default function OrderOverviewCard({ stats, loading }) {
             label: 'Total Spend',
             value: `₹${stats.totalSpend?.toLocaleString('en-IN') || 0}`,
             icon: TrendingUp,
-            color: 'text-purple-600',
-            bg: 'bg-purple-50',
-            borderColor: 'border-purple-100'
+            color: 'text-[#3B7CF1]',
+            bg: 'bg-blue-50',
+            borderColor: 'border-blue-100'
         }
     ];
 
@@ -73,6 +73,9 @@ export default function OrderOverviewCard({ stats, loading }) {
         </>
     );
 }
+
+
+
 
 
 

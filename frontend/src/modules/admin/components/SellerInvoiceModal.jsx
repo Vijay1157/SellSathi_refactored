@@ -167,7 +167,7 @@ export default function SellerInvoiceModal({ seller, onClose, onDownloadPDF, isD
                 </div>
 
                 {/* Bank Details Section */}
-                <div className="glass-card" style={{ padding: '2rem', marginBottom: '2rem', border: '1px solid var(--border)', background: 'linear-gradient(135deg, rgba(99, 102, 241, 0.05) 0%, rgba(168, 85, 247, 0.05) 100%)' }}>
+                <div className="glass-card" style={{ padding: '2rem', marginBottom: '2rem', border: '1px solid var(--border)', background: 'linear-gradient(135deg, rgba(24, 0, 173, 0.05) 0%, rgba(168, 85, 247, 0.05) 100%)' }}>
                     <h3 style={{ fontSize: '1.25rem', fontWeight: 700, marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                         <DollarSign size={20} style={{ color: 'var(--primary)' }} />
                         Bank Details
@@ -242,12 +242,12 @@ export default function SellerInvoiceModal({ seller, onClose, onDownloadPDF, isD
                     <h3 style={{ fontSize: '1.25rem', fontWeight: 700, marginBottom: '1.5rem' }}>Invoice Summary</h3>
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '1.5rem', marginBottom: '1rem' }}>
                         {/* Total Products Listed */}
-                        <div className="glass-card" style={{ padding: '1.5rem', border: '2px solid #6366f1', background: 'rgba(99, 102, 241, 0.05)' }}>
+                        <div className="glass-card" style={{ padding: '1.5rem', border: '2px solid #3B7CF1', background: 'rgba(24, 0, 173, 0.05)' }}>
                             <div className="flex items-center justify-between mb-2">
-                                <Package size={24} style={{ color: '#6366f1' }} />
+                                <Package size={24} style={{ color: '#3B7CF1' }} />
                             </div>
-                            <p style={{ fontSize: '0.85rem', color: '#6366f1', fontWeight: 600, marginBottom: '0.5rem' }}>Total Products Listed</p>
-                            <h2 style={{ fontSize: '2.5rem', fontWeight: 800, color: '#4f46e5', margin: 0 }}>{totalProducts}</h2>
+                            <p style={{ fontSize: '0.85rem', color: '#3B7CF1', fontWeight: 600, marginBottom: '0.5rem' }}>Total Products Listed</p>
+                            <h2 style={{ fontSize: '2.5rem', fontWeight: 800, color: '#3B7CF1', margin: 0 }}>{totalProducts}</h2>
                         </div>
 
                         {/* Total Revenue Earned */}
@@ -449,6 +449,9 @@ export default function SellerInvoiceModal({ seller, onClose, onDownloadPDF, isD
         </div>
     );
 }
+
+
+
 
 
 

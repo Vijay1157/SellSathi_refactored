@@ -30,7 +30,7 @@ export default function RecentPurchases({ orders, loading, onOrderClick, activeO
         const s = status?.toLowerCase() || 'placed';
         if (s.includes('delivered')) return 'bg-green-50 text-green-600 ring-green-100';
         if (s.includes('cancel')) return 'bg-red-50 text-red-600 ring-red-100';
-        if (s.includes('ship') || s.includes('out')) return 'bg-blue-50 text-blue-600 ring-blue-100';
+        if (s.includes('ship') || s.includes('out')) return 'bg-blue-50 text-[#3B7CF1] ring-blue-100';
         return 'bg-amber-50 text-amber-600 ring-amber-100';
     };
 
@@ -76,6 +76,8 @@ export default function RecentPurchases({ orders, loading, onOrderClick, activeO
         </div>
     );
 }
+
+
 
 
 

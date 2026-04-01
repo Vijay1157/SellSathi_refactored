@@ -18,7 +18,7 @@ export default function ConsumerWishlistTab({ wishlist, onRemoveFromWishlist, pr
                     <Heart size={48} className="text-gray-300 mx-auto mb-4" />
                     <p className="text-gray-500 mb-4">Your wishlist is empty</p>
                     <button onClick={() => navigate('/products')}
-                        className="px-6 py-2 bg-primary text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors">
+                        className="px-6 py-2 bg-primary text-white rounded-lg text-sm font-medium hover:bg-[#120085] transition-colors">
                         Browse Products
                     </button>
                 </div>
@@ -144,3 +144,4 @@ export default function ConsumerWishlistTab({ wishlist, onRemoveFromWishlist, pr
         </div>
     );
 }
+

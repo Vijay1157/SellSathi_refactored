@@ -130,3 +130,4 @@ export default function PayoutsTab({ analytics, setSelectedAnalyticsSeller, fetc
         </div>
     );
 }
+

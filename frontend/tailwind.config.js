@@ -7,12 +7,12 @@ export default {
   theme: {
     extend: {
       colors: {
-        primary: 'hsl(230, 85%, 60%)',
-        secondary: 'hsl(280, 80%, 65%)',
-        accent: 'hsl(190, 90%, 50%)',
+        primary: '#3B7CF1',
+        secondary: '#5BB8FF',
+        accent: '#94C7FD',
         brand: {
-          DEFAULT: '#7B4DDB',
-          hover: '#6A3FD8',
+          DEFAULT: '#3B7CF1',
+          hover: '#1800AD',
         }
       },
     },

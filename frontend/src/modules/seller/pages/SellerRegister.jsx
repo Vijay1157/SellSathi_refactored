@@ -189,7 +189,7 @@ export const SellerRegister = () => {
 
         <div className="relative z-10">
           <Link to="/seller" className="inline-flex items-center gap-2 text-white/80 hover:text-white mb-12 transition-colors">
-            <ArrowLeft size={20} /> Back to SellSathi
+            <ArrowLeft size={20} /> Back to GudKart
           </Link>
 
           <div className="flex items-center gap-3 mb-12">
@@ -198,12 +198,12 @@ export const SellerRegister = () => {
             </div>
             <div>
               <h3 className="text-xl font-bold">Seller Center</h3>
-              <p className="text-white/60 text-sm">SellSathi for Business</p>
+              <p className="text-white/60 text-sm">GudKart for Business</p>
             </div>
           </div>
 
           <h1 className="text-5xl lg:text-6xl font-bold leading-tight mb-8">
-            Grow your business with SellSathi
+            Grow your business with GudKart
           </h1>
           <p className="text-xl text-white/80 max-w-md mb-12">
             Reach millions of customers and scale your brand with powerful selling tools.
@@ -227,7 +227,7 @@ export const SellerRegister = () => {
 
         <div className="relative z-10 pt-12">
           <p className="text-sm text-white/60">
-            By logging in, you agree to SellSathi's Seller <Link to="#" className="underline">Terms of Service</Link>
+            By logging in, you agree to GudKart's Seller <Link to="#" className="underline">Terms of Service</Link>
           </p>
         </div>
       </div>
@@ -237,7 +237,7 @@ export const SellerRegister = () => {
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="w-full max-w-xl bg-white rounded-[2.5rem] shadow-2xl shadow-purple-100 p-8 lg:p-12 border border-gray-100 relative"
+          className="w-full max-w-xl bg-white rounded-[2.5rem] shadow-2xl shadow-blue-100 p-8 lg:p-12 border border-gray-100 relative"
         >
           {step === 'upload' ? (
             <div className="text-center">
@@ -258,7 +258,7 @@ export const SellerRegister = () => {
                       <p className="text-brand font-medium">Extracting Details...</p>
                     </div>
                   )}
-                  <div className={`w-full h-48 rounded-3xl border-2 border-dashed border-purple-200 bg-purple-50/50 flex flex-col items-center justify-center transition-all group ${!loading ? 'cursor-pointer hover:bg-purple-50' : ''}`}>
+                  <div className={`w-full h-48 rounded-3xl border-2 border-dashed border-blue-200 bg-blue-50/50 flex flex-col items-center justify-center transition-all group ${!loading ? 'cursor-pointer hover:bg-blue-50' : ''}`}>
                     <div className="w-16 h-16 rounded-full bg-white flex items-center justify-center text-brand mb-4 shadow-sm group-hover:scale-110 transition-transform">
                       <Upload size={28} />
                     </div>
@@ -367,7 +367,7 @@ export const SellerRegister = () => {
                   </label>
                   {!aadhaarImagePreview ? (
                     <label className="block cursor-pointer">
-                      <div className="w-full h-36 rounded-2xl border-2 border-dashed border-purple-200 bg-purple-50/30 flex flex-col items-center justify-center transition-all hover:bg-purple-50 hover:border-purple-300 group">
+                      <div className="w-full h-36 rounded-2xl border-2 border-dashed border-blue-200 bg-blue-50/30 flex flex-col items-center justify-center transition-all hover:bg-blue-50 hover:border-blue-300 group">
                         <div className="w-12 h-12 rounded-full bg-white flex items-center justify-center text-brand mb-3 shadow-sm group-hover:scale-110 transition-transform">
                           <Camera size={22} />
                         </div>
@@ -382,7 +382,7 @@ export const SellerRegister = () => {
                       />
                     </label>
                   ) : (
-                    <div className="relative rounded-2xl overflow-hidden border-2 border-purple-200 bg-purple-50/30">
+                    <div className="relative rounded-2xl overflow-hidden border-2 border-blue-200 bg-blue-50/30">
                       <img
                         src={aadhaarImagePreview}
                         alt="Aadhaar Preview"
@@ -425,3 +425,5 @@ export const SellerRegister = () => {
     </div>
   );
 };
+
+

@@ -99,7 +99,7 @@ export default function SellerProfileTab({ profile, sellerUid }) {
                     style={{
                         display: 'flex', alignItems: 'center', gap: '8px',
                         padding: '0.75rem 1.5rem', borderRadius: '12px',
-                        background: 'linear-gradient(135deg, #7B4DDB, #5A32C8)',
+                        background: 'linear-gradient(135deg, #3B7CF1, #0D0070)',
                         color: 'white', fontWeight: 600, fontSize: '0.9rem',
                         border: 'none', cursor: 'pointer',
                         boxShadow: '0 4px 12px rgba(123, 77, 219, 0.3)',
@@ -174,12 +174,12 @@ export default function SellerProfileTab({ profile, sellerUid }) {
                     <div className="space-y-10">
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
                             {[
-                                { label: 'Supplier/Shop Name', value: profile.supplierName || profile.shopName, icon: <Store className="text-purple-500" /> },
-                                { label: 'Business Type', value: profile.businessType || 'N/A', icon: <User className="text-blue-500" /> },
+                                { label: 'Supplier/Shop Name', value: profile.supplierName || profile.shopName, icon: <Store className="text-[#3B7CF1]" /> },
+                                { label: 'Business Type', value: profile.businessType || 'N/A', icon: <User className="text-[#3B7CF1]" /> },
                                 { label: 'Product Category', value: profile.productCategory || profile.shopCategory || 'N/A', icon: <Package className="text-orange-500" /> },
                                 { label: 'Contact Email', value: profile.contactEmail || profile.emailId || 'N/A', icon: <ImageIcon className="text-pink-500" /> },
                                 { label: 'GST Number', value: profile.gstNumber || 'Exempted (EID)', icon: <CheckCircle className="text-green-500" /> },
-                                { label: 'PAN Number', value: profile.panNumber || 'N/A', icon: <CreditCard className="text-indigo-500" /> }
+                                { label: 'PAN Number', value: profile.panNumber || 'N/A', icon: <CreditCard className="text-[#3B7CF1]" /> }
                             ].map((item, idx) => (
                                 <div key={idx} className="flex gap-4 p-6 rounded-2xl bg-gray-50 border border-gray-100 transition-all hover:shadow-md">
                                     <div className="w-12 h-12 rounded-xl bg-white flex items-center justify-center shadow-sm shrink-0 border border-gray-100">
@@ -249,15 +249,15 @@ export default function SellerProfileTab({ profile, sellerUid }) {
                             ].map((item, idx) => (
                                 <div key={idx} className="p-8 rounded-[1.5rem] bg-white border border-gray-100 shadow-sm flex flex-col gap-2">
                                     <span className="text-xs font-bold text-gray-400 uppercase tracking-widest">{item.label}</span>
-                                    <span className="text-xl font-bold text-indigo-900">{item.value}</span>
+                                    <span className="text-xl font-bold text-blue-900">{item.value}</span>
                                 </div>
                             ))}
                         </div>
-                        <div className="mt-8 p-6 rounded-2xl bg-indigo-50 border border-indigo-100 flex items-center gap-4">
-                            <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center text-indigo-600 shadow-sm shrink-0">
+                        <div className="mt-8 p-6 rounded-2xl bg-blue-50 border border-blue-100 flex items-center gap-4">
+                            <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center text-blue-700 shadow-sm shrink-0">
                                 <AlertCircle size={20} />
                             </div>
-                            <p className="text-sm text-indigo-900 font-medium">To change your primary bank account, please use the "Request Edit" button above to submit a correction request to admin.</p>
+                            <p className="text-sm text-blue-900 font-medium">To change your primary bank account, please use the "Request Edit" button above to submit a correction request to admin.</p>
                         </div>
                     </div>
                 )}
@@ -315,7 +315,7 @@ export default function SellerProfileTab({ profile, sellerUid }) {
                                     <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '0.5rem' }}>
                                         <div style={{
                                             width: '44px', height: '44px', borderRadius: '12px',
-                                            background: 'linear-gradient(135deg, #7B4DDB, #5A32C8)',
+                                            background: 'linear-gradient(135deg, #3B7CF1, #0D0070)',
                                             display: 'flex', alignItems: 'center', justifyContent: 'center'
                                         }}>
                                             <Edit3 size={20} color="white" />
@@ -371,7 +371,7 @@ export default function SellerProfileTab({ profile, sellerUid }) {
                                             outline: 'none', transition: 'border-color 0.2s',
                                             fontFamily: 'inherit'
                                         }}
-                                        onFocus={(e) => e.target.style.borderColor = '#7B4DDB'}
+                                        onFocus={(e) => e.target.style.borderColor = '#3B7CF1'}
                                         onBlur={(e) => e.target.style.borderColor = '#e2e8f0'}
                                     />
                                     <p style={{ fontSize: '0.75rem', color: '#94a3b8', marginTop: '0.25rem' }}>
@@ -397,7 +397,7 @@ export default function SellerProfileTab({ profile, sellerUid }) {
                                         disabled={sendingRequest || !correctionMessage.trim()}
                                         style={{
                                             padding: '0.75rem 1.5rem', borderRadius: '12px',
-                                            border: 'none', background: sendingRequest ? '#94a3b8' : 'linear-gradient(135deg, #7B4DDB, #5A32C8)',
+                                            border: 'none', background: sendingRequest ? '#94a3b8' : 'linear-gradient(135deg, #3B7CF1, #0D0070)',
                                             color: 'white', fontWeight: 600, cursor: sendingRequest ? 'not-allowed' : 'pointer',
                                             fontSize: '0.9rem', display: 'flex', alignItems: 'center', gap: '8px',
                                             opacity: !correctionMessage.trim() ? 0.5 : 1,
@@ -444,7 +444,7 @@ export default function SellerProfileTab({ profile, sellerUid }) {
                             onClick={dismissNotification}
                             style={{
                                 marginTop: '0.75rem', padding: '0.4rem 1rem',
-                                background: 'linear-gradient(135deg, #7B4DDB, #5A32C8)',
+                                background: 'linear-gradient(135deg, #3B7CF1, #0D0070)',
                                 color: 'white', border: 'none', borderRadius: '8px',
                                 fontSize: '0.8rem', fontWeight: 600, cursor: 'pointer'
                             }}
@@ -469,3 +469,9 @@ export default function SellerProfileTab({ profile, sellerUid }) {
         </div>
     );
 }
+
+
+
+
+
+

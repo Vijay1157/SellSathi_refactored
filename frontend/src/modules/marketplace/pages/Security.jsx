@@ -1,7 +1,7 @@
 import './PolicyPage.css';
 
 const EFFECTIVE_DATE = '27 March 2026';
-const COMPANY = 'SellSathi';
+const COMPANY = 'GudKart';
 const EMAIL = 'sumanhp31@gmail.com';
 
 export default function Security() {
@@ -59,3 +59,4 @@ function Section({ title, children }) {
         </div>
     );
 }
+

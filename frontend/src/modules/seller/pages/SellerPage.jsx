@@ -4,7 +4,7 @@ import { Link, useNavigate, useLocation } from 'react-router-dom';
 import SellerHeader from '../components/SellerHeader';
 import Footer from '../components/Footer';
 import StatsSection from '../components/StatsSection';
-import WhySellSathi from '../components/WhySellSathi';
+import WhyGudKart from '../components/WhySellSathi';
 import HowItWorks from '../components/HowItWorks';
 import Testimonials from '../components/Testimonials';
 import AuthModal from '@/modules/auth/components/AuthModal';
@@ -53,7 +53,7 @@ export const SellerPage = () => {
                 Sell Online to Crores of Customers at <span className="text-brand">0% Commission</span>
               </h1>
               <p className="text-xl text-gray-600 mb-10 max-w-2xl mx-auto lg:mx-0">
-                Become a SellSathi seller and grow your business across India.
+                Become a GudKart seller and grow your business across India.
               </p>
               <div className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-4 mb-6">
                 <button
@@ -65,7 +65,7 @@ export const SellerPage = () => {
               </div>
               <p className="text-sm text-gray-500">
                 <span className="bg-brand text-white text-[10px] font-bold px-2 py-0.5 rounded mr-2">NEW</span>
-                Don't have a GSTIN? You can still sell on SellSathi.{' '}
+                Don't have a GSTIN? You can still sell on GudKart.{' '}
                 <Link to="#" className="text-brand font-semibold hover:underline">Know more</Link>
               </p>
             </motion.div>
@@ -91,7 +91,7 @@ export const SellerPage = () => {
       </section>
 
       <StatsSection />
-      <WhySellSathi />
+      <WhyGudKart />
       <Testimonials />
       <HowItWorks />
 
@@ -105,7 +105,7 @@ export const SellerPage = () => {
                 <span className="font-bold tracking-widest uppercase text-sm">Supplier Learning Hub</span>
               </div>
               <h2 className="text-3xl md:text-4xl font-bold text-white mb-2">
-                Learn how to sell and grow your business on SellSathi
+                Learn how to sell and grow your business on GudKart
               </h2>
             </div>
             <button className="px-8 py-4 rounded-2xl bg-white text-brand font-bold text-lg hover:bg-gray-50 transition-all flex items-center gap-2 whitespace-nowrap">
@@ -119,7 +119,7 @@ export const SellerPage = () => {
       <section id="grow-business" className="py-24 bg-white">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-16 text-center">
-            Grow Your Business With SellSathi
+            Grow Your Business With GudKart
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             <div className="p-10 rounded-[2rem] bg-gray-50 border border-gray-100 flex gap-6">
@@ -185,10 +185,10 @@ export const SellerPage = () => {
           <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-brand/5 text-brand mb-8">
             <Mail size={32} />
           </div>
-          <h2 className="text-3xl font-bold text-gray-900 mb-4">SellSathi Supplier Support Available 24/7</h2>
+          <h2 className="text-3xl font-bold text-gray-900 mb-4">GudKart Supplier Support Available 24/7</h2>
           <p className="text-gray-600 mb-8">Have questions? We're here to help you every step of the way.</p>
-          <a href="mailto:support@sellsathi.com" className="text-2xl font-bold text-brand hover:underline">
-            support@sellsathi.com
+          <a href="mailto:support@GudKart.com" className="text-2xl font-bold text-brand hover:underline">
+            support@GudKart.com
           </a>
         </div>
       </section>
@@ -201,3 +201,5 @@ export const SellerPage = () => {
     </div>
   );
 };
+
+

@@ -44,3 +44,4 @@ export default function CategoryShowcase({ groupedDeals, wishlist, productReview
         </section>
     );
 }
+

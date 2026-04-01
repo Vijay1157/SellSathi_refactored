@@ -1,5 +1,5 @@
 /**
- * Centralized utility for price calculations across Sellsathi.
+ * Centralized utility for price calculations across GudKart.
  */
 
 /**

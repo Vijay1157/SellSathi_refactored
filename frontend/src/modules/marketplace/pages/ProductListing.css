@@ -245,7 +245,7 @@ body.product-listing-page footer {
 }
 
 .category-btn.active {
-    background: linear-gradient(135deg, #2563EB 0%, #1D4ED8 100%);
+    background: linear-gradient(135deg, #3B7CF1 0%, #120085 100%);
     color: var(--white);
     border-color: var(--primary);
     box-shadow: 0 4px 12px rgba(37, 99, 235, 0.2);
@@ -326,7 +326,7 @@ body.product-listing-page footer {
 }
 
 .category-list-pro button.active {
-    background: linear-gradient(135deg, #2563EB 0%, #1D4ED8 100%);
+    background: linear-gradient(135deg, #3B7CF1 0%, #120085 100%);
     color: var(--white);
     border-color: var(--primary);
     box-shadow: 0 4px 12px rgba(37, 99, 235, 0.2);
@@ -702,7 +702,7 @@ body.product-listing-page footer {
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
 }
 .tool-btn:hover { 
-    background: linear-gradient(135deg, #2563EB 0%, #1D4ED8 100%);
+    background: linear-gradient(135deg, #3B7CF1 0%, #120085 100%);
     color: var(--white); 
     border-color: transparent;
     transform: scale(1.05); 
@@ -795,7 +795,7 @@ body.product-listing-page footer {
     height: 32px;
     min-width: 32px;
     padding: 0;
-    background: linear-gradient(135deg, #2563EB 0%, #1D4ED8 100%);
+    background: linear-gradient(135deg, #3B7CF1 0%, #120085 100%);
     color: var(--white); 
     border-radius: var(--radius-md, 8px); 
     display: flex; 
@@ -808,7 +808,7 @@ body.product-listing-page footer {
     box-shadow: 0 2px 8px rgba(37, 99, 235, 0.15);
 }
 .add-to-cart-simple:hover { 
-    background: linear-gradient(135deg, #1D4ED8 0%, #1E40AF 100%);
+    background: linear-gradient(135deg, #120085 0%, #0D0070 100%);
     transform: scale(1.05);
     box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25);
 }
@@ -1005,3 +1005,6 @@ body.product-listing-page footer {
         max-height: 200px;
     }
 }
+
+
+

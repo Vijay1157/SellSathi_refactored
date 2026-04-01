@@ -367,7 +367,7 @@ export default function AddProduct() {
                                         <span style={sty.badge('var(--primary)')}>
                                             {config.icon} {product.category}
                                         </span>
-                                        {config.hasSizes && <span style={sty.badge('#8b5cf6')}>📏 Size Options</span>}
+                                        {config.hasSizes && <span style={sty.badge('#5BB8FF')}>📏 Size Options</span>}
                                         {config.hasColors && <span style={sty.badge('#ec4899')}>🎨 Color Options</span>}
                                         {config.hasVariants && <span style={sty.badge('#f59e0b')}>⚙️ Variant Options</span>}
                                     </div>
@@ -499,7 +499,7 @@ export default function AddProduct() {
                                                                 justifyContent: 'space-between',
                                                                 alignItems: 'center',
                                                                 padding: '0.75rem',
-                                                                background: 'rgba(99,102,241,0.08)',
+                                                                background: 'rgba(24, 0, 173,0.08)',
                                                                 borderRadius: '6px',
                                                                 marginTop: '0.25rem',
                                                                 borderTop: '2px solid var(--primary)'
@@ -619,3 +619,6 @@ export default function AddProduct() {
         </div>
     );
 }
+
+
+

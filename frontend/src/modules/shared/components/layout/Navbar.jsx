@@ -13,6 +13,17 @@ import CategorySidebar from './CategorySidebar';
 import { authFetch } from '@/modules/shared/utils/api';
 import './Navbar.css';
 
+function GudKartLogo() {
+    return (
+        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+            <img src="/gudkart-logo.png" alt="" style={{ height: '38px', width: '38px', objectFit: 'contain' }} />
+            <span style={{ fontFamily: 'Inter, sans-serif', lineHeight: 1, letterSpacing: '-0.3px' }}>
+                <span style={{ fontSize: '1.5rem', fontWeight: 900, color: '#1800AD' }}>Gud</span><span style={{ fontSize: '1.5rem', fontWeight: 400, color: '#5BB8FF' }}>kart</span>
+            </span>
+        </div>
+    );
+}
+
 export default function Navbar() {
     const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
     const [isProfileOpen, setIsProfileOpen] = useState(false);
@@ -55,7 +66,7 @@ export default function Navbar() {
     useEffect(() => {
         // Fetch custom admin categories using the correct API base
         const API_BASE = import.meta.env.PROD
-            ? (import.meta.env.VITE_API_BASE_URL || 'https://sellsathi-refactored.onrender.com')
+            ? (import.meta.env.VITE_API_BASE_URL || 'https://GudKart-refactored.onrender.com')
             : 'http://localhost:5000';
         fetch(`${API_BASE}/admin/config/public`)
             .then(r => r.json())
@@ -380,12 +391,12 @@ export default function Navbar() {
                 <div className="main-nav-wrapper">
                     <div className="container main-nav">
                         {location.pathname === '/' ? (
-                            <div className="brand-logo gradient-text" style={{ cursor: 'default' }}>
-                                SELLSATHI
+                            <div className="brand-logo" style={{ cursor: 'default' }}>
+                                <GudKartLogo />
                             </div>
                         ) : (
-                            <Link to="/" className="brand-logo gradient-text">
-                                SELLSATHI
+                            <Link to="/" className="brand-logo">
+                                <GudKartLogo />
                             </Link>
                         )}
 
@@ -668,3 +679,5 @@ export default function Navbar() {
         </>
     );
 }
+
+

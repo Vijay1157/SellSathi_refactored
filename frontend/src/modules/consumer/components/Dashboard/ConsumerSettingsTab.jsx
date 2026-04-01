@@ -31,7 +31,7 @@ export default function ConsumerSettingsTab({
                             setProfileData({ displayName: userName, email: user?.email || '', phone: profileData.phone });
                         }} className="px-4 py-2 text-sm font-medium text-gray-600 hover:bg-gray-100 rounded-lg transition-colors">Cancel</button>
                         <button onClick={onSaveProfile} disabled={savingProfile}
-                            className="px-4 py-2 text-sm font-medium text-white bg-primary hover:bg-blue-700 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+                            className="px-4 py-2 text-sm font-medium text-white bg-primary hover:bg-[#120085] rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
                             {savingProfile ? 'Saving...' : 'Save Changes'}
                         </button>
                     </div>
@@ -100,3 +100,4 @@ export default function ConsumerSettingsTab({
         </div>
     );
 }
+

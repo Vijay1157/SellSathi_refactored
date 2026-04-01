@@ -79,7 +79,7 @@ export default function TrackOrderModal({ show, trackingOrder, onClose, onDownlo
                                 return (
                                     <div key={stage.key} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', zIndex: 1 }}>
                                         <motion.div
-                                            animate={active ? { scale: [1, 1.15, 1], boxShadow: ['0 0 0 0 rgba(99,102,241,0.4)', '0 0 0 8px rgba(99,102,241,0.15)', '0 0 0 0 rgba(99,102,241,0.4)'] } : {}}
+                                            animate={active ? { scale: [1, 1.15, 1], boxShadow: ['0 0 0 0 rgba(24, 0, 173,0.4)', '0 0 0 8px rgba(24, 0, 173,0.15)', '0 0 0 0 rgba(24, 0, 173,0.4)'] } : {}}
                                             transition={{ repeat: active ? Infinity : 0, duration: 2 }}
                                             style={{
                                                 width: '40px', height: '40px', borderRadius: '50%',
@@ -211,3 +211,6 @@ export default function TrackOrderModal({ show, trackingOrder, onClose, onDownlo
         </AnimatePresence>
     );
 }
+
+
+

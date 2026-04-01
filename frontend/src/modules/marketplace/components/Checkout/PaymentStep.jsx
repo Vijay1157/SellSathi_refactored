@@ -59,7 +59,7 @@ export default function PaymentStep({
                                 </div>
                                 <button
                                     type="button"
-                                    className="w-full py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-xl font-semibold hover:opacity-90 transition-all disabled:opacity-50 text-sm flex items-center justify-center gap-2"
+                                    className="w-full py-3 bg-gradient-to-r from-blue-700 to-blue-700 text-white rounded-xl font-semibold hover:opacity-90 transition-all disabled:opacity-50 text-sm flex items-center justify-center gap-2"
                                     onClick={(e) => {
                                         e.preventDefault();
                                         e.stopPropagation();
@@ -135,3 +135,5 @@ export default function PaymentStep({
         </section>
     );
 }
+
+

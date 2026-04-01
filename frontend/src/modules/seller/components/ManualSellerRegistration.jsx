@@ -162,7 +162,7 @@ export default function ManualSellerRegistration({ onClose }) {
                                 type="text"
                                 value={stepData.fullName}
                                 onChange={(e) => updateFormData('personalDetails', 'fullName', e.target.value)}
-                                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                                 placeholder="Enter your full name"
                             />
                         </div>
@@ -173,7 +173,7 @@ export default function ManualSellerRegistration({ onClose }) {
                                 type="tel"
                                 value={stepData.phoneNumber}
                                 onChange={(e) => updateFormData('personalDetails', 'phoneNumber', e.target.value)}
-                                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                                 placeholder="Enter your phone number"
                             />
                         </div>
@@ -184,7 +184,7 @@ export default function ManualSellerRegistration({ onClose }) {
                                 type="email"
                                 value={stepData.emailAddress}
                                 onChange={(e) => updateFormData('personalDetails', 'emailAddress', e.target.value)}
-                                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                                 placeholder="Enter your email address"
                             />
                         </div>
@@ -195,7 +195,7 @@ export default function ManualSellerRegistration({ onClose }) {
                                 type="text"
                                 value={stepData.aadhaarNumber}
                                 onChange={(e) => updateFormData('personalDetails', 'aadhaarNumber', e.target.value)}
-                                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                                 placeholder="Enter your Aadhaar number"
                                 maxLength={12}
                             />
@@ -214,7 +214,7 @@ export default function ManualSellerRegistration({ onClose }) {
                                 type="text"
                                 value={stepData.bankName}
                                 onChange={(e) => updateFormData('bankDetails', 'bankName', e.target.value)}
-                                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                                 placeholder="Enter bank name"
                             />
                         </div>
@@ -225,7 +225,7 @@ export default function ManualSellerRegistration({ onClose }) {
                                 type="text"
                                 value={stepData.accountHolderName}
                                 onChange={(e) => updateFormData('bankDetails', 'accountHolderName', e.target.value)}
-                                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                                 placeholder="Enter account holder name"
                             />
                         </div>
@@ -236,7 +236,7 @@ export default function ManualSellerRegistration({ onClose }) {
                                 type="text"
                                 value={stepData.accountNumber}
                                 onChange={(e) => updateFormData('bankDetails', 'accountNumber', e.target.value)}
-                                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                                 placeholder="Enter account number"
                             />
                         </div>
@@ -247,7 +247,7 @@ export default function ManualSellerRegistration({ onClose }) {
                                 type="text"
                                 value={stepData.ifscCode}
                                 onChange={(e) => updateFormData('bankDetails', 'ifscCode', e.target.value)}
-                                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                                 placeholder="Enter IFSC code"
                             />
                         </div>
@@ -258,7 +258,7 @@ export default function ManualSellerRegistration({ onClose }) {
                                 type="text"
                                 value={stepData.upiId}
                                 onChange={(e) => updateFormData('bankDetails', 'upiId', e.target.value)}
-                                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                                 placeholder="Enter UPI ID (optional)"
                             />
                         </div>
@@ -276,7 +276,7 @@ export default function ManualSellerRegistration({ onClose }) {
                                 type="text"
                                 value={stepData.companyName}
                                 onChange={(e) => updateFormData('companyDetails', 'companyName', e.target.value)}
-                                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                                 placeholder="Enter company name"
                             />
                         </div>
@@ -287,7 +287,7 @@ export default function ManualSellerRegistration({ onClose }) {
                                 type="text"
                                 value={stepData.companyHolderName}
                                 onChange={(e) => updateFormData('companyDetails', 'companyHolderName', e.target.value)}
-                                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                                 placeholder="Enter company holder name"
                             />
                         </div>
@@ -298,7 +298,7 @@ export default function ManualSellerRegistration({ onClose }) {
                                 type="email"
                                 value={stepData.companyEmail}
                                 onChange={(e) => updateFormData('companyDetails', 'companyEmail', e.target.value)}
-                                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                                 placeholder="Enter company email"
                             />
                         </div>
@@ -309,7 +309,7 @@ export default function ManualSellerRegistration({ onClose }) {
                                 type="tel"
                                 value={stepData.companyPhoneNumber}
                                 onChange={(e) => updateFormData('companyDetails', 'companyPhoneNumber', e.target.value)}
-                                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                                 placeholder="Enter company phone number"
                             />
                         </div>
@@ -326,7 +326,7 @@ export default function ManualSellerRegistration({ onClose }) {
                             <textarea
                                 value={stepData.address}
                                 onChange={(e) => updateFormData('pickupAddress', 'address', e.target.value)}
-                                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                                 placeholder="Enter pickup address"
                                 rows={3}
                             />
@@ -338,7 +338,7 @@ export default function ManualSellerRegistration({ onClose }) {
                                 type="text"
                                 value={stepData.state}
                                 onChange={(e) => updateFormData('pickupAddress', 'state', e.target.value)}
-                                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                                 placeholder="Enter state"
                             />
                         </div>
@@ -349,7 +349,7 @@ export default function ManualSellerRegistration({ onClose }) {
                                 type="text"
                                 value={stepData.city}
                                 onChange={(e) => updateFormData('pickupAddress', 'city', e.target.value)}
-                                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                                 placeholder="Enter city"
                             />
                         </div>
@@ -360,7 +360,7 @@ export default function ManualSellerRegistration({ onClose }) {
                                 type="text"
                                 value={stepData.country}
                                 onChange={(e) => updateFormData('pickupAddress', 'country', e.target.value)}
-                                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                                 placeholder="Enter country"
                             />
                         </div>
@@ -371,7 +371,7 @@ export default function ManualSellerRegistration({ onClose }) {
                                 type="text"
                                 value={stepData.landmark}
                                 onChange={(e) => updateFormData('pickupAddress', 'landmark', e.target.value)}
-                                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                                 placeholder="Enter landmark (optional)"
                             />
                         </div>
@@ -397,14 +397,14 @@ export default function ManualSellerRegistration({ onClose }) {
                             return (
                                 <div key={step.id} className="flex items-center">
                                     <div className={`flex items-center justify-center w-10 h-10 rounded-full border-2 transition-colors ${
-                                        isActive ? 'border-purple-600 bg-purple-600 text-white' :
+                                        isActive ? 'border-[#3B7CF1] bg-[#3B7CF1] text-white' :
                                         isCompleted ? 'border-green-500 bg-green-500 text-white' :
                                         'border-gray-300 bg-white text-gray-500'
                                     }`}>
                                         <Icon className="w-5 h-5" />
                                     </div>
                                     <span className={`ml-2 text-sm font-medium ${
-                                        isActive ? 'text-purple-600' :
+                                        isActive ? 'text-[#3B7CF1]' :
                                         isCompleted ? 'text-green-500' :
                                         'text-gray-500'
                                     }`}>
@@ -438,7 +438,7 @@ export default function ManualSellerRegistration({ onClose }) {
                         {currentStep < 4 ? (
                             <button
                                 onClick={handleNext}
-                                className="px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
+                                className="px-6 py-3 bg-[#3B7CF1] text-white rounded-lg hover:bg-[#120085] transition-colors"
                             >
                                 Next
                                 <ArrowRight className="w-4 h-4 inline ml-2" />
@@ -447,7 +447,7 @@ export default function ManualSellerRegistration({ onClose }) {
                             <button
                                 onClick={handleSubmit}
                                 disabled={loading}
-                                className="px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                className="px-6 py-3 bg-[#3B7CF1] text-white rounded-lg hover:bg-[#120085] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                             >
                                 {loading ? 'Submitting...' : 'Submit'}
                             </button>
@@ -468,6 +468,10 @@ export default function ManualSellerRegistration({ onClose }) {
         </div>
     );
 }
+
+
+
+
 
 
 

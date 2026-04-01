@@ -174,7 +174,7 @@ const styles = `
 .wishlist-card:hover { 
     transform: translateY(-4px); 
     box-shadow: 0 12px 24px rgba(0, 0, 0, 0.15);
-    border-color: #2563EB;
+    border-color: #3B7CF1;
     background: #FAFBFC;
 }
 
@@ -226,7 +226,7 @@ const styles = `
 .card-actions { border-top: 1px solid #E5E7EB; padding-top: 8px; margin-top: auto; }
 .add-cart-btn { 
     width: 100%; 
-    background: linear-gradient(135deg, #2563EB 0%, #1D4ED8 100%); 
+    background: linear-gradient(135deg, #3B7CF1 0%, #120085 100%); 
     color: white; 
     border: none; 
     padding: 10px; 
@@ -242,7 +242,7 @@ const styles = `
     box-shadow: 0 2px 8px rgba(37, 99, 235, 0.15);
 }
 .add-cart-btn:hover { 
-    background: linear-gradient(135deg, #1D4ED8 0%, #1E40AF 100%); 
+    background: linear-gradient(135deg, #120085 0%, #0D0070 100%); 
     transform: scale(1.05);
     box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25);
 }
@@ -255,3 +255,7 @@ const styles = `
 .btn-explore { display: inline-block; background: #1e293b; color: white; padding: 1rem 2.5rem; border-radius: 16px; font-weight: 800; transition: 0.3s; }
 .btn-explore:hover { background: #334155; transform: translateY(-3px); box-shadow: 0 10px 25px rgba(0,0,0,0.1); }
 `;
+
+
+
+

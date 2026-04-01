@@ -76,3 +76,4 @@ export default function BankDetailsModal({ seller, onClose }) {
         </div>
     );
 }
+

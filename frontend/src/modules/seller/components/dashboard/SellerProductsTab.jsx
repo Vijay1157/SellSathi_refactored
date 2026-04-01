@@ -43,7 +43,7 @@ export default function SellerProductsTab({ products, onViewProduct, onDeletePro
                                                         <p style={{ fontWeight: 700, color: '#1e293b', margin: 0, fontSize: '0.95rem', letterSpacing: '-0.2px' }}>{p.title}</p>
                                                         <div style={{ display: 'flex', gap: '0.35rem', marginTop: '6px', flexWrap: 'wrap' }}>
                                                             <span style={{ color: '#94a3b8', fontSize: '0.7rem', fontWeight: 500 }}>ID: {p.id?.substring(0, 8)}</span>
-                                                            {p.sizes && p.sizes.length > 0 && <span style={{ background: '#f3e8ff', color: '#7c3aed', padding: '0.1rem 0.55rem', borderRadius: '12px', fontSize: '0.65rem', fontWeight: 600 }}>{p.sizes.length} SIZES</span>}
+                                                            {p.sizes && p.sizes.length > 0 && <span style={{ background: '#f3e8ff', color: '#3B7CF1', padding: '0.1rem 0.55rem', borderRadius: '12px', fontSize: '0.65rem', fontWeight: 600 }}>{p.sizes.length} SIZES</span>}
                                                             {p.colors && p.colors.length > 0 && <span style={{ background: '#fce7f3', color: '#db2777', padding: '0.1rem 0.55rem', borderRadius: '12px', fontSize: '0.65rem', fontWeight: 600 }}>{p.colors.length} COLORS</span>}
                                                             {p.pricingType === 'varied' && <span style={{ background: '#ecfdf5', color: '#059669', padding: '0.1rem 0.55rem', borderRadius: '12px', fontSize: '0.65rem', fontWeight: 700 }}>VARIED PRICE</span>}
                                                         </div>
@@ -92,3 +92,7 @@ export default function SellerProductsTab({ products, onViewProduct, onDeletePro
         </div>
     );
 }
+
+
+
+

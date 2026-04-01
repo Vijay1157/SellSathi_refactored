@@ -402,7 +402,7 @@ export default function ProductViewModal({
                                 <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
                                     <div>
                                         <h3 style={{ fontSize: '1.75rem', fontWeight: 700, margin: '0 0 0.5rem', color: '#1e293b' }}>{selectedProduct.title}</h3>
-                                        <div style={{ display: 'inline-flex', padding: '0.5rem 1rem', background: '#eef2ff', color: '#4f46e5', borderRadius: '8px', fontWeight: 600, fontSize: '0.9rem' }}>
+                                        <div style={{ display: 'inline-flex', padding: '0.5rem 1rem', background: '#EBF0FF', color: '#3B7CF1', borderRadius: '8px', fontWeight: 600, fontSize: '0.9rem' }}>
                                             {selectedProduct.category}
                                         </div>
                                     </div>
@@ -435,7 +435,7 @@ export default function ProductViewModal({
                                     <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                                         {selectedProduct.sizes?.length > 0 && (
                                             <div style={{ background: '#faf5ff', padding: '1rem', borderRadius: '12px' }}>
-                                                <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 600, color: '#7c3aed', fontSize: '0.85rem' }}>Available Sizes</label>
+                                                <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 600, color: '#3B7CF1', fontSize: '0.85rem' }}>Available Sizes</label>
                                                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
                                                     {selectedProduct.sizes.map(size => (
                                                         <span key={size} style={{ padding: '0.4rem 0.85rem', borderRadius: '50px', background: '#ede9fe', color: '#6d28d9', fontSize: '0.85rem', fontWeight: 500 }}>
@@ -507,3 +507,7 @@ export default function ProductViewModal({
         </AnimatePresence>
     );
 }
+
+
+
+
