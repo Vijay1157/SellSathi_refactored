@@ -119,7 +119,8 @@ class ShiprocketOrderService {
           orderId: data.order_id,
           shipmentId: data.shipment_id,
           awbCode: data.awb_code || 'Pending',
-          courierName: data.courier_name || 'Pending'
+          courierName: data.courier_name || 'Pending',
+          courierRate: data.freight_charge || 'Pending'
         });
 
         return {
@@ -128,6 +129,8 @@ class ShiprocketOrderService {
           shipmentId: data.shipment_id ? data.shipment_id.toString() : null,
           awbNumber: data.awb_code || null,
           courierName: data.courier_name || null,
+          courierRate: data.freight_charge || null,
+          estimatedDeliveryDays: data.estimated_delivery_days || null,
           estimatedDelivery: data.estimated_delivery_date || null
         };
       } else {

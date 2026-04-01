@@ -162,17 +162,31 @@ const updateAdminProfile = async (req, res) => {
         
         console.log(`[UpdateAdminProfile] Saving data for admin ${uid}:`, {
             exists: adminDocSnap.exists,
-            platformFeeBreakdown: updateData.platformFeeBreakdown,
-            categoryGstRates: updateData.categoryGstRates,
+            platformFeeBreakdownToSave: updateData.platformFeeBreakdown,
+            categoryGstRatesCount: updateData.categoryGstRates ? Object.keys(updateData.categoryGstRates).length : 0,
             defaultShippingHandlingPercent: updateData.defaultShippingHandlingPercent
         });
         
         if (adminDocSnap.exists) {
             // Document exists, use update to replace fields completely
             await adminDocRef.update(updateData);
+            console.log(`[UpdateAdminProfile] ✅ Updated existing document`);
         } else {
-            // Document doesn't exist, create it
-            await adminDocRef.set(updateData);
+            // Document doesn't exist, create it with all required fields
+            const initialData = {
+                ...updateData,
+                createdAt: admin.firestore.FieldValue.serverTimestamp(),
+                // Ensure platformFeeBreakdown exists
+                platformFeeBreakdown: updateData.platformFeeBreakdown || {
+                    digitalSecurityFee: 1.2,
+                    merchantVerification: 1.0,
+                    transitCare: 0.8,
+                    platformMaintenance: 0.5,
+                    qualityHandling: 0.0
+                }
+            };
+            await adminDocRef.set(initialData);
+            console.log(`[UpdateAdminProfile] ✅ Created new document with initial data`);
         }
 
         // Update phone in users collection if provided
@@ -186,16 +200,31 @@ const updateAdminProfile = async (req, res) => {
         // Verify the data was saved by reading it back
         const verifyDoc = await adminDocRef.get();
         const savedData = verifyDoc.data();
-        console.log(`[UpdateAdminProfile] Verified saved data:`, {
-            platformFeeBreakdown: savedData.platformFeeBreakdown,
-            categoryGstRates: savedData.categoryGstRates ? Object.keys(savedData.categoryGstRates).length + ' categories' : 'none',
-            defaultShippingHandlingPercent: savedData.defaultShippingHandlingPercent
+        console.log(`[UpdateAdminProfile] ✅ Verified saved data:`, {
+            platformFeeBreakdown: savedData?.platformFeeBreakdown,
+            categoryGstRatesCount: savedData?.categoryGstRates ? Object.keys(savedData.categoryGstRates).length : 0,
+            defaultShippingHandlingPercent: savedData?.defaultShippingHandlingPercent,
+            documentExists: verifyDoc.exists
         });
         
+        // CRITICAL: Check if saved data matches what we tried to save
+        if (JSON.stringify(savedData?.platformFeeBreakdown) !== JSON.stringify(updateData.platformFeeBreakdown)) {
+            console.error(`[UpdateAdminProfile] ❌ WARNING: Saved data does not match!`);
+            console.error(`[UpdateAdminProfile] Expected:`, updateData.platformFeeBreakdown);
+            console.error(`[UpdateAdminProfile] Got:`, savedData?.platformFeeBreakdown);
+        } else {
+            console.log(`[UpdateAdminProfile] ✅ Data verification passed!`);
+        }
+        
+        // Return the actual saved data, not just updateData
         return res.status(200).json({ 
             success: true, 
             message: "Profile updated successfully",
-            profile: updateData
+            profile: savedData,
+            saved: {
+                platformFeeBreakdown: savedData?.platformFeeBreakdown,
+                defaultShippingHandlingPercent: savedData?.defaultShippingHandlingPercent
+            }
         });
     } catch (error) {
         console.error("[UpdateAdminProfile] ERROR:", error);

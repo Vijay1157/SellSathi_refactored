@@ -421,8 +421,79 @@ export default function OrderTracking() {
                             )}
                         </div>
                         <hr style={{ border: 'none', borderTop: '1px solid var(--border)', margin: '1.5rem 0' }} />
+                        
+                        {/* Payment Method & Status */}
+                        <div className="flex justify-between items-center" style={{ marginBottom: '0.75rem' }}>
+                            <span className="text-muted" style={{ fontSize: '0.9rem' }}>Shipping Charges</span>
+                            <div style={{ textAlign: 'right' }}>
+                                {order.actualShippingCharge || order.courierRate ? (
+                                    <>
+                                        <span style={{ fontWeight: '700', fontSize: '1rem' }}>
+                                            ₹{(order.actualShippingCharge || order.courierRate).toLocaleString('en-IN')}
+                                        </span>
+                                        {order.estimatedShippingCharge && order.estimatedShippingCharge !== (order.actualShippingCharge || order.courierRate) && (
+                                            <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '2px' }}>
+                                                Estimated: ₹{order.estimatedShippingCharge.toLocaleString('en-IN')}
+                                            </div>
+                                        )}
+                                    </>
+                                ) : order.estimatedShippingCharge ? (
+                                    <>
+                                        <span style={{ fontWeight: '600', fontSize: '0.9rem', color: '#f59e0b' }}>
+                                            ₹{order.estimatedShippingCharge.toLocaleString('en-IN')}
+                                        </span>
+                                        <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginTop: '2px' }}>
+                                            (Estimated)
+                                        </div>
+                                    </>
+                                ) : (
+                                    <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>Calculating...</span>
+                                )}
+                            </div>
+                        </div>
+                        
+                        <div className="flex justify-between items-center" style={{ marginBottom: '0.75rem' }}>
+                            <span className="text-muted" style={{ fontSize: '0.9rem' }}>Payment Method</span>
+                            <span style={{ fontWeight: '600', textTransform: 'uppercase' }}>{order.paymentMethod || 'N/A'}</span>
+                        </div>
+                        
+                        <div className="flex justify-between items-center" style={{ marginBottom: '0.75rem' }}>
+                            <span className="text-muted" style={{ fontSize: '0.9rem' }}>Payment Status</span>
+                            <span style={{ 
+                                fontWeight: '600',
+                                color: order.paymentStatus === 'Completed' || order.paymentStatus === 'Collected' ? '#10b981' : '#f59e0b',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '0.25rem'
+                            }}>
+                                {order.paymentStatus === 'Completed' ? (
+                                    <>
+                                        <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#10b981' }}></span>
+                                        Paid Online
+                                    </>
+                                ) : order.paymentStatus === 'Collected' ? (
+                                    <>
+                                        <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#10b981' }}></span>
+                                        Payment Collected
+                                    </>
+                                ) : order.paymentMethod === 'COD' ? (
+                                    <>
+                                        <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#f59e0b' }}></span>
+                                        Pay on Delivery
+                                    </>
+                                ) : (
+                                    <>
+                                        <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#10b981' }}></span>
+                                        Paid Online
+                                    </>
+                                )}
+                            </span>
+                        </div>
+                        
+                        <hr style={{ border: 'none', borderTop: '1px solid var(--border)', margin: '0.75rem 0' }} />
+                        
                         <div className="flex justify-between items-center">
-                            <span style={{ fontWeight: '600' }}>Total Paid</span>
+                            <span style={{ fontWeight: '600' }}>Order Total</span>
                             <span className="gradient-text" style={{ fontWeight: '800', fontSize: '1.25rem' }}>₹{order.total?.toLocaleString('en-IN') || '0'}</span>
                         </div>
                     </div>
