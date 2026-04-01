@@ -46,7 +46,8 @@ app.use('/orders', orderRoutes);
 app.use('/consumer', consumerRoutes);
 app.use('/payment', paymentRoutes);
 app.use('/reviews', reviewRoutes);
-app.use('/webhook', shippingRoutes); // Unified webhook path
+app.use('/webhook', shippingRoutes); // Shiprocket webhook
+app.use('/shipping', shippingRoutes); // Shipping estimation and rates
 
 // Health Check
 app.get('/health', (req, res) => res.status(200).json({ status: 'UP', timestamp: new Date().toISOString() }));

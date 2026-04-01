@@ -66,23 +66,45 @@ export default function OrdersTab({ orders, fetchAllData }) {
                 <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                     <thead style={{ background: 'var(--surface)', textAlign: 'left', position: 'sticky', top: 0, zIndex: 1 }}>
                         <tr style={{ borderBottom: '2px solid var(--border)' }}>
-                            {['Order ID', 'Customer', 'Total', 'Status', 'Date'].map(h => (
+                            {['Order ID', 'Customer', 'Product Total', 'Shipping', 'Total', 'Status', 'Date'].map(h => (
                                 <th key={h} style={{ padding: '0.5rem 0.75rem', fontWeight: 600, fontSize: '0.65rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', background: 'var(--surface)' }}>{h}</th>
                             ))}
                         </tr>
                     </thead>
                     <tbody>
                         {filteredOrdersList.length === 0 ? (
-                            <tr><td colSpan="5" style={{ padding: '2rem', textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.85rem' }}>{searchTerm || selectedDate ? 'No orders found matching your search criteria.' : 'No orders yet.'}</td></tr>
+                            <tr><td colSpan="7" style={{ padding: '2rem', textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.85rem' }}>{searchTerm || selectedDate ? 'No orders found matching your search criteria.' : 'No orders yet.'}</td></tr>
                         ) : (
                             filteredOrdersList.map(o => {
                                 if (!o) return null;
                                 const normalizedStatus = o.status === 'Placed' ? 'Order Placed' : (o.status || 'Processing');
                                 const statusStyle = getStatusStyle(normalizedStatus);
+                                
+                                // Calculate product total (order total - shipping)
+                                const actualShipping = o.actualShippingCharge || o.courierRate || 0;
+                                const estimatedShipping = o.estimatedShippingCharge || 0;
+                                const displayShipping = actualShipping || estimatedShipping;
+                                const productTotal = (o.total || 0) - displayShipping;
+                                
                                 return (
                                     <tr key={o.id || Math.random()} style={{ borderBottom: '1px solid var(--border)', transition: 'background 0.2s' }} onMouseOver={(e) => e.currentTarget.style.background = 'var(--surface)'} onMouseOut={(e) => e.currentTarget.style.background = 'transparent'}>
                                         <td style={{ padding: '0.5rem 0.75rem' }}><strong style={{ fontFamily: 'monospace', fontSize: '0.7rem' }}>{o.orderId || 'N/A'}</strong></td>
                                         <td style={{ padding: '0.5rem 0.75rem' }}><span style={{ fontWeight: 500, fontSize: '0.7rem' }}>{o.customer || 'Guest Customer'}</span></td>
+                                        <td style={{ padding: '0.5rem 0.75rem' }}><span style={{ fontWeight: 600, fontSize: '0.75rem' }}>₹{productTotal.toLocaleString()}</span></td>
+                                        <td style={{ padding: '0.5rem 0.75rem' }}>
+                                            {actualShipping > 0 ? (
+                                                <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                                                    <span style={{ fontWeight: 700, fontSize: '0.75rem', color: 'var(--primary)' }}>₹{actualShipping.toLocaleString()}</span>
+                                                    {estimatedShipping > 0 && estimatedShipping !== actualShipping && (
+                                                        <span style={{ fontSize: '0.6rem', color: 'var(--text-muted)' }}>Est: ₹{estimatedShipping}</span>
+                                                    )}
+                                                </div>
+                                            ) : estimatedShipping > 0 ? (
+                                                <span style={{ fontWeight: 600, fontSize: '0.7rem', color: 'var(--warning)' }}>₹{estimatedShipping} (Est)</span>
+                                            ) : (
+                                                <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>Pending</span>
+                                            )}
+                                        </td>
                                         <td style={{ padding: '0.5rem 0.75rem' }}><span style={{ fontWeight: 700, fontSize: '0.75rem' }}>₹{(o.total || 0).toLocaleString()}</span></td>
                                         <td style={{ padding: '0.5rem 0.75rem' }}><span style={{ background: statusStyle.bg, color: statusStyle.color, padding: '4px 8px', borderRadius: '5px', fontSize: '0.65rem', fontWeight: 700 }}>{normalizedStatus}</span></td>
                                         <td style={{ padding: '0.5rem 0.75rem' }}><span style={{ fontSize: '0.7rem' }}>{o.date || 'N/A'}</span></td>
