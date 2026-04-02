@@ -111,10 +111,17 @@ const generateAnalyticsPDF = async (req, res) => {
         res.setHeader('Content-Disposition', `attachment; filename=${filename}`);
         doc.pipe(res);
 
-        // Header
-        doc.fontSize(24).fillColor('#3B7CF1').text(adminConfig.websiteName.toUpperCase(), 50, 50);
-        doc.fontSize(9).fillColor('#666666')
-            .text(adminConfig.websiteInfo, 50, 78);
+        // Header - Logo + Website Name
+        const logoPath = require('path').join(__dirname, '../../../assets/gudkart-logo.png');
+        const fs = require('fs');
+        if (fs.existsSync(logoPath)) {
+            doc.image(logoPath, 50, 40, { height: 45 });
+            doc.fontSize(22).fillColor('#3B7CF1').font('Helvetica-Bold').text(adminConfig.websiteName.toUpperCase(), 105, 50);
+        } else {
+            doc.fontSize(24).fillColor('#3B7CF1').font('Helvetica-Bold').text(adminConfig.websiteName.toUpperCase(), 50, 50);
+        }
+        doc.fontSize(9).fillColor('#666666').font('Helvetica')
+            .text(adminConfig.websiteInfo, 50, 90);
 
         const reportDate = new Date().toLocaleDateString('en-GB');
         doc.fontSize(9).fillColor('#666666').text('Report Date:', 450, 50);
@@ -338,10 +345,17 @@ const generateInvoicePDF = async (req, res) => {
         res.setHeader('Content-Disposition', `attachment; filename=invoice_${sellerData.shopName?.replace(/\s+/g, '_') || 'seller'}.pdf`);
         doc.pipe(res);
 
-        // Header
-        doc.fontSize(28).fillColor('#3B7CF1').font('Helvetica-Bold').text(adminConfig.websiteName.toUpperCase(), 50, 50);
+        // Header - Logo + Website Name
+        const logoPath = require('path').join(__dirname, '../../../assets/gudkart-logo.png');
+        const fs = require('fs');
+        if (fs.existsSync(logoPath)) {
+            doc.image(logoPath, 50, 40, { height: 50 });
+            doc.fontSize(26).fillColor('#3B7CF1').font('Helvetica-Bold').text(adminConfig.websiteName.toUpperCase(), 110, 50);
+        } else {
+            doc.fontSize(28).fillColor('#3B7CF1').font('Helvetica-Bold').text(adminConfig.websiteName.toUpperCase(), 50, 50);
+        }
         doc.fontSize(10).fillColor('#999999').font('Helvetica')
-            .text(adminConfig.websiteInfo, 50, 82);
+            .text(adminConfig.websiteInfo, 50, 95);
 
         const reportDate = new Date().toLocaleDateString('en-GB');
         doc.fontSize(10).fillColor('#666666').font('Helvetica').text('Report Date:', 450, 50);
