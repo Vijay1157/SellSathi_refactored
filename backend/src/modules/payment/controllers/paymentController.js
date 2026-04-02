@@ -27,6 +27,61 @@ const createOrder = async (req, res) => {
 };
 
 /**
+ * Process post-order tasks in the background.
+ * This prevents HTTP timeouts during long operations like PDF generation or Shiprocket API calls.
+ */
+const processPostOrderTasks = async (orderData, orderRef) => {
+    try {
+        console.log(`[Background] Processing post-order tasks for Order ID: ${orderData.orderId}`);
+
+        // 1. Generate Invoice & Send Emails
+        try {
+            const invPath = await invoiceService.generateInvoice({ ...orderData, documentId: orderRef.id });
+            await orderRef.update({ invoiceGenerated: true, invoicePath: invPath });
+            
+            if (orderData.email) {
+                emailService.sendOrderConfirmation(orderData.email, { ...orderData, documentId: orderRef.id }, invPath)
+                    .catch(err => console.error('[Background] Confirmation email error:', err));
+            }
+            
+            // Notify sellers about the new order
+            emailService.notifySellers({ ...orderData, documentId: orderRef.id })
+                .catch(err => console.error('[Background] Seller notification error:', err));
+        } catch (invoiceErr) {
+            console.error("[Background] Invoice/Email logic error:", invoiceErr.message);
+        }
+
+        // 2. Handle Shiprocket Shipment
+        try {
+            const shipmentResult = await shiprocketService.createShipment({ ...orderData, orderId: orderData.orderId });
+            if (shipmentResult.success) {
+                await orderRef.update({ 
+                    shiprocketOrderId: shipmentResult.shiprocketOrderId, 
+                    shipmentId: shipmentResult.shipmentId, 
+                    awbNumber: shipmentResult.awbNumber, 
+                    courierName: shipmentResult.courierName,
+                    courierRate: shipmentResult.courierRate || null,
+                    actualShippingCharge: shipmentResult.courierRate || null,
+                    estimatedDeliveryDays: shipmentResult.estimatedDeliveryDays || null,
+                    shiprocketCreatedAt: admin.firestore.FieldValue.serverTimestamp() 
+                });
+            }
+        } catch (shiprocketErr) {
+            console.error("[Background] Shiprocket logic error:", shiprocketErr.message);
+        }
+
+        // 3. Reduce stock atomically
+        if (orderData.items) {
+            reduceStock(orderData.items).catch(err => console.error("[Background] Stock reduction error:", err));
+        }
+
+        console.log(`[Background] Completed tasks for Order ID: ${orderData.orderId}`);
+    } catch (criticalErr) {
+        console.error("[Background] Critical error in post-order processing:", criticalErr);
+    }
+};
+
+/**
  * Handle payment verification and result processing.
  */
 const verifyPayment = async (req, res) => {
@@ -45,57 +100,26 @@ const verifyPayment = async (req, res) => {
             email: customerInfo?.email || "", phone: customerInfo?.phone || "",
             shippingAddress: customerInfo?.shippingAddress || customerInfo?.address || {},
             billingAddress: customerInfo?.billingAddress || customerInfo?.address || {},
-            customerInfo: customerInfo, // Store full customerInfo including GST
-            gstNumber: customerInfo?.gstNumber || null, // Store GST at top level for easy access
+            customerInfo: customerInfo,
+            gstNumber: customerInfo?.gstNumber || null,
             items: cartItems || [],
             total: amount || 0, paymentMethod: "RAZORPAY", paymentId: razorpay_payment_id,
-            estimatedShippingCharge: customerInfo?.estimatedShippingCharge || 0, // Store estimated charge shown to user
-            actualShippingCharge: null, // Will be updated with Shiprocket's actual charge
-            platformFeeBreakdown: platformFeeBreakdown || null, // Store platform fee breakdown for invoice
-            couponDiscount: couponDiscount || 0, // Store coupon discount
-            paymentStatus: "Completed", // Razorpay payment is completed immediately
+            estimatedShippingCharge: customerInfo?.estimatedShippingCharge || 0,
+            actualShippingCharge: null,
+            platformFeeBreakdown: platformFeeBreakdown || null,
+            couponDiscount: couponDiscount || 0,
+            paymentStatus: "Completed",
             status: "Processing", createdAt: admin.firestore.FieldValue.serverTimestamp(),
         };
 
         const orderRef = await db.collection("orders").add(orderData);
 
-        // Handle invoice asynchronously
-        try {
-            const invPath = await invoiceService.generateInvoice({ ...orderData, documentId: orderRef.id });
-            await orderRef.update({ invoiceGenerated: true, invoicePath: invPath });
-            if (orderData.email) emailService.sendOrderConfirmation(orderData.email, { ...orderData, documentId: orderRef.id }, invPath).catch(err => console.error(err));
-            // Notify sellers about the new order
-            emailService.notifySellers({ ...orderData, documentId: orderRef.id }).catch(err => console.error('[VerifyPayment] Seller notification error:', err));
-        } catch (e) {
-            console.error("Invoice generation error:", e.message);
-        }
-
-        // Handle Shiprocket asynchronously
-        try {
-            const shipmentResult = await shiprocketService.createShipment({ ...orderData, orderId: orderData.orderId });
-            if (shipmentResult.success) {
-                await orderRef.update({ 
-                    shiprocketOrderId: shipmentResult.shiprocketOrderId, 
-                    shipmentId: shipmentResult.shipmentId, 
-                    awbNumber: shipmentResult.awbNumber, 
-                    courierName: shipmentResult.courierName,
-                    courierRate: shipmentResult.courierRate || null,
-                    actualShippingCharge: shipmentResult.courierRate || null, // Store actual Shiprocket charge
-                    estimatedDeliveryDays: shipmentResult.estimatedDeliveryDays || null,
-                    shiprocketCreatedAt: admin.firestore.FieldValue.serverTimestamp() 
-                });
-            }
-        } catch (e) {
-            console.error("Shiprocket shipment logic error:", e.message);
-        }
-
-        // Reduce stock atomically
-        if (orderData.items) {
-            reduceStock(orderData.items).catch(err => console.error("Stock reduction error:", err));
-        }
+        // START BACKGROUND TASKS - DO NOT AWAIT
+        processPostOrderTasks(orderData, orderRef);
 
         return res.status(200).json({ success: true, orderId: orderData.orderId, documentId: orderRef.id });
     } catch (error) {
+        console.error("verifyPayment Error:", error);
         return res.status(500).json({ success: false, message: "Verification failed" });
     }
 };
@@ -104,7 +128,6 @@ const codOrder = async (req, res) => {
     try {
         const { cartItems, customerInfo, amount, uid, platformFeeBreakdown, couponDiscount } = req.body;
         const orderId = "OD" + Date.now();
-        // Resolve sellerId from cart items
         const resolvedSellerId = (cartItems || []).find(i => i?.sellerId)?.sellerId || null;
 
         const orderData = {
@@ -117,59 +140,28 @@ const codOrder = async (req, res) => {
             phone: customerInfo?.phone || "",
             shippingAddress: customerInfo?.shippingAddress || customerInfo?.address || {},
             billingAddress: customerInfo?.billingAddress || customerInfo?.address || {},
-            customerInfo: customerInfo, // Store full customerInfo including GST
-            gstNumber: customerInfo?.gstNumber || null, // Store GST at top level for easy access
+            customerInfo: customerInfo,
+            gstNumber: customerInfo?.gstNumber || null,
             items: cartItems || [],
             total: amount || 0,
-            estimatedShippingCharge: customerInfo?.estimatedShippingCharge || 0, // Store estimated charge shown to user
-            actualShippingCharge: null, // Will be updated with Shiprocket's actual charge
-            platformFeeBreakdown: platformFeeBreakdown || null, // Store platform fee breakdown for invoice
-            couponDiscount: couponDiscount || 0, // Store coupon discount
+            estimatedShippingCharge: customerInfo?.estimatedShippingCharge || 0,
+            actualShippingCharge: null,
+            platformFeeBreakdown: platformFeeBreakdown || null,
+            couponDiscount: couponDiscount || 0,
             paymentMethod: "COD",
-            paymentStatus: "Pending", // COD payment is pending until delivery
+            paymentStatus: "Pending",
             status: "Processing",
             createdAt: admin.firestore.FieldValue.serverTimestamp(),
         };
 
         const orderRef = await db.collection("orders").add(orderData);
 
-        // Handle invoice asynchronously
-        try {
-            const invPath = await invoiceService.generateInvoice({ ...orderData, documentId: orderRef.id });
-            await orderRef.update({ invoiceGenerated: true, invoicePath: invPath });
-            if (orderData.email) emailService.sendOrderConfirmation(orderData.email, { ...orderData, documentId: orderRef.id }, invPath).catch(err => console.error(err));
-            // Notify sellers about the new order
-            emailService.notifySellers({ ...orderData, documentId: orderRef.id }).catch(err => console.error('[CODOrder] Seller notification error:', err));
-        } catch (e) {
-            console.error("Invoice generation error:", e.message);
-        }
-
-        // Handle Shiprocket asynchronously
-        try {
-            const shipmentResult = await shiprocketService.createShipment({ ...orderData, orderId: orderData.orderId });
-            if (shipmentResult.success) {
-                await orderRef.update({
-                    shiprocketOrderId: shipmentResult.shiprocketOrderId,
-                    shipmentId: shipmentResult.shipmentId,
-                    awbNumber: shipmentResult.awbNumber,
-                    courierName: shipmentResult.courierName,
-                    courierRate: shipmentResult.courierRate || null,
-                    actualShippingCharge: shipmentResult.courierRate || null, // Store actual Shiprocket charge
-                    estimatedDeliveryDays: shipmentResult.estimatedDeliveryDays || null,
-                    shiprocketCreatedAt: admin.firestore.FieldValue.serverTimestamp()
-                });
-            }
-        } catch (e) {
-            console.error("Shiprocket shipment logic error:", e.message);
-        }
-
-        // Reduce stock atomically
-        if (orderData.items) {
-            reduceStock(orderData.items).catch(err => console.error("Stock reduction error:", err));
-        }
+        // START BACKGROUND TASKS - DO NOT AWAIT
+        processPostOrderTasks(orderData, orderRef);
 
         return res.status(200).json({ success: true, orderId: orderData.orderId, documentId: orderRef.id });
     } catch (error) {
+        console.error("codOrder Error:", error);
         return res.status(500).json({ success: false, message: "COD placement failed" });
     }
 };
