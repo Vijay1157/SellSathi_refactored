@@ -55,17 +55,17 @@ export default function Footer() {
             }}>
                 <div className="container">
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '2rem' }}>
-                        <div>
-                            <div style={{ marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                                <img src="/gudkart-logo.png" alt="" style={{ height: '40px', width: '40px', objectFit: 'contain' }} />
+                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
+                            <div style={{ marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '8px', marginLeft: '-12px' }}>
+                                <img src="/gudkart-logo.png" alt="" style={{ height: '88px', width: '88px', objectFit: 'contain' }} />
                                 <span style={{ lineHeight: 1 }}>
-                                    <span style={{ fontSize: '1.5rem', fontWeight: 900, color: '#1800AD' }}>Gud</span><span style={{ fontSize: '1.5rem', fontWeight: 400, color: '#5BB8FF' }}>kart</span>
+                                    <span style={{ fontSize: '2rem', fontWeight: 900, color: '#1800AD' }}>Gud</span><span style={{ fontSize: '2rem', fontWeight: 400, color: '#5BB8FF' }}>kart</span>
                                 </span>
                             </div>
                             <p className="text-muted" style={{ lineHeight: 1.6 }}>The future of global marketplace. Fast, secure, and seller-friendly.</p>
                         </div>
 
-                        <div>
+                        <div style={{ paddingLeft: '2rem' }}>
                             <h4 style={{ fontWeight: 800, marginBottom: '1.5rem' }}>Marketplace</h4>
                             <ul style={{ listStyle: 'none' }} className="flex flex-col gap-3">
                                 <li><Link to="/products" className="text-muted" style={{ textDecoration: 'none', fontSize: '0.9rem', fontWeight: 600 }}>All Products</Link></li>
@@ -74,7 +74,7 @@ export default function Footer() {
                             </ul>
                         </div>
 
-                        <div>
+                        <div style={{ paddingLeft: '2rem' }}>
                             <h4 style={{ fontWeight: 800, marginBottom: '1.5rem' }}>Support</h4>
                             <ul style={{ listStyle: 'none' }} className="flex flex-col gap-3">
                                 <li><Link to="/faq" className="text-muted" style={{ textDecoration: 'none', fontSize: '0.9rem', fontWeight: 600 }}>FAQ</Link></li>
@@ -142,7 +142,7 @@ export default function Footer() {
                             </ul>
                         </div>
 
-                        <div style={{ textAlign: 'right' }}>
+                        <div style={{ textAlign: 'center' }}>
                             {(() => {
                                 const rawUser = localStorage.getItem('user');
                                 const role = rawUser ? JSON.parse(rawUser).role : null;
@@ -151,7 +151,7 @@ export default function Footer() {
                                 return (
                                     <>
                                         <h4 style={{ fontWeight: 800, marginBottom: '1.5rem' }}>Earn with Us</h4>
-                                        <div style={{ marginTop: '0' }}>
+                                        <div style={{ marginTop: '0', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
                                             <button
                                                 onClick={handleBecomeSellerClick}
                                                 className="btn btn-primary"
