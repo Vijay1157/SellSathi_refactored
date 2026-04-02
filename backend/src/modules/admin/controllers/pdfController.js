@@ -1,4 +1,4 @@
-'use strict';
+﻿'use strict';
 const path = require('path');
 const fs = require('fs');
 const { admin, db } = require('../../../config/firebase');
@@ -18,32 +18,40 @@ const BRAND = {
 
 // Shared PDF header renderer
 function renderPDFHeader(doc, adminConfig, title, subtitle) {
-    const siteName = (adminConfig.websiteName && adminConfig.websiteName !== 'SellSathi')
-        ? adminConfig.websiteName
-        : BRAND.name;
     const siteInfo = adminConfig.websiteInfo || BRAND.tagline;
 
-    // Logo + Name
+    // Centered logo + two-tone brand name header
+    const logoH = 70;
+    const logoW = 70;
+    const logoX = 160;
+    const logoY = 28;
+    const textX = logoX + logoW + 14;
+    const textY = 42;
+
     if (fs.existsSync(BRAND.logoPath)) {
-        doc.image(BRAND.logoPath, 50, 38, { height: 44 });
-        doc.fontSize(22).fillColor(BRAND.primary).font('Helvetica-Bold').text(siteName.toUpperCase(), 105, 48);
-    } else {
-        doc.fontSize(22).fillColor(BRAND.primary).font('Helvetica-Bold').text(siteName.toUpperCase(), 50, 48);
+        doc.image(BRAND.logoPath, logoX, logoY, { height: logoH });
     }
-    doc.fontSize(9).fillColor('#666666').font('Helvetica').text(siteInfo, 50, 88);
+
+    // "Gud" in dark navy bold
+    doc.fontSize(38).fillColor('#1a1a6e').font('Helvetica-Bold').text('Gud', textX, textY, { continued: true });
+    // "kart" in GudKart blue
+    doc.fontSize(38).fillColor('#3B7CF1').font('Helvetica').text('kart');
+
+    // Tagline below brand name
+    doc.fontSize(9).fillColor('#888888').font('Helvetica').text(siteInfo, textX, textY + 44);
 
     // Date top right
     const reportDate = new Date().toLocaleDateString('en-GB');
-    doc.fontSize(9).fillColor('#666666').text('Report Date:', 430, 48);
-    doc.fontSize(10).fillColor('#000000').font('Helvetica-Bold').text(reportDate, 430, 60);
+    doc.fontSize(9).fillColor('#666666').text('Report Date:', 430, 35);
+    doc.fontSize(10).fillColor('#000000').font('Helvetica-Bold').text(reportDate, 430, 48);
 
     // Divider
-    doc.moveTo(50, 108).lineTo(545, 108).strokeColor(BRAND.primary).lineWidth(2).stroke();
+    doc.moveTo(50, 112).lineTo(545, 112).strokeColor(BRAND.primary).lineWidth(2).stroke();
 
     // Title
-    doc.fontSize(16).fillColor('#000000').font('Helvetica-Bold').text(title, 50, 122, { align: 'center' });
+    doc.fontSize(16).fillColor('#000000').font('Helvetica-Bold').text(title, 50, 124, { align: 'center' });
     if (subtitle) {
-        doc.fontSize(10).fillColor('#666666').font('Helvetica').text(subtitle, 50, 142, { align: 'center' });
+        doc.fontSize(10).fillColor('#666666').font('Helvetica').text(subtitle, 50, 144, { align: 'center' });
     }
 
     return reportDate;
@@ -178,7 +186,7 @@ const generateAnalyticsPDF = async (req, res) => {
             : null;
         const reportDate = renderPDFHeader(doc, adminConfig, 'SELLER ANALYTICS REPORT', subtitle);
 
-        let y = subtitle ? 168 : 158;
+        let y = subtitle ? 175 : 162;
 
         // Seller Info
         y = renderSellerInfo(doc, sellerData, sellerContact, y);
@@ -312,7 +320,7 @@ const generateInvoicePDF = async (req, res) => {
             : (fromDate ? `From: ${new Date(fromDate).toLocaleDateString('en-GB')}` : null);
         const reportDate = renderPDFHeader(doc, adminConfig, 'SELLER INVOICE REPORT', subtitle);
 
-        let y = subtitle ? 168 : 158;
+        let y = subtitle ? 175 : 162;
 
         // Seller Info
         y = renderSellerInfo(doc, sellerData, sellerContact, y);
