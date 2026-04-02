@@ -411,9 +411,9 @@ async function generatePage2(doc, order, logoDataUrl, shiprocketQR, getNameFromA
     }
 
     // Title
-    doc.fontSize(16).font('Helvetica-Bold').text('Bill of Supply - Page 2', 50, yPos, { align: 'center' });
+    doc.fontSize(16).font('Helvetica-Bold').text('Bill of Supply - Detailed', 50, yPos, { align: 'center' });
     
-    // Add QR Code (Shiprocket or placeholder)
+    // Add QR Code
     if (shiprocketQR) {
         const qrBuffer = Buffer.from(shiprocketQR.split(',')[1], 'base64');
         doc.image(qrBuffer, 490, yPos, { width: 70, height: 70 });
@@ -433,9 +433,9 @@ async function generatePage2(doc, order, logoDataUrl, shiprocketQR, getNameFromA
 
     yPos += 25;
     const leftCol = 30;
-    const rightCol = 320;
+    const rightCol = 310;
 
-    // Billed From and Billed To (NO SHIPPING ADDRESSES)
+    // Billed From
     doc.fontSize(9).font('Helvetica-Bold').text('Billed From', leftCol, yPos);
     yPos += 15;
     doc.fontSize(8).font('Helvetica-Bold').text(COMPANY_INFO.name, leftCol, yPos);
@@ -443,21 +443,13 @@ async function generatePage2(doc, order, logoDataUrl, shiprocketQR, getNameFromA
     doc.fontSize(7).font('Helvetica')
         .text(COMPANY_INFO.addressLine1, leftCol, yPos, { width: 260 });
     yPos += 10;
-    doc.text(COMPANY_INFO.addressLine2, leftCol, yPos, { width: 260 });
-    yPos += 10;
-    doc.text(COMPANY_INFO.addressLine3, leftCol, yPos, { width: 260 });
-    yPos += 10;
-    doc.text(`${COMPANY_INFO.city}, ${COMPANY_INFO.pincode}, ${COMPANY_INFO.state}, ${COMPANY_INFO.country}, IN- ${COMPANY_INFO.pincode}`, leftCol, yPos, { width: 260 });
+    doc.text(`${COMPANY_INFO.city}, ${COMPANY_INFO.pincode}, ${COMPANY_INFO.state}, ${COMPANY_INFO.country}`, leftCol, yPos);
     yPos += 12;
     doc.font('Helvetica-Bold').text(`GSTIN : ${COMPANY_INFO.gstin}`, leftCol, yPos);
-    yPos += 10;
-    doc.text(`PAN : ${COMPANY_INFO.pan}`, leftCol, yPos);
 
     // Billed To
-    yPos = 175;
+    yPos = 160;
     const billingAddr = order.billingAddress || order.shippingAddress || {};
-    const customerGST = order.customerInfo?.gstNumber || order.gstNumber || null;
-    
     doc.fontSize(9).font('Helvetica-Bold').text('Billed To', rightCol, yPos);
     yPos += 15;
     doc.fontSize(8).font('Helvetica-Bold').text(getNameFromAddress(billingAddr), rightCol, yPos);
@@ -465,73 +457,11 @@ async function generatePage2(doc, order, logoDataUrl, shiprocketQR, getNameFromA
     doc.fontSize(7).font('Helvetica')
         .text(billingAddr.addressLine || 'N/A', rightCol, yPos, { width: 240 });
     yPos += 10;
-    doc.text(`${billingAddr.city || 'N/A'}, ${billingAddr.state || 'N/A'} - ${billingAddr.pincode || 'N/A'}`, rightCol, yPos, { width: 240 });
+    doc.text(`${billingAddr.city || 'N/A'}, ${billingAddr.state || 'N/A'} - ${billingAddr.pincode || 'N/A'}`, rightCol, yPos);
     yPos += 12;
-    
-    if (customerGST) {
-        doc.font('Helvetica-Bold').text(`GSTIN : ${customerGST}`, rightCol, yPos);
-        yPos += 10;
-    }
-    
     doc.font('Helvetica-Bold').text(`State : ${billingAddr.state || 'Karnataka'}`, rightCol, yPos);
-    yPos += 10;
-    doc.text(`State Code : IN-KA`, rightCol, yPos);
 
-
-    // Platform Fee Breakdown Section
-    yPos = 300;
-    doc.moveTo(30, yPos).lineTo(565, yPos).strokeColor('#000000').lineWidth(1).stroke();
-    yPos += 15;
-
-    doc.fontSize(10).font('Helvetica-Bold').text('Order Summary & Platform Fee Breakdown', 30, yPos);
-    yPos += 20;
-
-    // Calculate totals
-    const items = order.items || [];
-    let itemsSubtotal = 0;
-    let totalGST = 0;
-
-    items.forEach(item => {
-        const itemTotal = (item.price || 0) * (item.quantity || 1);
-        itemsSubtotal += itemTotal;
-        const gstPercent = item.gstPercent || 0;
-        totalGST += (itemTotal * gstPercent) / 100;
-    });
-
-    const subtotalWithGST = itemsSubtotal + totalGST;
-
-    // Order Summary Box
-    doc.fontSize(8).font('Helvetica');
-    const summaryStartY = yPos;
-    
-    // Items Subtotal
-    doc.text('Items Subtotal (incl. GST)', 40, yPos);
-    doc.text(`₹${subtotalWithGST.toFixed(2)}`, 450, yPos, { width: 105, align: 'right' });
-    yPos += 15;
-
-    // Shipping Charges (if applicable)
-    const shippingCharge = order.actualShippingCharge || order.estimatedShippingCharge || 0;
-    if (shippingCharge > 0) {
-        doc.text('Shipping Charges', 40, yPos);
-        doc.text(`₹${shippingCharge.toFixed(2)}`, 450, yPos, { width: 105, align: 'right' });
-        yPos += 15;
-    }
-
-    // Coupon Discount (if applicable)
-    const couponDiscount = order.couponDiscount || order.discount || 0;
-    if (couponDiscount > 0) {
-        doc.fillColor('#059669').text('Coupon Discount', 40, yPos);
-        doc.text(`-₹${couponDiscount.toFixed(2)}`, 450, yPos, { width: 105, align: 'right' });
-        doc.fillColor('#000000');
-        yPos += 15;
-    }
-
-    // Platform Fee Breakdown
-    yPos += 10;
-    doc.fontSize(9).font('Helvetica-Bold').text('Platform Fee Breakdown:', 40, yPos);
-    yPos += 15;
-
-    // Get platform fee breakdown from order or use defaults
+    // Calculate platform fee percentage
     const platformFeeBreakdown = order.platformFeeBreakdown || {
         digitalSecurityFee: 1.2,
         merchantVerification: 1.0,
@@ -539,108 +469,106 @@ async function generatePage2(doc, order, logoDataUrl, shiprocketQR, getNameFromA
         platformMaintenance: 0.5,
         qualityHandling: 0.0
     };
+    const platformFeePercent = Object.values(platformFeeBreakdown).reduce((sum, val) => 
+        sum + (typeof val === 'number' ? val : (val.percent || 0)), 0
+    );
+    const effectivePlatformFeePercent = platformFeePercent * 1.18; // Incl. 18% GST on platform fee
 
-    const feeLabels = {
-        digitalSecurityFee: 'Digital Security Fee',
-        merchantVerification: 'Merchant Verification',
-        transitCare: 'Transit Care',
-        platformMaintenance: 'Platform Maintenance',
-        qualityHandling: 'Quality Handling'
-    };
+    // Items Table with Platform Fee
+    yPos = 260;
+    doc.moveTo(30, yPos).lineTo(565, yPos).strokeColor('#000000').lineWidth(1).stroke();
+    yPos += 8;
 
-    let totalPlatformFee = 0;
+    // Table Header
+    doc.fontSize(7).font('Helvetica-Bold');
+    doc.text('Particulars', 35, yPos);
+    doc.text('SAC', 150, yPos);
+    doc.text('Qty', 190, yPos);
+    doc.text('Platform', 225, yPos);
+    doc.text('Gross', 280, yPos);
+    doc.text('Taxable', 330, yPos);
+    doc.text('SGST', 385, yPos);
+    doc.text('CGST', 435, yPos);
+    doc.text('Total', 495, yPos);
+    yPos += 8;
+    doc.text('Fee', 225, yPos);
+    doc.text('Amount', 275, yPos);
+    doc.text('Value', 330, yPos);
 
-    doc.fontSize(7).font('Helvetica');
-    Object.entries(platformFeeBreakdown).forEach(([key, percent]) => {
-        if (percent > 0) {
-            const feeAmount = (subtotalWithGST * percent) / 100;
-            totalPlatformFee += feeAmount;
-            
-            doc.text(`${feeLabels[key] || key} (${percent}%)`, 50, yPos);
-            doc.text(`₹${feeAmount.toFixed(2)}`, 450, yPos, { width: 105, align: 'right' });
-            yPos += 12;
+    yPos += 8;
+    doc.moveTo(30, yPos).lineTo(565, yPos).strokeColor('#000000').lineWidth(0.5).stroke();
+
+    const items = order.items || [];
+    let subtotal = 0;
+    let totalSGST = 0;
+    let totalCGST = 0;
+    let totalPFee = 0;
+
+    items.forEach((item, index) => {
+        yPos += 10;
+        const itemTotal = (item.price || 0) * (item.quantity || 1);
+        subtotal += itemTotal;
+        
+        const gstPercent = item.gstPercent || 0;
+        const sgst = (itemTotal * gstPercent) / 200;
+        const cgst = (itemTotal * gstPercent) / 200;
+        const pFee = (itemTotal * effectivePlatformFeePercent) / 100;
+        totalSGST += sgst;
+        totalCGST += cgst;
+        totalPFee += pFee;
+
+        doc.fontSize(6).font('Helvetica');
+        doc.text(item.name || item.title || 'Product', 35, yPos, { width: 110 });
+        
+        doc.fontSize(6.5);
+        doc.text('996511', 150, yPos);
+        doc.text((item.quantity || 1).toFixed(1), 190, yPos);
+        doc.text(`₹${pFee.toFixed(2)}`, 225, yPos);
+        doc.text(`₹${itemTotal.toFixed(2)}`, 275, yPos);
+        doc.text(`₹${itemTotal.toFixed(2)}`, 330, yPos);
+        doc.text(`₹${sgst.toFixed(2)}`, 385, yPos);
+        doc.text(`₹${cgst.toFixed(2)}`, 435, yPos);
+        doc.text(`₹${(itemTotal + sgst + cgst + pFee).toFixed(2)}`, 495, yPos);
+
+        yPos += 18;
+        if (index < items.length - 1) {
+            doc.moveTo(30, yPos).lineTo(565, yPos).strokeColor('#eeeeee').lineWidth(0.5).stroke();
         }
     });
 
+    // Total Row
     yPos += 5;
-    doc.fontSize(8).font('Helvetica-Bold');
-    doc.text('Total Platform Fee', 40, yPos);
-    doc.text(`₹${totalPlatformFee.toFixed(2)}`, 450, yPos, { width: 105, align: 'right' });
-    yPos += 20;
-
-    // Grand Total
     doc.moveTo(30, yPos).lineTo(565, yPos).strokeColor('#000000').lineWidth(1).stroke();
-    yPos += 12;
+    yPos += 10;
     
-    doc.fontSize(10).font('Helvetica-Bold');
-    doc.text('Order Total', 40, yPos);
-    doc.fontSize(12).text(`₹${(order.total || 0).toFixed(2)}`, 450, yPos, { width: 105, align: 'right' });
-    
-    yPos += 20;
+    doc.fontSize(7).font('Helvetica-Bold');
+    doc.text('Total', 35, yPos);
+    doc.text(items.reduce((sum, item) => sum + (item.quantity || 1), 0).toFixed(1), 190, yPos);
+    doc.text(`₹${totalPFee.toFixed(2)}`, 225, yPos);
+    doc.text(`₹${subtotal.toFixed(2)}`, 275, yPos);
+    doc.text(`₹${subtotal.toFixed(2)}`, 330, yPos);
+    doc.text(`₹${totalSGST.toFixed(2)}`, 385, yPos);
+    doc.text(`₹${totalCGST.toFixed(2)}`, 435, yPos);
+    doc.text(`₹${(subtotal + totalSGST + totalCGST + totalPFee).toFixed(2)}`, 495, yPos);
+
+    yPos += 15;
     doc.moveTo(30, yPos).lineTo(565, yPos).strokeColor('#000000').lineWidth(1).stroke();
 
-
-    // Payment Information
+    // Footer items
     yPos += 20;
-    const paymentBoxY = yPos;
-    const paymentBoxHeight = 35;
-    
     const paymentStatus = order.paymentStatus || (order.paymentMethod === 'COD' ? 'Pending' : 'Completed');
     const isPaymentComplete = paymentStatus === 'Completed' || paymentStatus === 'Collected';
-    
-    if (isPaymentComplete) {
-        doc.rect(30, paymentBoxY, 535, paymentBoxHeight)
-           .fillAndStroke('rgba(16, 185, 129, 0.1)', 'rgba(16, 185, 129, 0.3)');
-    } else {
-        doc.rect(30, paymentBoxY, 535, paymentBoxHeight)
-           .fillAndStroke('rgba(245, 158, 11, 0.1)', 'rgba(245, 158, 11, 0.3)');
-    }
-    
-    doc.fillColor('#666666').fontSize(7).font('Helvetica-Bold')
-       .text('PAYMENT METHOD', 40, paymentBoxY + 8, { width: 250 });
-    doc.fillColor('#000000').fontSize(9).font('Helvetica-Bold')
-       .text((order.paymentMethod || 'N/A').toUpperCase(), 40, paymentBoxY + 18, { width: 250 });
-    
-    let statusText;
-    if (paymentStatus === 'Completed') {
-        statusText = 'PAID ONLINE';
-    } else if (paymentStatus === 'Collected') {
-        statusText = 'PAYMENT COLLECTED';
-    } else if (order.paymentMethod === 'COD') {
-        statusText = 'PAY ON DELIVERY';
-    } else {
-        statusText = 'PAID ONLINE';
-    }
-    
     const statusColor = isPaymentComplete ? '#059669' : '#d97706';
+
+    doc.rect(30, yPos, 535, 30).fillAndStroke(isPaymentComplete ? 'rgba(16, 185, 129, 0.1)' : 'rgba(245, 158, 11, 0.1)', isPaymentComplete ? 'rgba(16, 185, 129, 0.3)' : 'rgba(245, 158, 11, 0.3)');
+    doc.fillColor('#000000').fontSize(7).font('Helvetica-Bold').text('PAYMENT METHOD: ' + (order.paymentMethod || 'N/A').toUpperCase(), 40, yPos + 10);
+    doc.fillColor(statusColor).text('STATUS: ' + paymentStatus.toUpperCase(), 350, yPos + 10, { width: 200, align: 'right' });
     
-    doc.fillColor('#666666').fontSize(7).font('Helvetica-Bold')
-       .text('PAYMENT STATUS', 320, paymentBoxY + 8, { width: 235, align: 'right' });
-    doc.fillColor(statusColor).fontSize(9).font('Helvetica-Bold')
-       .text(statusText, 320, paymentBoxY + 18, { width: 235, align: 'right' });
-    
-    yPos += paymentBoxHeight + 15;
-    doc.fillColor('#000000');
-    
-    // Note about platform fees
-    yPos += 10;
-    doc.fontSize(7).font('Helvetica-Oblique')
-        .fillColor('#666666')
-        .text('Platform fees are used to maintain service quality, security, and support for buyers and sellers.', 30, yPos, { align: 'center', width: 535 });
-    
-    yPos += 15;
-    doc.text('This is a computer generated invoice, no need for digital signature', 30, yPos, { align: 'center', width: 535 });
+    yPos += 50;
+    doc.fillColor('#666666').fontSize(7).font('Helvetica-Oblique').text('This is a computer generated invoice, no need for digital signature', 30, yPos, { align: 'center', width: 535 });
     
     yPos += 20;
-    doc.fillColor('#000000');
-    doc.fontSize(8).font('Helvetica-Bold').text('Thank you for Shopping!', 30, yPos);
+    doc.fillColor('#000000').fontSize(8).font('Helvetica-Bold').text('Thank you for Shopping!', 30, yPos, { align: 'center', width: 535 });
     yPos += 15;
-    doc.fontSize(7).font('Helvetica').text('Please contact support if you have any questions.', 30, yPos);
-    
-    yPos += 30;
-    doc.fontSize(7).font('Helvetica-Bold').text(`${COMPANY_INFO.name} - Empowering Local Sellers`, 30, yPos, { align: 'center', width: 535 });
-    yPos += 12;
-    doc.fontSize(6).font('Helvetica').text(`${COMPANY_INFO.addressLine1}, ${COMPANY_INFO.city}, ${COMPANY_INFO.state} - ${COMPANY_INFO.pincode}`, 30, yPos, { align: 'center', width: 535 });
-    yPos += 10;
-    doc.text(`GSTIN: ${COMPANY_INFO.gstin} | PAN: ${COMPANY_INFO.pan}`, 30, yPos, { align: 'center', width: 535 });
+    doc.fontSize(7).font('Helvetica').text('GudKart Private Limited - Empowering Local Sellers', 30, yPos, { align: 'center', width: 535 });
 }
