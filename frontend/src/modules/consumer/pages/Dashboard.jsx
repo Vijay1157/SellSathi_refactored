@@ -4,7 +4,7 @@ import { auth } from '@/modules/shared/config/firebase';
 import { authFetch } from '@/modules/shared/utils/api';
 import {
     ShoppingBag, Heart, Settings, LogOut, User, MapPin,
-    LayoutDashboard, Star, ArrowLeft
+    LayoutDashboard, Star, ArrowLeft, XCircle, Loader
 } from 'lucide-react';
 import { listenToWishlist, removeFromWishlist as removeFromWishlistAPI } from '@/modules/shared/utils/wishlistUtils';
 import ReviewModal from '@/modules/shared/components/common/ReviewModal';
@@ -372,13 +372,58 @@ export default function ConsumerDashboard() {
         finally { setSavingProfile(false); }
     };
 
+    const [showCancelModal, setShowCancelModal] = useState(false);
+    const [orderToCancel, setOrderToCancel] = useState(null);
+    const [cancelling, setCancelling] = useState(false);
+    const [cancellationReason, setCancellationReason] = useState('');
+    const [customReason, setCustomReason] = useState('');
+
+    const cancellationReasons = [
+        'Changed my mind',
+        'Found a better price elsewhere',
+        'Ordered by mistake',
+        'Delivery time is too long',
+        'Product no longer needed',
+        'Want to change shipping address',
+        'Want to modify order items',
+        'Other'
+    ];
+
     const handleCancelOrder = async (orderId) => {
         console.log(`[CANCEL] Triggered for order: ${orderId}`);
-        if (!window.confirm('Are you sure you want to cancel this order?')) return;
+        const order = orders.find(o => o.id === orderId);
+        if (!order) return;
+        
+        setOrderToCancel(order);
+        setShowCancelModal(true);
+    };
+
+    const confirmCancelOrder = async () => {
+        if (!orderToCancel) return;
+
+        // Validate reason selection
+        if (!cancellationReason) {
+            alert('Please select a reason for cancellation');
+            return;
+        }
+
+        if (cancellationReason === 'Other' && !customReason.trim()) {
+            alert('Please provide a reason for cancellation');
+            return;
+        }
+
+        const finalReason = cancellationReason === 'Other' ? customReason : cancellationReason;
+
+        console.log(`[CANCEL] Confirming cancellation for order: ${orderToCancel.id} with reason: ${finalReason}`);
+        setCancelling(true);
         try {
-            const url = `/orders/${orderId}/cancel`;
+            const url = `/orders/${orderToCancel.id}/cancel`;
             console.log(`[CANCEL] Sending request to: ${url}`);
-            const response = await authFetch(url, { method: 'POST' });
+            const response = await authFetch(url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ cancellationReason: finalReason })
+            });
             console.log(`[CANCEL] Response status: ${response.status}`);
             
             const text = await response.text();
@@ -394,7 +439,29 @@ export default function ConsumerDashboard() {
             }
 
             if (data.success) {
-                alert('Order cancelled successfully');
+                // Show refund information
+                const refundInfo = data.refundInfo || data.data?.refundInfo;
+                if (refundInfo) {
+                    alert(
+                        `Order cancelled successfully!\n\n` +
+                        `${refundInfo.message}\n\n` +
+                        (refundInfo.refundAmount > 0 ? 
+                            `Refund Amount: ₹${refundInfo.refundAmount}\n` +
+                            `Refund Method: ${refundInfo.refundMethod}\n` +
+                            `Processing Time: ${refundInfo.processingTime}` 
+                            : '')
+                    );
+                } else {
+                    alert('Order cancelled successfully!');
+                }
+                
+                // Reset modal state
+                setShowCancelModal(false);
+                setOrderToCancel(null);
+                setCancellationReason('');
+                setCustomReason('');
+                
+                // Refresh orders
                 await fetchOrders(user.uid);
             } else {
                 alert(data.message || 'Failed to cancel order');
@@ -402,6 +469,8 @@ export default function ConsumerDashboard() {
         } catch (error) {
             console.error('[CANCEL] Error caught:', error);
             alert(`Failed to cancel order. Please try again. (${error.message})`);
+        } finally {
+            setCancelling(false);
         }
     };
 
@@ -572,6 +641,170 @@ export default function ConsumerDashboard() {
                     productName={selectedReviewProduct.productName}
                     orderId={selectedReviewProduct.orderId}
                 />
+            )}
+
+            {/* Cancel Order Modal */}
+            {showCancelModal && orderToCancel && (
+                <div
+                    style={{
+                        position: 'fixed',
+                        top: 0,
+                        left: 0,
+                        right: 0,
+                        bottom: 0,
+                        background: 'rgba(0, 0, 0, 0.5)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        zIndex: 9999,
+                        backdropFilter: 'blur(4px)'
+                    }}
+                    onClick={() => !cancelling && setShowCancelModal(false)}
+                >
+                    <div
+                        className="glass-card"
+                        style={{
+                            maxWidth: '500px',
+                            width: '90%',
+                            maxHeight: '90vh',
+                            overflowY: 'auto',
+                            padding: '2rem'
+                        }}
+                        onClick={(e) => e.stopPropagation()}
+                    >
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1.5rem' }}>
+                            <div style={{
+                                width: '48px',
+                                height: '48px',
+                                borderRadius: '12px',
+                                background: 'rgba(239, 68, 68, 0.1)',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center'
+                            }}>
+                                <XCircle size={24} style={{ color: '#ef4444' }} />
+                            </div>
+                            <div>
+                                <h3 style={{ margin: 0, fontSize: '1.25rem' }}>Cancel Order</h3>
+                                <p className="text-muted" style={{ margin: '0.25rem 0 0 0', fontSize: '0.85rem' }}>
+                                    Order #{orderToCancel.orderId || orderToCancel.id}
+                                </p>
+                            </div>
+                        </div>
+
+                        <div style={{ marginBottom: '1.5rem' }}>
+                            <label style={{ display: 'block', marginBottom: '0.75rem', fontWeight: '600', fontSize: '0.9rem' }}>
+                                Please select a reason for cancellation:
+                            </label>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                                {cancellationReasons.map((reason) => (
+                                    <label
+                                        key={reason}
+                                        style={{
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            gap: '0.75rem',
+                                            padding: '0.75rem 1rem',
+                                            background: cancellationReason === reason ? 'rgba(59, 130, 246, 0.1)' : 'var(--surface)',
+                                            border: `2px solid ${cancellationReason === reason ? '#3b82f6' : 'var(--border)'}`,
+                                            borderRadius: '8px',
+                                            cursor: 'pointer',
+                                            transition: 'all 0.2s'
+                                        }}
+                                    >
+                                        <input
+                                            type="radio"
+                                            name="cancellationReason"
+                                            value={reason}
+                                            checked={cancellationReason === reason}
+                                            onChange={(e) => setCancellationReason(e.target.value)}
+                                            style={{ cursor: 'pointer' }}
+                                        />
+                                        <span style={{ fontSize: '0.9rem' }}>{reason}</span>
+                                    </label>
+                                ))}
+                            </div>
+                        </div>
+
+                        {cancellationReason === 'Other' && (
+                            <div style={{ marginBottom: '1.5rem' }}>
+                                <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '600', fontSize: '0.9rem' }}>
+                                    Please specify your reason:
+                                </label>
+                                <textarea
+                                    value={customReason}
+                                    onChange={(e) => setCustomReason(e.target.value)}
+                                    placeholder="Enter your reason for cancellation..."
+                                    style={{
+                                        width: '100%',
+                                        minHeight: '100px',
+                                        padding: '0.75rem',
+                                        border: '1px solid var(--border)',
+                                        borderRadius: '8px',
+                                        background: 'var(--surface)',
+                                        color: 'var(--text)',
+                                        fontSize: '0.9rem',
+                                        resize: 'vertical',
+                                        outline: 'none'
+                                    }}
+                                />
+                            </div>
+                        )}
+
+                        <div style={{
+                            padding: '1rem',
+                            background: 'rgba(239, 68, 68, 0.05)',
+                            border: '1px solid rgba(239, 68, 68, 0.2)',
+                            borderRadius: '8px',
+                            marginBottom: '1.5rem'
+                        }}>
+                            <p style={{ margin: 0, fontSize: '0.85rem', color: '#ef4444', lineHeight: '1.5' }}>
+                                <strong>Note:</strong> Once cancelled, this action cannot be undone. 
+                                {orderToCancel.paymentMethod !== 'COD' && ' Refund will be processed within 5-7 business days.'}
+                            </p>
+                        </div>
+
+                        <div style={{ display: 'flex', gap: '1rem' }}>
+                            <button
+                                onClick={() => {
+                                    setShowCancelModal(false);
+                                    setOrderToCancel(null);
+                                    setCancellationReason('');
+                                    setCustomReason('');
+                                }}
+                                disabled={cancelling}
+                                className="btn btn-secondary"
+                                style={{ flex: 1 }}
+                            >
+                                Keep Order
+                            </button>
+                            <button
+                                onClick={confirmCancelOrder}
+                                disabled={cancelling || !cancellationReason}
+                                className="btn"
+                                style={{
+                                    flex: 1,
+                                    background: '#ef4444',
+                                    color: 'white',
+                                    opacity: cancelling || !cancellationReason ? 0.5 : 1,
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    gap: '0.5rem'
+                                }}
+                            >
+                                {cancelling ? (
+                                    <>
+                                        <Loader size={16} className="animate-spin" />
+                                        Cancelling...
+                                    </>
+                                ) : (
+                                    'Cancel Order'
+                                )}
+                            </button>
+                        </div>
+                    </div>
+                </div>
             )}
         </div>
     );
