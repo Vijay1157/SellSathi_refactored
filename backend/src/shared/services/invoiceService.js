@@ -4,9 +4,21 @@ const path = require('path');
 const QRCode = require('qrcode');
 const axios = require('axios');
 
-const invoicesDir = path.join(__dirname, '..', 'invoices');
-if (!fs.existsSync(invoicesDir)) {
-    fs.mkdirSync(invoicesDir);
+const invoicesDir = process.env.NODE_ENV === 'production' 
+    ? path.join('/tmp', 'invoices')
+    : path.join(__dirname, '..', 'invoices');
+
+try {
+    if (!fs.existsSync(invoicesDir)) {
+        fs.mkdirSync(invoicesDir, { recursive: true });
+    }
+} catch (err) {
+    console.error('Failed to create invoices directory:', err.message);
+    // Fallback to /tmp if even the nested one fails
+    if (invoicesDir !== '/tmp') {
+        const fallbackDir = '/tmp';
+        console.log(`Falling back to ${fallbackDir}`);
+    }
 }
 
 // Company Details - Sellsathi Private Limited
@@ -344,11 +356,23 @@ async function generatePage1(doc, order, logoDataUrl, shiprocketQR, getNameFromA
     const isPaymentComplete = paymentStatus === 'Completed' || paymentStatus === 'Collected';
 
     if (isPaymentComplete) {
-        doc.rect(30, paymentBoxY, 535, paymentBoxHeight)
-            .fillAndStroke('rgba(16, 185, 129, 0.1)', 'rgba(16, 185, 129, 0.3)');
+        doc.save()
+           .fillOpacity(0.1)
+           .fill('#10b981')
+           .strokeOpacity(0.3)
+           .stroke('#059669')
+           .rect(30, paymentBoxY, 535, paymentBoxHeight)
+           .fillAndStroke()
+           .restore();
     } else {
-        doc.rect(30, paymentBoxY, 535, paymentBoxHeight)
-            .fillAndStroke('rgba(245, 158, 11, 0.1)', 'rgba(245, 158, 11, 0.3)');
+        doc.save()
+           .fillOpacity(0.1)
+           .fill('#f59e0b')
+           .strokeOpacity(0.3)
+           .stroke('#d97706')
+           .rect(30, paymentBoxY, 535, paymentBoxHeight)
+           .fillAndStroke()
+           .restore();
     }
 
     doc.fillColor('#666666').fontSize(7).font('Helvetica-Bold')
@@ -560,7 +584,14 @@ async function generatePage2(doc, order, logoDataUrl, shiprocketQR, getNameFromA
     const isPaymentComplete = paymentStatus === 'Completed' || paymentStatus === 'Collected';
     const statusColor = isPaymentComplete ? '#059669' : '#d97706';
 
-    doc.rect(30, yPos, 535, 30).fillAndStroke(isPaymentComplete ? 'rgba(16, 185, 129, 0.1)' : 'rgba(245, 158, 11, 0.1)', isPaymentComplete ? 'rgba(16, 185, 129, 0.3)' : 'rgba(245, 158, 11, 0.3)');
+    doc.save()
+       .fillOpacity(isPaymentComplete ? 0.1 : 0.1)
+       .fill(isPaymentComplete ? '#10b981' : '#f59e0b')
+       .strokeOpacity(0.3)
+       .stroke(isPaymentComplete ? '#059669' : '#d97706')
+       .rect(30, yPos, 535, 30)
+       .fillAndStroke()
+       .restore();
     doc.fillColor('#000000').fontSize(7).font('Helvetica-Bold').text('PAYMENT METHOD: ' + (order.paymentMethod || 'N/A').toUpperCase(), 40, yPos + 10);
     doc.fillColor(statusColor).text('STATUS: ' + paymentStatus.toUpperCase(), 350, yPos + 10, { width: 200, align: 'right' });
 
