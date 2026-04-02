@@ -440,7 +440,8 @@ export default function Checkout() {
                     cartItems: selectedCartItems,
                     customerInfo: customerInfo,
                     couponCode: appliedCoupon?.code || null,
-                    couponDiscount: couponDiscount
+                    couponDiscount: couponDiscount,
+                    platformFeeBreakdown: adminConfig.platformFeeBreakdown // Send platform fee breakdown
                 })
             });
 
@@ -496,7 +497,8 @@ export default function Checkout() {
                                     amount: finalTotal,
                                     uid: auth.currentUser?.uid || 'guest',
                                     couponCode: appliedCoupon?.code || null,
-                                    couponDiscount: couponDiscount
+                                    couponDiscount: couponDiscount,
+                                    platformFeeBreakdown: adminConfig.platformFeeBreakdown // Send platform fee breakdown
                                 })
                             });
 
@@ -619,7 +621,8 @@ export default function Checkout() {
                     customerInfo: customerInfo,
                     amount: finalTotal,
                     couponCode: appliedCoupon?.code || null,
-                    couponDiscount: couponDiscount
+                    couponDiscount: couponDiscount,
+                    platformFeeBreakdown: adminConfig.platformFeeBreakdown // Send platform fee breakdown
                 })
             });
 

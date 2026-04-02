@@ -31,7 +31,7 @@ const createOrder = async (req, res) => {
  */
 const verifyPayment = async (req, res) => {
     try {
-        const { razorpay_payment_id, razorpay_order_id, razorpay_signature, cartItems, customerInfo, amount, uid } = req.body;
+        const { razorpay_payment_id, razorpay_order_id, razorpay_signature, cartItems, customerInfo, amount, uid, platformFeeBreakdown, couponDiscount } = req.body;
         const expected = crypto.createHmac('sha256', process.env.RAZORPAY_KEY_SECRET).update(razorpay_order_id + "|" + razorpay_payment_id).digest('hex');
 
         if (expected !== razorpay_signature) return res.status(400).json({ success: false, message: "Invalid signature" });
@@ -51,6 +51,8 @@ const verifyPayment = async (req, res) => {
             total: amount || 0, paymentMethod: "RAZORPAY", paymentId: razorpay_payment_id,
             estimatedShippingCharge: customerInfo?.estimatedShippingCharge || 0, // Store estimated charge shown to user
             actualShippingCharge: null, // Will be updated with Shiprocket's actual charge
+            platformFeeBreakdown: platformFeeBreakdown || null, // Store platform fee breakdown for invoice
+            couponDiscount: couponDiscount || 0, // Store coupon discount
             paymentStatus: "Completed", // Razorpay payment is completed immediately
             status: "Processing", createdAt: admin.firestore.FieldValue.serverTimestamp(),
         };
@@ -100,7 +102,7 @@ const verifyPayment = async (req, res) => {
 
 const codOrder = async (req, res) => {
     try {
-        const { cartItems, customerInfo, amount, uid } = req.body;
+        const { cartItems, customerInfo, amount, uid, platformFeeBreakdown, couponDiscount } = req.body;
         const orderId = "OD" + Date.now();
         // Resolve sellerId from cart items
         const resolvedSellerId = (cartItems || []).find(i => i?.sellerId)?.sellerId || null;
@@ -121,6 +123,8 @@ const codOrder = async (req, res) => {
             total: amount || 0,
             estimatedShippingCharge: customerInfo?.estimatedShippingCharge || 0, // Store estimated charge shown to user
             actualShippingCharge: null, // Will be updated with Shiprocket's actual charge
+            platformFeeBreakdown: platformFeeBreakdown || null, // Store platform fee breakdown for invoice
+            couponDiscount: couponDiscount || 0, // Store coupon discount
             paymentMethod: "COD",
             paymentStatus: "Pending", // COD payment is pending until delivery
             status: "Processing",
