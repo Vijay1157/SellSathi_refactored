@@ -26,7 +26,14 @@ const COMPANY_INFO = {
 // Helper function to download and convert logo to base64
 async function getLogoBase64() {
     try {
-        // Try to read from local file first
+        // Try to read from backend assets first (more reliable)
+        const logoPathBackend = path.join(__dirname, '..', 'assets', 'gudkart-logo.png');
+        if (fs.existsSync(logoPathBackend)) {
+            const logoBuffer = fs.readFileSync(logoPathBackend);
+            return `data:image/png;base64,${logoBuffer.toString('base64')}`;
+        }
+        
+        // Fallback to frontend public folder
         const logoPath = path.join(__dirname, '..', '..', '..', '..', 'frontend', 'public', 'gudkart-logo.png');
         if (fs.existsSync(logoPath)) {
             const logoBuffer = fs.readFileSync(logoPath);
