@@ -78,10 +78,41 @@ async function getShiprocketQR(order) {
 exports.generateInvoice = async (order) => {
     return new Promise(async (resolve, reject) => {
         try {
+            console.log(`[InvoiceService] Starting generation for order: ${order.orderId}`);
+            
+            // Final check for invoices directory before writing
+            try {
+                if (!fs.existsSync(invoicesDir)) {
+                    fs.mkdirSync(invoicesDir, { recursive: true });
+                }
+            } catch (dirErr) {
+                console.error(`[InvoiceService] Dir creation failed, using /tmp as fallback:`, dirErr.message);
+                // Last ditch effort to use /tmp directly if nested creation failed
+                const fallback = path.join('/tmp', `Invoice-${order.orderId}.pdf`);
+                // Continue with /tmp
+            }
+
             const doc = new PDFDocument({ margin: 30, size: 'A4' });
             const invoiceName = `Invoice-${order.orderId}.pdf`;
             const invoicePath = path.join(invoicesDir, invoiceName);
+            
+            // CRITICAL: Handle PDFKit errors to prevent process crash (Unhandled 'error' event)
+            doc.on('error', (err) => {
+                console.error(`[InvoiceService] PDFKit Error for ${order.orderId}:`, err);
+                reject(err);
+            });
+
             const stream = fs.createWriteStream(invoicePath);
+            
+            stream.on('finish', () => {
+                console.log(`[InvoiceService] PDF generated successfully: ${invoicePath}`);
+                resolve(invoicePath);
+            });
+
+            stream.on('error', (err) => {
+                console.error(`[InvoiceService] Stream Error for ${order.orderId}:`, err);
+                reject(err);
+            });
 
             doc.pipe(stream);
 
@@ -96,18 +127,18 @@ exports.generateInvoice = async (order) => {
             const shiprocketQR = await getShiprocketQR(order);
 
             // ============= PAGE 1 =============
+            console.log(`[InvoiceService] Generating Page 1...`);
             await generatePage1(doc, order, logoDataUrl, shiprocketQR, getNameFromAddress);
 
             // ============= PAGE 2 =============
+            console.log(`[InvoiceService] Generating Page 2...`);
             doc.addPage();
             await generatePage2(doc, order, logoDataUrl, shiprocketQR, getNameFromAddress);
 
             doc.end();
 
-            stream.on('finish', () => resolve(invoicePath));
-            stream.on('error', (err) => reject(err));
-
         } catch (error) {
+            console.error(`[InvoiceService] Caught Exception:`, error);
             reject(error);
         }
     });
@@ -493,10 +524,11 @@ async function generatePage2(doc, order, logoDataUrl, shiprocketQR, getNameFromA
         platformMaintenance: 0.5,
         qualityHandling: 0.0
     };
-    const platformFeePercent = Object.values(platformFeeBreakdown).reduce((sum, val) =>
-        sum + (typeof val === 'number' ? val : (val.percent || 0)), 0
-    );
-    const effectivePlatformFeePercent = platformFeePercent * 1.18; // Incl. 18% GST on platform fee
+    const platformFeePercent = Object.values(platformFeeBreakdown).reduce((sum, val) => {
+        const num = typeof val === 'number' ? val : (val && typeof val === 'object' ? (val.percent || 0) : 0);
+        return sum + (isNaN(num) ? 0 : num);
+    }, 0);
+    const effectivePlatformFeePercent = (platformFeePercent || 0) * 1.18; // Incl. 18% GST on platform fee
 
     // Items Table with Platform Fee
     yPos = 260;
