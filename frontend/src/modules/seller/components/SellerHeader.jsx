@@ -114,9 +114,9 @@ const SellerHeader = ({ onLoginClick, onNewSellerClick }) => {
       <div className="container mx-auto flex h-20 items-center justify-between px-4 sm:px-6 lg:px-8">
         <div className="flex items-center gap-8">
           <Link to="/" className="flex items-center gap-1.5">
-            <img src="/gudkart-logo.png" alt="" style={{ height: '36px', width: '36px', objectFit: 'contain' }} />
+            <img src="/gudkart-logo.png" alt="" style={{ height: '64px', width: '64px', objectFit: 'contain' }} />
             <span style={{ lineHeight: 1 }}>
-              <span style={{ fontSize: '1.4rem', fontWeight: 900, color: '#1800AD' }}>Gud</span><span style={{ fontSize: '1.4rem', fontWeight: 400, color: '#5BB8FF' }}>kart</span>
+              <span style={{ fontSize: '2rem', fontWeight: 900, color: '#1800AD' }}>Gud</span><span style={{ fontSize: '2rem', fontWeight: 400, color: '#5BB8FF' }}>kart</span>
             </span>
             <span className="text-xs font-medium text-gray-400 ml-1">Supplier</span>
           </Link>

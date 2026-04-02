@@ -15,10 +15,10 @@ import './Navbar.css';
 
 function GudKartLogo() {
     return (
-        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-            <img src="/gudkart-logo.png" alt="" style={{ height: '38px', width: '38px', objectFit: 'contain' }} />
-            <span style={{ fontFamily: 'Inter, sans-serif', lineHeight: 1, letterSpacing: '-0.3px' }}>
-                <span style={{ fontSize: '1.5rem', fontWeight: 900, color: '#1800AD' }}>Gud</span><span style={{ fontSize: '1.5rem', fontWeight: 400, color: '#5BB8FF' }}>kart</span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <img src="/gudkart-logo.png" alt="" style={{ height: '88px', width: '88px', objectFit: 'contain' }} />
+            <span style={{ fontFamily: 'Inter, sans-serif', lineHeight: 1, letterSpacing: '-0.5px' }}>
+                <span style={{ fontSize: '2rem', fontWeight: 900, color: '#1800AD' }}>Gud</span><span style={{ fontSize: '2rem', fontWeight: 400, color: '#5BB8FF' }}>kart</span>
             </span>
         </div>
     );

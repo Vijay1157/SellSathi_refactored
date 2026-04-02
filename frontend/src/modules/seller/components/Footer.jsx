@@ -9,9 +9,9 @@ const Footer = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 mb-12">
           <div className="lg:col-span-1">
             <Link to="/" className="flex items-center gap-1.5 mb-4">
-              <img src="/gudkart-logo.png" alt="" style={{ height: '40px', width: '40px', objectFit: 'contain' }} />
+              <img src="/gudkart-logo.png" alt="" style={{ height: '64px', width: '64px', objectFit: 'contain' }} />
               <span style={{ lineHeight: 1 }}>
-                <span style={{ fontSize: '1.5rem', fontWeight: 900, color: '#1800AD' }}>Gud</span><span style={{ fontSize: '1.5rem', fontWeight: 400, color: '#5BB8FF' }}>kart</span>
+                <span style={{ fontSize: '2rem', fontWeight: 900, color: '#1800AD' }}>Gud</span><span style={{ fontSize: '2rem', fontWeight: 400, color: '#5BB8FF' }}>kart</span>
               </span>
             </Link>
             <p className="text-gray-600 text-sm leading-relaxed mb-6">

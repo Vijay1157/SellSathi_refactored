@@ -12,6 +12,7 @@ export default function Invoice() {
     const orderId = searchParams.get('orderId');
     const [order, setOrder] = useState(null);
     const [loading, setLoading] = useState(true);
+    const [logoBase64, setLogoBase64] = useState('');
 
     useEffect(() => {
         const fetchOrder = async () => {
@@ -50,6 +51,20 @@ export default function Invoice() {
     }, [orderId]);
 
     useEffect(() => {
+        // Preload logo as base64 so html2canvas can embed it in PDF
+        const img = new Image();
+        img.crossOrigin = 'anonymous';
+        img.onload = () => {
+            const canvas = document.createElement('canvas');
+            canvas.width = img.width;
+            canvas.height = img.height;
+            canvas.getContext('2d').drawImage(img, 0, 0);
+            setLogoBase64(canvas.toDataURL('image/png'));
+        };
+        img.src = '/gudkart-logo.png';
+    }, []);
+
+    useEffect(() => {
         const params = new URLSearchParams(location.search);
         if (params.get('download') === 'true' && order) {
             // Give a small delay for contents to settle
@@ -67,7 +82,7 @@ export default function Invoice() {
             margin: 0,
             filename: `GudKart_Invoice_${order.orderId || order.id}.pdf`,
             image: { type: 'jpeg', quality: 0.98 },
-            html2canvas: { scale: 2, useCORS: true, logging: false },
+            html2canvas: { scale: 2, useCORS: true, allowTaint: true, logging: false },
             jsPDF: { unit: 'in', format: 'a4', orientation: 'portrait' }
         };
 
@@ -157,22 +172,16 @@ export default function Invoice() {
                         <h1 style={{ fontSize: '2rem', fontWeight: '700', margin: 0, letterSpacing: '0', color: '#000', textTransform: 'uppercase' }}>Bill of Supply</h1>
                         <p style={{ color: '#000', fontSize: '1rem', marginTop: '0.25rem', fontWeight: '600' }}>#{order.orderId || order.id}</p>
                     </div>
-                    {/* QR Code Placeholder */}
+                    {/* Logo + Name in place of QR */}
                     <div style={{
-                        width: '70px',
-                        height: '70px',
-                        background: '#f9fafb',
-                        borderRadius: '4px',
                         display: 'flex',
                         alignItems: 'center',
-                        justifyContent: 'center',
-                        border: '1px solid #000',
-                        fontSize: '10px',
-                        color: '#000',
-                        textAlign: 'center',
-                        fontWeight: '700'
+                        gap: '6px',
                     }}>
-                        QR<br/>CODE
+                        <img src={logoBase64 || '/gudkart-logo.png'} alt="GudKart" style={{ width: '70px', height: '70px', objectFit: 'contain' }} />
+                        <span style={{ lineHeight: 1, letterSpacing: '-0.3px' }}>
+                            <span style={{ fontSize: '1.6rem', fontWeight: 900, color: '#1800AD' }}>Gud</span><span style={{ fontSize: '1.6rem', fontWeight: 400, color: '#5BB8FF' }}>kart</span>
+                        </span>
                     </div>
                 </div>
 
@@ -382,10 +391,24 @@ export default function Invoice() {
                         This is a computer generated invoice, no need for digital signature
                     </p>
                     
-                    <p style={{ fontWeight: '700', marginBottom: '0.3rem', color: '#000' }}>Thank you for Shopping!</p>
-                    <p style={{ color: '#000', fontSize: '10px', marginBottom: '1rem' }}>Please contact support if you have any questions.</p>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                        <div>
+                            <p style={{ fontWeight: '700', marginBottom: '0.3rem', color: '#000' }}>Thank you for Shopping!</p>
+                            <p style={{ color: '#000', fontSize: '10px', marginBottom: '0' }}>Please contact support if you have any questions.</p>
+                        </div>
+                        {/* QR Code - right aligned between pay section and email */}
+                        <div style={{
+                            width: '80px', height: '80px', background: '#f9fafb',
+                            borderRadius: '4px', display: 'flex', alignItems: 'center',
+                            justifyContent: 'center', border: '1px solid #000',
+                            fontSize: '10px', color: '#000', textAlign: 'center', fontWeight: '700',
+                            flexShrink: 0
+                        }}>
+                            QR<br/>CODE
+                        </div>
+                    </div>
 
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '0.75rem' }}>
                         <p style={{ fontWeight: '700', color: '#000', fontSize: '11px', margin: 0 }}>GudKart Private Limited - Empowering Local Sellers</p>
                         <div style={{ display: 'flex', gap: '1rem', color: '#000', fontSize: '10px' }}>
                             <span style={{ display: 'flex', alignItems: 'center', gap: '0.3rem' }}><Phone size={12} /> +91 98765 43210</span>
