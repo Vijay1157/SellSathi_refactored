@@ -1,4 +1,4 @@
-'use strict';
+﻿'use strict';
 const { admin, db } = require('../../../config/firebase');
 const PDFDocument = require('pdfkit');
 const { getAdminConfig } = require('../../../shared/services/adminConfigService');
@@ -112,7 +112,7 @@ const generateAnalyticsPDF = async (req, res) => {
         doc.pipe(res);
 
         // Header
-        doc.fontSize(24).fillColor('#6366f1').text(adminConfig.websiteName.toUpperCase(), 50, 50);
+        doc.fontSize(24).fillColor('#3B7CF1').text(adminConfig.websiteName.toUpperCase(), 50, 50);
         doc.fontSize(9).fillColor('#666666')
             .text(adminConfig.websiteInfo, 50, 78);
 
@@ -120,7 +120,7 @@ const generateAnalyticsPDF = async (req, res) => {
         doc.fontSize(9).fillColor('#666666').text('Report Date:', 450, 50);
         doc.fontSize(10).fillColor('#000000').text(reportDate, 450, 62);
 
-        doc.moveTo(50, 125).lineTo(545, 125).strokeColor('#6366f1').lineWidth(2).stroke();
+        doc.moveTo(50, 125).lineTo(545, 125).strokeColor('#3B7CF1').lineWidth(2).stroke();
 
         // Title
         doc.fontSize(18).fillColor('#000000').font('Helvetica-Bold')
@@ -178,28 +178,28 @@ const generateAnalyticsPDF = async (req, res) => {
         const boxGap = 10;
 
         // Boxes
-        doc.rect(50, boxY, boxWidth, boxHeight).fillAndStroke('#e0e7ff', '#c7d2fe');
-        doc.fontSize(9).fillColor('#6366f1').font('Helvetica')
+        doc.rect(50, boxY, boxWidth, boxHeight).fillAndStroke('#EBF0FF', '#BFCFFA');
+        doc.fontSize(9).fillColor('#3B7CF1').font('Helvetica')
             .text('Total Products', 55, boxY + 10, { width: boxWidth - 10, align: 'center' });
-        doc.fontSize(24).fillColor('#4f46e5').font('Helvetica-Bold')
+        doc.fontSize(24).fillColor('#1D5FD4').font('Helvetica-Bold')
             .text(totalProducts.toString(), 55, boxY + 28, { width: boxWidth - 10, align: 'center' });
 
-        doc.rect(50 + boxWidth + boxGap, boxY, boxWidth, boxHeight).fillAndStroke('#e0e7ff', '#c7d2fe');
-        doc.fontSize(9).fillColor('#6366f1').font('Helvetica')
+        doc.rect(50 + boxWidth + boxGap, boxY, boxWidth, boxHeight).fillAndStroke('#EBF0FF', '#BFCFFA');
+        doc.fontSize(9).fillColor('#3B7CF1').font('Helvetica')
             .text('Units Sold', 50 + boxWidth + boxGap + 5, boxY + 10, { width: boxWidth - 10, align: 'center' });
-        doc.fontSize(24).fillColor('#4f46e5').font('Helvetica-Bold')
+        doc.fontSize(24).fillColor('#1D5FD4').font('Helvetica-Bold')
             .text(unitsSold.toString(), 50 + boxWidth + boxGap + 5, boxY + 28, { width: boxWidth - 10, align: 'center' });
 
-        doc.rect(50 + (boxWidth + boxGap) * 2, boxY, boxWidth, boxHeight).fillAndStroke('#e0e7ff', '#c7d2fe');
-        doc.fontSize(9).fillColor('#6366f1').font('Helvetica')
+        doc.rect(50 + (boxWidth + boxGap) * 2, boxY, boxWidth, boxHeight).fillAndStroke('#EBF0FF', '#BFCFFA');
+        doc.fontSize(9).fillColor('#3B7CF1').font('Helvetica')
             .text('Stock Left', 50 + (boxWidth + boxGap) * 2 + 5, boxY + 10, { width: boxWidth - 10, align: 'center' });
-        doc.fontSize(24).fillColor('#4f46e5').font('Helvetica-Bold')
+        doc.fontSize(24).fillColor('#1D5FD4').font('Helvetica-Bold')
             .text(totalStockLeft.toString(), 50 + (boxWidth + boxGap) * 2 + 5, boxY + 28, { width: boxWidth - 10, align: 'center' });
 
-        doc.rect(50 + (boxWidth + boxGap) * 3, boxY, boxWidth, boxHeight).fillAndStroke('#e0e7ff', '#c7d2fe');
-        doc.fontSize(9).fillColor('#6366f1').font('Helvetica')
+        doc.rect(50 + (boxWidth + boxGap) * 3, boxY, boxWidth, boxHeight).fillAndStroke('#EBF0FF', '#BFCFFA');
+        doc.fontSize(9).fillColor('#3B7CF1').font('Helvetica')
             .text('Total Revenue', 50 + (boxWidth + boxGap) * 3 + 5, boxY + 10, { width: boxWidth - 10, align: 'center' });
-        doc.fontSize(20).fillColor('#4f46e5').font('Helvetica-Bold')
+        doc.fontSize(20).fillColor('#1D5FD4').font('Helvetica-Bold')
             .text(`Rs.${grossRevenue}`, 50 + (boxWidth + boxGap) * 3 + 5, boxY + 28, { width: boxWidth - 10, align: 'center' });
 
         // Product Table
@@ -208,7 +208,7 @@ const generateAnalyticsPDF = async (req, res) => {
             .text('PRODUCT DETAILS', 55, boxY + boxHeight + 55);
 
         const tableTop = boxY + boxHeight + 85;
-        doc.rect(50, tableTop, 495, 20).fillAndStroke('#6366f1', '#6366f1');
+        doc.rect(50, tableTop, 495, 20).fillAndStroke('#3B7CF1', '#3B7CF1');
         doc.fontSize(9).fillColor('#ffffff').font('Helvetica-Bold');
         doc.text('Product', 55, tableTop + 6);
         doc.text('Price', 200, tableTop + 6);
@@ -339,7 +339,7 @@ const generateInvoicePDF = async (req, res) => {
         doc.pipe(res);
 
         // Header
-        doc.fontSize(28).fillColor('#6366f1').font('Helvetica-Bold').text(adminConfig.websiteName.toUpperCase(), 50, 50);
+        doc.fontSize(28).fillColor('#3B7CF1').font('Helvetica-Bold').text(adminConfig.websiteName.toUpperCase(), 50, 50);
         doc.fontSize(10).fillColor('#999999').font('Helvetica')
             .text(adminConfig.websiteInfo, 50, 82);
 
@@ -347,7 +347,7 @@ const generateInvoicePDF = async (req, res) => {
         doc.fontSize(10).fillColor('#666666').font('Helvetica').text('Report Date:', 450, 50);
         doc.fontSize(11).fillColor('#000000').font('Helvetica-Bold').text(reportDate, 450, 65);
 
-        doc.moveTo(50, 135).lineTo(545, 135).strokeColor('#6366f1').lineWidth(2).stroke();
+        doc.moveTo(50, 135).lineTo(545, 135).strokeColor('#3B7CF1').lineWidth(2).stroke();
 
         // Title
         doc.fontSize(20).fillColor('#000000').font('Helvetica-Bold')
@@ -356,12 +356,12 @@ const generateInvoicePDF = async (req, res) => {
         // Date Range (if provided)
         let sellerInfoY = 210;
         if (fromDate && toDate) {
-            doc.fontSize(11).fillColor('#6366f1').font('Helvetica-Bold')
+            doc.fontSize(11).fillColor('#3B7CF1').font('Helvetica-Bold')
                 .text(`Invoice Period: ${new Date(fromDate).toLocaleDateString('en-GB')} to ${new Date(toDate).toLocaleDateString('en-GB')}`, 50, 185, { align: 'center' });
             sellerInfoY = 220;
         } else if (fromDate || toDate) {
             const dateText = fromDate ? `From: ${new Date(fromDate).toLocaleDateString('en-GB')}` : `Until: ${new Date(toDate).toLocaleDateString('en-GB')}`;
-            doc.fontSize(11).fillColor('#6366f1').font('Helvetica-Bold')
+            doc.fontSize(11).fillColor('#3B7CF1').font('Helvetica-Bold')
                 .text(dateText, 50, 185, { align: 'center' });
             sellerInfoY = 220;
         }
@@ -413,34 +413,34 @@ const generateInvoicePDF = async (req, res) => {
 
         // Box 1: Total Products
         const box1X = 50;
-        doc.rect(box1X, boxY, boxWidth, boxHeight).fillAndStroke('#e0e7ff', '#6366f1');
-        doc.fontSize(10).fillColor('#6366f1').font('Helvetica')
+        doc.rect(box1X, boxY, boxWidth, boxHeight).fillAndStroke('#EBF0FF', '#3B7CF1');
+        doc.fontSize(10).fillColor('#3B7CF1').font('Helvetica')
             .text('Total Products', box1X, boxY + 12, { width: boxWidth, align: 'center' });
-        doc.fontSize(numberFontSize).fillColor('#4f46e5').font('Helvetica-Bold')
+        doc.fontSize(numberFontSize).fillColor('#1D5FD4').font('Helvetica-Bold')
             .text(totalProducts.toString(), box1X, boxY + 35, { width: boxWidth, align: 'center' });
 
         // Box 2: Total Revenue
         const box2X = box1X + boxWidth + boxGap;
-        doc.rect(box2X, boxY, boxWidth, boxHeight).fillAndStroke('#e0e7ff', '#6366f1');
-        doc.fontSize(10).fillColor('#6366f1').font('Helvetica')
+        doc.rect(box2X, boxY, boxWidth, boxHeight).fillAndStroke('#EBF0FF', '#3B7CF1');
+        doc.fontSize(10).fillColor('#3B7CF1').font('Helvetica')
             .text('Total Revenue', box2X, boxY + 12, { width: boxWidth, align: 'center' });
-        doc.fontSize(numberFontSize).fillColor('#4f46e5').font('Helvetica-Bold')
+        doc.fontSize(numberFontSize).fillColor('#1D5FD4').font('Helvetica-Bold')
             .text(`Rs.${totalRevenue}`, box2X, boxY + 35, { width: boxWidth, align: 'center' });
 
         // Box 3: Platform Charges
         const box3X = box2X + boxWidth + boxGap;
-        doc.rect(box3X, boxY, boxWidth, boxHeight).fillAndStroke('#e0e7ff', '#6366f1');
-        doc.fontSize(10).fillColor('#6366f1').font('Helvetica')
+        doc.rect(box3X, boxY, boxWidth, boxHeight).fillAndStroke('#EBF0FF', '#3B7CF1');
+        doc.fontSize(10).fillColor('#3B7CF1').font('Helvetica')
             .text('Platform Charges', box3X, boxY + 12, { width: boxWidth, align: 'center' });
-        doc.fontSize(numberFontSize).fillColor('#4f46e5').font('Helvetica-Bold')
+        doc.fontSize(numberFontSize).fillColor('#1D5FD4').font('Helvetica-Bold')
             .text(`Rs.${platformCharges.toFixed(2)}`, box3X, boxY + 35, { width: boxWidth, align: 'center' });
 
         // Box 4: Amount to Receive
         const box4X = box3X + boxWidth + boxGap;
-        doc.rect(box4X, boxY, boxWidth, boxHeight).fillAndStroke('#e0e7ff', '#6366f1');
-        doc.fontSize(10).fillColor('#6366f1').font('Helvetica')
+        doc.rect(box4X, boxY, boxWidth, boxHeight).fillAndStroke('#EBF0FF', '#3B7CF1');
+        doc.fontSize(10).fillColor('#3B7CF1').font('Helvetica')
             .text('Amount to Receive', box4X, boxY + 12, { width: boxWidth, align: 'center' });
-        doc.fontSize(numberFontSize).fillColor('#4f46e5').font('Helvetica-Bold')
+        doc.fontSize(numberFontSize).fillColor('#1D5FD4').font('Helvetica-Bold')
             .text(`Rs.${amountToReceive.toFixed(2)}`, box4X, boxY + 35, { width: boxWidth, align: 'center' });
 
         // Products Listed by Seller
@@ -449,7 +449,7 @@ const generateInvoicePDF = async (req, res) => {
         doc.fontSize(12).fillColor('#000000').font('Helvetica-Bold').text('PRODUCTS LISTED BY SELLER', 55, productsTableY + 6);
 
         const prodTableTop = productsTableY + 35;
-        doc.rect(50, prodTableTop, 495, 22).fillAndStroke('#6366f1', '#6366f1');
+        doc.rect(50, prodTableTop, 495, 22).fillAndStroke('#3B7CF1', '#3B7CF1');
         doc.fontSize(9).fillColor('#ffffff').font('Helvetica-Bold');
         doc.text('Product Name', 55, prodTableTop + 7);
         doc.text('Category', 280, prodTableTop + 7);
@@ -468,7 +468,7 @@ const generateInvoicePDF = async (req, res) => {
                     doc.addPage();
                     prodY = 50;
                     // Redraw table header on new page
-                    doc.rect(50, prodY, 495, 22).fillAndStroke('#6366f1', '#6366f1');
+                    doc.rect(50, prodY, 495, 22).fillAndStroke('#3B7CF1', '#3B7CF1');
                     doc.fontSize(9).fillColor('#ffffff').font('Helvetica-Bold');
                     doc.text('Product Name', 55, prodY + 7);
                     doc.text('Category', 280, prodY + 7);
@@ -498,7 +498,7 @@ const generateInvoicePDF = async (req, res) => {
         doc.fontSize(12).fillColor('#000000').font('Helvetica-Bold').text('ORDER DETAILS', 55, orderTableY + 6);
 
         const tableTop = orderTableY + 35;
-        doc.rect(50, tableTop, 495, 22).fillAndStroke('#6366f1', '#6366f1');
+        doc.rect(50, tableTop, 495, 22).fillAndStroke('#3B7CF1', '#3B7CF1');
         doc.fontSize(9).fillColor('#ffffff').font('Helvetica-Bold');
         doc.text('Order ID', 55, tableTop + 7);
         doc.text('Date', 140, tableTop + 7);
@@ -519,7 +519,7 @@ const generateInvoicePDF = async (req, res) => {
                     doc.addPage();
                     y = 50;
                     // Redraw table header on new page
-                    doc.rect(50, y, 495, 22).fillAndStroke('#6366f1', '#6366f1');
+                    doc.rect(50, y, 495, 22).fillAndStroke('#3B7CF1', '#3B7CF1');
                     doc.fontSize(9).fillColor('#ffffff').font('Helvetica-Bold');
                     doc.text('Order ID', 55, y + 7);
                     doc.text('Date', 140, y + 7);
@@ -567,3 +567,4 @@ const generateInvoicePDF = async (req, res) => {
 };
 
 module.exports = { generateAnalyticsPDF, generateInvoicePDF };
+
