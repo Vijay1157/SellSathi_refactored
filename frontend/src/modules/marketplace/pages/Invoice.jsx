@@ -323,10 +323,10 @@ export default function Invoice() {
                             <td colSpan={showPlatformFee ? 8 : 7} style={{ padding: '0.4rem 0.5rem', textAlign: 'right', color: '#000', border: '1px solid #000' }}>Shipping Charges</td>
                             <td style={{ textAlign: 'right', padding: '0.4rem 0.5rem', color: '#000', border: '1px solid #000' }}>₹{(order.estimatedShippingCharge || 0).toFixed(2)}</td>
                         </tr>
-                        {order.couponDiscount > 0 && (
-                            <tr style={{ fontWeight: '500', color: '#059669' }}>
-                                <td colSpan={showPlatformFee ? 8 : 7} style={{ padding: '0.4rem 0.5rem', textAlign: 'right', border: '1px solid #000' }}>Coupon Discount</td>
-                                <td style={{ textAlign: 'right', padding: '0.4rem 0.5rem', border: '1px solid #000' }}>-₹{order.couponDiscount.toFixed(2)}</td>
+                        {(order.couponDiscount > 0 || order.discountValue > 0) && (
+                            <tr style={{ background: '#f0fdf4', fontWeight: '700', color: '#059669' }}>
+                                <td colSpan={showPlatformFee ? 8 : 7} style={{ padding: '0.5rem', textAlign: 'right', border: '1px solid #000' }}>DISCOUNT VALUE (COUPON)</td>
+                                <td style={{ textAlign: 'right', padding: '0.5rem', border: '1px solid #000' }}>-₹{(order.couponDiscount || order.discountValue || 0).toFixed(2)}</td>
                             </tr>
                         )}
                         <tr style={{ background: '#f3f4f6', fontWeight: '800', fontSize: '11px' }}>
