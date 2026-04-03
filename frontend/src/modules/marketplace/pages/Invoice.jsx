@@ -226,106 +226,119 @@ export default function Invoice() {
             qualityHandling: 0.0
         };
         
-        const platformFeePercent = Object.values(platformFeeBreakdown).reduce((sum, val) => 
-            sum + (typeof val === 'number' ? val : (val.percent || 0)), 0
-        );
+        const platformFeePercent = Object.values(platformFeeBreakdown).reduce((sum, val) => {
+            const num = typeof val === 'number' ? val : (val && typeof val === 'object' ? (val.percent || 0) : 0);
+            return sum + (isNaN(num) ? 0 : num);
+        }, 0);
         
         // Effective percent includes 18% GST on the fee
         const effectivePlatformFeePercent = platformFeePercent * 1.18;
 
+        // Cumulative totals
+        let totalQty = 0;
+        let totalGross = 0;
+        let totalTaxable = 0;
+        let totalSGST = 0;
+        let totalCGST = 0;
+        let totalPFee = 0;
+
         return (
-            <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: '1.5rem', fontSize: '10px', border: '1px solid #000' }}>
-                <thead>
-                    <tr style={{ borderBottom: '1px solid #000', background: '#f9fafb' }}>
-                        <th style={{ textAlign: 'left', padding: '0.5rem', color: '#000', fontWeight: '700', fontSize: '10px', border: '1px solid #000' }}>Particulars</th>
-                        <th style={{ textAlign: 'center', padding: '0.5rem', color: '#000', fontWeight: '700', fontSize: '10px', border: '1px solid #000' }}>SAC</th>
-                        <th style={{ textAlign: 'center', padding: '0.5rem', color: '#000', fontWeight: '700', fontSize: '10px', border: '1px solid #000' }}>Qty</th>
-                        {showPlatformFee && (
-                            <th style={{ textAlign: 'right', padding: '0.5rem', color: '#000', fontWeight: '700', fontSize: '10px', border: '1px solid #000' }}>Platform<br/>Fees</th>
-                        )}
-                        <th style={{ textAlign: 'right', padding: '0.5rem', color: '#000', fontWeight: '700', fontSize: '10px', border: '1px solid #000' }}>Gross<br/>Amount</th>
-                        <th style={{ textAlign: 'right', padding: '0.5rem', color: '#000', fontWeight: '700', fontSize: '10px', border: '1px solid #000' }}>Taxable<br/>Value</th>
-                        <th style={{ textAlign: 'right', padding: '0.5rem', color: '#000', fontWeight: '700', fontSize: '10px', border: '1px solid #000' }}>SGST</th>
-                        <th style={{ textAlign: 'right', padding: '0.5rem', color: '#000', fontWeight: '700', fontSize: '10px', border: '1px solid #000' }}>CGST</th>
-                        <th style={{ textAlign: 'right', padding: '0.5rem', color: '#000', fontWeight: '700', fontSize: '10px', border: '1px solid #000' }}>Total</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {order.items && order.items.map((item, index) => {
-                        const itemTotal = (item.price || 0) * (item.quantity || 1);
-                        const gstPercent = item.gstPercent || 0;
-                        const sgst = (itemTotal * gstPercent) / 200;
-                        const cgst = (itemTotal * gstPercent) / 200;
-                        
-                        const platformFeeAmount = showPlatformFee ? (itemTotal * effectivePlatformFeePercent) / 100 : 0;
-                        const finalRowTotal = itemTotal + sgst + cgst + platformFeeAmount;
-                        
-                        return (
-                            <tr key={index} style={{ borderBottom: '1px solid #000' }}>
-                                <td style={{ padding: '0.5rem', fontWeight: '500', color: '#000', border: '1px solid #000' }}>
-                                    {item.name || item.title || 'Product'}
-                                    <div style={{ fontSize: '9px', color: '#000', marginTop: '0.15rem' }}>
-                                        CGST {(gstPercent/2).toFixed(1)}%<br/>
-                                        SGST {(gstPercent/2).toFixed(1)}%
-                                    </div>
-                                </td>
-                                <td style={{ textAlign: 'center', padding: '0.5rem', color: '#000', border: '1px solid #000' }}>996511</td>
-                                <td style={{ textAlign: 'center', padding: '0.5rem', color: '#000', border: '1px solid #000' }}>{(item.quantity || 1).toFixed(1)}</td>
-                                {showPlatformFee && (
-                                    <td style={{ textAlign: 'right', padding: '0.5rem', color: '#000', border: '1px solid #000' }}>₹{platformFeeAmount.toFixed(2)}</td>
-                                )}
-                                <td style={{ textAlign: 'right', padding: '0.5rem', color: '#000', border: '1px solid #000' }}>₹{itemTotal.toFixed(2)}</td>
-                                <td style={{ textAlign: 'right', padding: '0.5rem', color: '#000', border: '1px solid #000' }}>₹{itemTotal.toFixed(2)}</td>
-                                <td style={{ textAlign: 'right', padding: '0.5rem', color: '#000', border: '1px solid #000' }}>₹{sgst.toFixed(2)}</td>
-                                <td style={{ textAlign: 'right', padding: '0.5rem', color: '#000', border: '1px solid #000' }}>₹{cgst.toFixed(2)}</td>
-                                <td style={{ textAlign: 'right', padding: '0.5rem', fontWeight: '600', color: '#000', border: '1px solid #000' }}>₹{finalRowTotal.toFixed(2)}</td>
+            <div style={{ marginBottom: '1.5rem' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '10px', border: '1px solid #000' }}>
+                    <thead>
+                        <tr style={{ borderBottom: '1px solid #000', background: '#f9fafb' }}>
+                            <th style={{ textAlign: 'left', padding: '0.5rem', color: '#000', fontWeight: '700', fontSize: '10px', border: '1px solid #000' }}>Particulars</th>
+                            <th style={{ textAlign: 'center', padding: '0.5rem', color: '#000', fontWeight: '700', fontSize: '10px', border: '1px solid #000' }}>SAC</th>
+                            <th style={{ textAlign: 'center', padding: '0.5rem', color: '#000', fontWeight: '700', fontSize: '10px', border: '1px solid #000' }}>Qty</th>
+                            {showPlatformFee && (
+                                <th style={{ textAlign: 'right', padding: '0.5rem', color: '#000', fontWeight: '700', fontSize: '10px', border: '1px solid #000' }}>Platform Fees<br/>(Incl. GST)</th>
+                            )}
+                            <th style={{ textAlign: 'right', padding: '0.5rem', color: '#000', fontWeight: '700', fontSize: '10px', border: '1px solid #000' }}>Gross Amount</th>
+                            <th style={{ textAlign: 'right', padding: '0.5rem', color: '#000', fontWeight: '700', fontSize: '10px', border: '1px solid #000' }}>Taxable Value</th>
+                            <th style={{ textAlign: 'right', padding: '0.5rem', color: '#000', fontWeight: '700', fontSize: '10px', border: '1px solid #000' }}>SGST</th>
+                            <th style={{ textAlign: 'right', padding: '0.5rem', color: '#000', fontWeight: '700', fontSize: '10px', border: '1px solid #000' }}>CGST</th>
+                            <th style={{ textAlign: 'right', padding: '0.5rem', color: '#000', fontWeight: '700', fontSize: '10px', border: '1px solid #000' }}>Total</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {order.items && order.items.map((item, index) => {
+                            const qty = item.quantity || 1;
+                            const inclusivePrice = item.priceWithGST || item.price || 0;
+                            const gstPercent = item.gstPercent || 18;
+                            
+                            // Back out taxable value from inclusive price
+                            const taxableUnitPrice = inclusivePrice / (1 + (gstPercent / 100));
+                            const taxableAmount = taxableUnitPrice * qty;
+                            const totalAmount = inclusivePrice * qty;
+                            const totalTax = totalAmount - taxableAmount;
+                            const sgst = totalTax / 2;
+                            const cgst = totalTax / 2;
+                            
+                            const platformFeeAmount = showPlatformFee ? (taxableAmount * effectivePlatformFeePercent) / 100 : 0;
+                            const finalRowTotal = totalAmount + platformFeeAmount;
+
+                            // Update cumulative totals
+                            totalQty += qty;
+                            totalGross += totalAmount;
+                            totalTaxable += taxableAmount;
+                            totalSGST += sgst;
+                            totalCGST += cgst;
+                            totalPFee += platformFeeAmount;
+                            
+                            return (
+                                <tr key={index} style={{ borderBottom: '1px solid #000' }}>
+                                    <td style={{ padding: '0.5rem', fontWeight: '500', color: '#000', border: '1px solid #000' }}>
+                                        {item.name || item.title || 'Product'}
+                                        <div style={{ fontSize: '8px', color: '#666', marginTop: '0.15rem' }}>
+                                            SAC: 996511 | GST {gstPercent}% ({(gstPercent/2).toFixed(1)}% + {(gstPercent/2).toFixed(1)}%)
+                                        </div>
+                                    </td>
+                                    <td style={{ textAlign: 'center', padding: '0.5rem', color: '#000', border: '1px solid #000' }}>996511</td>
+                                    <td style={{ textAlign: 'center', padding: '0.5rem', color: '#000', border: '1px solid #000' }}>{qty.toFixed(1)}</td>
+                                    {showPlatformFee && (
+                                        <td style={{ textAlign: 'right', padding: '0.5rem', color: '#000', border: '1px solid #000' }}>₹{platformFeeAmount.toFixed(2)}</td>
+                                    )}
+                                    <td style={{ textAlign: 'right', padding: '0.5rem', color: '#000', border: '1px solid #000' }}>₹{totalAmount.toFixed(2)}</td>
+                                    <td style={{ textAlign: 'right', padding: '0.5rem', color: '#000', border: '1px solid #000' }}>₹{taxableAmount.toFixed(2)}</td>
+                                    <td style={{ textAlign: 'right', padding: '0.5rem', color: '#000', border: '1px solid #000' }}>₹{sgst.toFixed(2)}</td>
+                                    <td style={{ textAlign: 'right', padding: '0.5rem', color: '#000', border: '1px solid #000' }}>₹{cgst.toFixed(2)}</td>
+                                    <td style={{ textAlign: 'right', padding: '0.5rem', fontWeight: '600', color: '#000', border: '1px solid #000' }}>₹{finalRowTotal.toFixed(2)}</td>
+                                </tr>
+                            );
+                        })}
+                        <tr style={{ background: '#f9fafb', fontWeight: '700' }}>
+                            <td colSpan="2" style={{ padding: '0.5rem', color: '#000', border: '1px solid #000' }}>Subtotal (Items)</td>
+                            <td style={{ textAlign: 'center', padding: '0.5rem', color: '#000', border: '1px solid #000' }}>{totalQty.toFixed(1)}</td>
+                            {showPlatformFee && (
+                                <td style={{ textAlign: 'right', padding: '0.5rem', color: '#000', border: '1px solid #000' }}>₹{totalPFee.toFixed(2)}</td>
+                            )}
+                            <td style={{ textAlign: 'right', padding: '0.5rem', color: '#000', border: '1px solid #000' }}>₹{totalGross.toFixed(2)}</td>
+                            <td style={{ textAlign: 'right', padding: '0.5rem', color: '#000', border: '1px solid #000' }}>₹{totalTaxable.toFixed(2)}</td>
+                            <td style={{ textAlign: 'right', padding: '0.5rem', color: '#000', border: '1px solid #000' }}>₹{totalSGST.toFixed(2)}</td>
+                            <td style={{ textAlign: 'right', padding: '0.5rem', color: '#000', border: '1px solid #000' }}>₹{totalCGST.toFixed(2)}</td>
+                            <td style={{ textAlign: 'right', padding: '0.5rem', color: '#000', border: '1px solid #000' }}>₹{(totalGross + totalPFee).toFixed(2)}</td>
+                        </tr>
+                        {/* Additional Charges and Discounts */}
+                        <tr style={{ fontWeight: '500' }}>
+                            <td colSpan={showPlatformFee ? 8 : 7} style={{ padding: '0.4rem 0.5rem', textAlign: 'right', color: '#000', border: '1px solid #000' }}>Shipping Charges</td>
+                            <td style={{ textAlign: 'right', padding: '0.4rem 0.5rem', color: '#000', border: '1px solid #000' }}>₹{(order.estimatedShippingCharge || 0).toFixed(2)}</td>
+                        </tr>
+                        {order.couponDiscount > 0 && (
+                            <tr style={{ fontWeight: '500', color: '#059669' }}>
+                                <td colSpan={showPlatformFee ? 8 : 7} style={{ padding: '0.4rem 0.5rem', textAlign: 'right', border: '1px solid #000' }}>Coupon Discount</td>
+                                <td style={{ textAlign: 'right', padding: '0.4rem 0.5rem', border: '1px solid #000' }}>-₹{order.couponDiscount.toFixed(2)}</td>
                             </tr>
-                        );
-                    })}
-                    <tr style={{ borderTop: '2px solid #000', background: '#f9fafb' }}>
-                        <td style={{ padding: '0.5rem', fontWeight: '700', color: '#000', border: '1px solid #000' }}>Total</td>
-                        <td style={{ textAlign: 'center', padding: '0.5rem', color: '#000', border: '1px solid #000' }}>-</td>
-                        <td style={{ textAlign: 'center', padding: '0.5rem', fontWeight: '700', color: '#000', border: '1px solid #000' }}>
-                            {order.items?.reduce((sum, item) => sum + (item.quantity || 1), 0).toFixed(1)}
-                        </td>
-                        {showPlatformFee && (
-                            <td style={{ textAlign: 'right', padding: '0.5rem', fontWeight: '700', color: '#000', border: '1px solid #000' }}>
-                                ₹{order.items?.reduce((sum, item) => sum + (((item.price || 0) * (item.quantity || 1)) * effectivePlatformFeePercent / 100), 0).toFixed(2)}
-                            </td>
                         )}
-                        <td style={{ textAlign: 'right', padding: '0.5rem', fontWeight: '700', color: '#000', border: '1px solid #000' }}>
-                            ₹{order.items?.reduce((sum, item) => sum + ((item.price || 0) * (item.quantity || 1)), 0).toFixed(2)}
-                        </td>
-                        <td style={{ textAlign: 'right', padding: '0.5rem', fontWeight: '700', color: '#000', border: '1px solid #000' }}>
-                            ₹{order.items?.reduce((sum, item) => sum + ((item.price || 0) * (item.quantity || 1)), 0).toFixed(2)}
-                        </td>
-                        <td style={{ textAlign: 'right', padding: '0.5rem', fontWeight: '700', color: '#000', border: '1px solid #000' }}>
-                            ₹{order.items?.reduce((sum, item) => {
-                                const itemTotal = (item.price || 0) * (item.quantity || 1);
-                                const gstPercent = item.gstPercent || 0;
-                                return sum + ((itemTotal * gstPercent) / 200);
-                            }, 0).toFixed(2)}
-                        </td>
-                        <td style={{ textAlign: 'right', padding: '0.5rem', fontWeight: '700', color: '#000', border: '1px solid #000' }}>
-                            ₹{order.items?.reduce((sum, item) => {
-                                const itemTotal = (item.price || 0) * (item.quantity || 1);
-                                const gstPercent = item.gstPercent || 0;
-                                return sum + ((itemTotal * gstPercent) / 200);
-                            }, 0).toFixed(2)}
-                        </td>
-                        <td style={{ textAlign: 'right', padding: '0.5rem', fontWeight: '700', color: '#000', border: '1px solid #000' }}>
-                            ₹{order.items?.reduce((sum, item) => {
-                                const itemTotal = (item.price || 0) * (item.quantity || 1);
-                                const gstPercent = item.gstPercent || 0;
-                                const sgst = (itemTotal * gstPercent) / 200;
-                                const cgst = (itemTotal * gstPercent) / 200;
-                                const pFee = showPlatformFee ? (itemTotal * effectivePlatformFeePercent / 100) : 0;
-                                return sum + itemTotal + sgst + cgst + pFee;
-                            }, 0).toFixed(2)}
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
+                        <tr style={{ background: '#f3f4f6', fontWeight: '800', fontSize: '11px' }}>
+                            <td colSpan={showPlatformFee ? 8 : 7} style={{ padding: '0.6rem 0.5rem', textAlign: 'right', color: '#000', border: '1px solid #000', textTransform: 'uppercase' }}>Grand Total</td>
+                            <td style={{ textAlign: 'right', padding: '0.6rem 0.5rem', color: '#111827', border: '1px solid #000', fontSize: '12px' }}>₹{(order.total || (totalGross + totalPFee + (order.estimatedShippingCharge || 0) - (order.couponDiscount || 0))).toFixed(2)}</td>
+                        </tr>
+                    </tbody>
+                </table>
+                <div style={{ marginTop: '0.3rem', fontSize: '8px', color: '#666' }}>
+                    * Platform Fee calculation based on base value (Taxable Value) of items.
+                </div>
+            </div>
         );
     };
 
