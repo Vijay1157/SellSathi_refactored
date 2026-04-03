@@ -621,7 +621,7 @@ export default function Checkout() {
                     customerInfo: customerInfo,
                     amount: finalTotal,
                     couponCode: appliedCoupon?.code || null,
-                    couponDiscount: couponDiscount,
+                    couponDiscount: actualCouponDiscount,
                     platformFeeBreakdown: adminConfig.platformFeeBreakdown // Send platform fee breakdown
                 })
             });

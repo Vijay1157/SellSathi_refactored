@@ -224,16 +224,17 @@ function renderItemsTable(doc, order, y, showPlatformFee) {
     doc.text('Shipping Charges', 320, y);
     doc.text(`+ ₹${(order.estimatedShippingCharge || 0).toFixed(2)}`, 480, y);
     
-    if (order.couponDiscount > 0) {
+    const disc = order.couponDiscount || order.discountValue || 0;
+    if (disc > 0) {
         y += 12;
-        doc.fillColor('#059669').text('Coupon Discount', 320, y);
-        doc.text(`- ₹${order.couponDiscount.toFixed(2)}`, 480, y);
-        doc.fillColor('#000000');
+        doc.fillColor('#059669').font('Helvetica-Bold').text('DISCOUNT VALUE (COUPON)', 320, y);
+        doc.text(`- ₹${disc.toFixed(2)}`, 480, y);
+        doc.fillColor('#000000').font('Helvetica');
     }
     
     y += 15;
-    doc.fontSize(10).text('GRAND TOTAL', 320, y);
-    const grandTotal = order.total || (tGross + tPFee + (order.estimatedShippingCharge || 0) - (order.couponDiscount || 0));
+    doc.fontSize(10).font('Helvetica-Bold').text('GRAND TOTAL', 320, y);
+    const grandTotal = order.total || (tGross + tPFee + (order.estimatedShippingCharge || 0) - disc);
     doc.text(`₹${grandTotal.toFixed(2)}`, 480, y);
 }
 
