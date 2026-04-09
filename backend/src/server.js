@@ -24,7 +24,7 @@ app.use(cors({
     origin: ['https://sellsathifrontend.onrender.com', 'http://localhost:5173', 'http://localhost:3000'],
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'x-uid', 'x-role']
+    allowedHeaders: ['Content-Type', 'Authorization', 'x-uid', 'x-role', 'X-Test-UID']
 }));
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));

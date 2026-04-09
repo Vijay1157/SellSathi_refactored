@@ -15,6 +15,7 @@ const TEST_CREDENTIALS = {
     '+917676879059': { otp: '123456', role: 'CONSUMER' },
     '+919353469036': { otp: '741852', role: 'SELLER' },
     '+916366151635': { otp: '123456', role: 'SELLER' },
+    '+919480290587': { otp: '123456', role: 'SELLER' },
 };
 
 /** Redirects user based on role/status after a successful auth response */
@@ -129,6 +130,34 @@ export default function AuthModal({ isOpen, onClose, onSuccess, hideRegister, se
 
         // Block consumers and admins from seller login
         if (sellerLogin && data.role !== 'SELLER') {
+            // If it's a new user or consumer trying to login on seller page, offer to register as seller
+            if (data.role === 'CONSUMER' && !isRegistering) {
+                setError(
+                    <span>
+                        You don't have a seller account yet. Would you like to register as a seller?<br />
+                        <button style={{ ...linkStyle, marginTop: '8px', padding: '6px 16px', background: 'var(--primary)', color: '#fff', borderRadius: '6px', textDecoration: 'none' }} onClick={() => {
+                            persistUser(data, { fullName: data.fullName, email: data.email, status: data.status }, true);
+                            handleClose();
+                            navigate('/seller/register');
+                        }}>Register as Seller</button>
+                        <br />
+                        <button style={linkStyle} onClick={() => { handleClose(); navigate('/'); setTimeout(() => window.dispatchEvent(new Event('openLoginModal')), 300); }}>Or login as a consumer</button>
+                    </span>
+                );
+                return false;
+            }
+            
+            // Block admins from seller login
+            if (data.role === 'ADMIN') {
+                setError(
+                    <span>
+                        Admins cannot login here.<br />
+                        <button style={linkStyle} onClick={() => { handleClose(); navigate('/admin'); }}>Go to Admin Dashboard</button>
+                    </span>
+                );
+                return false;
+            }
+            
             setError(
                 <span>
                     Only sellers are allowed to login here.<br />
@@ -276,6 +305,11 @@ export default function AuthModal({ isOpen, onClose, onSuccess, hideRegister, se
                 method: 'POST', headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ ...payload, fullName: formData.fullName, dob: formData.dob }),
             });
+            
+            if (!response.ok) {
+                throw new Error(`Server returned ${response.status}`);
+            }
+            
             const data = await response.json();
             if (data.success) {
                 if (!isRegistering) {
@@ -324,8 +358,13 @@ export default function AuthModal({ isOpen, onClose, onSuccess, hideRegister, se
                 
                 if (onSuccess) onSuccess(data);
                 handleClose();
-            } else setError(data.message || 'Verification failed');
-        } catch (err) { setError(err.message || 'Verification failed. Please try again.'); }
+            } else {
+                setError(data.message || 'Verification failed');
+            }
+        } catch (err) { 
+            console.error('Verification Error:', err);
+            setError(err.message || 'Verification failed. Please try again.'); 
+        }
         finally { setLoading(false); }
     };
 
@@ -335,11 +374,17 @@ export default function AuthModal({ isOpen, onClose, onSuccess, hideRegister, se
             const result = await signInWithPopup(auth, new GoogleAuthProvider());
             const idToken = await result.user.getIdToken();
             const response = await authFetch('/auth/google-login', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ idToken }) });
+            
+            if (!response.ok) {
+                throw new Error(`Server returned ${response.status}`);
+            }
+            
             const data = await response.json();
             if (data.success) {
                 const allowed = await checkRoleAllowed(data);
                 if (!allowed) {
                     setLoading(false);
+                    // Don't sign out - keep the user authenticated so they can use the "Register as Seller" button
                     return;
                 }
                 const isSellerSession = sellerLogin || startSellingFlow;
@@ -368,10 +413,18 @@ export default function AuthModal({ isOpen, onClose, onSuccess, hideRegister, se
                 
                 if (onSuccess) onSuccess(data);
                 handleClose();
-            } else setError(data.message || 'Google authentication failed');
+            } else {
+                setError(data.message || 'Google authentication failed');
+            }
         } catch (err) {
-            const msgs = { 'auth/popup-closed-by-user': 'Authentication cancelled.', 'auth/popup-blocked': 'Popup blocked. Allow popups for this site.', 'auth/network-request-failed': 'Network error. Check your connection.' };
-            setError(msgs[err.code] || 'Google authentication failed. Please try again.');
+            console.error('Google Sign-In Error:', err);
+            const msgs = { 
+                'auth/popup-closed-by-user': 'Authentication cancelled.', 
+                'auth/popup-blocked': 'Popup blocked. Allow popups for this site.', 
+                'auth/network-request-failed': 'Network error. Check your connection.',
+                'auth/internal-error': 'Authentication error. Please try again.'
+            };
+            setError(msgs[err.code] || err.message || 'Google authentication failed. Please try again.');
         } finally { setLoading(false); }
     };
 
@@ -398,6 +451,11 @@ export default function AuthModal({ isOpen, onClose, onSuccess, hideRegister, se
                 else throw loginErr;
             }
             const response = await authFetch('/auth/login', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ idToken, isTest: isTestMode, email: formData.email, password: formData.password }) });
+            
+            if (!response.ok) {
+                throw new Error(`Server returned ${response.status}`);
+            }
+            
             const data = await response.json();
             if (data.success) {
                 const allowed = await checkRoleAllowed(data);
@@ -432,8 +490,11 @@ export default function AuthModal({ isOpen, onClose, onSuccess, hideRegister, se
                 
                 if (onSuccess) onSuccess(data);
                 handleClose();
-            } else setError(data.message || 'Login failed');
+            } else {
+                setError(data.message || 'Login failed');
+            }
         } catch (err) {
+            console.error('Email Login Error:', err);
             const msgs = { 'auth/wrong-password': 'Incorrect password.', 'auth/operation-not-allowed': 'Email/Password auth not enabled in Firebase.', 'auth/weak-password': 'Password too weak (min 6 chars).', 'auth/email-already-in-use': 'Email already in use.' };
             setError(msgs[err.code] || err.message || 'Authentication failed.');
         } finally { setLoading(false); }
