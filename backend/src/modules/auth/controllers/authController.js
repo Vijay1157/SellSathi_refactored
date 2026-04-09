@@ -47,6 +47,10 @@ const login = async (req, res) => {
         const userSnap = await userRef.get();
 
         if (!userSnap.exists) {
+            // Define test seller phone numbers
+            const TEST_SELLER_PHONES = ['+919353469036', '+916366151635', '+919480290587'];
+            const isTestSeller = phoneNumber && TEST_SELLER_PHONES.includes(phoneNumber);
+            
             // If they are logging in from Google but don't exist yet, we automatically create them
             // This skips the "complete profile" step on the frontend
             if (decodedToken && decodedToken.firebase && decodedToken.firebase.sign_in_provider === 'google.com') {
@@ -55,10 +59,29 @@ const login = async (req, res) => {
                     phone: phoneNumber,
                     email,
                     fullName: fullName || "User",
-                    role: "CONSUMER",
+                    role: isTestSeller ? "SELLER" : "CONSUMER",
                     isActive: true,
                     createdAt: admin.firestore.FieldValue.serverTimestamp(),
                 });
+                
+                // If test seller, also create seller document
+                if (isTestSeller) {
+                    await db.collection("sellers").doc(uid).set({
+                        uid,
+                        shopName: "Test Seller Shop",
+                        sellerStatus: "APPROVED",
+                        isBlocked: false,
+                        category: "General",
+                        address: "Test Address",
+                        appliedAt: admin.firestore.FieldValue.serverTimestamp(),
+                    });
+                    
+                    return res.status(200).json({
+                        success: true, uid, role: "SELLER", fullName: fullName || "Test Seller", 
+                        status: "APPROVED", sellerStatus: "APPROVED", shopName: "Test Seller Shop",
+                        message: "Test seller created via Google",
+                    });
+                }
 
                 return res.status(200).json({
                     success: true, uid, role: "CONSUMER", fullName: fullName || "User", status: "NEW_USER",
@@ -72,10 +95,29 @@ const login = async (req, res) => {
                 phone: phoneNumber,
                 email,
                 fullName,
-                role: "CONSUMER",
+                role: isTestSeller ? "SELLER" : "CONSUMER",
                 isActive: true,
                 createdAt: admin.firestore.FieldValue.serverTimestamp(),
             });
+            
+            // If test seller, also create seller document
+            if (isTestSeller) {
+                await db.collection("sellers").doc(uid).set({
+                    uid,
+                    shopName: "Test Seller Shop",
+                    sellerStatus: "APPROVED",
+                    isBlocked: false,
+                    category: "General",
+                    address: "Test Address",
+                    appliedAt: admin.firestore.FieldValue.serverTimestamp(),
+                });
+                
+                return res.status(200).json({
+                    success: true, uid, role: "SELLER", fullName: fullName || "Test Seller", 
+                    status: "APPROVED", sellerStatus: "APPROVED", shopName: "Test Seller Shop",
+                    message: "Test seller created",
+                });
+            }
 
             return res.status(200).json({
                 success: true, uid, role: "CONSUMER", fullName, status: "NEW_USER",
@@ -99,8 +141,40 @@ const login = async (req, res) => {
                 });
             }
         }
+        
+        // Check if this is a test seller phone number and upgrade to seller if needed
+        const TEST_SELLER_PHONES = ['+919353469036', '+916366151635', '+919480290587'];
+        const isTestSeller = phoneNumber && TEST_SELLER_PHONES.includes(phoneNumber);
+        
+        if (isTestSeller && userData.role !== "SELLER") {
+            // Upgrade user to seller role
+            try { await userRef.update({ role: "SELLER" }); } catch (e) { console.error("Failed to update role:", e); }
+        }
 
         const sellerSnap = await db.collection("sellers").doc(uid).get();
+        
+        // If test seller but no seller document exists, create it
+        if (isTestSeller && !sellerSnap.exists) {
+            await db.collection("sellers").doc(uid).set({
+                uid,
+                shopName: "Test Seller Shop",
+                sellerStatus: "APPROVED",
+                isBlocked: false,
+                category: "General",
+                address: "Test Address",
+                fullName: userData.fullName || "Test Seller",
+                appliedAt: admin.firestore.FieldValue.serverTimestamp(),
+            });
+            
+            return res.status(200).json({
+                success: true, uid, role: "SELLER", 
+                status: "APPROVED", sellerStatus: "APPROVED", 
+                shopName: "Test Seller Shop",
+                fullName: userData.fullName || "Test Seller",
+                message: "Test seller upgraded and approved"
+            });
+        }
+        
         if (sellerSnap.exists) {
             const sellerData = sellerSnap.data();
             const sellerStatus = sellerData.sellerStatus || "PENDING";
@@ -402,18 +476,44 @@ const testLogin = async (req, res) => {
         if (!userSnap.exists) {
             // Determine role based on phone number
             const ADMIN_PHONE = "+917483743936";
-            const initialRole = phone === ADMIN_PHONE ? "ADMIN" : "CONSUMER";
+            const TEST_SELLER_PHONES = ['+919353469036', '+916366151635', '+919480290587'];
+            const isTestSeller = TEST_SELLER_PHONES.includes(phone);
+            const initialRole = phone === ADMIN_PHONE ? "ADMIN" : (isTestSeller ? "SELLER" : "CONSUMER");
 
             // Create new test user
             await userRef.set({
                 uid,
                 phone,
-                fullName: phone === ADMIN_PHONE ? "Admin User" : `User ${phone.slice(-4)}`,
+                fullName: phone === ADMIN_PHONE ? "Admin User" : (isTestSeller ? "Test Seller" : `User ${phone.slice(-4)}`),
                 role: initialRole,
                 isActive: true,
                 isTest: true,
                 createdAt: admin.firestore.FieldValue.serverTimestamp(),
             });
+            
+            // If test seller, also create seller document
+            if (isTestSeller) {
+                await db.collection("sellers").doc(uid).set({
+                    uid,
+                    shopName: "Test Seller Shop",
+                    sellerStatus: "APPROVED",
+                    isBlocked: false,
+                    category: "General",
+                    address: "Test Address",
+                    appliedAt: admin.firestore.FieldValue.serverTimestamp(),
+                });
+                
+                return res.status(200).json({
+                    success: true,
+                    uid,
+                    role: "SELLER",
+                    fullName: "Test Seller",
+                    status: "APPROVED",
+                    sellerStatus: "APPROVED",
+                    shopName: "Test Seller Shop",
+                    message: "Test seller login successful",
+                });
+            }
 
             return res.status(200).json({
                 success: true,
@@ -450,9 +550,44 @@ const testLogin = async (req, res) => {
                 message: "Admin login successful"
             });
         }
+        
+        // Check if this is a test seller phone number and upgrade to seller if needed
+        const TEST_SELLER_PHONES = ['+919353469036', '+916366151635', '+919480290587'];
+        const isTestSeller = TEST_SELLER_PHONES.includes(phone);
+        
+        if (isTestSeller && userData.role !== "SELLER") {
+            // Upgrade user to seller role
+            try { await userRef.update({ role: "SELLER" }); } catch (e) { console.error("Failed to update role:", e); }
+        }
 
         // Check if user is a seller
         const sellerSnap = await db.collection("sellers").doc(uid).get();
+        
+        // If test seller but no seller document exists, create it
+        if (isTestSeller && !sellerSnap.exists) {
+            await db.collection("sellers").doc(uid).set({
+                uid,
+                shopName: "Test Seller Shop",
+                sellerStatus: "APPROVED",
+                isBlocked: false,
+                category: "General",
+                address: "Test Address",
+                fullName: userData.fullName || "Test Seller",
+                appliedAt: admin.firestore.FieldValue.serverTimestamp(),
+            });
+            
+            return res.status(200).json({
+                success: true,
+                uid,
+                role: "SELLER",
+                status: "APPROVED",
+                sellerStatus: "APPROVED",
+                shopName: "Test Seller Shop",
+                fullName: userData.fullName || "Test Seller",
+                message: "Test seller upgraded and approved"
+            });
+        }
+        
         if (sellerSnap.exists) {
             const sellerData = sellerSnap.data();
             const sellerStatus = sellerData.sellerStatus || "PENDING";
