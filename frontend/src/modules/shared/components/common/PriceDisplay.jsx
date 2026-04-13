@@ -1,5 +1,6 @@
 import React from 'react';
 import { getProductPricingWithGST, formatPrice } from '@/modules/shared/utils/priceUtils';
+import { useLocation } from 'react-router-dom';
 
 const PriceDisplay = ({
     product,
@@ -9,6 +10,9 @@ const PriceDisplay = ({
     showGSTIndicator = true,
     className = ''
 }) => {
+    const location = useLocation();
+    const isHomePage = location.pathname === '/';
+    
     // Safety check for null/undefined product
     if (!product) {
         return null;
@@ -62,7 +66,7 @@ const PriceDisplay = ({
         <div className={`price-display-container ${styles.container} ${className}`}>
             <div className={`price-row ${styles.row}`}>
                 <span className={`final-price ${styles.final}`}>
-                    {formatPrice(finalPrice)}{includesGST && '*'}
+                    {formatPrice(finalPrice)}{includesGST && !isHomePage && '*'}
                 </span>
 
                 {showDiscount && strikethroughPrice > finalPrice && (
@@ -80,7 +84,7 @@ const PriceDisplay = ({
                 )}
             </div>
             
-            {showGSTIndicator && includesGST && (
+            {showGSTIndicator && includesGST && !isHomePage && (
                 <span className={`gst-indicator ${styles.gst}`}>
                     * Includes GST
                 </span>

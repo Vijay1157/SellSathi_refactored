@@ -29,20 +29,21 @@ export default function ConsumerOverviewTab({
 
     return (
         <div>
-            {/* Stats Cards - Centered */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
+            {/* Stats Cards - Compact Horizontal Layout */}
+            <div className="grid grid-cols-3 gap-4 mb-6">
                 {[
-                    { label: 'Total Orders', value: stats.total, icon: <ShoppingBag size={18} className="text-[#3B7CF1]" />, bg: 'bg-blue-100' },
-                    { label: 'Pending Orders', value: stats.pending, icon: <Clock size={18} className="text-orange-600" />, bg: 'bg-orange-100' },
-                    { label: 'Delivered', value: stats.delivered, icon: <CheckCircle2 size={18} className="text-green-600" />, bg: 'bg-green-100' },
-                    { label: 'Total Spent', value: `₹${stats.totalSpent.toLocaleString('en-IN')}`, icon: <TrendingUp size={18} className="text-[#3B7CF1]" />, bg: 'bg-blue-100' }
+                    { label: 'Total Orders', value: stats.total, icon: <ShoppingBag size={22} className="text-[#3B7CF1]" />, bg: 'bg-blue-100' },
+                    { label: 'Pending Orders', value: stats.pending, icon: <Clock size={22} className="text-orange-600" />, bg: 'bg-orange-100' },
+                    { label: 'Delivered', value: stats.delivered, icon: <CheckCircle2 size={22} className="text-green-600" />, bg: 'bg-green-100' }
                 ].map((s, i) => (
                     <div key={i} className="bg-white p-3 rounded-lg border border-gray-200 hover:shadow-md transition-shadow">
-                        <div className="flex items-center gap-2 mb-1">
-                            <div className={`w-8 h-8 ${s.bg} rounded-lg flex items-center justify-center flex-shrink-0`}>{s.icon}</div>
+                        <div className="flex items-center justify-between gap-3">
+                            <div className="flex items-center gap-3">
+                                <div className={`w-11 h-11 ${s.bg} rounded-lg flex items-center justify-center flex-shrink-0`}>{s.icon}</div>
+                                <p className="text-base font-semibold text-gray-700">{s.label}</p>
+                            </div>
+                            <p className="text-3xl font-bold text-gray-900">{s.value}</p>
                         </div>
-                        <p className="text-xs text-gray-500 mb-0.5">{s.label}</p>
-                        <p className="text-xl font-bold text-gray-900">{s.value}</p>
                     </div>
                 ))}
             </div>
@@ -56,7 +57,7 @@ export default function ConsumerOverviewTab({
                             <h2 className="text-base font-semibold text-gray-900">My Orders</h2>
                             <button onClick={() => onSwitchTab('orders')} className="text-sm text-primary hover:underline">View All</button>
                         </div>
-                        <div className="overflow-y-auto overflow-x-hidden" style={{ maxHeight: 'calc(6 * 60px + 48px)' }}>
+                        <div className="overflow-y-auto overflow-x-hidden" style={{ maxHeight: 'calc(5 * 52px + 48px)' }}>
                             <table className="w-full">
                                 <thead className="bg-gray-50 sticky top-0 z-10">
                                     <tr>
@@ -203,28 +204,21 @@ export default function ConsumerOverviewTab({
                             <motion.div 
                                 key={selectedOrder.id}
                                 className="bg-white rounded-lg shadow-sm border border-gray-200 p-4"
-                                initial={{ opacity: 0, scale: 0.8, x: -100, rotateY: -20 }}
+                                initial={{ opacity: 0, y: -50 }}
                                 animate={{ 
                                     opacity: 1, 
-                                    scale: 1, 
-                                    x: 0, 
-                                    rotateY: 0,
+                                    y: 0,
                                     transition: {
                                         type: "spring",
-                                        stiffness: 200,
-                                        damping: 25,
-                                        mass: 0.5
+                                        stiffness: 300,
+                                        damping: 30,
+                                        mass: 1
                                     }
                                 }}
                                 exit={{ 
                                     opacity: 0, 
-                                    scale: 0.8, 
-                                    x: 100,
+                                    y: -50,
                                     transition: { duration: 0.2 }
-                                }}
-                                style={{
-                                    transformStyle: "preserve-3d",
-                                    perspective: "1000px"
                                 }}
                             >
                             <div className="flex items-center justify-between mb-3">
@@ -246,34 +240,59 @@ export default function ConsumerOverviewTab({
                                 </motion.span>
                             </div>
 
-                            {/* Timeline */}
-                            <motion.div 
-                                className="space-y-2 mb-4"
-                                initial={{ opacity: 0, y: 10 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                transition={{ delay: 0.2 }}
-                            >
-                                {[
-                                    { label: 'Order Placed', icon: <CheckCircle2 size={14} />, active: !!selectedOrder.status, color: 'green', date: formatDate(selectedOrder.createdAt) },
-                                    { label: 'Processing', icon: <Clock size={14} />, active: ['Processing','Shipped','Delivered'].includes(selectedOrder.status), color: 'orange' },
-                                    { label: 'Shipped', icon: <Package size={14} />, active: ['Shipped','Delivered'].includes(selectedOrder.status), color: 'blue' },
-                                    { label: 'Out for Delivery', icon: <TrendingUp size={14} />, active: ['Out for Delivery','Delivered'].includes(selectedOrder.status), color: 'purple' },
-                                    { label: 'Delivered', icon: <CheckCircle2 size={14} />, active: selectedOrder.status === 'Delivered', color: 'green' }
-                                ].map((step, idx, arr) => (
-                                    <div key={step.label}>
-                                        <div className="flex items-start gap-2">
-                                            <div className={`w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 ${step.active ? `bg-${step.color}-500 text-white` : 'bg-gray-200 text-gray-400'}`}>
-                                                {step.icon}
+                            {/* Timeline and Product Image Layout */}
+                            <div className="flex gap-4 mb-4">
+                                {/* Timeline - Left Side */}
+                                <motion.div 
+                                    className="flex-1 space-y-1"
+                                    initial={{ opacity: 0, y: 10 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    transition={{ delay: 0.2 }}
+                                >
+                                    {[
+                                        { label: 'Order Placed', icon: <CheckCircle2 size={14} />, active: !!selectedOrder.status, color: 'green', date: formatDate(selectedOrder.createdAt) },
+                                        { label: 'Processing', icon: <Clock size={14} />, active: ['Processing','Shipped','Delivered'].includes(selectedOrder.status), color: 'orange' },
+                                        { label: 'Shipped', icon: <Package size={14} />, active: ['Shipped','Delivered'].includes(selectedOrder.status), color: 'blue' },
+                                        { label: 'Out for Delivery', icon: <TrendingUp size={14} />, active: ['Out for Delivery','Delivered'].includes(selectedOrder.status), color: 'purple' },
+                                        { label: 'Delivered', icon: <CheckCircle2 size={14} />, active: selectedOrder.status === 'Delivered', color: 'green' }
+                                    ].map((step, idx, arr) => (
+                                        <div key={step.label}>
+                                            <div className="flex items-start gap-2">
+                                                <div className={`w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 ${step.active ? `bg-${step.color}-500 text-white` : 'bg-gray-200 text-gray-400'}`}>
+                                                    {step.icon}
+                                                </div>
+                                                <div className="flex-1">
+                                                    <p className="font-medium text-sm text-gray-900 leading-tight">{step.label}</p>
+                                                    {step.date && <p className="text-xs text-gray-500 leading-tight mt-0.5">{step.date}</p>}
+                                                </div>
                                             </div>
-                                            <div className="flex-1">
-                                                <p className="font-medium text-sm text-gray-900 leading-tight">{step.label}</p>
-                                                {step.date && <p className="text-xs text-gray-500 leading-tight mt-0.5">{step.date}</p>}
-                                            </div>
+                                            {idx < arr.length - 1 && <div className="ml-3.5 w-0.5 h-2 bg-gray-200"></div>}
                                         </div>
-                                        {idx < arr.length - 1 && <div className="ml-3.5 w-0.5 h-3 bg-gray-200"></div>}
-                                    </div>
-                                ))}
-                            </motion.div>
+                                    ))}
+                                </motion.div>
+
+                                {/* Product Image - Right Side */}
+                                {selectedOrder.items && selectedOrder.items.length > 0 && (
+                                    <motion.div 
+                                        className="w-40 h-40 bg-gray-50 rounded-lg overflow-hidden flex-shrink-0"
+                                        initial={{ opacity: 0, scale: 0.9 }}
+                                        animate={{ opacity: 1, scale: 1 }}
+                                        transition={{ delay: 0.25 }}
+                                    >
+                                        {selectedOrder.items[0].imageUrl || selectedOrder.items[0].image ? (
+                                            <img 
+                                                src={selectedOrder.items[0].imageUrl || selectedOrder.items[0].image} 
+                                                alt={selectedOrder.items[0].name}
+                                                className="w-full h-full object-cover"
+                                            />
+                                        ) : (
+                                            <div className="w-full h-full flex items-center justify-center">
+                                                <Package size={40} className="text-gray-300" />
+                                            </div>
+                                        )}
+                                    </motion.div>
+                                )}
+                            </div>
 
                             {/* Order Items */}
                             {selectedOrder.items && selectedOrder.items.length > 0 && (
@@ -286,17 +305,12 @@ export default function ConsumerOverviewTab({
                                     <h4 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Order Items</h4>
                                     <div className="space-y-2 max-h-32 overflow-y-auto">
                                         {selectedOrder.items.map((item, idx) => (
-                                            <div key={idx} className="flex items-center gap-2 p-2 bg-gray-50 rounded">
-                                                {item.imageUrl && (
-                                                    <div className="w-12 h-12 rounded overflow-hidden flex-shrink-0">
-                                                        <img src={item.imageUrl} alt={item.name} className="w-full h-full object-cover" />
-                                                    </div>
-                                                )}
+                                            <div key={idx} className="flex items-center justify-between p-2 bg-gray-50 rounded">
                                                 <div className="flex-1 min-w-0">
                                                     <p className="text-sm font-bold text-gray-900 truncate leading-tight">{item.name}</p>
                                                     <p className="text-xs text-gray-500 leading-tight mt-0.5">Qty: {item.quantity} × ₹{item.price}</p>
                                                 </div>
-                                                <p className="text-sm font-black text-primary">₹{(item.price * item.quantity).toLocaleString()}</p>
+                                                <p className="text-sm font-black text-primary ml-3">₹{(item.price * item.quantity).toLocaleString()}</p>
                                             </div>
                                         ))}
                                     </div>
