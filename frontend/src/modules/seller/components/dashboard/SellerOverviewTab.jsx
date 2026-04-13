@@ -28,26 +28,26 @@ export default function SellerOverviewTab({ statCards, orders, performanceYear, 
     })();
 
     return (
-        <div className="animate-fade-in flex flex-col" style={{ gap: '2.5rem' }}>
+        <div className="animate-fade-in flex flex-col gap-6 md:gap-10">
             {/* Panoramic Stats Row */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '1.5rem' }}>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-6">
                 {statCards.map((s, i) => (
                     <div key={i} style={{
-                        background: 'white', padding: '1.5rem', borderRadius: '20px',
+                        background: 'white', borderRadius: '20px',
                         boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03)',
                         border: '1px solid #f1f5f9', display: 'flex', flexDirection: 'column',
-                        justifyContent: 'space-between', height: '160px', position: 'relative', overflow: 'hidden'
-                    }}>
+                        justifyContent: 'space-between', position: 'relative', overflow: 'hidden'
+                    }} className="p-4 md:p-6 h-32 md:h-40">
                         <div style={{
-                            width: '48px', height: '48px', borderRadius: '12px',
+                            width: '40px', height: '40px', borderRadius: '12px',
                             background: s.color + '15', color: s.color,
                             display: 'flex', alignItems: 'center', justifyContent: 'center'
-                        }}>
+                        }} className="md:w-12 md:h-12">
                             {s.icon}
                         </div>
                         <div>
-                            <h3 style={{ fontSize: '2rem', fontWeight: 800, color: '#1e293b', lineHeight: 1, marginBottom: '0.25rem' }}>{s.value}</h3>
-                            <p style={{ color: '#64748b', fontSize: '0.9rem', fontWeight: 500 }}>{s.label}</p>
+                            <h3 className="text-xl md:text-3xl font-extrabold text-slate-800 leading-none mb-1">{s.value}</h3>
+                            <p className="text-slate-500 text-xs md:text-sm font-medium">{s.label}</p>
                         </div>
                     </div>
                 ))}
@@ -55,14 +55,14 @@ export default function SellerOverviewTab({ statCards, orders, performanceYear, 
 
             {/* Performance Analytics */}
             <div style={{
-                background: 'white', borderRadius: '24px', padding: '2rem',
+                background: 'white', borderRadius: '24px',
                 boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03)',
                 border: '1px solid #f1f5f9'
-            }}>
-                <div className="flex justify-between items-center mb-6">
+            }} className="p-4 md:p-8">
+                <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-3 mb-4 md:mb-6">
                     <div>
-                        <h3 style={{ fontSize: '1.25rem', fontWeight: 700, color: '#1e293b' }}>Performance Analytics</h3>
-                        <p style={{ color: '#64748b', fontSize: '0.9rem' }}>Annual Sales Growth</p>
+                        <h3 className="text-base md:text-xl font-bold text-slate-800">Performance Analytics</h3>
+                        <p className="text-slate-500 text-xs md:text-sm">Annual Sales Growth</p>
                     </div>
                     <select
                         value={performanceYear}
@@ -74,8 +74,8 @@ export default function SellerOverviewTab({ statCards, orders, performanceYear, 
                     </select>
                 </div>
 
-                <div style={{ width: '100%', height: 350 }}>
-                    <ResponsiveContainer width="100%" height={350}>
+                <div style={{ width: '100%' }} className="h-56 md:h-80">
+                    <ResponsiveContainer width="100%" height="100%">
                         <AreaChart data={monthlySalesData}>
                             <defs>
                                 <linearGradient id="colorSales" x1="0" y1="0" x2="0" y2="1">
@@ -84,8 +84,8 @@ export default function SellerOverviewTab({ statCards, orders, performanceYear, 
                                 </linearGradient>
                             </defs>
                             <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
-                            <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: '#64748b', fontSize: 12 }} dy={10} />
-                            <YAxis axisLine={false} tickLine={false} tick={{ fill: '#64748b', fontSize: 12 }} tickFormatter={(value) => `₹${value}`} />
+                            <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: '#64748b', fontSize: 11 }} dy={10} />
+                            <YAxis axisLine={false} tickLine={false} tick={{ fill: '#64748b', fontSize: 11 }} tickFormatter={(value) => `₹${value}`} width={50} />
                             <Tooltip
                                 contentStyle={{ background: 'white', border: 'none', borderRadius: '8px', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)' }}
                                 formatter={(value) => [`₹${value}`, 'Sales']}

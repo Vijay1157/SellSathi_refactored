@@ -250,53 +250,53 @@ const SellerOnboarding = () => {
 
   return (
     <div className="min-h-screen relative bg-white flex flex-col lg:flex-row overflow-hidden font-sans">
-      {/* 1. Branding Side (Left 50%) */}
+      {/* 1. Branding Side (Left 50% on desktop, top on mobile) */}
       <div
-        className="lg:w-1/2 p-12 lg:p-20 text-white flex flex-col justify-center relative z-10 min-h-[40vh] lg:min-h-screen"
+        className="lg:w-1/2 p-6 sm:p-10 lg:p-20 text-white flex flex-col justify-center relative z-10 min-h-[25vh] lg:min-h-screen"
         style={{ background: 'linear-gradient(135deg, #3B7CF1, #0D0070)' }}
       >
         <div className="relative z-10">
-          <Link to="/" className="inline-flex items-center gap-2 text-white/60 hover:text-white mb-12 transition-colors">
-            <ArrowLeft size={20} /> Back to GudKart
+          <Link to="/" className="inline-flex items-center gap-2 text-white/60 hover:text-white mb-4 lg:mb-12 transition-colors text-sm">
+            <ArrowLeft size={18} /> Back to GudKart
           </Link>
 
-          <div className="flex items-center gap-3 mb-12">
-            <div className="w-12 h-12 rounded-2xl bg-white/20 backdrop-blur-md flex items-center justify-center">
-              <Store size={24} />
+          <div className="flex items-center gap-3 mb-4 lg:mb-12">
+            <div className="w-10 h-10 lg:w-12 lg:h-12 rounded-xl lg:rounded-2xl bg-white/20 backdrop-blur-md flex items-center justify-center">
+              <Store size={20} />
             </div>
             <div>
-              <h3 className="text-xl font-bold">Seller Center</h3>
-              <p className="text-white/60 text-sm">GudKart for Business</p>
+              <h3 className="text-lg lg:text-xl font-bold">Seller Center</h3>
+              <p className="text-white/60 text-xs lg:text-sm">GudKart for Business</p>
             </div>
           </div>
 
-          <h1 className="text-4xl lg:text-6xl font-bold leading-tight mb-8">
+          <h1 className="text-2xl sm:text-3xl lg:text-6xl font-bold leading-tight mb-3 lg:mb-8">
             Grow your business with GudKart
           </h1>
-          <p className="text-xl text-white/80 max-w-md mb-12">
+          <p className="hidden sm:block text-base lg:text-xl text-white/80 max-w-md mb-6 lg:mb-12">
             Reach millions of customers and scale your brand with powerful selling tools.
           </p>
 
-          <div className="grid grid-cols-2 gap-4 max-w-md">
+          <div className="hidden sm:grid grid-cols-2 gap-3 lg:gap-4 max-w-md">
             {['Sales Analytics', 'Inventory Mgmt', 'Growth Insights', 'Fast Payouts'].map(feat => (
-              <div key={feat} className="p-4 rounded-2xl bg-white/10 backdrop-blur-md border border-white/10">
-                <p className="text-sm font-semibold">{feat}</p>
+              <div key={feat} className="p-3 lg:p-4 rounded-xl lg:rounded-2xl bg-white/10 backdrop-blur-md border border-white/10">
+                <p className="text-xs lg:text-sm font-semibold">{feat}</p>
               </div>
             ))}
           </div>
         </div>
       </div>
 
-      {/* 2. Content Side (Right 50%) */}
-      <div className="lg:w-1/2 flex flex-col bg-gray-50 h-screen overflow-hidden">
+      {/* 2. Content Side (Right 50% on desktop, full on mobile) */}
+      <div className="lg:w-1/2 flex flex-col bg-gray-50 min-h-[60vh] lg:h-screen lg:overflow-hidden">
         {/* Fixed Header with Progress */}
-        <div className="z-20 pt-4 pb-4 px-6 bg-white border-b border-gray-100 flex flex-col gap-4">
+        <div className="z-20 pt-3 pb-3 md:pt-4 md:pb-4 px-3 md:px-6 bg-white border-b border-gray-100 flex flex-col gap-3 md:gap-4">
           <div className="flex items-center justify-start">
             <div className="flex items-center bg-gray-50 rounded-full p-1.5 border border-gray-100">
               {steps.map((stepItem, index) => (
                 <React.Fragment key={stepItem.id}>
                   <div
-                    className={`flex items-center px-4 py-2 rounded-full transition-all ${step === stepItem.id ? 'text-white font-semibold' :
+                    className={`flex items-center px-2.5 py-1.5 md:px-4 md:py-2 rounded-full transition-all ${step === stepItem.id ? 'text-white font-semibold' :
                       step > stepItem.id ? 'text-white' : 'text-gray-400'
                       }`}
                     style={step >= stepItem.id ? { backgroundColor: '#3B7CF1' } : {}}
@@ -320,7 +320,7 @@ const SellerOnboarding = () => {
         {/* Scrollable Form Body */}
         <div className="flex-1 overflow-y-auto custom-scrollbar" ref={formRef}>
           <div className="w-full pb-12">
-            <div className="bg-white p-6 border-b border-gray-100 min-h-screen">
+            <div className="bg-white p-4 md:p-6 border-b border-gray-100 min-h-[50vh] lg:min-h-screen">
               {error && (
                 <div className="mb-6 p-4 bg-red-50 border border-red-200 text-red-700 rounded-xl text-sm font-medium">
                   {error}

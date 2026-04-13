@@ -146,45 +146,57 @@ const getWishlist = async (req, res) => {
     try {
         const { uid } = req.params;
         const snapshot = await db.collection("users").doc(uid).collection("wishlist").get();
-        const items = [];
         
-        // Fetch fresh product data for each wishlist item
+        if (snapshot.empty) {
+            return res.status(200).json({ success: true, items: [] });
+        }
+
+        const items = [];
+        const productIds = snapshot.docs.map(doc => doc.id);
+        
+        // Batch fetch all products in chunks of 10 (Firestore limit for 'in' queries)
+        const chunkSize = 10;
+        const productDataMap = new Map();
+        
+        for (let i = 0; i < productIds.length; i += chunkSize) {
+            const chunk = productIds.slice(i, i + chunkSize);
+            const productsSnapshot = await db.collection("products")
+                .where(admin.firestore.FieldPath.documentId(), 'in', chunk)
+                .get();
+            
+            productsSnapshot.docs.forEach(doc => {
+                productDataMap.set(doc.id, doc.data());
+            });
+        }
+        
+        // Merge wishlist items with fresh product data
         for (const doc of snapshot.docs) {
             const wishlistItem = doc.data();
+            const productData = productDataMap.get(doc.id);
             
-            try {
-                // Get latest product data from products collection
-                const productDoc = await db.collection("products").doc(doc.id).get();
+            if (productData) {
+                // Skip admin-removed products
+                if (productData.adminRemoved) continue;
                 
-                if (productDoc.exists) {
-                    const productData = productDoc.data();
-                    // Skip admin-removed products
-                    if (productData.adminRemoved) continue;
-                    // Merge wishlist item with fresh product data (prioritize fresh data for pricing)
-                    items.push({
-                        id: doc.id,
-                        ...wishlistItem,
-                        // Update with fresh pricing data - COMPLETE structure for PriceDisplay
-                        price: productData.price || wishlistItem.price,
-                        discountPrice: productData.discountPrice !== undefined ? productData.discountPrice : wishlistItem.discountPrice,
-                        oldPrice: productData.oldPrice || wishlistItem.oldPrice,
-                        pricingType: productData.pricingType || wishlistItem.pricingType || 'uniform',
-                        sizePrices: productData.sizePrices || wishlistItem.sizePrices,
-                        gstPercent: productData.gstPercent || wishlistItem.gstPercent || 18,
-                        // Update other fresh data
-                        rating: productData.rating !== undefined ? productData.rating : 0,
-                        reviewCount: productData.reviewCount || 0,
-                        stock: productData.stock,
-                        status: productData.status,
-                        discount: productData.discount || wishlistItem.discount
-                    });
-                } else {
-                    // Product no longer exists, keep wishlist item as is
-                    items.push({ id: doc.id, ...wishlistItem });
-                }
-            } catch (err) {
-                console.error(`Error fetching product ${doc.id}:`, err);
-                // If error, use wishlist data
+                // Merge with fresh product data
+                items.push({
+                    id: doc.id,
+                    ...wishlistItem,
+                    // Update with fresh pricing data
+                    price: productData.price || wishlistItem.price,
+                    discountPrice: productData.discountPrice !== undefined ? productData.discountPrice : wishlistItem.discountPrice,
+                    oldPrice: productData.oldPrice || wishlistItem.oldPrice,
+                    pricingType: productData.pricingType || wishlistItem.pricingType || 'uniform',
+                    sizePrices: productData.sizePrices || wishlistItem.sizePrices,
+                    gstPercent: productData.gstPercent || wishlistItem.gstPercent || 18,
+                    rating: productData.rating !== undefined ? productData.rating : 0,
+                    reviewCount: productData.reviewCount || 0,
+                    stock: productData.stock,
+                    status: productData.status,
+                    discount: productData.discount || wishlistItem.discount
+                });
+            } else {
+                // Product no longer exists, keep wishlist item as is
                 items.push({ id: doc.id, ...wishlistItem });
             }
         }

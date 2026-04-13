@@ -2,7 +2,7 @@ import { motion } from 'framer-motion';
 import { Ruler, Palette, Cpu, Settings, CheckCircle, Plus, Trash2, X } from 'lucide-react';
 
 const sty = {
-    card: { background: 'white', borderRadius: '20px', padding: '2rem', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05), 0 2px 4px -1px rgba(0,0,0,0.03)', border: '1px solid #f1f5f9' },
+    card: { background: 'white', borderRadius: '20px', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05), 0 2px 4px -1px rgba(0,0,0,0.03)', border: '1px solid #f1f5f9' },
     sectionIcon: (color) => ({ padding: '0.5rem', background: `${color}15`, color, borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center' }),
     label: { display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem', fontWeight: 600, color: '#334155' },
     input: { width: '100%', padding: '0.875rem 1rem', border: '1.5px solid #e2e8f0', borderRadius: '12px', fontSize: '0.95rem', background: 'white', transition: 'border-color 0.2s', outline: 'none' },
@@ -13,8 +13,8 @@ const sty = {
     dynamicSection: { background: '#f8fafc', borderRadius: '16px', padding: '1.5rem', border: '1px solid #e2e8f0', marginTop: '1rem' },
     radioGroup: { display: 'flex', gap: '0.75rem', flexWrap: 'wrap' },
     radioOption: (active) => ({ padding: '0.75rem 1.25rem', borderRadius: '12px', border: active ? '2px solid var(--primary)' : '1.5px solid #e2e8f0', background: active ? 'var(--primary)08' : 'white', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.9rem', fontWeight: active ? 600 : 400, color: active ? 'var(--primary)' : '#475569', transition: 'all 0.2s' }),
-    specRow: { display: 'grid', gridTemplateColumns: '1fr 1.5fr auto', gap: '0.75rem', alignItems: 'center', marginBottom: '0.75rem' },
-    variantPriceRow: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem', alignItems: 'center', padding: '0.75rem', background: 'white', borderRadius: '12px', border: '1px solid #e2e8f0', marginBottom: '0.5rem' },
+    specRow: { display: 'grid', gap: '0.75rem', alignItems: 'center', marginBottom: '0.75rem' },
+    variantPriceRow: { display: 'grid', gap: '0.75rem', alignItems: 'center', padding: '0.75rem', background: 'white', borderRadius: '12px', border: '1px solid #e2e8f0', marginBottom: '0.5rem' },
 };
 
 export default function VariantsEditor({
@@ -38,7 +38,7 @@ export default function VariantsEditor({
 
             {/* ── SIZES SECTION ── */}
             {config.hasSizes && config.defaultSizes && (
-                <div style={sty.card}>
+                <div style={sty.card} className="p-4 md:p-8">
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1.5rem' }}>
                         <div style={sty.sectionIcon('#5BB8FF')}><Ruler size={20} /></div>
                         <div>
@@ -103,7 +103,7 @@ export default function VariantsEditor({
                                         Set individual prices for each size:
                                     </p>
                                     {selectedSizes.map(size => (
-                                        <div key={size} style={sty.variantPriceRow}>
+                                        <div key={size} style={sty.variantPriceRow} className="grid-cols-[1fr_2fr] sm:grid-cols-2">
                                             <span style={{ fontWeight: 600, color: '#334155' }}>{size}</span>
                                             <div style={{ position: 'relative' }}>
                                                 <span style={{ position: 'absolute', left: '0.75rem', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8', fontWeight: 'bold' }}>₹</span>
@@ -122,7 +122,7 @@ export default function VariantsEditor({
 
             {/* ── COLORS SECTION ── */}
             {config.hasColors && (
-                <div style={sty.card}>
+                <div style={sty.card} className="p-4 md:p-8">
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1.5rem' }}>
                         <div style={sty.sectionIcon('#ec4899')}><Palette size={20} /></div>
                         <div>
@@ -156,7 +156,7 @@ export default function VariantsEditor({
 
             {/* ── VARIANTS SECTION (Electronics, Food) ── */}
             {config.hasVariants && config.variantTypes?.map(vType => (
-                <div key={vType.key} style={sty.card}>
+                <div key={vType.key} style={sty.card} className="p-4 md:p-8">
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1.5rem' }}>
                         <div style={sty.sectionIcon('#f59e0b')}><Cpu size={20} /></div>
                         <div>
@@ -201,7 +201,7 @@ export default function VariantsEditor({
                                 Use + for additional cost, - for discount, 0 for same as base price
                             </p>
                             {(variants[vType.key] || []).map(v => (
-                                <div key={v.label} style={sty.variantPriceRow}>
+                                <div key={v.label} style={sty.variantPriceRow} className="grid-cols-[1fr_2fr] sm:grid-cols-2">
                                     <span style={{ fontWeight: 600, color: '#334155' }}>{v.label}</span>
                                     <div style={{ position: 'relative' }}>
                                         <span style={{ position: 'absolute', left: '0.75rem', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8', fontSize: '0.8rem' }}>+₹</span>
@@ -218,7 +218,7 @@ export default function VariantsEditor({
 
             {/* ── SPECIFICATIONS SECTION ── */}
             {config.hasSpecifications && (
-                <div style={sty.card}>
+                <div style={sty.card} className="p-4 md:p-8">
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1.5rem' }}>
                         <div style={sty.sectionIcon('#0ea5e9')}><Settings size={20} /></div>
                         <div>
@@ -243,7 +243,7 @@ export default function VariantsEditor({
 
                     {/* Existing specs */}
                     {specifications.map((spec, i) => (
-                        <div key={i} style={sty.specRow}>
+                        <div key={i} style={sty.specRow} className="grid-cols-1 sm:grid-cols-[1fr_1.5fr_auto]">
                             <input type="text" value={spec.key} readOnly
                                 style={{ ...sty.input, background: '#f1f5f9', fontWeight: 600 }} />
                             <input type="text" placeholder="Enter value..." style={sty.input}
@@ -257,7 +257,7 @@ export default function VariantsEditor({
 
                     {/* Add custom spec */}
                     {showSpecInput ? (
-                        <div style={{ ...sty.specRow, marginTop: '0.5rem' }}>
+                        <div style={sty.specRow} className="grid-cols-1 sm:grid-cols-[1fr_1.5fr_auto] mt-2">
                             <input type="text" placeholder="Spec name" style={sty.input}
                                 value={newSpecKey} onChange={e => setNewSpecKey(e.target.value)} />
                             <input type="text" placeholder="Value" style={sty.input}

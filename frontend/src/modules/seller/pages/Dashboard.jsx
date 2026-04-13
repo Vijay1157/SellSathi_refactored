@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { LayoutDashboard, Package, ShoppingBag, DollarSign, Plus, Truck, Loader, AlertCircle, X, User, LogOut } from 'lucide-react';
+import { LayoutDashboard, Package, ShoppingBag, DollarSign, Plus, Truck, Loader, AlertCircle, X, User, LogOut, Menu } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { auth } from '@/modules/shared/config/firebase';
@@ -37,6 +37,7 @@ export default function SellerDashboard() {
     const [sellerUid, setSellerUid] = useState(null);
     const [error, setError] = useState(null);
     const [isProfileOpen, setIsProfileOpen] = useState(false);
+    const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
     const profileRef = React.useRef(null);
 
     // Data States
@@ -262,14 +263,32 @@ export default function SellerDashboard() {
         }
 
         return (
-            <div className="flex" style={{ minHeight: '100vh', width: '100%', background: '#f8fafc' }}>
+            <div className="flex relative" style={{ minHeight: '100vh', width: '100%', background: '#f8fafc' }}>
+                {/* Mobile sidebar overlay */}
+                {isMobileSidebarOpen && (
+                    <div 
+                        className="fixed inset-0 bg-black/50 z-40 md:hidden"
+                        onClick={() => setIsMobileSidebarOpen(false)}
+                    />
+                )}
+
                 {/* Sidebar — Dark Obsidian */}
-                <aside style={{
-                    width: '280px', minHeight: '100vh',
-                    background: 'linear-gradient(180deg, #0f172a 0%, #1e293b 100%)',
-                    padding: '2rem 1.5rem', display: 'flex', flexDirection: 'column',
-                    position: 'sticky', top: 0, flexShrink: 0
-                }}>
+                <aside 
+                    className={`fixed md:sticky top-0 left-0 z-50 transform ${isMobileSidebarOpen ? 'translate-x-0' : '-translate-x-full'} md:translate-x-0 transition-transform duration-300 ease-in-out h-screen`}
+                    style={{
+                        width: '280px', 
+                        background: 'linear-gradient(180deg, #0f172a 0%, #1e293b 100%)',
+                        padding: '2rem 1.5rem', display: 'flex', flexDirection: 'column',
+                        flexShrink: 0
+                    }}>
+                    
+                    {/* Mobile Close Button */}
+                    <button 
+                        className="md:hidden absolute top-4 right-4 text-white/70 hover:text-white"
+                        onClick={() => setIsMobileSidebarOpen(false)}
+                    >
+                        <X size={24} />
+                    </button>
                     <div>
                         <div className="flex items-center gap-3" style={{ marginBottom: '2.5rem', paddingBottom: '1.5rem', borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
                             <div style={{ width: '42px', height: '42px', borderRadius: '12px', background: 'var(--primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white' }}>
@@ -299,7 +318,7 @@ export default function SellerDashboard() {
                         <nav className="flex flex-col gap-3">
 
                             {['overview', 'products', 'orders', 'personal'].map(tab => (
-                                <button key={tab} onClick={() => setActiveTab(tab)} style={{
+                                <button key={tab} onClick={() => { setActiveTab(tab); setIsMobileSidebarOpen(false); }} style={{
                                     width: '100%', display: 'flex', alignItems: 'center', gap: '12px',
                                     padding: '1rem', fontSize: '0.95rem', borderRadius: '12px', textTransform: 'capitalize',
                                     transition: 'all 0.2s ease',
@@ -339,20 +358,15 @@ export default function SellerDashboard() {
                 <div className="flex-1 flex flex-col" style={{ background: '#f8fafc', minHeight: '100vh', overflowY: 'auto' }}>
                     
                     {/* Sticky Header */}
-                    <header style={{
-                        padding: '1.25rem 3rem',
+                    <header className="px-4 py-4 md:px-12 md:py-5 flex justify-between items-center sticky top-0 z-30 shadow-sm" style={{
                         background: 'white',
                         borderBottom: '1px solid #e2e8f0',
-                        display: 'flex',
-                        justifyContent: 'space-between',
-                        alignItems: 'center',
-                        position: 'sticky',
-                        top: 0,
-                        zIndex: 30,
-                        boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.05)'
                     }}>
-                        <div className="flex items-center gap-4">
-                            <h2 style={{ fontSize: '1.5rem', fontWeight: 800, color: '#1e293b', margin: 0 }}>
+                        <div className="flex items-center gap-3 md:gap-4">
+                            <button className="md:hidden p-2 -ml-2 rounded-lg hover:bg-gray-100" onClick={() => setIsMobileSidebarOpen(true)}>
+                                <Menu size={24} color="#1e293b" />
+                            </button>
+                            <h2 className="text-lg md:text-2xl font-extrabold text-slate-800 m-0">
                                 {activeTab === 'overview' ? 'Dashboard Overview' : 
                                  activeTab === 'products' ? 'Product Management' :
                                  activeTab === 'orders' ? 'Order Management' : 'Seller Profile'}
@@ -421,26 +435,26 @@ export default function SellerDashboard() {
                         </div>
                     </header>
 
-                    <div style={{ padding: '2.5rem 3rem', display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+                    <div className="p-4 md:p-12 flex flex-col gap-6 md:gap-8">
                         {quotaExceeded && (
                             <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}
-                                style={{ background: '#fff3cd', color: '#856404', padding: '1rem 1.5rem', borderRadius: '12px', border: '1px solid #ffeeba', display: 'flex', alignItems: 'center', gap: '12px', fontSize: '0.9rem' }}>
-                                <AlertCircle size={20} />
+                                className="bg-yellow-50 text-yellow-800 p-4 rounded-xl border border-yellow-200 flex items-start md:items-center gap-3 text-sm md:text-base">
+                                <AlertCircle size={20} className="shrink-0 mt-0.5 md:mt-0" />
                                 <div><strong>Cloud Database Quota Exceeded.</strong> You are currently seeing limited/cached demo data. Real-time updates may be restricted until the quota resets.</div>
                             </motion.div>
                         )}
 
-                        <div className="flex justify-between items-center">
+                        <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4">
                             <div>
-                                <h2 style={{ fontSize: '2rem', fontWeight: 800, color: '#1e293b', marginBottom: '0.25rem' }}>
+                                <h2 className="text-xl md:text-3xl font-extrabold text-slate-800 mb-1">
                                     {activeTab === 'overview' ? 'Performance Summary' : 
                                      activeTab === 'products' ? 'Inventory' :
                                      activeTab === 'orders' ? 'Shipments' : 'Business Credentials'}
                                 </h2>
-                                <p style={{ color: '#64748b' }}>Manage your <span style={{ fontWeight: 600, color: 'var(--primary)' }}>{activeTab}</span> activities below.</p>
+                                <p className="text-slate-500 text-sm md:text-base">Manage your <span className="font-semibold text-primary">{activeTab}</span> activities below.</p>
                             </div>
                             {activeTab === 'products' && (
-                                <button className="btn btn-primary shadow-lg hover:shadow-xl transition-all" onClick={() => navigate('/seller/add-product')} style={{ padding: '0.75rem 1.5rem', borderRadius: '50px' }}>
+                                <button className="btn btn-primary shadow-lg hover:shadow-xl transition-all flex items-center justify-center gap-2 px-6 py-3 rounded-full w-full md:w-auto" onClick={() => navigate('/seller/add-product')}>
                                     <Plus size={20} /> New Product
                                 </button>
                             )}
