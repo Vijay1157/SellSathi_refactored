@@ -68,40 +68,40 @@ export default function SellerLanding() {
       <HowItWorks />
       <Testimonials />
 
-      <section className="w-full py-16 bg-gradient-to-r from-blue-600 via-blue-600 to-[#5BB8FF]">
-        <div className="max-w-7xl mx-auto px-6">
-          <div className="rounded-2xl bg-white/10 backdrop-blur-lg p-10 flex flex-col md:flex-row justify-between items-center gap-8">
+      <section className="w-full py-12 md:py-16 bg-gradient-to-r from-blue-600 via-blue-600 to-[#5BB8FF]">
+        <div className="max-w-7xl mx-auto px-4 md:px-6">
+          <div className="rounded-[2rem] md:rounded-2xl bg-white/10 backdrop-blur-lg p-8 md:p-10 flex flex-col md:flex-row justify-between items-center gap-6 md:gap-8 border border-white/20">
             <div className="text-center md:text-left">
               <div className="flex items-center justify-center md:justify-start gap-3 mb-4 text-white/80">
-                <BookOpen size={24} />
-                <span className="font-bold tracking-widest uppercase text-sm">SUPPLIER LEARNING HUB</span>
+                <BookOpen size={20} className="md:w-6 md:h-6" />
+                <span className="font-bold tracking-widest uppercase text-xs md:text-sm">SUPPLIER LEARNING HUB</span>
               </div>
-              <h2 className="text-3xl md:text-4xl font-bold text-white mb-2">Learn how to sell and grow your business on GudKart</h2>
+              <h2 className="text-2xl md:text-4xl font-bold text-white mb-2 leading-tight">Learn how to sell and grow your business on GudKart</h2>
             </div>
-            <button className="px-8 py-4 rounded-2xl bg-white text-brand font-bold text-lg hover:bg-gray-50 transition-all flex items-center gap-2 whitespace-nowrap">
-              <Play fill="currentColor" size={20} /> Visit Learning Hub
+            <button className="w-full md:w-auto px-8 py-4 rounded-2xl bg-white text-brand font-bold text-base md:text-lg hover:bg-gray-50 transition-all flex items-center justify-center gap-2 whitespace-nowrap">
+              <Play fill="currentColor" size={18} /> Visit Learning Hub
             </button>
           </div>
         </div>
       </section>
 
-      <section className="py-24 bg-white">
+      <section className="py-16 md:py-24 bg-white">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-          <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-16 text-center">Grow Your Business With GudKart</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+          <h2 className="text-2xl md:text-4xl font-bold text-gray-900 mb-10 md:mb-16 text-center tracking-tight">Grow Your Business With GudKart</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-8">
             {[
               { icon: Truck, title: "Efficient & Affordable Shipping", desc: "Sell your products across India with our vast logistics network covering 28,000+ pincodes." },
               { icon: Rocket, title: "Next Day Dispatch Program", desc: "Get higher visibility and faster growth by opting for our Next Day Dispatch (NDD) program." },
               { icon: Zap, title: "Ads to Grow More", desc: "Use our intuitive advertising tools to put your products in front of right customers." },
               { icon: BarChart3, title: "Business Insights & Analytics", desc: "Make data-driven decisions with our comprehensive seller dashboard and analytics." }
             ].map((feature, i) => (
-              <div key={i} className="p-10 rounded-[2rem] bg-gray-50 border border-gray-100 flex gap-6">
-                <div className="w-14 h-14 rounded-2xl bg-brand/5 flex items-center justify-center text-brand shrink-0">
-                  <feature.icon size={28} />
+              <div key={i} className="p-6 md:p-10 rounded-2xl md:rounded-[2rem] bg-gray-50 border border-gray-100 flex flex-col sm:flex-row gap-4 md:gap-6 items-start">
+                <div className="w-12 h-12 md:w-14 md:h-14 rounded-xl md:rounded-2xl bg-brand/5 flex items-center justify-center text-brand shrink-0">
+                  <feature.icon size={24} className="md:w-7 md:h-7" />
                 </div>
                 <div>
-                  <h4 className="text-xl font-bold text-gray-900 mb-3">{feature.title}</h4>
-                  <p className="text-gray-600 leading-relaxed">{feature.desc}</p>
+                  <h4 className="text-lg md:text-xl font-bold text-gray-900 mb-2 md:mb-3">{feature.title}</h4>
+                  <p className="text-gray-600 text-sm md:text-base leading-relaxed">{feature.desc}</p>
                 </div>
               </div>
             ))}
