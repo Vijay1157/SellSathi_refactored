@@ -77,8 +77,12 @@ export default function CategoryPage() {
             <div className="container main-container glass-card">
                 {/* Header with Back Button */}
                 <div className="hub-header">
-                    <button onClick={() => navigate('/')} className="back-home-btn">
-                        <ArrowLeft size={18} /> Back to Home
+                    <button 
+                        onClick={() => navigate('/')} 
+                        className="flex items-center gap-2 text-gray-600 hover:text-primary transition-colors text-sm font-medium"
+                        style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
+                    >
+                        <ArrowLeft size={16} /> Back to Home
                     </button>
                     <div className="hub-breadcrumb">
                         <Link to="/">Home</Link> / <span>{categoryName}</span>

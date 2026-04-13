@@ -423,17 +423,25 @@ export default function Invoice() {
             <div className="no-print flex justify-between items-center" style={{ width: '100%', maxWidth: '850px', marginBottom: '2rem' }}>
                 <button
                     onClick={() => navigate(`/track?orderId=${order.orderId || order.id}`)}
-                    className="btn btn-secondary flex items-center gap-2"
-                    style={{ padding: '0.6rem 1.2rem' }}
+                    className="flex items-center gap-2 text-gray-600 hover:text-primary transition-colors text-sm font-medium"
+                    style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
                 >
-                    <ArrowLeft size={18} />
+                    <ArrowLeft size={16} />
                     Back to Tracking
                 </button>
                 <div className="flex gap-3">
                     <button
                         onClick={handleDownload}
-                        className="btn btn-primary flex items-center gap-2"
-                        style={{ padding: '0.6rem 1.2rem', background: 'var(--success)', border: 'none' }}
+                        className="btn flex items-center gap-2"
+                        style={{ 
+                            padding: '0.6rem 1.2rem', 
+                            background: '#10b981', 
+                            color: 'white',
+                            border: 'none',
+                            borderRadius: '8px',
+                            fontWeight: '600',
+                            cursor: 'pointer'
+                        }}
                     >
                         <Download size={18} />
                         Download PDF

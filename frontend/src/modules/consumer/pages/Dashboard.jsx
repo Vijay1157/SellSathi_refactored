@@ -283,7 +283,7 @@ export default function ConsumerDashboard() {
 
     const handleDownloadInvoice = async (orderId) => {
         try {
-            const response = await authFetch(`/orders/invoice/${orderId}`);
+            const response = await authFetch(`/orders/invoice/${orderId}?regenerate=true`);
             if (!response.ok) throw new Error('Failed to download invoice');
             const blob = await response.blob();
             const url = window.URL.createObjectURL(blob);
@@ -580,7 +580,7 @@ export default function ConsumerDashboard() {
                                 stats={stats} orders={orders}
                                 selectedOrder={selectedOrder} setSelectedOrder={setSelectedOrder}
                                 recentlyViewed={recentlyViewed} recommendedProducts={recommendedProducts}
-                                onDownloadInvoice={handleDownloadInvoice} onSwitchTab={setActiveTab}
+                                onSwitchTab={setActiveTab}
                                 onCancelOrder={handleCancelOrder}
                             />
                         )}
@@ -588,7 +588,6 @@ export default function ConsumerDashboard() {
                             <ConsumerOrdersTab
                                 orders={orders}
                                 onSelectOrder={(order) => { setSelectedOrder(order); setActiveTab('dashboard'); }}
-                                onDownloadInvoice={handleDownloadInvoice}
                                 onCancelOrder={handleCancelOrder}
                             />
                         )}

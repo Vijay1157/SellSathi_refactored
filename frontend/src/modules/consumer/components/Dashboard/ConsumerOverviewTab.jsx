@@ -1,9 +1,10 @@
 import { useNavigate } from 'react-router-dom';
 import {
     ShoppingBag, Clock, CheckCircle2, Package, TrendingUp,
-    Download, RotateCcw, Bookmark
+    RotateCcw, Bookmark
 } from 'lucide-react';
 import PriceDisplay from '@/modules/shared/components/common/PriceDisplay';
+import { motion, AnimatePresence } from 'framer-motion';
 
 const formatDate = (timestamp) => {
     if (!timestamp) return 'N/A';
@@ -22,7 +23,7 @@ const formatDate = (timestamp) => {
 export default function ConsumerOverviewTab({
     stats, orders, selectedOrder, setSelectedOrder,
     recentlyViewed, recommendedProducts,
-    onDownloadInvoice, onSwitchTab, onCancelOrder
+    onSwitchTab, onCancelOrder
 }) {
     const navigate = useNavigate();
 
@@ -55,19 +56,44 @@ export default function ConsumerOverviewTab({
                             <h2 className="text-base font-semibold text-gray-900">My Orders</h2>
                             <button onClick={() => onSwitchTab('orders')} className="text-sm text-primary hover:underline">View All</button>
                         </div>
-                        <div className="overflow-x-auto max-h-[400px] overflow-y-auto custom-scrollbar">
+                        <div className="overflow-y-auto overflow-x-hidden" style={{ maxHeight: 'calc(6 * 60px + 48px)' }}>
                             <table className="w-full">
-                                <thead className="bg-gray-50 sticky top-0">
+                                <thead className="bg-gray-50 sticky top-0 z-10">
                                     <tr>
                                         {['Order ID', 'Date', 'Items', 'Amount', 'Status', 'Action'].map(h => (
-                                            <th key={h} className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">{h}</th>
+                                            <th key={h} className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase whitespace-nowrap">{h}</th>
                                         ))}
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-gray-200">
-                                    {orders.slice(0, 5).map((order) => (
-                                        <tr key={order.id} onClick={() => setSelectedOrder(order)}
-                                            className={`hover:bg-gray-50 cursor-pointer transition-colors ${selectedOrder?.id === order.id ? 'bg-blue-50' : ''}`}>
+                                    {orders.map((order, index) => (
+                                        <motion.tr 
+                                            key={order.id} 
+                                            onClick={() => setSelectedOrder(order)}
+                                            className={`cursor-pointer transition-all ${
+                                                selectedOrder?.id === order.id 
+                                                    ? 'bg-gradient-to-r from-blue-100 via-blue-50 to-transparent border-l-4 border-l-primary shadow-sm' 
+                                                    : 'hover:bg-gray-50'
+                                            }`}
+                                            initial={{ opacity: 0, x: -20 }}
+                                            animate={{ 
+                                                opacity: 1, 
+                                                x: 0,
+                                                scale: selectedOrder?.id === order.id ? 1.02 : 1,
+                                            }}
+                                            transition={{ 
+                                                delay: index * 0.05,
+                                                type: "spring",
+                                                stiffness: 300,
+                                                damping: 30
+                                            }}
+                                            whileHover={{ 
+                                                scale: 1.01,
+                                                x: 4,
+                                                backgroundColor: selectedOrder?.id === order.id ? undefined : 'rgba(249, 250, 251, 1)',
+                                                transition: { type: "spring", stiffness: 400, damping: 25 }
+                                            }}
+                                        >
                                             <td className="px-4 py-3">
                                                 <div className="flex items-center gap-2">
                                                     <div className="w-8 h-8 bg-gray-100 rounded flex items-center justify-center overflow-hidden">
@@ -94,7 +120,7 @@ export default function ConsumerOverviewTab({
                                                 <button onClick={(e) => { e.stopPropagation(); navigate(`/track?orderId=${order.orderId || order.id}`); }}
                                                     className="text-sm text-primary hover:underline font-medium">Track</button>
                                             </td>
-                                        </tr>
+                                        </motion.tr>
                                     ))}
                                 </tbody>
                             </table>
@@ -172,17 +198,61 @@ export default function ConsumerOverviewTab({
 
                 {/* Order Details Sidebar */}
                 <div className="lg:col-span-1 space-y-2">
-                    {selectedOrder && (
-                        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+                    <AnimatePresence mode="wait">
+                        {selectedOrder && (
+                            <motion.div 
+                                key={selectedOrder.id}
+                                className="bg-white rounded-lg shadow-sm border border-gray-200 p-4"
+                                initial={{ opacity: 0, scale: 0.8, x: -100, rotateY: -20 }}
+                                animate={{ 
+                                    opacity: 1, 
+                                    scale: 1, 
+                                    x: 0, 
+                                    rotateY: 0,
+                                    transition: {
+                                        type: "spring",
+                                        stiffness: 200,
+                                        damping: 25,
+                                        mass: 0.5
+                                    }
+                                }}
+                                exit={{ 
+                                    opacity: 0, 
+                                    scale: 0.8, 
+                                    x: 100,
+                                    transition: { duration: 0.2 }
+                                }}
+                                style={{
+                                    transformStyle: "preserve-3d",
+                                    perspective: "1000px"
+                                }}
+                            >
                             <div className="flex items-center justify-between mb-3">
-                                <h3 className="text-base font-semibold text-gray-900">Order Details</h3>
-                                <span className={`px-2 py-1 rounded-full text-xs font-medium ${selectedOrder.status === 'Delivered' ? 'bg-green-100 text-green-700' : 'bg-orange-100 text-orange-700'}`}>
+                                <motion.h3 
+                                    className="text-base font-semibold text-gray-900"
+                                    initial={{ opacity: 0, x: -10 }}
+                                    animate={{ opacity: 1, x: 0 }}
+                                    transition={{ delay: 0.1 }}
+                                >
+                                    Order Details
+                                </motion.h3>
+                                <motion.span 
+                                    className={`px-2 py-1 rounded-full text-xs font-medium ${selectedOrder.status === 'Delivered' ? 'bg-green-100 text-green-700' : 'bg-orange-100 text-orange-700'}`}
+                                    initial={{ opacity: 0, scale: 0.8 }}
+                                    animate={{ opacity: 1, scale: 1 }}
+                                    transition={{ delay: 0.15, type: "spring", stiffness: 300 }}
+                                >
                                     ● {selectedOrder.status || 'Pending'}
-                                </span>
+                                </motion.span>
                             </div>
 
                             {/* Timeline */}
-                            <div className="space-y-2 mb-4">
+                            <motion.div 
+                                className="space-y-2 mb-4"
+                                initial={{ opacity: 0, y: 10 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ delay: 0.2 }}
+                            >
                                 {[
                                     { label: 'Order Placed', icon: <CheckCircle2 size={14} />, active: !!selectedOrder.status, color: 'green', date: formatDate(selectedOrder.createdAt) },
                                     { label: 'Processing', icon: <Clock size={14} />, active: ['Processing','Shipped','Delivered'].includes(selectedOrder.status), color: 'orange' },
@@ -203,11 +273,16 @@ export default function ConsumerOverviewTab({
                                         {idx < arr.length - 1 && <div className="ml-3.5 w-0.5 h-3 bg-gray-200"></div>}
                                     </div>
                                 ))}
-                            </div>
+                            </motion.div>
 
                             {/* Order Items */}
                             {selectedOrder.items && selectedOrder.items.length > 0 && (
-                                <div className="mb-4 pb-4 border-b border-gray-200">
+                                <motion.div 
+                                    className="mb-4 pb-4 border-b border-gray-200"
+                                    initial={{ opacity: 0, y: 10 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    transition={{ delay: 0.3 }}
+                                >
                                     <h4 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Order Items</h4>
                                     <div className="space-y-2 max-h-32 overflow-y-auto">
                                         {selectedOrder.items.map((item, idx) => (
@@ -225,24 +300,34 @@ export default function ConsumerOverviewTab({
                                             </div>
                                         ))}
                                     </div>
-                                </div>
+                                </motion.div>
                             )}
 
                             {/* Shipping Address */}
                             {selectedOrder.shippingAddress && (
-                                <div className="mb-4 pb-4 border-b border-gray-200">
+                                <motion.div 
+                                    className="mb-4 pb-4 border-b border-gray-200"
+                                    initial={{ opacity: 0, y: 10 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    transition={{ delay: 0.4 }}
+                                >
                                     <h4 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Delivery Address</h4>
                                     <div className="p-2 bg-gray-50 rounded text-sm text-gray-700 leading-relaxed">
                                         <p className="font-bold text-gray-900">{selectedOrder.shippingAddress.firstName} {selectedOrder.shippingAddress.lastName}</p>
                                         <p className="mt-1">{selectedOrder.shippingAddress.addressLine}</p>
                                         <p>{selectedOrder.shippingAddress.city}, {selectedOrder.shippingAddress.pincode}</p>
                                     </div>
-                                </div>
+                                </motion.div>
                             )}
 
                             {/* Payment Method & Status */}
                             {selectedOrder.paymentMethod && (
-                                <div className="mb-4">
+                                <motion.div 
+                                    className="mb-4"
+                                    initial={{ opacity: 0, y: 10 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    transition={{ delay: 0.5 }}
+                                >
                                     <h4 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Payment Details</h4>
                                     <div className="p-2 bg-gray-50 rounded">
                                         <div className="flex justify-between items-center mb-1">
@@ -267,26 +352,30 @@ export default function ConsumerOverviewTab({
                                         </div>
                                         {selectedOrder.paymentId && <p className="text-xs text-gray-500 mt-1 leading-tight">Payment ID: {selectedOrder.paymentId}</p>}
                                     </div>
-                                </div>
+                                </motion.div>
                             )}
 
                             {/* Action Buttons */}
-                            <div className="space-y-2">
+                            <motion.div 
+                                className="space-y-2"
+                                initial={{ opacity: 0, y: 10 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ delay: 0.6 }}
+                            >
                                 <button onClick={() => navigate(`/track?orderId=${selectedOrder.orderId || selectedOrder.id}`)}
                                     className="w-full px-3 py-2 bg-primary text-white rounded text-sm font-medium hover:bg-[#120085] transition-colors">Track Order</button>
-                                <button onClick={() => onDownloadInvoice(selectedOrder.orderId || selectedOrder.id)}
-                                    className="w-full px-3 py-2 border border-gray-300 rounded text-sm font-medium hover:bg-gray-50 transition-colors flex items-center justify-center gap-2">
-                                    <Download size={16} /> Download Invoice
-                                </button>
+                                <button onClick={() => navigate(`/invoice?orderId=${selectedOrder.orderId || selectedOrder.id}`)}
+                                    className="w-full px-3 py-2 border border-gray-300 rounded text-sm font-medium hover:bg-gray-50 transition-colors">Download Invoice</button>
                                 {['Placed', 'Pending', 'Processing'].includes(selectedOrder.status) && (
                                     <button onClick={() => onCancelOrder(selectedOrder.id)}
                                         className="w-full px-3 py-2 border border-red-200 text-red-600 rounded text-sm font-medium hover:bg-red-50 transition-colors">
                                         Cancel Order
                                     </button>
                                 )}
-                            </div>
-                        </div>
+                            </motion.div>
+                        </motion.div>
                     )}
+                    </AnimatePresence>
 
                     {/* Quick Actions */}
                     <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
@@ -325,7 +414,7 @@ export default function ConsumerOverviewTab({
                                 className="w-full flex items-center gap-2 px-3 py-2 rounded hover:bg-red-50 transition-colors text-left border border-transparent hover:border-red-200"
                             >
                                 <Bookmark size={18} className="text-red-600" />
-                                <span className="text-sm font-medium text-gray-700">Saved Items</span>
+                                <span className="text-sm font-medium text-gray-700">Wishlist</span>
                             </button>
                         </div>
                     </div>

@@ -178,10 +178,10 @@ export default function OrderTracking() {
                 <div className="flex flex-col gap-2">
                     <button
                         onClick={() => navigate('/')}
-                        className="flex items-center gap-2 text-muted hover:text-primary transition-colors"
-                        style={{ background: 'none', border: 'none', cursor: 'pointer', fontWeight: '600' }}
+                        className="flex items-center gap-2 text-gray-600 hover:text-primary transition-colors text-sm font-medium"
+                        style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
                     >
-                        <ArrowLeft size={18} />
+                        <ArrowLeft size={16} />
                         Back to Shopping
                     </button>
                     <h1 style={{ margin: 0 }}>Track <span className="gradient-text">Order</span></h1>
