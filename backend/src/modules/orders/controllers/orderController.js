@@ -350,6 +350,7 @@ const getReviewableOrders = async (req, res) => {
 const downloadInvoice = async (req, res) => {
     try {
         const { orderId } = req.params;
+        const { regenerate } = req.query;
         const query = await db.collection("orders").where("orderId", "==", orderId).limit(1).get();
 
         let docSnap;
@@ -361,6 +362,16 @@ const downloadInvoice = async (req, res) => {
         }
 
         const order = docSnap.data();
+        
+        // If regenerate=true, always generate a fresh invoice
+        if (regenerate === 'true') {
+            console.log(`[INVOICE] Regenerating invoice for order: ${orderId}`);
+            const invPath = await invoiceService.generateInvoice({ ...order, documentId: docSnap.id });
+            await docSnap.ref.update({ invoiceGenerated: true, invoicePath: invPath });
+            return res.sendFile(invPath);
+        }
+        
+        // Otherwise, use cached invoice if available
         if (!order.invoicePath) {
             // Generate it on the fly if missing
             const invPath = await invoiceService.generateInvoice({ ...order, documentId: docSnap.id });

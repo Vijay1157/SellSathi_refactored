@@ -901,9 +901,10 @@ export default function Checkout() {
                         {/* Left: Back to Shopping Button */}
                         <Link
                             to="/"
-                            className="flex items-center gap-2 px-5 py-3 bg-white border border-gray-200 rounded-xl font-bold text-gray-600 hover:bg-gray-50 hover:border-primary/20 hover:text-primary transition-all shadow-sm"
+                            className="flex items-center gap-2 text-gray-600 hover:text-primary transition-colors text-sm font-medium"
+                            style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, textDecoration: 'none' }}
                         >
-                            <ArrowLeft size={18} />
+                            <ArrowLeft size={16} />
                             Back to Shopping
                         </Link>
                         
