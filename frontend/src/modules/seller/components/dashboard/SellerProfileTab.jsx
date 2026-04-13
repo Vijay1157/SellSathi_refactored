@@ -88,11 +88,11 @@ export default function SellerProfileTab({ profile, sellerUid }) {
     };
 
     return (
-        <div className="animate-fade-in flex flex-col gap-6">
-            <div className="flex justify-between items-center mb-2">
+        <div className="animate-fade-in flex flex-col gap-4 md:gap-6">
+            <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-3 mb-2">
                 <div>
-                    <h2 style={{ fontSize: '1.75rem', fontWeight: 800, color: '#1e293b' }}>Personal & Business Details</h2>
-                    <p style={{ color: '#64748b' }}>Manage your verified account information</p>
+                    <h2 className="text-xl md:text-2xl font-extrabold text-slate-800">Personal & Business Details</h2>
+                    <p className="text-sm text-gray-500">Manage your verified account information</p>
                 </div>
                 <button
                     onClick={() => setShowEditModal(true)}
@@ -113,20 +113,20 @@ export default function SellerProfileTab({ profile, sellerUid }) {
             </div>
 
             {/* Sub-navigation Tabs */}
-            <div className="flex gap-2 p-1.5 bg-white rounded-2xl border border-gray-100 shadow-sm w-fit">
+            <div className="flex gap-1.5 md:gap-2 p-1.5 bg-white rounded-2xl border border-gray-100 shadow-sm overflow-x-auto" style={{ WebkitOverflowScrolling: 'touch' }}>
                 {[
                     { id: 'personal', label: 'Personal', icon: <User size={16} /> },
                     { id: 'business', label: 'Business', icon: <Store size={16} /> },
-                    { id: 'pickup', label: 'Pickup Address', icon: <MapPin size={16} /> },
-                    { id: 'bank', label: 'Bank Details', icon: <CreditCard size={16} /> }
+                    { id: 'pickup', label: 'Pickup', icon: <MapPin size={16} /> },
+                    { id: 'bank', label: 'Bank', icon: <CreditCard size={16} /> }
                 ].map(t => (
                     <button
                         key={t.id}
                         onClick={() => setPersonalTab(t.id)}
                         style={{
-                            display: 'flex', alignItems: 'center', gap: '8px',
-                            padding: '0.75rem 1.25rem', borderRadius: '12px', fontSize: '0.9rem', fontWeight: 600,
-                            transition: 'all 0.2s',
+                            display: 'flex', alignItems: 'center', gap: '6px',
+                            padding: '0.6rem 0.9rem', borderRadius: '12px', fontSize: '0.82rem', fontWeight: 600,
+                            transition: 'all 0.2s', whiteSpace: 'nowrap',
                             background: personalTab === t.id ? 'var(--primary)10' : 'transparent',
                             color: personalTab === t.id ? 'var(--primary)' : '#64748b',
                             border: 'none', cursor: 'pointer'
@@ -138,7 +138,7 @@ export default function SellerProfileTab({ profile, sellerUid }) {
                 ))}
             </div>
 
-            <div className="bg-white rounded-[2rem] shadow-xl p-10 border border-gray-100 min-h-[400px]">
+            <div className="bg-white rounded-2xl md:rounded-[2rem] shadow-xl p-4 md:p-10 border border-gray-100 min-h-[300px] md:min-h-[400px]">
                 {personalTab === 'personal' && (
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
                         <div className="space-y-8">
@@ -197,16 +197,16 @@ export default function SellerProfileTab({ profile, sellerUid }) {
 
                 {personalTab === 'pickup' && (
                     <div className="max-w-3xl">
-                        <div className="flex items-center gap-4 mb-8">
-                            <div className="w-14 h-14 rounded-2xl bg-orange-100 text-orange-600 flex items-center justify-center shadow-inner">
-                                <MapPin size={28} />
+                        <div className="flex items-center gap-3 md:gap-4 mb-6 md:mb-8">
+                            <div className="w-10 h-10 md:w-14 md:h-14 rounded-xl md:rounded-2xl bg-orange-100 text-orange-600 flex items-center justify-center shadow-inner">
+                                <MapPin size={24} />
                             </div>
                             <div>
-                                <h3 className="text-2xl font-bold text-gray-900">Shipment Pickup Address</h3>
-                                <p className="text-gray-500 text-sm">This address will be used for courier pickups</p>
+                                <h3 className="text-lg md:text-2xl font-bold text-gray-900">Shipment Pickup Address</h3>
+                                <p className="text-gray-500 text-xs md:text-sm">This address will be used for courier pickups</p>
                             </div>
                         </div>
-                        <div className="bg-gray-50 rounded-[2rem] p-10 border border-gray-100 space-y-6">
+                        <div className="bg-gray-50 rounded-2xl md:rounded-[2rem] p-5 md:p-10 border border-gray-100 space-y-6">
                             <div className="flex flex-col gap-2">
                                 <span className="text-xs font-bold text-gray-400 uppercase tracking-widest underline decoration-orange-200 decoration-2 underline-offset-4">Primary Pickup Location</span>
                                 <p className="text-xl font-medium text-gray-800 leading-relaxed italic">
@@ -231,13 +231,13 @@ export default function SellerProfileTab({ profile, sellerUid }) {
 
                 {personalTab === 'bank' && (
                     <div className="max-w-3xl">
-                        <div className="flex items-center gap-4 mb-8">
-                            <div className="w-14 h-14 rounded-2xl bg-green-100 text-green-600 flex items-center justify-center shadow-inner">
-                                <CreditCard size={28} />
+                        <div className="flex items-center gap-3 md:gap-4 mb-6 md:mb-8">
+                            <div className="w-10 h-10 md:w-14 md:h-14 rounded-xl md:rounded-2xl bg-green-100 text-green-600 flex items-center justify-center shadow-inner">
+                                <CreditCard size={24} />
                             </div>
                             <div>
-                                <h3 className="text-2xl font-bold text-gray-900">Financial Settlements</h3>
-                                <p className="text-gray-500 text-sm">Bank account for payouts and tax compliance</p>
+                                <h3 className="text-lg md:text-2xl font-bold text-gray-900">Financial Settlements</h3>
+                                <p className="text-gray-500 text-xs md:text-sm">Bank account for payouts and tax compliance</p>
                             </div>
                         </div>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -247,13 +247,13 @@ export default function SellerProfileTab({ profile, sellerUid }) {
                                 { label: 'IFSC Code', value: profile.ifscCode || 'N/A' },
                                 { label: 'UPI ID', value: profile.upiId || 'N/A' }
                             ].map((item, idx) => (
-                                <div key={idx} className="p-8 rounded-[1.5rem] bg-white border border-gray-100 shadow-sm flex flex-col gap-2">
+                                <div key={idx} className="p-5 md:p-8 rounded-xl md:rounded-[1.5rem] bg-white border border-gray-100 shadow-sm flex flex-col gap-2">
                                     <span className="text-xs font-bold text-gray-400 uppercase tracking-widest">{item.label}</span>
                                     <span className="text-xl font-bold text-blue-900">{item.value}</span>
                                 </div>
                             ))}
                         </div>
-                        <div className="mt-8 p-6 rounded-2xl bg-blue-50 border border-blue-100 flex items-center gap-4">
+                        <div className="mt-6 md:mt-8 p-4 md:p-6 rounded-xl md:rounded-2xl bg-blue-50 border border-blue-100 flex items-start md:items-center gap-3 md:gap-4">
                             <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center text-blue-700 shadow-sm shrink-0">
                                 <AlertCircle size={20} />
                             </div>

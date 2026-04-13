@@ -256,41 +256,40 @@ export default function ProductViewModal({
                     exit={{ opacity: 0, y: 50, scale: 0.95 }}
                     style={{
                         width: '100%', maxWidth: '1000px', maxHeight: '95vh', overflowY: 'auto',
-                        borderRadius: '28px', border: '1px solid rgba(255,255,255,0.2)',
+                        borderRadius: '16px', border: '1px solid rgba(255,255,255,0.2)',
                         background: 'white', boxShadow: '0 30px 60px -12px rgba(0, 0, 0, 0.25)',
                         color: 'var(--text)', position: 'relative'
                     }}
+                    className="md:rounded-[28px]"
                 >
-                    <div style={{
-                        padding: '2rem 2.5rem', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'linear-gradient(to right, #f8fafc, white)'
-                    }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                            <div style={{ padding: '0.75rem', background: 'var(--primary)15', color: 'var(--primary)', borderRadius: '12px' }}>
+                    <div className="p-4 md:px-10 md:py-8 border-b flex flex-col sm:flex-row justify-between sm:items-center gap-3" style={{ borderColor: 'var(--border)', background: 'linear-gradient(to right, #f8fafc, white)' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                            <div className="hidden sm:flex" style={{ padding: '0.75rem', background: 'var(--primary)15', color: 'var(--primary)', borderRadius: '12px' }}>
                                 {isEditing ? <Edit2 size={24} /> : <Eye size={24} />}
                             </div>
                             <div>
-                                <h2 style={{ fontSize: '1.75rem', fontWeight: 700, margin: 0 }}>
+                                <h2 className="text-lg md:text-2xl font-bold m-0">
                                     {isEditing ? 'Editing' : 'Product'} <span className="gradient-text">Details</span>
                                 </h2>
-                                <p className="text-muted" style={{ margin: 0 }}>ID: {selectedProduct.id}</p>
+                                <p className="text-muted text-xs md:text-sm" style={{ margin: 0 }}>ID: {selectedProduct.id?.substring(0, 12)}</p>
                             </div>
                         </div>
-                        <div className="flex gap-3">
+                        <div className="flex gap-2 md:gap-3">
                             {!isEditing && (
-                                <button onClick={() => setIsEditing(true)} className="btn btn-primary" style={{ padding: '0.75rem 1.5rem', borderRadius: '12px' }}>
-                                    <Edit2 size={18} /> Modify Listing
+                                <button onClick={() => setIsEditing(true)} className="btn btn-primary text-sm" style={{ padding: '0.6rem 1rem', borderRadius: '12px' }}>
+                                    <Edit2 size={16} /> Edit
                                 </button>
                             )}
-                            <button onClick={() => { onClose(); setIsEditing(false); }} style={{ padding: '0.75rem', borderRadius: '12px', background: 'var(--surface)', color: 'var(--text-muted)' }}>
-                                <X size={20} />
+                            <button onClick={() => { onClose(); setIsEditing(false); }} style={{ padding: '0.6rem', borderRadius: '12px', background: 'var(--surface)', color: 'var(--text-muted)' }}>
+                                <X size={18} />
                             </button>
                         </div>
                     </div>
 
-                    <div style={{ padding: '2.5rem' }}>
+                    <div className="p-4 md:p-10">
                         {isEditing ? (
                             <form onSubmit={handleUpdateProduct}>
-                                <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1.2fr) minmax(0, 0.8fr)', gap: '2rem' }}>
+                                <div className="grid grid-cols-1 md:grid-cols-[1.2fr_0.8fr] gap-4 md:gap-8">
                                     <div className="flex flex-col gap-6">
                                         <div className="glass-card" style={{ padding: '1.5rem', background: 'white', border: '1px solid #e2e8f0', borderRadius: '20px' }}>
                                             <div className="flex flex-col gap-4">
@@ -304,7 +303,7 @@ export default function ProductViewModal({
                                                     <textarea required rows="4" style={{ width: '100%', padding: '0.875rem 1rem', border: '1.5px solid #e2e8f0', borderRadius: '12px', resize: 'vertical' }}
                                                         value={editData.description} onChange={e => setEditData({ ...editData, description: e.target.value })} />
                                                 </div>
-                                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '1rem' }}>
+                                                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                                                     <div>
                                                         <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem', fontWeight: 600 }}>Category</label>
                                                         <select required style={{ width: '100%', padding: '0.875rem 1rem', border: '1.5px solid #e2e8f0', borderRadius: '12px', background: '#f8fafc' }} 
@@ -369,7 +368,7 @@ export default function ProductViewModal({
                                             product={editData} setProduct={setEditData} selectedColors={selectedColors}
                                             variants={variants} variantImages={variantImages} setVariantImages={setVariantImages}
                                         />
-                                        <div className="flex gap-4 mt-auto">
+                                        <div className="flex flex-col sm:flex-row gap-3 md:gap-4 mt-4 md:mt-auto">
                                             <button type="submit" disabled={updateLoading} className="btn btn-primary" style={{ flex: 2, padding: '1rem', borderRadius: '12px' }}>
                                                 {updateLoading ? 'Saving...' : 'Save Changes'}
                                             </button>
@@ -381,7 +380,7 @@ export default function ProductViewModal({
                                 </div>
                             </form>
                         ) : (
-                            <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) minmax(0, 1.5fr)', gap: '3rem' }}>
+                            <div className="grid grid-cols-1 md:grid-cols-[1fr_1.5fr] gap-4 md:gap-12">
                                 <div className="flex flex-col gap-4">
                                     <div style={{ borderRadius: '24px', overflow: 'hidden', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)', border: '1px solid #e2e8f0' }}>
                                         <img src={selectedProduct.image} alt={selectedProduct.title} style={{ width: '100%', aspectRatio: '1', objectFit: 'cover' }} />
@@ -407,7 +406,7 @@ export default function ProductViewModal({
                                         </div>
                                     </div>
 
-                                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '1rem' }}>
+                                    <div className="grid grid-cols-3 gap-2 md:gap-4">
                                         <div style={{ background: '#f1f5f9', borderRadius: '12px', padding: '1rem' }}>
                                             <label style={{ display: 'block', marginBottom: '0.2rem', color: '#64748b', fontSize: '0.8rem', textTransform: 'uppercase' }}>Price</label>
                                             <p style={{ fontSize: '1.5rem', fontWeight: 700, color: '#0f172a', margin: 0 }}>₹{Number(selectedProduct.price).toLocaleString('en-IN')}</p>
