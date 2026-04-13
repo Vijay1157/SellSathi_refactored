@@ -526,6 +526,7 @@ export default function ProductDetail() {
                         images={images}
                         mainImages={mainImages}
                         variantImageMap={variantImageMap}
+                        variantImages={product?.variantImages || {}}
                         variantImageUrl={variantImageUrl}
                         setVariantImageUrl={setVariantImageUrl}
                         activeImageIndex={activeImageIndex}
