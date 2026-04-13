@@ -81,13 +81,13 @@ exports.generateInvoice = async (order) => {
 async function generatePage1(doc, order, logoDataUrl, shiprocketQR, getName) {
     renderHeader(doc, logoDataUrl, 'Bill of Supply', order.orderId);
     
-    let y = 120;
+    let y = 100;
     renderOrderDetails(doc, order, y);
     
-    y = 230;
-    renderAddresses(doc, order, y, getName, true); // show shipping details
+    y = 210;
+    renderAddresses(doc, order, y, getName, true);
     
-    y = 480;
+    y = 460;
     renderItemsTable(doc, order, y, false);
     
     renderFooter(doc, order, 750);
@@ -96,11 +96,11 @@ async function generatePage1(doc, order, logoDataUrl, shiprocketQR, getName) {
 async function generatePage2(doc, order, logoDataUrl, shiprocketQR, getName) {
     renderHeader(doc, logoDataUrl, 'Bill of Supply - Detailed', order.orderId);
     
-    let y = 120;
+    let y = 100;
     renderOrderDetails(doc, order, y);
     
-    y = 230;
-    renderAddresses(doc, order, y, getName, false); // hide shipping details on page 2
+    y = 210;
+    renderAddresses(doc, order, y, getName, false);
     
     y = 350;
     renderItemsTable(doc, order, y, true); // show platform fees
@@ -109,15 +109,23 @@ async function generatePage2(doc, order, logoDataUrl, shiprocketQR, getName) {
 }
 
 function renderHeader(doc, logoDataUrl, title, orderId) {
+    // Left side: title + order ID
+    doc.fontSize(16).font('Helvetica-Bold').fillColor('#000000').text(title, 30, 35);
+    doc.fontSize(10).font('Helvetica').fillColor('#444444').text(`#${orderId}`, 30, 58);
+
+    // Right side: logo + brand name + tagline
     if (logoDataUrl) {
         try {
             const logoBuffer = Buffer.from(logoDataUrl.split(',')[1], 'base64');
-            doc.image(logoBuffer, 50, 40, { width: 100 });
+            doc.image(logoBuffer, 430, 22, { width: 30 });
         } catch (e) {}
     }
-    doc.fontSize(16).font('Helvetica-Bold').text(title, 200, 45, { align: 'center' });
-    doc.fontSize(10).font('Helvetica').text(`#${orderId}`, 200, 65, { align: 'center' });
-    doc.moveTo(30, 110).lineTo(565, 110).lineWidth(1).stroke();
+    doc.fontSize(18).font('Helvetica-Bold').fillColor('#1800AD').text('Gud', 480, 28, { continued: true });
+    doc.fontSize(18).font('Helvetica').fillColor('#5BB8FF').text('kart');
+    doc.fontSize(7).font('Helvetica').fillColor('#1800AD').text('Gud Deals. Gud Life', 480, 52, { width: 80, align: 'center' });
+
+    doc.fillColor('#000000');
+    doc.moveTo(30, 85).lineTo(565, 85).lineWidth(1).strokeColor('#cccccc').stroke();
 }
 
 function renderOrderDetails(doc, order, y) {

@@ -132,9 +132,12 @@ export default function Invoice() {
                 <p style={{ color: '#000', fontSize: '1rem', marginTop: '0.25rem', fontWeight: '600' }}>#{order.orderId || order.id}</p>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                <img src={logoBase64 || '/gudkart-logo.png'} alt="GudKart" style={{ width: '70px', height: '70px', objectFit: 'contain' }} />
-                <span style={{ lineHeight: 1, letterSpacing: '-0.3px' }}>
-                    <span style={{ fontSize: '1.6rem', fontWeight: 900, color: '#1800AD' }}>Gud</span><span style={{ fontSize: '1.6rem', fontWeight: 400, color: '#5BB8FF' }}>kart</span>
+                <img src={logoBase64 || '/gudkart-logo.png'} alt="GudKart" style={{ width: '55px', height: '55px', objectFit: 'contain' }} />
+                <span style={{ lineHeight: 1, letterSpacing: '-0.3px', display: 'flex', flexDirection: 'column' }}>
+                    <span>
+                        <span style={{ fontSize: '1.6rem', fontWeight: 900, color: '#1800AD' }}>Gud</span><span style={{ fontSize: '1.6rem', fontWeight: 400, color: '#5BB8FF' }}>kart</span>
+                    </span>
+                    <span style={{ fontSize: '0.6rem', fontWeight: 600, color: '#1800AD', letterSpacing: '0.3px', textAlign: 'center', marginTop: '2px' }}>Gud Deals. Gud Life</span>
                 </span>
             </div>
         </div>

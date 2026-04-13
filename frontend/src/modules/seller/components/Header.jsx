@@ -11,9 +11,12 @@ export const Header = () => {
         <div className="container mx-auto flex h-16 items-center justify-between px-4 sm:px-6 lg:px-8">
           <div className="flex items-center gap-2">
             <Link to="/" className="flex items-center gap-1.5">
-              <img src="/gudkart-logo.png" alt="" style={{ height: '64px', width: '64px', objectFit: 'contain' }} />
-              <span style={{ lineHeight: 1 }}>
-                <span style={{ fontSize: '2rem', fontWeight: 900, color: '#1800AD' }}>Gud</span><span style={{ fontSize: '2rem', fontWeight: 400, color: '#5BB8FF' }}>kart</span>
+              <img src="/gudkart-logo.png" alt="" style={{ height: '60px', width: '60px', objectFit: 'contain' }} />
+              <span style={{ lineHeight: 1, display: 'flex', flexDirection: 'column' }}>
+                <span>
+                  <span style={{ fontSize: '2rem', fontWeight: 900, color: '#1800AD' }}>Gud</span><span style={{ fontSize: '2rem', fontWeight: 400, color: '#5BB8FF' }}>kart</span>
+                </span>
+                <span style={{ fontSize: '0.65rem', fontWeight: 600, color: '#1800AD', letterSpacing: '0.3px', textAlign: 'center' }}>Gud Deals. Gud Life</span>
               </span>
             </Link>
           </div>
