@@ -88,6 +88,10 @@ export const addToWishlist = async (product) => {
         }
 
         window.dispatchEvent(new CustomEvent('wishlistUpdated'));
+        // Trigger notification with product name
+        window.dispatchEvent(new CustomEvent('wishlistItemAdded', { 
+            detail: { productName: product.name || product.title || 'Product' }
+        }));
         return { success: true, message: 'Added to wishlist' };
     } catch (error) {
         console.error('Error adding to wishlist:', error);
