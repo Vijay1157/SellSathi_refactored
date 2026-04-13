@@ -40,11 +40,12 @@ export default function TrackOrderModal({ show, trackingOrder, onClose, onDownlo
                     exit={{ opacity: 0, y: 40, scale: 0.96 }}
                     transition={{ duration: 0.25 }}
                     style={{
-                        background: 'var(--background)', borderRadius: '24px',
+                        background: 'var(--background)', borderRadius: '20px',
                         width: '100%', maxWidth: '640px', maxHeight: '90vh',
-                        overflowY: 'auto', padding: '2rem', position: 'relative',
+                        overflowY: 'auto', position: 'relative',
                         border: '1px solid var(--border)', boxShadow: '0 32px 80px rgba(0,0,0,0.4)'
                     }}
+                    className="p-4 md:p-8 md:rounded-3xl"
                     onClick={e => e.stopPropagation()}
                 >
                     {/* Header */}
@@ -59,9 +60,8 @@ export default function TrackOrderModal({ show, trackingOrder, onClose, onDownlo
                     </div>
 
                     {/* 3-Stage Timeline */}
-                    <div style={{
-                        padding: '1.5rem', background: 'var(--surface)',
-                        borderRadius: '16px', marginBottom: '1.5rem',
+                    <div className="p-4 md:p-6 rounded-2xl mb-4 md:mb-6" style={{
+                        background: 'var(--surface)',
                         border: '1px solid var(--border)'
                     }}>
                         <div style={{ position: 'relative', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
@@ -125,7 +125,7 @@ export default function TrackOrderModal({ show, trackingOrder, onClose, onDownlo
                                 )}
                             </div>
                         ) : trackingOrder.awbNumber ? (
-                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                 <div>
                                     <p className="text-muted" style={{ fontSize: '0.75rem', margin: '0 0 0.2rem 0' }}>Courier Partner</p>
                                     <p style={{ margin: 0, fontWeight: 600 }}>{trackingOrder.courierName || 'Assigned'}</p>

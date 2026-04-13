@@ -4,7 +4,7 @@ import { ImageIcon, Trash2, Upload, Loader, Plus } from 'lucide-react';
 import { authFetch } from '@/modules/shared/utils/api';
 
 const sty = {
-    card: { background: 'white', borderRadius: '20px', padding: '2rem', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05), 0 2px 4px -1px rgba(0,0,0,0.03)', border: '1px solid #f1f5f9' },
+    card: { background: 'white', borderRadius: '20px', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05), 0 2px 4px -1px rgba(0,0,0,0.03)', border: '1px solid #f1f5f9' },
     sectionIcon: (color) => ({ padding: '0.5rem', background: `${color}15`, color, borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center' }),
 };
 
@@ -165,7 +165,7 @@ export default function ImageUploader({
 
             {/* Variant Images Upload */}
             {allVariantLabels.length > 0 && (
-                <div style={sty.card}>
+                <div style={sty.card} className="p-4 md:p-8">
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1.5rem' }}>
                         <div style={sty.sectionIcon('#3b82f6')}><ImageIcon size={20} /></div>
                         <div>

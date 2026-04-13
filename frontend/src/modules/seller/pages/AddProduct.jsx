@@ -27,7 +27,7 @@ const CATEGORY_GST_RATES_DEFAULT = {
 };
 
 const sty = {
-    page: { minHeight: '100vh', background: 'linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%)', padding: '2rem 1rem' },
+    page: { minHeight: '100vh', background: 'linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%)', padding: '1rem' },
     container: { maxWidth: '1100px', margin: '0 auto' },
     card: { background: 'white', borderRadius: '20px', padding: '2rem', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05), 0 2px 4px -1px rgba(0,0,0,0.03)', border: '1px solid #f1f5f9' },
     sectionIcon: (color) => ({ padding: '0.5rem', background: `${color}15`, color, borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center' }),
@@ -282,18 +282,18 @@ export default function AddProduct() {
         <div style={sty.page}>
             <div style={sty.container}>
                 <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }}
-                    style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '2rem' }}>
+                    className="flex flex-col-reverse sm:flex-row items-start sm:items-center justify-between gap-3 mb-4 md:mb-8">
                     <button onClick={() => navigate('/seller/dashboard')} className="btn btn-secondary" style={{ padding: '0.5rem 1rem', borderRadius: '12px' }}>
                         <ArrowLeft size={20} /> Back to Dashboard
                     </button>
-                    <div style={{ textAlign: 'right' }}>
-                        <h1 style={{ fontSize: '2rem', fontWeight: 800 }}>Create New <span className="gradient-text">Listing</span></h1>
-                        <p className="text-muted">Build your product with dynamic attributes</p>
+                    <div className="text-left sm:text-right">
+                        <h1 className="text-xl md:text-2xl font-extrabold">Create New <span className="gradient-text">Listing</span></h1>
+                        <p className="text-muted text-sm">Build your product with dynamic attributes</p>
                     </div>
                 </motion.div>
 
                 <form onSubmit={handleSubmit}>
-                    <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 0.8fr', gap: '2rem' }}>
+                    <div className="grid grid-cols-1 md:grid-cols-[1.2fr_0.8fr] gap-4 md:gap-8">
                         {/* ═══════════ LEFT COLUMN ═══════════ */}
                         <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.1 }}
                             className="flex flex-col gap-6">
@@ -373,7 +373,7 @@ export default function AddProduct() {
                                     </div>
                                 )}
 
-                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '1rem' }}>
+                                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 md:gap-4">
                                     <div>
                                         <label style={sty.label}>Base Price (₹)</label>
                                         <div style={{ position: 'relative' }}>
