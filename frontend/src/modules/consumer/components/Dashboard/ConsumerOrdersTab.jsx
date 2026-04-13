@@ -36,14 +36,14 @@ export default function ConsumerOrdersTab({ orders, onSelectOrder, onCancelOrder
     }
 
     return (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 overflow-x-hidden">
                 {/* Orders List - Left Side */}
                 <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
                     <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between bg-gradient-to-r from-blue-50 to-blue-50">
                         <h2 className="text-lg font-semibold text-gray-900">All Orders</h2>
                         <span className="text-sm text-gray-500">{orders.length} total</span>
                     </div>
-                    <div className="overflow-y-auto" style={{ maxHeight: '70vh' }}>
+                    <div className="overflow-y-auto overflow-x-hidden" style={{ maxHeight: '70vh' }}>
                         {orders.map((order) => (
                             <motion.div
                                 key={order.id}
@@ -98,19 +98,16 @@ export default function ConsumerOrdersTab({ orders, onSelectOrder, onCancelOrder
                     {selectedOrder && (
                         <motion.div
                             key={selectedOrder.id}
-                            initial={{ opacity: 0, scale: 0.8, y: 20 }}
-                            animate={{ opacity: 1, scale: 1, y: 0 }}
-                            exit={{ opacity: 0, scale: 0.8, y: -20 }}
+                            initial={{ opacity: 0, y: -50 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, y: -50 }}
                             transition={{ 
                                 type: "spring", 
-                                stiffness: 260, 
-                                damping: 20,
-                                mass: 0.8
+                                stiffness: 300, 
+                                damping: 30,
+                                mass: 1
                             }}
                             className="bg-white rounded-lg shadow-lg border border-gray-200 overflow-hidden"
-                            style={{
-                                transformOrigin: "left center"
-                            }}
                         >
                             <motion.div 
                                 className="px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-blue-50 to-blue-50"

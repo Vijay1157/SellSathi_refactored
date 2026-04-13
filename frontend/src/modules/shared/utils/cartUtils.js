@@ -81,6 +81,10 @@ export const addToCart = async (product, selections = {}) => {
             if (!data.success) throw new Error(data.message || 'Failed to add to backend');
 
             window.dispatchEvent(new Event('cartUpdate'));
+            // Trigger notification with product name
+            window.dispatchEvent(new CustomEvent('cartItemAdded', { 
+                detail: { productName: product.name || product.title || 'Product' }
+            }));
             return { success: true, message: "Added to cart successfully" };
         }
     } catch (error) {

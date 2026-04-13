@@ -11,6 +11,8 @@ import { fetchWithCache } from '@/modules/shared/utils/firestoreCache';
 import NavbarMegaMenu from './NavbarMegaMenu';
 import CategorySidebar from './CategorySidebar';
 import { authFetch } from '@/modules/shared/utils/api';
+import CartNotification from '@/modules/shared/components/common/CartNotification';
+import WishlistNotification from '@/modules/shared/components/common/WishlistNotification';
 import './Navbar.css';
 
 function GudKartLogo() {
@@ -37,6 +39,10 @@ export default function Navbar() {
     const [dynamicMegaData, setDynamicMegaData] = useState({});
     const [isHoverLocked, setIsHoverLocked] = useState(false);
     const [customAdminCategories, setCustomAdminCategories] = useState([]);
+    const [showCartNotification, setShowCartNotification] = useState(false);
+    const [cartProductName, setCartProductName] = useState('');
+    const [showWishlistNotification, setShowWishlistNotification] = useState(false);
+    const [wishlistProductName, setWishlistProductName] = useState('');
 
     const navigate = useNavigate();
     const location = useLocation();
@@ -252,9 +258,35 @@ export default function Navbar() {
             setWishlistCount(items.length);
         });
 
+        // Listen for cart add event to show notification
+        const handleCartAdded = (event) => {
+            const productName = event.detail?.productName || '';
+            setCartProductName(productName);
+            setShowCartNotification(true);
+            // Auto-close after 5 seconds
+            setTimeout(() => {
+                setShowCartNotification(false);
+            }, 5000);
+        };
+        window.addEventListener('cartItemAdded', handleCartAdded);
+
+        // Listen for wishlist add event to show notification
+        const handleWishlistAdded = (event) => {
+            const productName = event.detail?.productName || '';
+            setWishlistProductName(productName);
+            setShowWishlistNotification(true);
+            // Auto-close after 5 seconds
+            setTimeout(() => {
+                setShowWishlistNotification(false);
+            }, 5000);
+        };
+        window.addEventListener('wishlistItemAdded', handleWishlistAdded);
+
         return () => {
             unsubscribeCart();
             unsubscribeWishlist();
+            window.removeEventListener('cartItemAdded', handleCartAdded);
+            window.removeEventListener('wishlistItemAdded', handleWishlistAdded);
         };
     }, []);
 
@@ -675,6 +707,18 @@ export default function Navbar() {
                 isOpen={isLoginModalOpen}
                 onClose={() => setIsLoginModalOpen(false)}
                 onSuccess={handleLoginSuccess}
+            />
+
+            <CartNotification
+                isOpen={showCartNotification}
+                onClose={() => setShowCartNotification(false)}
+                productName={cartProductName}
+            />
+
+            <WishlistNotification
+                isOpen={showWishlistNotification}
+                onClose={() => setShowWishlistNotification(false)}
+                productName={wishlistProductName}
             />
         </>
     );
