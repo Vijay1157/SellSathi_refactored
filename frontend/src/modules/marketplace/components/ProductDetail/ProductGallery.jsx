@@ -91,9 +91,40 @@ export default function ProductGallery({
                         transition={{ duration: 0.2 }}
                     />
                     {currentColorImages.length > 1 && (
-                        <div className="media-controls-bottom">
-                            {/* Navigation arrows */}
-                            <div className="arrow-controls">
+                        <>
+                            {/* Thumbnail previews - positioned from top */}
+                            <div className="angle-thumbnails-container">
+                                <div className="angle-thumbnails">
+                                    {currentColorImages.slice(0, 3).map((img, idx) => (
+                                        <div
+                                            key={idx}
+                                            className={`angle-thumb ${activeImageIndex === idx ? 'active' : ''}`}
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                setActiveImageIndex(idx);
+                                            }}
+                                            onMouseEnter={(e) => e.stopPropagation()}
+                                        >
+                                            <img src={img} alt={`Angle ${idx + 1}`} />
+                                        </div>
+                                    ))}
+                                    {currentColorImages.length > 3 && (
+                                        <div 
+                                            className="angle-thumb more-indicator"
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                setShowAllThumbnails(true);
+                                            }}
+                                            onMouseEnter={(e) => e.stopPropagation()}
+                                        >
+                                            <span>{currentColorImages.length - 3}+</span>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+
+                            {/* Navigation arrows - independently positioned at bottom */}
+                            <div className="arrow-controls-fixed">
                                 <button
                                     className="ctrl-btn-bottom"
                                     onClick={(e) => { e.stopPropagation(); prevImage(); }}
@@ -109,36 +140,7 @@ export default function ProductGallery({
                                     <ChevronRight size={20} />
                                 </button>
                             </div>
-                            
-                            {/* Thumbnail previews below arrows */}
-                            <div className="angle-thumbnails">
-                                {currentColorImages.slice(0, 3).map((img, idx) => (
-                                    <div
-                                        key={idx}
-                                        className={`angle-thumb ${activeImageIndex === idx ? 'active' : ''}`}
-                                        onClick={(e) => {
-                                            e.stopPropagation();
-                                            setActiveImageIndex(idx);
-                                        }}
-                                        onMouseEnter={(e) => e.stopPropagation()}
-                                    >
-                                        <img src={img} alt={`Angle ${idx + 1}`} />
-                                    </div>
-                                ))}
-                                {currentColorImages.length > 3 && (
-                                    <div 
-                                        className="angle-thumb more-indicator"
-                                        onClick={(e) => {
-                                            e.stopPropagation();
-                                            setShowAllThumbnails(true);
-                                        }}
-                                        onMouseEnter={(e) => e.stopPropagation()}
-                                    >
-                                        <span>{currentColorImages.length - 3}+</span>
-                                    </div>
-                                )}
-                            </div>
-                        </div>
+                        </>
                     )}
                 </div>
 
