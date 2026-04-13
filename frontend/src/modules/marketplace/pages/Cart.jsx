@@ -303,6 +303,32 @@ export default function Cart() {
                                 Order Summary
                             </h2>
 
+                            {/* Selected Items List */}
+                            {selectedCartItems.length > 0 && (
+                                <div className="mb-6 pb-4 border-b border-gray-200">
+                                    <div className="grid grid-cols-12 gap-2 text-xs font-bold text-gray-700 mb-3 px-1">
+                                        <div className="col-span-6">Item</div>
+                                        <div className="col-span-3 text-center">Qty</div>
+                                        <div className="col-span-3 text-right">Price</div>
+                                    </div>
+                                    <div className="space-y-2 max-h-48 overflow-y-auto">
+                                        {selectedCartItems.map((item) => {
+                                            const itemName = item.name || 'Product';
+                                            const truncatedName = itemName.length > 25 ? itemName.substring(0, 25) + '...' : itemName;
+                                            const itemPrice = (item.priceWithGST || item.price) * item.quantity;
+                                            
+                                            return (
+                                                <div key={item.id} className="grid grid-cols-12 gap-2 text-xs text-gray-600 px-1 py-1 hover:bg-gray-50 rounded">
+                                                    <div className="col-span-6 truncate" title={itemName}>{truncatedName}</div>
+                                                    <div className="col-span-3 text-center font-semibold">{item.quantity}</div>
+                                                    <div className="col-span-3 text-right font-semibold">₹{itemPrice.toLocaleString()}</div>
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                </div>
+                            )}
+
                             <div className="space-y-4 mb-6">
                                 <div className="flex justify-between text-gray-600">
                                     <span>Subtotal ({selectedItems.size} {selectedItems.size === 1 ? 'item' : 'items'})</span>

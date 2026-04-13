@@ -4,14 +4,16 @@ import { auth } from '@/modules/shared/config/firebase';
 import { authFetch } from '@/modules/shared/utils/api';
 import {
     ShoppingBag, Heart, Settings, LogOut, User, MapPin,
-    LayoutDashboard, Star, ArrowLeft, XCircle, Loader
+    LayoutDashboard, Star, ArrowLeft, XCircle, Loader, ShoppingCart
 } from 'lucide-react';
 import { listenToWishlist, removeFromWishlist as removeFromWishlistAPI } from '@/modules/shared/utils/wishlistUtils';
+import { listenToCart } from '@/modules/shared/utils/cartUtils';
 import ReviewModal from '@/modules/shared/components/common/ReviewModal';
 import { fetchWithCache } from '@/modules/shared/utils/firestoreCache';
 
 import ConsumerOverviewTab from '@/modules/consumer/components/Dashboard/ConsumerOverviewTab';
 import ConsumerOrdersTab from '@/modules/consumer/components/Dashboard/ConsumerOrdersTab';
+import ConsumerCartTab from '@/modules/consumer/components/Dashboard/ConsumerCartTab';
 import ConsumerWishlistTab from '@/modules/consumer/components/Dashboard/ConsumerWishlistTab';
 import ConsumerAddressTab from '@/modules/consumer/components/Dashboard/ConsumerAddressTab';
 import ConsumerReviewsTab from '@/modules/consumer/components/Dashboard/ConsumerReviewsTab';
@@ -33,6 +35,7 @@ export default function ConsumerDashboard() {
     const [userPhoto, setUserPhoto] = useState(null);
     const [uploadingImage, setUploadingImage] = useState(false);
     const [orders, setOrders] = useState([]);
+    const [cart, setCart] = useState([]);
     const [wishlist, setWishlist] = useState([]);
     const [addresses, setAddresses] = useState([]);
     const [reviewableOrders, setReviewableOrders] = useState([]);
@@ -52,6 +55,7 @@ export default function ConsumerDashboard() {
 
     useEffect(() => {
         let wishlistUnsubscribe = null;
+        let cartUnsubscribe = null;
         let mounted = true;
 
         const unsubscribe = auth.onAuthStateChanged(async (currentUser) => {
@@ -122,6 +126,7 @@ export default function ConsumerDashboard() {
                 }
 
                 wishlistUnsubscribe = listenToWishlist((items) => { if (mounted) setWishlist(items); });
+                cartUnsubscribe = listenToCart((items) => { if (mounted) setCart(items); });
                 if (mounted) setLoading(false);
             } else if (localUser && localUser.uid) {
                 // User is logged in via test mode OR Firebase auth doesn't match this tab's session
@@ -143,6 +148,7 @@ export default function ConsumerDashboard() {
                     ]);
                 } catch (err) { console.error('Error loading dashboard data:', err); }
                 wishlistUnsubscribe = listenToWishlist((items) => { if (mounted) setWishlist(items); });
+                cartUnsubscribe = listenToCart((items) => { if (mounted) setCart(items); });
                 if (mounted) setLoading(false);
             } else {
                 navigate('/');
@@ -153,6 +159,7 @@ export default function ConsumerDashboard() {
             mounted = false;
             unsubscribe();
             if (wishlistUnsubscribe) wishlistUnsubscribe();
+            if (cartUnsubscribe) cartUnsubscribe();
         };
     }, [navigate]);
 
@@ -501,13 +508,13 @@ export default function ConsumerDashboard() {
     if (!user) return null;
 
     return (
-        <div className="min-h-screen bg-gray-50">
+        <div className="min-h-screen bg-gray-50 overflow-x-hidden">
             {/* Main Content */}
             <div className="max-w-full mx-auto px-3 py-6">
-                <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
+                <div className="grid grid-cols-1 lg:grid-cols-5 gap-6" style={{ alignItems: 'start' }}>
                     {/* Sidebar */}
                     <div className="lg:col-span-1">
-                        <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden sticky top-20">
+                        <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-y-auto" style={{ position: 'sticky', top: '24px', maxHeight: 'calc(100vh - 48px)' }}>
                             {/* User Profile */}
                             <div className="p-4 bg-gradient-to-r from-blue-50 to-blue-50 border-b border-gray-200">
                                 <div className="flex flex-col items-center text-center">
@@ -541,6 +548,7 @@ export default function ConsumerDashboard() {
                                 {[
                                     { key: 'dashboard', label: 'Dashboard', icon: <LayoutDashboard size={18} />, badge: null },
                                     { key: 'orders', label: 'My Orders', icon: <ShoppingBag size={18} />, badge: orders.length },
+                                    { key: 'cart', label: 'Cart', icon: <ShoppingCart size={18} />, badge: cart.length },
                                     { key: 'wishlist', label: 'Wishlist', icon: <Heart size={18} />, badge: wishlist.length },
                                     { key: 'address', label: 'Address Book', icon: <MapPin size={18} />, badge: null },
                                     { key: 'reviews', label: 'My Reviews', icon: <Star size={18} />, badge: reviewableOrders.length > 0 ? reviewableOrders.length : null, badgeColor: 'bg-orange-100 text-orange-700' },
@@ -589,6 +597,12 @@ export default function ConsumerDashboard() {
                                 orders={orders}
                                 onSelectOrder={(order) => { setSelectedOrder(order); setActiveTab('dashboard'); }}
                                 onCancelOrder={handleCancelOrder}
+                            />
+                        )}
+                        {activeTab === 'cart' && (
+                            <ConsumerCartTab 
+                                cart={cart}
+                                onCartUpdate={() => window.dispatchEvent(new Event('cartUpdate'))}
                             />
                         )}
                         {activeTab === 'wishlist' && (

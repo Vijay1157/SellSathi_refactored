@@ -524,12 +524,28 @@ export default function AddressStep({
                                             </span>
                                         </label>
                                         <p className="text-xs text-gray-600 mt-1 ml-6">
-                                            Add your GST number for business purchases (optional)
+                                            Ensure GST details match your billing address
                                         </p>
                                         
                                         {hasGST && (
-                                            <div className="mt-3 ml-6 space-y-2">
+                                            <div className="mt-3 ml-6 space-y-3">
+                                                {/* Business/Company Name Field */}
                                                 <div>
+                                                    <label className="block text-xs font-semibold text-gray-700 mb-1.5">
+                                                        Business/Company Name
+                                                    </label>
+                                                    <input
+                                                        type="text"
+                                                        placeholder="Enter your business or company name"
+                                                        className="w-full px-4 py-2.5 bg-white border border-gray-300 rounded-lg text-sm font-medium focus:ring-2 focus:ring-blue-200 transition-all outline-none"
+                                                    />
+                                                </div>
+
+                                                {/* GST Number Field */}
+                                                <div>
+                                                    <label className="block text-xs font-semibold text-gray-700 mb-1.5">
+                                                        GST Number
+                                                    </label>
                                                     <input
                                                         type="text"
                                                         value={gstNumber}
@@ -566,11 +582,11 @@ export default function AddressStep({
                                                             Valid GST Number
                                                         </p>
                                                     )}
-                                                </div>
-                                                <div className="bg-blue-50 border border-blue-200 rounded-lg p-2">
-                                                    <p className="text-xs text-blue-800 font-medium">
-                                                        <span className="font-bold">Format:</span> 2 digits (state code) + 5 letters (PAN) + 4 digits + 1 letter + 1 letter/digit + Z + 1 letter/digit
-                                                    </p>
+                                                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-2 mt-2">
+                                                        <p className="text-xs text-blue-800 font-medium">
+                                                            <span className="font-bold">Format:</span> 2 digits (state code) + 5 letters (PAN) + 4 digits + 1 letter + 1 letter/digit + Z + 1 letter/digit
+                                                        </p>
+                                                    </div>
                                                 </div>
                                             </div>
                                         )}
