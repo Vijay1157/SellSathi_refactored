@@ -45,7 +45,7 @@ export default function ProductInfo({
                     />
                     <div className="actions-meta">
                         <button onClick={toggleWishlist} className={isSaved ? 'active' : ''}>
-                            <Heart size={18} fill={isSaved ? "#E11D48" : "none"} color={isSaved ? "#E11D48" : "currentColor"} />
+                            <Heart size={18} fill={isSaved ? "#ef4444" : "none"} color={isSaved ? "#ef4444" : "currentColor"} />
                             {isSaved ? 'Saved' : 'Save'}
                         </button>
                         <button onClick={handleShare}><Share2 size={18} /> Share</button>
@@ -183,23 +183,32 @@ export default function ProductInfo({
             </div>
 
             <div className="pd-actions">
-                <button
-                    className="btn-add-cart"
-                    onClick={handleAddToCart}
-                    disabled={product.stock === 0 || product.status === 'Out of Stock'}
-                    style={product.stock === 0 || product.status === 'Out of Stock' ? { background: '#94a3b8', cursor: 'not-allowed' } : {}}
-                >
-                    <ShoppingCart size={20} />
-                    Add to Cart
-                </button>
-                <button
-                    className="btn-buy-now"
-                    onClick={handleBuyNow}
-                    disabled={product.stock === 0 || product.status === 'Out of Stock'}
-                    style={product.stock === 0 || product.status === 'Out of Stock' ? { background: '#cbd5e1', cursor: 'not-allowed', color: '#64748b' } : {}}
-                >
-                    Buy Now
-                </button>
+                {isOutOfStock ? (
+                    <button
+                        className="btn-add-cart"
+                        onClick={toggleWishlist}
+                        style={{ background: isSaved ? '#ef4444' : '#3B7CF1', width: '100%' }}
+                    >
+                        <Heart size={20} fill={isSaved ? "white" : "none"} />
+                        {isSaved ? 'Saved to Wishlist' : 'Add to Wishlist'}
+                    </button>
+                ) : (
+                    <>
+                        <button
+                            className="btn-add-cart"
+                            onClick={handleAddToCart}
+                        >
+                            <ShoppingCart size={20} />
+                            Add to Cart
+                        </button>
+                        <button
+                            className="btn-buy-now"
+                            onClick={handleBuyNow}
+                        >
+                            Buy Now
+                        </button>
+                    </>
+                )}
             </div>
 
             {/* Size Chart Modal */}
