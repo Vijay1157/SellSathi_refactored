@@ -15,16 +15,7 @@ import VariantsEditor from '../components/AddProduct/VariantsEditor';
 const CATEGORY_CONFIG = VARIANT_CONFIGS;
 const categories = SELLER_CATEGORIES;
 
-const CATEGORY_GST_RATES_DEFAULT = {
-    "Fashion (Men)": 5, "Fashion (Women)": 5, "Kids & Baby": 12,
-    "Electronics": 18, "Home & Living": 18, "Handicrafts": 5,
-    "Artworks": 12, "Beauty & Personal Care": 18, "Sports & Fitness": 18,
-    "Books & Stationery": 12, "Food & Beverages": 5, "Gifts & Customization": 18,
-    "Jewelry & Accessories": 5, "Fabrics & Tailoring Materials": 5,
-    "Local Sellers / Homepreneurs": 5, "Services": 18, "Pet Supplies": 12,
-    "Automotive & Accessories": 18, "Travel & Utility": 18,
-    "Sustainability & Eco-Friendly": 12
-};
+const CATEGORY_GST_RATES_DEFAULT = {}; // Removed hardcoded defaults as per request
 
 const sty = {
     page: { minHeight: '100vh', background: 'linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%)', padding: '1rem' },
@@ -44,7 +35,7 @@ export default function AddProduct() {
 
     // Core state
     const [product, setProduct] = useState({
-        name: '', price: '', discountPrice: '', category: '', subCategory: '', stock: '', description: '', image: '', images: [], gstPercent: ''
+        name: '', price: '', discountPrice: '', category: '', subCategory: '', stock: '', description: '', image: '', images: [], gstPercent: '', customCategory: ''
     });
 
     // Fee constants
@@ -54,14 +45,15 @@ export default function AddProduct() {
     const [platformFeeBreakdown, setPlatformFeeBreakdown] = useState(null);
     const [showFeeBreakdown, setShowFeeBreakdown] = useState(false);
     
-    // Calculate platform fee percent from breakdown (default 3.5%)
-    const PLATFORM_FEE_PERCENT = platformFeeBreakdown 
-        ? calculateTotalPlatformFeePercent(platformFeeBreakdown) 
-        : 3.5;
-
     // Seller GST status
     const [sellerHasGST, setSellerHasGST] = useState(false);
     const [sellerProfileLoaded, setSellerProfileLoaded] = useState(false);
+
+    // Calculate platform fee percent from breakdown (default 3.5%)
+    // Added 2% extra convenience fee for sellers without GST ID
+    const PLATFORM_FEE_PERCENT = (platformFeeBreakdown 
+        ? calculateTotalPlatformFeePercent(platformFeeBreakdown) 
+        : 3.5) + (!sellerHasGST ? 2 : 0);
 
     // Sub-component state
     const [selectedSizes, setSelectedSizes] = useState([]);
@@ -96,6 +88,10 @@ export default function AddProduct() {
                     if (d.config.categoryGstRates) setCategoryGstRates(d.config.categoryGstRates);
                     if (d.config.platformFeeBreakdown) {
                         setPlatformFeeBreakdown(getPlatformFeeBreakdownFromConfig(d.config));
+                    }
+                    // Fetch default GST if available
+                    if (d.config.defaultGstPercent) {
+                        setProduct(prev => ({ ...prev, gstPercent: prev.gstPercent || d.config.defaultGstPercent }));
                     }
                 }
             }).catch(() => {});
@@ -222,7 +218,7 @@ export default function AddProduct() {
             price: parseFloat(product.price),
             discountPrice: product.discountPrice ? parseFloat(product.discountPrice) : null,
             category: product.category,
-            subCategory: product.subCategory || null,
+            subCategory: product.category === 'Others' ? product.customCategory : (product.subCategory || null),
             stock: parseInt(product.stock),
             description: product.description,
             image: product.image,
@@ -330,6 +326,7 @@ export default function AddProduct() {
                                     <select required style={sty.select} value={product.category}
                                         onChange={e => {
                                             const newCat = e.target.value;
+                                            // Fallback to 18 if no rate found in admin config
                                             const newGst = !sellerHasGST ? (categoryGstRates[newCat] ?? 18) : product.gstPercent;
                                             setProduct({ ...product, category: newCat, subCategory: '', gstPercent: newGst });
                                             setSelectedSizes([]); setSelectedColors([]); setVariants({});
@@ -340,16 +337,17 @@ export default function AddProduct() {
                                             <option key={cat} value={cat}>{CATEGORY_CONFIG[cat]?.icon || '📦'} {cat}</option>
                                         ))}
                                     </select>
-                                    {product.category === 'Other' && (
+                                    {product.category === 'Others' && (
                                         <div style={{ marginTop: '1rem' }}>
-                                            <label style={sty.label}>Specify Category</label>
-                                            <input type="text" placeholder="Specify your custom category" required style={sty.input}
+                                            <label style={sty.label}>Specify Your Category</label>
+                                            <input type="text" placeholder="e.g. Handmade Pottery, Custom Tech" required style={sty.input}
                                                 value={product.customCategory} onChange={e => setProduct({ ...product, customCategory: e.target.value })} />
+                                            <p style={{ fontSize: '0.72rem', color: '#94a3b8', marginTop: '0.25rem' }}>This category will be listed under the "Others" section on the home page.</p>
                                         </div>
                                     )}
                                 </div>
 
-                                {product.category && getSubcategories(product.category).length > 0 && (
+                                {product.category && product.category !== 'Others' && getSubcategories(product.category).length > 0 && (
                                     <div style={{ marginBottom: '1.5rem' }}>
                                         <label style={sty.label}>Subcategory</label>
                                         <select required style={sty.select} value={product.subCategory}
@@ -397,21 +395,22 @@ export default function AddProduct() {
                                     </div>
                                 </div>
 
-                                {/* GST Row */}
-                                <div style={{ marginTop: '1.5rem' }}>
-                                    <label style={sty.label}>
-                                        <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                                            <Percent size={14} /> GST Percent (%) <span style={{ color: 'red' }}>*</span>
-                                        </span>
-                                    </label>
-                                    <div style={{ position: 'relative' }}>
-                                        <input type="number" placeholder="e.g. 18" required min="0" max="100" style={sty.priceInput}
-                                            value={product.gstPercent} onChange={e => setProduct({ ...product, gstPercent: e.target.value })} 
-                                            readOnly={!sellerHasGST} />
-                                        <span style={{ position: 'absolute', right: '0.75rem', top: '50%', transform: 'translateY(-50%)', fontWeight: 'bold', color: '#94a3b8', fontSize: '0.85rem' }}>%</span>
+                                {sellerHasGST && (
+                                    <div style={{ marginTop: '1.5rem' }}>
+                                        <label style={sty.label}>
+                                            <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                                <Percent size={14} /> GST Percent (%) <span style={{ color: 'red' }}>*</span>
+                                            </span>
+                                        </label>
+                                        <div style={{ position: 'relative' }}>
+                                            <input type="number" placeholder="e.g. 18" required min="0" max="100" style={sty.priceInput}
+                                                value={product.gstPercent} onChange={e => setProduct({ ...product, gstPercent: e.target.value })} 
+                                            />
+                                            <span style={{ position: 'absolute', right: '0.75rem', top: '50%', transform: 'translateY(-50%)', fontWeight: 'bold', color: '#94a3b8', fontSize: '0.85rem' }}>%</span>
+                                        </div>
+                                        <p style={{ fontSize: '0.72rem', color: '#94a3b8', marginTop: '0.25rem' }}>Enter applicable GST manually</p>
                                     </div>
-                                    <p style={{ fontSize: '0.72rem', color: '#94a3b8', marginTop: '0.25rem' }}>{sellerHasGST ? 'Enter applicable GST manually' : 'Applied automatically (No GST ID linked)'}</p>
-                                </div>
+                                )}
 
                                 {/* Platform Fee Breakdown */}
                                 <div style={{ marginTop: '1.5rem' }}>
@@ -494,6 +493,35 @@ export default function AddProduct() {
                                                                     </div>
                                                                 </div>
                                                             ))}
+                                                            
+                                                            {!sellerHasGST && (
+                                                                <div style={{
+                                                                    display: 'flex',
+                                                                    justifyContent: 'space-between',
+                                                                    alignItems: 'center',
+                                                                    padding: '0.5rem 0.75rem',
+                                                                    background: 'rgba(236, 72, 153, 0.05)',
+                                                                    borderRadius: '6px',
+                                                                    border: '1px dashed #ec4899'
+                                                                }}>
+                                                                    <div style={{ flex: 1 }}>
+                                                                        <div style={{ fontSize: '0.82rem', fontWeight: 600, color: '#ec4899' }}>
+                                                                            Non-GST Convenience Fee
+                                                                        </div>
+                                                                        <div style={{ fontSize: '0.7rem', color: '#94a3b8', marginTop: '2px' }}>
+                                                                            Applicable for sellers without GST registration
+                                                                        </div>
+                                                                    </div>
+                                                                    <div style={{ textAlign: 'right', marginLeft: '1rem' }}>
+                                                                        <div style={{ fontSize: '0.85rem', fontWeight: 700, color: '#ec4899' }}>
+                                                                            ₹{((parseFloat(product.price) || 0) * 0.02).toFixed(2)}
+                                                                        </div>
+                                                                        <div style={{ fontSize: '0.7rem', color: '#94a3b8' }}>
+                                                                            2%
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+                                                            )}
                                                             <div style={{
                                                                 display: 'flex',
                                                                 justifyContent: 'space-between',
