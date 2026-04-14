@@ -106,9 +106,11 @@ const getAdminConfig = async () => {
         };
 
         const platformFeeBreakdown = adminProfile.platformFeeBreakdown || DEFAULT_PLATFORM_FEE_BREAKDOWN;
+        const platformFeeBreakdownSeller = adminProfile.platformFeeBreakdownSeller || DEFAULT_PLATFORM_FEE_BREAKDOWN;
         
         // Calculate total platform fee from breakdown
         const calculatedPlatformFee = Object.values(platformFeeBreakdown).reduce((sum, val) => sum + val, 0);
+        const calculatedPlatformFeeSeller = Object.values(platformFeeBreakdownSeller).reduce((sum, val) => sum + val, 0);
 
         const DEFAULT_PRICE_RANGE_FEES = [
             { id: 'range1', label: '₹0 – ₹1,000',       min: 0,     max: 1000,  feePercent: 3.5 },
@@ -127,7 +129,9 @@ const getAdminConfig = async () => {
             profileImage: adminProfile.profileImage || null,
             platformChargeRate: adminProfile.platformChargeRate ?? 0.10,
             platformFeeBreakdown: platformFeeBreakdown,
+            platformFeeBreakdownSeller: platformFeeBreakdownSeller,
             defaultPlatformFeePercent: calculatedPlatformFee,
+            defaultPlatformFeePercentSeller: calculatedPlatformFeeSeller,
             defaultGstPercent: adminProfile.defaultGstPercent ?? 18,
             defaultShippingHandlingPercent: adminProfile.defaultShippingHandlingPercent ?? 0,
             categoryGstRates: adminProfile.categoryGstRates || DEFAULT_CATEGORY_GST,
@@ -168,7 +172,9 @@ const getDefaultConfig = () => {
         websiteInfo: 'Your Trusted E-Commerce Platform',
         profileImage: null,
         platformFeeBreakdown: DEFAULT_PLATFORM_FEE_BREAKDOWN,
-        defaultPlatformFeePercent: calculatedPlatformFee, // 3.5%
+        platformFeeBreakdownSeller: DEFAULT_PLATFORM_FEE_BREAKDOWN,
+        defaultPlatformFeePercent: calculatedPlatformFee,
+        defaultPlatformFeePercentSeller: calculatedPlatformFee,
         defaultGstPercent: 18,
         defaultShippingHandlingPercent: 0,
         categoryGstRates: {
