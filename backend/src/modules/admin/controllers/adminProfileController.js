@@ -51,7 +51,7 @@ const getAdminProfile = async (req, res) => {
 const updateAdminProfile = async (req, res) => {
     try {
         const uid = req.user.uid;
-        const { name, dateOfBirth, address, websiteName, websiteInfo, adminEmail, phone, defaultPlatformFeePercent, defaultGstPercent, defaultShippingHandlingPercent, categoryGstRates, platformFeeBreakdown, priceRangeFees } = req.body;
+        const { name, dateOfBirth, address, websiteName, websiteInfo, adminEmail, phone, defaultPlatformFeePercent, defaultGstPercent, defaultShippingHandlingPercent, categoryGstRates, platformFeeBreakdown, platformFeeBreakdownSeller, priceRangeFees } = req.body;
         
         // Validate required fields — name only required for profile updates, not settings-only updates
         if (name !== undefined && (!name || !name.trim())) {
@@ -66,7 +66,7 @@ const updateAdminProfile = async (req, res) => {
             }
         }
         
-        // Validate platform fee breakdown if provided
+        // Validate platform fee breakdown if provided (User)
         if (platformFeeBreakdown && typeof platformFeeBreakdown === 'object') {
             const breakdown = {};
             let total = 0;
@@ -82,6 +82,25 @@ const updateAdminProfile = async (req, res) => {
             
             if (total > 20) {
                 return res.status(400).json({ success: false, message: "Total platform fee cannot exceed 20%" });
+            }
+        }
+
+        // Validate platform fee breakdown if provided (Seller)
+        if (platformFeeBreakdownSeller && typeof platformFeeBreakdownSeller === 'object') {
+            const breakdown = {};
+            let total = 0;
+            
+            for (const [key, percent] of Object.entries(platformFeeBreakdownSeller)) {
+                const val = parseFloat(percent);
+                if (isNaN(val) || val < 0 || val > 10) {
+                    return res.status(400).json({ success: false, message: `Seller ${key} must be between 0 and 10` });
+                }
+                breakdown[key] = val;
+                total += val;
+            }
+            
+            if (total > 20) {
+                return res.status(400).json({ success: false, message: "Total seller platform fee cannot exceed 20%" });
             }
         }
         
@@ -118,8 +137,7 @@ const updateAdminProfile = async (req, res) => {
         if (websiteInfo !== undefined) updateData.websiteInfo = websiteInfo || 'Your Trusted E-Commerce Platform';
         if (adminEmail !== undefined) updateData.adminEmail = adminEmail ? adminEmail.trim() : '';
         
-        // Add platform fee breakdown if provided
-        // IMPORTANT: We always set this field to replace it completely (not merge)
+        // Add platform fee breakdown if provided (User)
         if (platformFeeBreakdown !== undefined && typeof platformFeeBreakdown === 'object') {
             const validated = {};
             for (const [key, percent] of Object.entries(platformFeeBreakdown)) {
@@ -128,8 +146,19 @@ const updateAdminProfile = async (req, res) => {
                     validated[key] = val;
                 }
             }
-            // Always set it, even if empty, to replace the field completely
             updateData.platformFeeBreakdown = validated;
+        }
+
+        // Add platform fee breakdown if provided (Seller)
+        if (platformFeeBreakdownSeller !== undefined && typeof platformFeeBreakdownSeller === 'object') {
+            const validated = {};
+            for (const [key, percent] of Object.entries(platformFeeBreakdownSeller)) {
+                const val = parseFloat(percent);
+                if (!isNaN(val) && val >= 0 && val <= 10) {
+                    validated[key] = val;
+                }
+            }
+            updateData.platformFeeBreakdownSeller = validated;
         }
         
         // Add default charges if provided
@@ -164,28 +193,32 @@ const updateAdminProfile = async (req, res) => {
         }
         
         // Update or create admin profile
-        // Check if document exists first
         const adminDocRef = db.collection("adminProfiles").doc(uid);
         const adminDocSnap = await adminDocRef.get();
         
         console.log(`[UpdateAdminProfile] Saving data for admin ${uid}:`, {
             exists: adminDocSnap.exists,
             platformFeeBreakdownToSave: updateData.platformFeeBreakdown,
+            platformFeeBreakdownSellerToSave: updateData.platformFeeBreakdownSeller,
             categoryGstRatesCount: updateData.categoryGstRates ? Object.keys(updateData.categoryGstRates).length : 0,
             defaultShippingHandlingPercent: updateData.defaultShippingHandlingPercent
         });
         
         if (adminDocSnap.exists) {
-            // Document exists, use update to replace fields completely
             await adminDocRef.update(updateData);
             console.log(`[UpdateAdminProfile] ✅ Updated existing document`);
         } else {
-            // Document doesn't exist, create it with all required fields
             const initialData = {
                 ...updateData,
                 createdAt: admin.firestore.FieldValue.serverTimestamp(),
-                // Ensure platformFeeBreakdown exists
                 platformFeeBreakdown: updateData.platformFeeBreakdown || {
+                    digitalSecurityFee: 1.2,
+                    merchantVerification: 1.0,
+                    transitCare: 0.8,
+                    platformMaintenance: 0.5,
+                    qualityHandling: 0.0
+                },
+                platformFeeBreakdownSeller: updateData.platformFeeBreakdownSeller || {
                     digitalSecurityFee: 1.2,
                     merchantVerification: 1.0,
                     transitCare: 0.8,
@@ -210,27 +243,19 @@ const updateAdminProfile = async (req, res) => {
         const savedData = verifyDoc.data();
         console.log(`[UpdateAdminProfile] ✅ Verified saved data:`, {
             platformFeeBreakdown: savedData?.platformFeeBreakdown,
+            platformFeeBreakdownSeller: savedData?.platformFeeBreakdownSeller,
             categoryGstRatesCount: savedData?.categoryGstRates ? Object.keys(savedData.categoryGstRates).length : 0,
             defaultShippingHandlingPercent: savedData?.defaultShippingHandlingPercent,
             documentExists: verifyDoc.exists
         });
         
-        // CRITICAL: Check if saved data matches what we tried to save
-        if (JSON.stringify(savedData?.platformFeeBreakdown) !== JSON.stringify(updateData.platformFeeBreakdown)) {
-            console.error(`[UpdateAdminProfile] ❌ WARNING: Saved data does not match!`);
-            console.error(`[UpdateAdminProfile] Expected:`, updateData.platformFeeBreakdown);
-            console.error(`[UpdateAdminProfile] Got:`, savedData?.platformFeeBreakdown);
-        } else {
-            console.log(`[UpdateAdminProfile] ✅ Data verification passed!`);
-        }
-        
-        // Return the actual saved data, not just updateData
         return res.status(200).json({ 
             success: true, 
             message: "Profile updated successfully",
             profile: savedData,
             saved: {
                 platformFeeBreakdown: savedData?.platformFeeBreakdown,
+                platformFeeBreakdownSeller: savedData?.platformFeeBreakdownSeller,
                 defaultShippingHandlingPercent: savedData?.defaultShippingHandlingPercent
             }
         });
