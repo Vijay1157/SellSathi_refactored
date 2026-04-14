@@ -29,11 +29,12 @@ const getPublicAdminConfig = async (req, res) => {
         const publicConfig = {
             websiteName: config.websiteName,
             websiteInfo: config.websiteInfo,
-            platformFeeBreakdown: config.platformFeeBreakdown, // Return actual value, no fallback
+            platformFeeBreakdown: config.platformFeeBreakdown,
             defaultPlatformFeePercent: config.defaultPlatformFeePercent,
             defaultGstPercent: config.defaultGstPercent,
             defaultShippingHandlingPercent: config.defaultShippingHandlingPercent,
-            categoryGstRates: config.categoryGstRates || {}
+            categoryGstRates: config.categoryGstRates || {},
+            priceRangeFees: config.priceRangeFees || []
         };
         
         return res.status(200).json({ success: true, config: publicConfig });

@@ -51,7 +51,7 @@ const getAdminProfile = async (req, res) => {
 const updateAdminProfile = async (req, res) => {
     try {
         const uid = req.user.uid;
-        const { name, dateOfBirth, address, websiteName, websiteInfo, adminEmail, phone, defaultPlatformFeePercent, defaultGstPercent, defaultShippingHandlingPercent, categoryGstRates, platformFeeBreakdown } = req.body;
+        const { name, dateOfBirth, address, websiteName, websiteInfo, adminEmail, phone, defaultPlatformFeePercent, defaultGstPercent, defaultShippingHandlingPercent, categoryGstRates, platformFeeBreakdown, priceRangeFees } = req.body;
         
         // Validate required fields — name only required for profile updates, not settings-only updates
         if (name !== undefined && (!name || !name.trim())) {
@@ -143,16 +143,24 @@ const updateAdminProfile = async (req, res) => {
             updateData.defaultShippingHandlingPercent = parseFloat(defaultShippingHandlingPercent);
         }
         // Add category GST rates if provided
-        // IMPORTANT: We always set this field to replace it completely (not merge)
         if (categoryGstRates !== undefined && typeof categoryGstRates === 'object') {
-            // Validate all values are numbers between 0-100
             const validated = {};
             for (const [cat, rate] of Object.entries(categoryGstRates)) {
                 const r = parseFloat(rate);
                 if (!isNaN(r) && r >= 0 && r <= 100) validated[cat] = r;
             }
-            // Always set it, even if empty, to replace the field completely
             updateData.categoryGstRates = validated;
+        }
+
+        // Add price range fees if provided
+        if (priceRangeFees !== undefined && Array.isArray(priceRangeFees)) {
+            updateData.priceRangeFees = priceRangeFees.map(r => ({
+                id: r.id,
+                label: r.label,
+                min: r.min,
+                max: r.max ?? null,
+                feePercent: parseFloat(r.feePercent) || 0
+            }));
         }
         
         // Update or create admin profile

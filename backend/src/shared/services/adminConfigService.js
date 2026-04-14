@@ -110,6 +110,13 @@ const getAdminConfig = async () => {
         // Calculate total platform fee from breakdown
         const calculatedPlatformFee = Object.values(platformFeeBreakdown).reduce((sum, val) => sum + val, 0);
 
+        const DEFAULT_PRICE_RANGE_FEES = [
+            { id: 'range1', label: '₹0 – ₹1,000',       min: 0,     max: 1000,  feePercent: 3.5 },
+            { id: 'range2', label: '₹1,001 – ₹10,000',  min: 1001,  max: 10000, feePercent: 3.0 },
+            { id: 'range3', label: '₹10,001 – ₹50,000', min: 10001, max: 50000, feePercent: 2.5 },
+            { id: 'range4', label: '₹50,001 & above',   min: 50001, max: null,  feePercent: 2.0 },
+        ];
+
         const config = {
             name: adminProfile.name || userData.name || userData.fullName || 'Admin',
             email: adminProfile.adminEmail || userData.email || 'admin@sellsathi.com',
@@ -120,10 +127,11 @@ const getAdminConfig = async () => {
             profileImage: adminProfile.profileImage || null,
             platformChargeRate: adminProfile.platformChargeRate ?? 0.10,
             platformFeeBreakdown: platformFeeBreakdown,
-            defaultPlatformFeePercent: calculatedPlatformFee, // Computed from breakdown
+            defaultPlatformFeePercent: calculatedPlatformFee,
             defaultGstPercent: adminProfile.defaultGstPercent ?? 18,
             defaultShippingHandlingPercent: adminProfile.defaultShippingHandlingPercent ?? 0,
             categoryGstRates: adminProfile.categoryGstRates || DEFAULT_CATEGORY_GST,
+            priceRangeFees: adminProfile.priceRangeFees || DEFAULT_PRICE_RANGE_FEES,
             uid: adminUid
         };
 
