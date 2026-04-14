@@ -31,23 +31,56 @@ exports.estimateShipping = async (req, res) => {
             });
         }
 
+        // Get admin config for shipping handling percentage
+        const { getAdminConfig } = require('../../shared/services/adminConfigService');
+        const adminConfig = await getAdminConfig();
+        const shippingHandlingPercent = adminConfig.defaultShippingHandlingPercent || 0;
+
         // Calculate total weight (if not provided)
         const weight = totalWeight || (cartItems.length * 0.5); // Default 0.5kg per item
 
-        // Calculate estimated shipping based on distance and weight
-        // This is a simplified calculation - you can make it more sophisticated
+        // Calculate base estimated shipping
         const estimatedShipping = calculateShippingEstimate(
             shippingAddress.pincode,
             weight,
             cartItems.length
         );
 
+        // Apply shipping handling percentage if configured
+        let finalShippingCharge = estimatedShipping.charge;
+        if (shippingHandlingPercent > 0) {
+            // Calculate cart subtotal for percentage-based shipping
+            const cartSubtotal = cartItems.reduce((sum, item) => {
+                const price = item.price || item.basePrice || 0;
+                const quantity = item.quantity || 1;
+                return sum + (price * quantity);
+            }, 0);
+
+            // Add percentage-based handling charge
+            const handlingCharge = (cartSubtotal * shippingHandlingPercent) / 100;
+            finalShippingCharge = estimatedShipping.charge + handlingCharge;
+        }
+
+        // Round to nearest rupee
+        finalShippingCharge = Math.round(finalShippingCharge);
+
+        // Free shipping if charge is 0 (when admin sets 0%)
+        if (shippingHandlingPercent === 0 && estimatedShipping.charge === 0) {
+            finalShippingCharge = 0;
+        }
+
         return res.status(200).json({
             success: true,
-            shippingCharge: estimatedShipping.charge,
+            shippingCharge: finalShippingCharge,
             estimatedDeliveryDays: estimatedShipping.deliveryDays,
             courierName: estimatedShipping.courierName || 'Standard Delivery',
-            message: 'Estimated shipping charge calculated'
+            message: 'Estimated shipping charge calculated',
+            breakdown: {
+                baseShipping: estimatedShipping.charge,
+                handlingPercent: shippingHandlingPercent,
+                handlingCharge: finalShippingCharge - estimatedShipping.charge,
+                total: finalShippingCharge
+            }
         });
 
     } catch (error) {
