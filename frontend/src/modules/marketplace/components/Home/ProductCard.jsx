@@ -17,6 +17,7 @@ export default function ProductCard({
     
     if (!product || !product.id) return null;
     const isWishlisted = wishlist.some(item => item.id === product.id);
+    const isOutOfStock = product.stock === 0 || product.status === 'Out of Stock';
 
     return (
         <motion.div
@@ -34,8 +35,12 @@ export default function ProductCard({
             transition={{ delay: index * 0.05 }}
         >
             <div className="card-media">
-                {product.discount && <span className="discount-badge">{product.discount}</span>}
-                <img src={product.image || product.imageUrl} alt={product.name} />
+                {product.discount && !isOutOfStock && <span className="discount-badge">{product.discount}</span>}
+                {isOutOfStock && <span className="out-of-stock-badge">OUT OF STOCK</span>}
+                <img 
+                    src={product.image || product.imageUrl} 
+                    alt={product.name}
+                />
                 <div className="overlay-tools">
                     <button
                         onClick={(e) => toggleWishlist(e, product)}
@@ -74,19 +79,34 @@ export default function ProductCard({
                 </div>
 
                 <div className="info-bottom">
-                    <PriceDisplay product={product} size="sm" showGSTIndicator={false} />
-                    <button
-                        onClick={(e) => handleAddToCart(e, product)}
-                        className="add-to-cart-simple"
-                        title="Add to Cart"
-                        disabled={product.stock === 0 || product.status === 'Out of Stock'}
-                        style={product.stock === 0 || product.status === 'Out of Stock' ? { opacity: 0.5, cursor: 'not-allowed', background: '#94a3b8' } : {}}
-                    >
-                        <ShoppingCart size={18} />
-                    </button>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', flex: 1 }}>
+                        <PriceDisplay product={product} size="sm" showGSTIndicator={false} />
+                        {isOutOfStock && (
+                            <span style={{ color: '#ef4444', fontSize: '0.7rem', fontWeight: 900, textTransform: 'uppercase' }}>
+                                Out of Stock
+                            </span>
+                        )}
+                    </div>
+                    {isOutOfStock ? (
+                        <button
+                            onClick={(e) => toggleWishlist(e, product)}
+                            className="add-to-cart-simple"
+                            title="Add to Wishlist"
+                            style={{ background: isWishlisted ? '#ef4444' : '#3B7CF1' }}
+                        >
+                            <Heart size={18} fill={isWishlisted ? "white" : "none"} />
+                        </button>
+                    ) : (
+                        <button
+                            onClick={(e) => handleAddToCart(e, product)}
+                            className="add-to-cart-simple"
+                            title="Add to Cart"
+                        >
+                            <ShoppingCart size={18} />
+                        </button>
+                    )}
                 </div>
             </div>
         </motion.div>
     );
 }
-

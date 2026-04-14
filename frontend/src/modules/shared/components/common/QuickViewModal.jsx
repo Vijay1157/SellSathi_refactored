@@ -68,6 +68,8 @@ export default function QuickViewModal({ isOpen, onClose, product, navigate }) {
         navigate(`/product/${product.id}`);
     };
 
+    const isOutOfStock = product.stock === 0 || product.status === 'Out of Stock';
+
     return (
         <AnimatePresence>
             {isOpen && (
@@ -85,8 +87,12 @@ export default function QuickViewModal({ isOpen, onClose, product, navigate }) {
 
                         <div className="quick-view-content">
                             <div className="qv-media">
-                                <img src={product.imageUrl || product.image} alt={product.name} />
-                                {product.discount && <span className="qv-discount">{product.discount}</span>}
+                                {isOutOfStock && <span className="out-of-stock-badge">OUT OF STOCK</span>}
+                                <img 
+                                    src={product.imageUrl || product.image} 
+                                    alt={product.name}
+                                />
+                                {product.discount && !isOutOfStock && <span className="qv-discount">{product.discount}</span>}
                             </div>
 
                             <div className="qv-info">
@@ -266,7 +272,7 @@ export default function QuickViewModal({ isOpen, onClose, product, navigate }) {
                             color: #0f172a;
                         }
                         .qv-old-price { font-size: 1.1rem; color: #94a3b8; text-decoration: line-through; margin-top: 0.25rem; }
-                        .qv-discount-text { color: #E11D48; font-weight: 700; font-size: 0.95rem; margin-top: 0.25rem; }
+                        .qv-discount-text { color: #ef4444; font-weight: 700; font-size: 0.95rem; margin-top: 0.25rem; }
 
                         .stock-status { font-size: 0.9rem; font-weight: 800; margin-top: 0.75rem; }
                         .stock-status.in { color: #10b981; }
@@ -387,6 +393,23 @@ export default function QuickViewModal({ isOpen, onClose, product, navigate }) {
                             border-color: #ef4444;
                             background: #fef2f2;
                             color: #ef4444;
+                        }
+                        .qv-notify-btn {
+                            width: 50px;
+                            height: 50px;
+                            border-radius: 16px;
+                            border: 2px solid #f59e0b;
+                            background: #fffbeb;
+                            display: flex;
+                            align-items: center;
+                            justify-content: center;
+                            cursor: pointer;
+                            transition: 0.2s;
+                            color: #f59e0b;
+                        }
+                        .qv-notify-btn:hover {
+                            background: #f59e0b;
+                            color: white;
                         }
 
                         @media (max-width: 768px) {

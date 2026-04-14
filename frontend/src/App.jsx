@@ -28,6 +28,9 @@ import Navbar from '@/modules/shared/components/layout/Navbar';
 import Footer from '@/modules/shared/components/layout/Footer';
 import ProtectedRoute from '@/modules/shared/components/common/ProtectedRoute';
 import ScrollToTop from '@/modules/shared/components/common/ScrollToTop';
+
+// Mobile Responsiveness - Proper vertical scrolling with adaptive layout
+import '@/styles/mobile-responsive.css';
 import ErrorBoundary from '@/modules/shared/components/common/ErrorBoundary';
 
 // Auto-cleanup old localStorage data (runs once per version)

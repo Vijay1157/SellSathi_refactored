@@ -79,40 +79,66 @@ export default function Wishlist() {
 
                 <div className="wishlist-grid">
                     <AnimatePresence>
-                        {wishlist.map((item) => (
-                            <motion.div
-                                key={item.id}
-                                layout
-                                initial={{ opacity: 0, scale: 0.9 }}
-                                animate={{ opacity: 1, scale: 1 }}
-                                exit={{ opacity: 0, scale: 0.9 }}
-                                className="wishlist-card glass-card"
-                            >
-                                <div className="card-media" onClick={() => navigate(`/product/${item.id}`)}>
-                                    <img src={item.image || item.imageUrl} alt={item.name || item.title} />
-                                </div>
-                                <div className="card-info">
-                                    <div className="info-top">
-                                        <h3 onClick={() => navigate(`/product/${item.id}`)}>{item.name || item.title}</h3>
-                                        <button className="remove-btn" onClick={() => removeFromWishlist(item.id)} title="Remove">
-                                            <Trash2 size={18} />
-                                        </button>
+                        {wishlist.map((item) => {
+                            const isOutOfStock = item.stock === 0 || item.status === 'Out of Stock';
+                            
+                            return (
+                                <motion.div
+                                    key={item.id}
+                                    layout
+                                    initial={{ opacity: 0, scale: 0.9 }}
+                                    animate={{ opacity: 1, scale: 1 }}
+                                    exit={{ opacity: 0, scale: 0.9 }}
+                                    className="wishlist-card glass-card"
+                                >
+                                    <div className="card-media" onClick={() => navigate(`/product/${item.id}`)}>
+                                        {isOutOfStock && <span className="out-of-stock-badge">OUT OF STOCK</span>}
+                                        <img 
+                                            src={item.image || item.imageUrl} 
+                                            alt={item.name || item.title}
+                                        />
                                     </div>
-                                    <div className="rating">
-                                        <Star size={14} fill="#FFB800" color="#FFB800" />
-                                        <span>{item.rating !== undefined ? item.rating : 0}</span>
+                                    <div className="card-info">
+                                        <div className="info-top">
+                                            <h3 onClick={() => navigate(`/product/${item.id}`)}>{item.name || item.title}</h3>
+                                            <button className="remove-btn" onClick={() => removeFromWishlist(item.id)} title="Remove">
+                                                <Trash2 size={18} />
+                                            </button>
+                                        </div>
+                                        <div className="rating">
+                                            <Star size={14} fill="#FFB800" color="#FFB800" />
+                                            <span>{item.rating !== undefined ? item.rating : 0}</span>
+                                        </div>
+                                        <div className="price-row">
+                                            <PriceDisplay product={item} size="sm" />
+                                            {isOutOfStock && (
+                                                <span style={{ color: '#ef4444', fontSize: '0.7rem', fontWeight: 900, textTransform: 'uppercase', marginTop: '4px' }}>
+                                                    Out of Stock
+                                                </span>
+                                            )}
+                                        </div>
+                                        <div className="card-actions">
+                                            {isOutOfStock ? (
+                                                <button 
+                                                    className="add-cart-btn" 
+                                                    onClick={() => { navigate(`/product/${item.id}`); }}
+                                                    style={{ background: '#3B7CF1' }}
+                                                >
+                                                    <Heart size={18} /> View Product
+                                                </button>
+                                            ) : (
+                                                <button 
+                                                    className="add-cart-btn" 
+                                                    onClick={() => handleAddToCart(item)}
+                                                >
+                                                    <ShoppingCart size={18} /> Add to Cart
+                                                </button>
+                                            )}
+                                        </div>
                                     </div>
-                                    <div className="price-row">
-                                        <PriceDisplay product={item} size="sm" />
-                                    </div>
-                                    <div className="card-actions">
-                                        <button className="add-cart-btn" onClick={() => handleAddToCart(item)}>
-                                            <ShoppingCart size={18} /> Add to Cart
-                                        </button>
-                                    </div>
-                                </div>
-                            </motion.div>
-                        ))}
+                                </motion.div>
+                            );
+                        })}
                     </AnimatePresence>
                 </div>
             </div>
@@ -203,7 +229,7 @@ const styles = `
 .card-media img { max-width: 100%; max-height: 100%; object-fit: contain; transition: transform 300ms; }
 .wishlist-card:hover .card-media img { transform: scale(1.05); }
 
-.discount-badge { position: absolute; top: 8px; left: 8px; background: #E11D48; color: white; padding: 4px 8px; border-radius: 6px; font-size: 10px; font-weight: 700; z-index: 2; }
+.discount-badge { position: absolute; top: 8px; left: 8px; background: #ef4444; color: white; padding: 4px 8px; border-radius: 6px; font-size: 10px; font-weight: 700; z-index: 2; }
 
 .card-info { padding: 4px; flex: 1; display: flex; flex-direction: column; }
 .info-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; margin-bottom: 4px; }
@@ -222,7 +248,7 @@ const styles = `
     margin: 4px 0 6px;
 }
 .remove-btn { color: #94a3b8; background: none; border: none; cursor: pointer; transition: 0.2s; padding: 4px; }
-.remove-btn:hover { color: #E11D48; transform: scale(1.1); }
+.remove-btn:hover { color: #ef4444; transform: scale(1.1); }
 
 .rating { display: flex; align-items: center; gap: 4px; margin-bottom: 6px; font-size: 0.85rem; font-weight: 600; color: #64748b; min-height: 20px; }
 
@@ -256,7 +282,7 @@ const styles = `
 
 .empty-wishlist { padding: 6rem 0; min-height: 80vh; display: flex; align-items: center; }
 .empty-content { max-width: 500px; margin: 0 auto; padding: 4rem 2rem; text-center; }
-.icon-circle { width: 100px; height: 100px; background: #fff1f2; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 2rem; color: #E11D48; }
+.icon-circle { width: 100px; height: 100px; background: #fff1f2; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 2rem; color: #ef4444; }
 .empty-content h2 { font-size: 2rem; font-weight: 800; color: #1e293b; margin-bottom: 1rem; }
 .empty-content p { color: #64748b; margin-bottom: 2.5rem; line-height: 1.6; }
 .btn-explore { display: inline-block; background: #1e293b; color: white; padding: 1rem 2.5rem; border-radius: 16px; font-weight: 800; transition: 0.3s; }
