@@ -28,7 +28,12 @@ export default function NavbarMegaMenu({
     const navigate = useNavigate();
     if (!activeMegaMenu) return null;
 
-    const subList = (showAllSubcategories ? ALL_SUBCATEGORIES : SUBCATEGORIES)[activeMegaMenu] || [];
+    let subList = (showAllSubcategories ? ALL_SUBCATEGORIES : SUBCATEGORIES)[activeMegaMenu] || [];
+    
+    // For 'Others' category, use dynamic subcategories (custom categories) from products
+    if (activeMegaMenu === 'Others' && dynamicMegaData['Others']?.categories?.length > 0) {
+        subList = dynamicMegaData['Others'].categories.map(c => c.name);
+    }
 
     const handleSubCategoryClick = (category, subcategory) => {
         setActiveMegaMenu(null);
