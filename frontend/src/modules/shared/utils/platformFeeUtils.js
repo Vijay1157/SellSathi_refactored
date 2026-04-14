@@ -176,6 +176,7 @@ export const formatCurrency = (amount) => {
 /**
  * Calculate order totals with GST-inclusive product pricing (NEW STRUCTURE)
  * Product prices already include GST, platform fee is calculated on base price
+ * If priceRangeFees are configured in adminConfig, they override the breakdown per item
  * 
  * @param {Array} items - Cart items with price info
  * @param {Object} options - { adminConfig, couponDiscount, shippingFee }
@@ -184,48 +185,54 @@ export const formatCurrency = (amount) => {
 export const calculateOrderTotalsWithGSTInclusive = (items, options = {}) => {
     const { adminConfig, couponDiscount = 0, shippingFee = 0 } = options;
     
-    // Calculate product pricing total (prices already include product GST)
     let productPricingTotal = 0;
     let totalBasePrice = 0;
     
     items.forEach(item => {
         const gstPercent = item.gstPercent || 18;
-        // Use basePrice if available (from cart), otherwise calculate from price
         const basePrice = item.basePrice || item.price;
         const priceWithGST = item.priceWithGST || (basePrice * (1 + gstPercent / 100));
         const itemTotal = priceWithGST * item.quantity;
-        
         productPricingTotal += itemTotal;
-        
-        // Use base price for platform fee calculation
-        const basePriceTotal = basePrice * item.quantity;
-        totalBasePrice += basePriceTotal;
+        totalBasePrice += basePrice * item.quantity;
     });
-    
-    // Get platform fee breakdown (calculated on base price, not GST-inclusive price)
-    const breakdown = getPlatformFeeBreakdownFromConfig(adminConfig);
-    const platformFeeDetails = calculatePlatformFeeBreakdown(totalBasePrice, breakdown);
-    
-    // GST on platform fee (18%)
+
+    // Check if price-range fees are configured
+    const priceRangeFees = adminConfig?.priceRangeFees;
+    let platformFeeDetails;
+
+    if (priceRangeFees && priceRangeFees.length > 0) {
+        // Calculate platform fee per item based on its price range
+        let totalPlatformFee = 0;
+        items.forEach(item => {
+            const basePrice = item.basePrice || item.price;
+            const feePercent = getPlatformFeePercentForPrice(basePrice, priceRangeFees) ?? 3.5;
+            totalPlatformFee += (basePrice * item.quantity * feePercent) / 100;
+        });
+        totalPlatformFee = Math.round(totalPlatformFee * 100) / 100;
+        platformFeeDetails = {
+            total: { amount: totalPlatformFee, percent: null }
+        };
+    } else {
+        // Fall back to breakdown-based calculation
+        const breakdown = getPlatformFeeBreakdownFromConfig(adminConfig);
+        platformFeeDetails = calculatePlatformFeeBreakdown(totalBasePrice, breakdown);
+    }
+
     const serviceGST = Math.round((platformFeeDetails.total.amount * 0.18) * 100) / 100;
-    
-    // Combined platform fee & service GST
     const platformFeeAndServiceGST = platformFeeDetails.total.amount + serviceGST;
-    
-    // Calculate total
     const total = productPricingTotal + platformFeeAndServiceGST + shippingFee - couponDiscount;
-    
+
     return {
         productPricingTotal: Math.round(productPricingTotal * 100) / 100,
         basePrice: Math.round(totalBasePrice * 100) / 100,
         platformFee: platformFeeDetails.total.amount,
         platformFeeBreakdown: platformFeeDetails,
-        serviceGST: serviceGST,
+        serviceGST,
         platformFeeAndServiceGST: Math.round(platformFeeAndServiceGST * 100) / 100,
-        shippingFee: shippingFee,
-        couponDiscount: couponDiscount,
+        shippingFee,
+        couponDiscount,
         total: Math.round(total * 100) / 100,
-        // For breakdown display
         breakdown: {
             ...platformFeeDetails,
             serviceGST: {
@@ -272,4 +279,19 @@ export const calculateOrderTotals = (items, options = {}) => {
         couponDiscount: couponDiscount,
         total: Math.round(total * 100) / 100
     };
+};
+
+/**
+ * Get platform fee percent for a given product price based on price range config
+ * @param {number} price - Product price
+ * @param {Array} priceRangeFees - Array of price range fee configs from adminConfig
+ * @returns {number} - Fee percentage to apply
+ */
+export const getPlatformFeePercentForPrice = (price, priceRangeFees) => {
+    if (!priceRangeFees || priceRangeFees.length === 0) return null; // fall back to breakdown
+    for (const range of priceRangeFees) {
+        const inRange = price >= range.min && (range.max === null || price <= range.max);
+        if (inRange) return range.feePercent;
+    }
+    return priceRangeFees[priceRangeFees.length - 1]?.feePercent ?? null;
 };
