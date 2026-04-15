@@ -93,6 +93,7 @@ export default function ProductGrid({
                                         <img 
                                             src={p.imageUrl || p.image} 
                                             alt={p.name}
+                                            style={isOutOfStock ? { filter: 'grayscale(100%)', opacity: 0.7 } : {}}
                                         />
                                         {viewMode === 'grid' && (
                                             <div className="overlay-tools">

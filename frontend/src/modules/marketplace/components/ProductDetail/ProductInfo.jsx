@@ -30,6 +30,7 @@ export default function ProductInfo({
     setIsSizeChartOpen
 }) {
     const { t } = useTranslation();
+    const isOutOfStock = product.stock === 0 || product.status === 'Out of Stock';
 
     return (
         <div className="pd-info">

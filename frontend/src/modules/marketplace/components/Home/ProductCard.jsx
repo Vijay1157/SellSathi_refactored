@@ -40,6 +40,7 @@ export default function ProductCard({
                 <img 
                     src={product.image || product.imageUrl} 
                     alt={product.name}
+                    style={isOutOfStock ? { filter: 'grayscale(100%)', opacity: 0.7 } : {}}
                 />
                 <div className="overlay-tools">
                     <button
