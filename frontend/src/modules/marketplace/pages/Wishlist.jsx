@@ -96,6 +96,7 @@ export default function Wishlist() {
                                         <img 
                                             src={item.image || item.imageUrl} 
                                             alt={item.name || item.title}
+                                            style={isOutOfStock ? { filter: 'grayscale(100%)', opacity: 0.7 } : {}}
                                         />
                                     </div>
                                     <div className="card-info">

@@ -400,8 +400,8 @@ export default function ProductDetail() {
 
     const handleAddToCart = async () => {
         if (!product) return;
-        const inStock = product.stock !== 0 && product.status !== 'Out of Stock';
-        if (!inStock) return;
+        const isOutOfStock = product.stock === 0 || product.status === 'Out of Stock';
+        if (isOutOfStock) return;
 
         const selections = {
             color: selectedColor,
@@ -422,8 +422,8 @@ export default function ProductDetail() {
 
     const handleBuyNow = async () => {
         if (!product) return;
-        const inStock = product.stock !== 0 && product.status !== 'Out of Stock';
-        if (!inStock) return;
+        const isOutOfStock = product.stock === 0 || product.status === 'Out of Stock';
+        if (isOutOfStock) return;
 
         let localUser = null;
         try { localUser = JSON.parse(localStorage.getItem('user')); } catch (e) {}

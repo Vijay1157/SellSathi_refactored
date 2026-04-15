@@ -91,6 +91,7 @@ export default function QuickViewModal({ isOpen, onClose, product, navigate }) {
                                 <img 
                                     src={product.imageUrl || product.image} 
                                     alt={product.name}
+                                    style={isOutOfStock ? { filter: 'grayscale(100%)', opacity: 0.7 } : {}}
                                 />
                                 {product.discount && !isOutOfStock && <span className="qv-discount">{product.discount}</span>}
                             </div>
