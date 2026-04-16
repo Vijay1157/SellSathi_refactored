@@ -113,10 +113,10 @@ const getAdminConfig = async () => {
         const calculatedPlatformFeeSeller = Object.values(platformFeeBreakdownSeller).reduce((sum, val) => sum + val, 0);
 
         const DEFAULT_PRICE_RANGE_FEES = [
-            { id: 'range1', label: '₹0 – ₹1,000',       min: 0,     max: 1000,  feePercent: 3.5 },
-            { id: 'range2', label: '₹1,001 – ₹10,000',  min: 1001,  max: 10000, feePercent: 3.0 },
-            { id: 'range3', label: '₹10,001 – ₹50,000', min: 10001, max: 50000, feePercent: 2.5 },
-            { id: 'range4', label: '₹50,001 & above',   min: 50001, max: null,  feePercent: 2.0 },
+            { id: 'range1', label: '₹0 – ₹1,000',       min: 0,     max: 1000,  feeAmount: 35 },
+            { id: 'range2', label: '₹1,001 – ₹10,000',  min: 1001,  max: 10000, feeAmount: 50 },
+            { id: 'range3', label: '₹10,001 – ₹50,000', min: 10001, max: 50000, feeAmount: 100 },
+            { id: 'range4', label: '₹50,001 & above',   min: 50001, max: null,  feeAmount: 200 },
         ];
 
         const config = {

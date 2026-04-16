@@ -16,10 +16,10 @@ const DEFAULT_GST = {
 };
 
 const DEFAULT_PRICE_RANGE_FEES = [
-    { id: 'range1', label: '₹0 – ₹1,000',       min: 0,     max: 1000,  feePercent: 3.5 },
-    { id: 'range2', label: '₹1,001 – ₹10,000',  min: 1001,  max: 10000, feePercent: 3.0 },
-    { id: 'range3', label: '₹10,001 – ₹50,000', min: 10001, max: 50000, feePercent: 2.5 },
-    { id: 'range4', label: '₹50,001 & above',   min: 50001, max: null,  feePercent: 2.0 },
+    { id: 'range1', label: '₹0 – ₹1,000',       min: 0,     max: 1000,  feeAmount: 35 },
+    { id: 'range2', label: '₹1,001 – ₹10,000',  min: 1001,  max: 10000, feeAmount: 50 },
+    { id: 'range3', label: '₹10,001 – ₹50,000', min: 10001, max: 50000, feeAmount: 100 },
+    { id: 'range4', label: '₹50,001 & above',   min: 50001, max: null,  feeAmount: 200 },
 ];
 
 const iStyle = { padding: '0.55rem 0.85rem', borderRadius: '8px', border: '1px solid var(--border)', fontSize: '0.95rem', background: 'var(--surface)', color: 'var(--text)', width: '90px', outline: 'none', textAlign: 'center' };
@@ -48,22 +48,18 @@ const SectionButtons = ({ editing, saving, onEdit, onSave, onCancel }) => (
 export default function PlatformSettingsTab() {
     const [loading, setLoading] = useState(true);
     const [catSearch, setCatSearch] = useState('');
-    const [formData, setFormData] = useState({ defaultShippingHandlingPercent: 0 });
     const [categoryGstRates, setCategoryGstRates] = useState(DEFAULT_GST);
     const [customCategories, setCustomCategories] = useState([]);
     const [platformFeeBreakdown, setPlatformFeeBreakdown] = useState(PLATFORM_FEE_BREAKDOWN);
     const [platformFeeBreakdownSeller, setPlatformFeeBreakdownSeller] = useState(PLATFORM_FEE_BREAKDOWN);
     const [feeBreakdownMode, setFeeBreakdownMode] = useState('user'); // 'user' or 'seller'
     const [editingPF, setEditingPF] = useState(false);
-    const [editingOC, setEditingOC] = useState(false);
     const [editingGST, setEditingGST] = useState(false);
 
     const [savingPF, setSavingPF] = useState(false);
-    const [savingOC, setSavingOC] = useState(false);
     const [savingGST, setSavingGST] = useState(false);
     const [origPF, setOrigPF] = useState(PLATFORM_FEE_BREAKDOWN);
     const [origPFSeller, setOrigPFSeller] = useState(PLATFORM_FEE_BREAKDOWN);
-    const [origOC, setOrigOC] = useState({ defaultShippingHandlingPercent: 0 });
     const [origGST, setOrigGST] = useState(DEFAULT_GST);
 
     // Price range fees
@@ -80,8 +76,6 @@ export default function PlatformSettingsTab() {
             const res = await authFetch('/admin/config/public');
             const data = await res.json();
             if (data.success && data.config) {
-                const oc = { defaultShippingHandlingPercent: data.config.defaultShippingHandlingPercent ?? 0 };
-                setFormData(oc); setOrigOC(oc);
                 if (data.config.categoryGstRates) {
                     const gst = { ...DEFAULT_GST, ...data.config.categoryGstRates };
                     setCategoryGstRates(gst); setOrigGST(gst);
@@ -152,16 +146,6 @@ export default function PlatformSettingsTab() {
         finally { setSavingPF(false); }
     };
 
-    const handleSaveOC = async () => {
-        setSavingOC(true);
-        try {
-            const data = await saveToBackend(formData);
-            if (data.success) { alert('Other Charges saved!'); setOrigOC(formData); setEditingOC(false); await fetchConfig(); }
-            else alert('Failed: ' + (data.message || 'Unknown error'));
-        } catch (e) { alert('Error: ' + e.message); }
-        finally { setSavingOC(false); }
-    };
-
     const handleSaveGST = async () => {
         setSavingGST(true);
         try {
@@ -174,8 +158,9 @@ export default function PlatformSettingsTab() {
 
     const handleSavePRF = async () => {
         for (const r of priceRangeFees) {
-            if (r.feePercent < 0 || r.feePercent > 100) {
-                alert('Fee % must be between 0 and 100'); return;
+            const amount = r.feeAmount || r.feePercent || 0;
+            if (amount < 0) {
+                alert('Fee amount must be 0 or greater'); return;
             }
         }
         setSavingPRF(true);
@@ -220,7 +205,7 @@ export default function PlatformSettingsTab() {
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                         <TrendingUp size={16} style={{ color: 'var(--primary)' }} />
                         <span style={{ fontWeight: 700, fontSize: '0.85rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Price Range Platform Fees</span>
-                        <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 400 }}>fee % applied based on product price</span>
+                        <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 400 }}>fixed amount applied based on product price</span>
                     </div>
                     <SectionButtons editing={editingPRF} saving={savingPRF}
                         onEdit={() => setEditingPRF(true)} onSave={handleSavePRF}
@@ -231,30 +216,30 @@ export default function PlatformSettingsTab() {
                         <div key={range.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '1rem 1.25rem', borderRadius: '10px', background: 'var(--surface)', border: '1px solid var(--border)' }}>
                             <div style={{ flex: 1 }}>
                                 <div style={{ fontSize: '0.82rem', fontWeight: 700, color: 'var(--text)', marginBottom: '2px' }}>{range.label}</div>
-                                <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>Platform fee for this price range</div>
+                                <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>Fixed platform fee for this range</div>
                             </div>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginLeft: '1rem' }}>
+                                <span style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--text-muted)' }}>₹</span>
                                 <input
                                     type="number"
-                                    value={range.feePercent}
+                                    value={range.feeAmount || range.feePercent || 0}
                                     disabled={!editingPRF}
                                     onChange={e => {
                                         const v = parseFloat(e.target.value);
-                                        if (!isNaN(v) && v >= 0 && v <= 100) {
-                                            setPriceRangeFees(prev => prev.map((r, i) => i === idx ? { ...r, feePercent: v } : r));
+                                        if (!isNaN(v) && v >= 0) {
+                                            setPriceRangeFees(prev => prev.map((r, i) => i === idx ? { ...r, feeAmount: v } : r));
                                         }
                                     }}
-                                    min="0" max="100" step="0.1"
-                                    style={{ ...iStyle, width: '80px', cursor: editingPRF ? 'text' : 'not-allowed' }}
+                                    min="0" step="1"
+                                    style={{ ...iStyle, width: '100px', cursor: editingPRF ? 'text' : 'not-allowed' }}
                                 />
-                                <span style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--text-muted)' }}>%</span>
                             </div>
                         </div>
                     ))}
                 </div>
                 <div style={{ marginTop: '1rem', padding: '0.85rem 1rem', background: 'rgba(59,124,241,0.05)', borderRadius: '8px', border: '1px solid rgba(59,124,241,0.2)' }}>
                     <p style={{ margin: 0, fontSize: '0.82rem', color: '#1D5FD4', lineHeight: 1.6 }}>
-                        When a seller adds a product, the platform fee % is automatically assigned based on the product price range. Consumers are charged this fee at checkout.
+                        When a seller adds a product, the fixed platform fee is automatically assigned based on the product price range. Consumers are charged this fixed amount at checkout.
                     </p>
                 </div>
             </div>
@@ -366,30 +351,6 @@ export default function PlatformSettingsTab() {
                             : 'Seller fees are deducted from seller payouts based on product price ranges. Each component max 10%, total max 20%.'
                         }
                     </p>
-                </div>
-            </div>
-
-            {/* Other Charges */}
-            <div className="glass-card" style={{ padding: '2rem' }}>                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingBottom: '0.75rem', marginBottom: '1.75rem', borderBottom: '2px solid var(--border)' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        <Percent size={16} style={{ color: 'var(--primary)' }} />
-                        <span style={{ fontWeight: 700, fontSize: '0.85rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Other Charges</span>
-                    </div>
-                    <SectionButtons editing={editingOC} saving={savingOC}
-                        onEdit={() => setEditingOC(true)} onSave={handleSaveOC}
-                        onCancel={() => { setFormData(origOC); setEditingOC(false); }} />
-                </div>
-                <div style={{ opacity: editingOC ? 1 : 0.75 }}>
-                    <label style={lStyle}>Shipping and Handling (%)</label>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginTop: '0.5rem' }}>
-                        <input type="number" name="defaultShippingHandlingPercent" value={formData.defaultShippingHandlingPercent} disabled={!editingOC}
-                            onChange={e => { const v = parseFloat(e.target.value) || 0; if (v >= 0 && v <= 100) setFormData(p => ({ ...p, defaultShippingHandlingPercent: v })); }}
-                            min="0" max="100" step="0.1" style={{ ...iStyle, cursor: editingOC ? 'text' : 'not-allowed' }} />
-                        <span style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--text-muted)' }}>%</span>
-                        <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>
-                            {formData.defaultShippingHandlingPercent === 0 ? '— FREE shipping' : '— ' + formData.defaultShippingHandlingPercent + '% applied at checkout'}
-                        </span>
-                    </div>
                 </div>
             </div>
 

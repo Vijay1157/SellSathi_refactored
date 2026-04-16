@@ -20,6 +20,7 @@ const getPublicAdminConfig = async (req, res) => {
         
         console.log('[GetPublicAdminConfig] Returning config:', {
             platformFeeBreakdown: config.platformFeeBreakdown,
+            platformFeeBreakdownSeller: config.platformFeeBreakdownSeller,
             defaultShippingHandlingPercent: config.defaultShippingHandlingPercent,
             categoryGstRatesCount: config.categoryGstRates ? Object.keys(config.categoryGstRates).length : 0,
             cached: !forceRefresh
@@ -30,7 +31,9 @@ const getPublicAdminConfig = async (req, res) => {
             websiteName: config.websiteName,
             websiteInfo: config.websiteInfo,
             platformFeeBreakdown: config.platformFeeBreakdown,
+            platformFeeBreakdownSeller: config.platformFeeBreakdownSeller,
             defaultPlatformFeePercent: config.defaultPlatformFeePercent,
+            defaultPlatformFeePercentSeller: config.defaultPlatformFeePercentSeller,
             defaultGstPercent: config.defaultGstPercent,
             defaultShippingHandlingPercent: config.defaultShippingHandlingPercent,
             categoryGstRates: config.categoryGstRates || {},
@@ -57,10 +60,13 @@ const getPublicAdminConfig = async (req, res) => {
                 websiteName: 'SellSathi',
                 websiteInfo: 'Your Trusted E-Commerce Platform',
                 platformFeeBreakdown: defaultBreakdown,
+                platformFeeBreakdownSeller: defaultBreakdown,
                 defaultPlatformFeePercent: 3.5,
+                defaultPlatformFeePercentSeller: 3.5,
                 defaultGstPercent: 18,
                 defaultShippingHandlingPercent: 0,
-                categoryGstRates: {}
+                categoryGstRates: {},
+                priceRangeFees: []
             }
         });
     }

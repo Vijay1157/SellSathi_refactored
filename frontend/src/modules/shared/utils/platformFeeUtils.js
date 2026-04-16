@@ -202,12 +202,18 @@ export const calculateOrderTotalsWithGSTInclusive = (items, options = {}) => {
     let platformFeeDetails;
 
     if (priceRangeFees && priceRangeFees.length > 0) {
-        // Calculate platform fee per item based on its price range
+        // Calculate platform fee per item based on its price range (FIXED AMOUNT)
         let totalPlatformFee = 0;
         items.forEach(item => {
             const basePrice = item.basePrice || item.price;
-            const feePercent = getPlatformFeePercentForPrice(basePrice, priceRangeFees) ?? 3.5;
-            totalPlatformFee += (basePrice * item.quantity * feePercent) / 100;
+            const feeAmount = getPlatformFeeAmountForPrice(basePrice, priceRangeFees);
+            if (feeAmount !== null) {
+                // Fixed amount per item
+                totalPlatformFee += feeAmount * item.quantity;
+            } else {
+                // Fallback to 3.5% if no range found
+                totalPlatformFee += (basePrice * item.quantity * 3.5) / 100;
+            }
         });
         totalPlatformFee = Math.round(totalPlatformFee * 100) / 100;
         platformFeeDetails = {
@@ -282,16 +288,19 @@ export const calculateOrderTotals = (items, options = {}) => {
 };
 
 /**
- * Get platform fee percent for a given product price based on price range config
+ * Get platform fee amount for a given product price based on price range config
  * @param {number} price - Product price
  * @param {Array} priceRangeFees - Array of price range fee configs from adminConfig
- * @returns {number} - Fee percentage to apply
+ * @returns {number} - Fixed fee amount to apply
  */
-export const getPlatformFeePercentForPrice = (price, priceRangeFees) => {
+export const getPlatformFeeAmountForPrice = (price, priceRangeFees) => {
     if (!priceRangeFees || priceRangeFees.length === 0) return null; // fall back to breakdown
     for (const range of priceRangeFees) {
         const inRange = price >= range.min && (range.max === null || price <= range.max);
-        if (inRange) return range.feePercent;
+        if (inRange) return range.feeAmount || range.feePercent || 0; // Support both old and new format
     }
-    return priceRangeFees[priceRangeFees.length - 1]?.feePercent ?? null;
+    return priceRangeFees[priceRangeFees.length - 1]?.feeAmount || priceRangeFees[priceRangeFees.length - 1]?.feePercent || null;
 };
+
+// Backward compatibility - keep old function name but use new logic
+export const getPlatformFeePercentForPrice = getPlatformFeeAmountForPrice;

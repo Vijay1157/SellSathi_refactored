@@ -188,7 +188,7 @@ const updateAdminProfile = async (req, res) => {
                 label: r.label,
                 min: r.min,
                 max: r.max ?? null,
-                feePercent: parseFloat(r.feePercent) || 0
+                feeAmount: parseFloat(r.feeAmount || r.feePercent) || 0
             }));
         }
         
