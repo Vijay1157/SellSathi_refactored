@@ -22,6 +22,7 @@ export default function CheckoutOrderSummary({
     },
     shippingFee = 0,
     estimatingShipping = false,
+    shippingEstimated = false,
     estimatedDeliveryDays = ''
 }) {
     const [showPlatformFeeBreakdown, setShowPlatformFeeBreakdown] = useState(false);
@@ -144,7 +145,7 @@ export default function CheckoutOrderSummary({
                                     <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-primary"></div>
                                     Calculating...
                                 </span>
-                            ) : (
+                            ) : shippingEstimated ? (
                                 <div className="flex flex-col items-end">
                                     <span className={`text-lg font-bold uppercase tracking-wide flex-shrink-0 ${shippingFee > 0 ? 'text-gray-900' : 'text-green-600'}`}>
                                         {shippingFee > 0 ? `₹${Math.round(shippingFee).toLocaleString('en-IN')}` : 'FREE'}
@@ -155,8 +156,28 @@ export default function CheckoutOrderSummary({
                                         </span>
                                     )}
                                 </div>
+                            ) : (
+                                <span className="text-sm text-gray-400 italic">
+                                    Enter address to calculate
+                                </span>
                             )}
                         </div>
+                        
+                        {/* Estimated Delivery Date - Show below shipping */}
+                        {!estimatingShipping && shippingEstimated && estimatedDeliveryDays && (
+                            <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 -mx-2 px-2">
+                                <div className="flex items-center gap-2">
+                                    <svg className="w-4 h-4 text-blue-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                    </svg>
+                                    <div className="flex-1">
+                                        <p className="text-xs font-semibold text-blue-900">
+                                            Delivery can be expected on: {estimatedDeliveryDays}
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
                         
                         {/* Coupon Discount */}
                         {couponDiscount > 0 && (

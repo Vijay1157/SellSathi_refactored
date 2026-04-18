@@ -177,7 +177,6 @@ export default function ProductInfo({
 
             <div className="pd-section">
                 <div className="trust-card">
-                    <div className="badge"><Truck size={20} /> <div><strong>Free Express Shipping</strong><span>On orders above ₹500</span></div></div>
                     <div className="badge"><Shield size={20} /> <div><strong>Secure Multi-layer Packaging</strong><span>Damage-free delivery guaranteed</span></div></div>
                     <div className="badge"><RotateCcw size={20} /> <div><strong>7 Days Replacement</strong><span>Easy returns & exchanges</span></div></div>
                 </div>

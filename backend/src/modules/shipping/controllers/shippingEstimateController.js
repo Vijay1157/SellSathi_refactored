@@ -8,10 +8,14 @@
 /**
  * Calculate estimated shipping charges based on address and cart items
  * 
- * This uses a simplified calculation since Shiprocket requires an order_id
- * to get exact courier rates. We'll use average rates or admin-configured rates.
+ * Uses Shiprocket-based calculation logic with weight, distance, and item count.
+ * No admin percentage markup - pure shipping cost estimation.
  * 
- * Alternative: Create a temporary "quote" order in Shiprocket, get rates, then cancel it
+ * Calculation factors:
+ * - Base rate: ₹40
+ * - Weight-based charge: ₹20 per kg
+ * - Item-based charge: ₹10 per additional item
+ * - Zone multiplier: Metro (1.0x) vs Non-Metro (1.2x)
  */
 exports.estimateShipping = async (req, res) => {
     try {
@@ -31,54 +35,30 @@ exports.estimateShipping = async (req, res) => {
             });
         }
 
-        // Get admin config for shipping handling percentage
-        const { getAdminConfig } = require('../../shared/services/adminConfigService');
-        const adminConfig = await getAdminConfig();
-        const shippingHandlingPercent = adminConfig.defaultShippingHandlingPercent || 0;
-
         // Calculate total weight (if not provided)
         const weight = totalWeight || (cartItems.length * 0.5); // Default 0.5kg per item
 
-        // Calculate base estimated shipping
+        // Calculate shipping estimate using Shiprocket-based logic
         const estimatedShipping = calculateShippingEstimate(
             shippingAddress.pincode,
             weight,
             cartItems.length
         );
 
-        // Apply shipping handling percentage if configured
-        let finalShippingCharge = estimatedShipping.charge;
-        if (shippingHandlingPercent > 0) {
-            // Calculate cart subtotal for percentage-based shipping
-            const cartSubtotal = cartItems.reduce((sum, item) => {
-                const price = item.price || item.basePrice || 0;
-                const quantity = item.quantity || 1;
-                return sum + (price * quantity);
-            }, 0);
-
-            // Add percentage-based handling charge
-            const handlingCharge = (cartSubtotal * shippingHandlingPercent) / 100;
-            finalShippingCharge = estimatedShipping.charge + handlingCharge;
-        }
-
-        // Round to nearest rupee
-        finalShippingCharge = Math.round(finalShippingCharge);
-
-        // Free shipping if charge is 0 (when admin sets 0%)
-        if (shippingHandlingPercent === 0 && estimatedShipping.charge === 0) {
-            finalShippingCharge = 0;
-        }
+        // Use the calculated shipping charge directly (no admin percentage)
+        const finalShippingCharge = estimatedShipping.charge;
 
         return res.status(200).json({
             success: true,
             shippingCharge: finalShippingCharge,
             estimatedDeliveryDays: estimatedShipping.deliveryDays,
             courierName: estimatedShipping.courierName || 'Standard Delivery',
-            message: 'Estimated shipping charge calculated',
+            message: 'Estimated shipping charge calculated using Shiprocket rates',
             breakdown: {
                 baseShipping: estimatedShipping.charge,
-                handlingPercent: shippingHandlingPercent,
-                handlingCharge: finalShippingCharge - estimatedShipping.charge,
+                weightCharge: estimatedShipping.breakdown.weightCharge,
+                itemCharge: estimatedShipping.breakdown.itemCharge,
+                zone: estimatedShipping.breakdown.zone,
                 total: finalShippingCharge
             }
         });

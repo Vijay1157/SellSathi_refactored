@@ -145,11 +145,21 @@ function renderAddresses(doc, order, y, getName, showShipping) {
 
     // Billed To
     doc.fontSize(9).font('Helvetica-Bold').text('Billed To', 350, y);
-    doc.fontSize(8).font('Helvetica').text(getName(order.billingAddress || order.shippingAddress), 350, y + 15);
+    
+    // Show business/company name if GST number is provided
+    if (order.customerInfo?.businessName || order.businessName) {
+        doc.fontSize(8).font('Helvetica').text(order.customerInfo?.businessName || order.businessName, 350, y + 15);
+        doc.fontSize(7).text(getName(order.billingAddress || order.shippingAddress), 350, y + 27);
+    } else {
+        doc.fontSize(8).font('Helvetica').text(getName(order.billingAddress || order.shippingAddress), 350, y + 15);
+    }
+    
     const bAddr = order.billingAddress || order.shippingAddress || {};
-    doc.fontSize(7).text(`${bAddr.addressLine || 'N/A'}, ${bAddr.city || ''}`, 350, y + 27);
+    const addressY = (order.customerInfo?.businessName || order.businessName) ? y + 37 : y + 27;
+    doc.fontSize(7).text(`${bAddr.addressLine || 'N/A'}, ${bAddr.city || ''}`, 350, addressY);
+    
     if (order.customerInfo?.gstNumber || order.gstNumber) {
-        doc.text(`GSTIN: ${order.customerInfo?.gstNumber || order.gstNumber}`, 350, y + 37);
+        doc.text(`GSTIN: ${order.customerInfo?.gstNumber || order.gstNumber}`, 350, addressY + 10);
     }
 
     if (showShipping) {

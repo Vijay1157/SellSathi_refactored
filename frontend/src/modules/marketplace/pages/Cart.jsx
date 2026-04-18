@@ -78,8 +78,7 @@ export default function Cart() {
         const priceToUse = item.priceWithGST || item.price; // Use GST-inclusive price if available
         return acc + (priceToUse * item.quantity);
     }, 0);
-    const shipping = subtotal > 500 ? 0 : 50;
-    const total = subtotal + shipping;
+    const total = subtotal;
 
     const handleCheckout = () => {
         if (!auth.currentUser) {
@@ -334,19 +333,6 @@ export default function Cart() {
                                     <span>Subtotal ({selectedItems.size} {selectedItems.size === 1 ? 'item' : 'items'})</span>
                                     <span className="font-semibold">₹{subtotal.toLocaleString()}</span>
                                 </div>
-                                <div className="flex justify-between text-gray-600">
-                                    <span>Shipping</span>
-                                    {shipping === 0 ? (
-                                        <span className="font-semibold text-green-600">FREE</span>
-                                    ) : (
-                                        <span className="font-semibold">₹{shipping}</span>
-                                    )}
-                                </div>
-                                {subtotal < 500 && (
-                                    <p className="text-xs text-gray-500 bg-blue-50 p-2 rounded-lg">
-                                        Add ₹{(500 - subtotal).toLocaleString()} more for FREE shipping!
-                                    </p>
-                                )}
                                 <div className="border-t border-gray-200 pt-4">
                                     <div className="flex justify-between items-center">
                                         <span className="text-lg font-bold text-gray-900">Total</span>
