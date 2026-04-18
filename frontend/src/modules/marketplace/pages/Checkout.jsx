@@ -506,7 +506,10 @@ export default function Checkout() {
                                     uid: auth.currentUser?.uid || 'guest',
                                     couponCode: appliedCoupon?.code || null,
                                     couponDiscount: couponDiscount,
-                                    platformFeeBreakdown: adminConfig.platformFeeBreakdown // Send platform fee breakdown
+                                    platformFeeBreakdown: adminConfig.platformFeeBreakdown,
+                                    effectivePlatformFee: finalOrderTotals.platformFee,
+                                    userCapApplied: finalOrderTotals.capApplied || false
+                                    // FIX 3: sellerCapApplied removed - calculated backend-side
                                 })
                             });
 
@@ -631,7 +634,10 @@ export default function Checkout() {
                     amount: finalTotal,
                     couponCode: appliedCoupon?.code || null,
                     couponDiscount: actualCouponDiscount,
-                    platformFeeBreakdown: adminConfig.platformFeeBreakdown // Send platform fee breakdown
+                    platformFeeBreakdown: adminConfig.platformFeeBreakdown,
+                    effectivePlatformFee: finalOrderTotals.platformFee,
+                    userCapApplied: finalOrderTotals.capApplied || false
+                    // FIX 3: sellerCapApplied removed - calculated backend-side
                 })
             });
 

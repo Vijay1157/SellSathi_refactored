@@ -165,6 +165,17 @@ export const validatePlatformFeeBreakdown = (breakdown) => {
 };
 
 /**
+ * Apply cap limit to calculated platform fee
+ * @param {number} calculatedFee - The calculated platform fee amount
+ * @param {number} capLimit - The maximum cap limit (0 = no cap)
+ * @returns {number} - Fee after applying cap
+ */
+export const applyCapLimit = (calculatedFee, capLimit) => {
+    if (!capLimit || capLimit <= 0) return calculatedFee;
+    return Math.min(calculatedFee, capLimit);
+};
+
+/**
  * Format currency for display
  * @param {number} amount - Amount to format
  * @returns {string} - Formatted currency string
@@ -177,13 +188,20 @@ export const formatCurrency = (amount) => {
  * Calculate order totals with GST-inclusive product pricing (NEW STRUCTURE)
  * Product prices already include GST, platform fee is calculated on base price
  * If priceRangeFees are configured in adminConfig, they override the breakdown per item
+ * Cap limits are applied after fee calculation if configured
  * 
  * @param {Array} items - Cart items with price info
- * @param {Object} options - { adminConfig, couponDiscount, shippingFee }
+ * @param {Object} options - Configuration options
+ * @param {Object} options.adminConfig - The full admin config from Firebase
+ * @param {number} options.couponDiscount - Discount amount in ₹
+ * @param {number} options.shippingFee - Shipping fee in ₹
+ * @param {'user'|'seller'} options.feeType - Whether to apply user-facing or
+ *   seller-facing cap limits. 'user' reads userCapLimit and methodAUserCapLimit.
+ *   'seller' reads sellerCapLimit and methodASellerCapLimit. Defaults to 'user'.
  * @returns {Object} - Complete order calculation with new structure
  */
 export const calculateOrderTotalsWithGSTInclusive = (items, options = {}) => {
-    const { adminConfig, couponDiscount = 0, shippingFee = 0 } = options;
+    const { adminConfig, couponDiscount = 0, shippingFee = 0, feeType = 'user' } = options;
     
     let productPricingTotal = 0;
     let totalBasePrice = 0;
@@ -200,29 +218,78 @@ export const calculateOrderTotalsWithGSTInclusive = (items, options = {}) => {
     // Check if price-range fees are configured
     const priceRangeFees = adminConfig?.priceRangeFees;
     let platformFeeDetails;
+    let capApplied = false;
 
     if (priceRangeFees && priceRangeFees.length > 0) {
         // Calculate platform fee per item based on its price range (FIXED AMOUNT)
         let totalPlatformFee = 0;
+        let totalPreCapFee = 0;
+        
         items.forEach(item => {
             const basePrice = item.basePrice || item.price;
             const feeAmount = getPlatformFeeAmountForPrice(basePrice, priceRangeFees);
+            
             if (feeAmount !== null) {
-                // Fixed amount per item
-                totalPlatformFee += feeAmount * item.quantity;
+                // Get the matched range for cap limit
+                const matchedRange = priceRangeFees.find(range => 
+                    basePrice >= range.min && (range.max === null || basePrice <= range.max)
+                );
+                
+                const capLimit = feeType === 'seller' 
+                    ? (matchedRange?.sellerCapLimit ?? 0)
+                    : (matchedRange?.userCapLimit ?? 0);
+                
+                // FIX 1: Apply cap per item unit, then multiply by quantity
+                const feePerItem = feeAmount;
+                const cappedFeePerItem = (capLimit > 0) 
+                    ? Math.min(feePerItem, capLimit)
+                    : feePerItem;
+                
+                // Track pre-cap amount
+                totalPreCapFee += feePerItem * item.quantity;
+                
+                // Check if cap was applied for this item
+                if (capLimit > 0 && cappedFeePerItem < feePerItem) {
+                    capApplied = true;
+                }
+                
+                // Calculate total fee for this item (capped fee × quantity)
+                totalPlatformFee += cappedFeePerItem * item.quantity;
             } else {
                 // Fallback to 3.5% if no range found
-                totalPlatformFee += (basePrice * item.quantity * 3.5) / 100;
+                const fallbackFee = (basePrice * item.quantity * 3.5) / 100;
+                totalPlatformFee += fallbackFee;
+                totalPreCapFee += fallbackFee;
             }
         });
+        
         totalPlatformFee = Math.round(totalPlatformFee * 100) / 100;
         platformFeeDetails = {
-            total: { amount: totalPlatformFee, percent: null }
+            total: { amount: totalPlatformFee, percent: null },
+            capApplied: capApplied,
+            preCapAmount: Math.round(totalPreCapFee * 100) / 100
         };
     } else {
-        // Fall back to breakdown-based calculation
+        // Fall back to breakdown-based calculation (Method A)
         const breakdown = getPlatformFeeBreakdownFromConfig(adminConfig);
         platformFeeDetails = calculatePlatformFeeBreakdown(totalBasePrice, breakdown);
+        
+        // FIX 2: Apply Method A cap limit
+        const methodACap = feeType === 'seller'
+            ? (adminConfig.methodASellerCapLimit ?? 0)
+            : (adminConfig.methodAUserCapLimit ?? 0);
+        
+        const preCapPlatformFee = platformFeeDetails.total.amount;
+        
+        if (methodACap > 0 && preCapPlatformFee > methodACap) {
+            platformFeeDetails.total.amount = methodACap;
+            platformFeeDetails.capApplied = true;
+            platformFeeDetails.preCapAmount = preCapPlatformFee;
+            capApplied = true;
+        } else {
+            platformFeeDetails.capApplied = false;
+            platformFeeDetails.preCapAmount = preCapPlatformFee;
+        }
     }
 
     const serviceGST = Math.round((platformFeeDetails.total.amount * 0.18) * 100) / 100;
@@ -239,6 +306,8 @@ export const calculateOrderTotalsWithGSTInclusive = (items, options = {}) => {
         shippingFee,
         couponDiscount,
         total: Math.round(total * 100) / 100,
+        capApplied: platformFeeDetails.capApplied,
+        preCapPlatformFee: platformFeeDetails.preCapAmount,
         breakdown: {
             ...platformFeeDetails,
             serviceGST: {

@@ -36,6 +36,13 @@ const getAdminConfig = async () => {
             return getDefaultConfig();
         }
 
+        // OPTIMIZED: Batch fetch all admin profiles in one query instead of loop
+        const adminUids = usersSnap.docs.map(doc => doc.id);
+        const profilePromises = adminUids.map(uid => 
+            db.collection("adminProfiles").doc(uid).get()
+        );
+        const profileDocs = await Promise.all(profilePromises);
+
         // Find the admin who has an adminProfiles document with actual settings
         // Prefer the most recently updated profile
         let adminUid = null;
@@ -43,10 +50,9 @@ const getAdminConfig = async () => {
         let userData = {};
         let latestUpdate = null;
 
-        for (const doc of usersSnap.docs) {
-            const uid = doc.id;
-            const profileDoc = await db.collection("adminProfiles").doc(uid).get();
+        profileDocs.forEach((profileDoc, index) => {
             if (profileDoc.exists) {
+                const uid = adminUids[index];
                 const profileData = profileDoc.data();
                 const updatedAt = profileData.updatedAt?.toMillis?.() || 0;
                 
@@ -56,7 +62,7 @@ const getAdminConfig = async () => {
                 if (hasSettings && (latestUpdate === null || updatedAt > latestUpdate)) {
                     adminUid = uid;
                     adminProfile = profileData;
-                    userData = doc.data();
+                    userData = usersSnap.docs[index].data();
                     latestUpdate = updatedAt;
                     console.log(`[AdminConfig] Found admin with settings: ${uid}, updatedAt: ${updatedAt}`);
                 }
@@ -65,10 +71,10 @@ const getAdminConfig = async () => {
                 if (!adminUid) {
                     adminUid = uid;
                     adminProfile = profileData;
-                    userData = doc.data();
+                    userData = usersSnap.docs[index].data();
                 }
             }
-        }
+        });
 
         // If no profile found at all, use first admin user
         if (!adminUid) {
@@ -113,11 +119,19 @@ const getAdminConfig = async () => {
         const calculatedPlatformFeeSeller = Object.values(platformFeeBreakdownSeller).reduce((sum, val) => sum + val, 0);
 
         const DEFAULT_PRICE_RANGE_FEES = [
-            { id: 'range1', label: '₹0 – ₹1,000',       min: 0,     max: 1000,  feeAmount: 35 },
-            { id: 'range2', label: '₹1,001 – ₹10,000',  min: 1001,  max: 10000, feeAmount: 50 },
-            { id: 'range3', label: '₹10,001 – ₹50,000', min: 10001, max: 50000, feeAmount: 100 },
-            { id: 'range4', label: '₹50,001 & above',   min: 50001, max: null,  feeAmount: 200 },
+            { id: 'range1', label: '₹0 – ₹1,000',       min: 0,     max: 1000,  feeAmount: 35,  userCapLimit: 0, sellerCapLimit: 0 },
+            { id: 'range2', label: '₹1,001 – ₹10,000',  min: 1001,  max: 10000, feeAmount: 50,  userCapLimit: 0, sellerCapLimit: 0 },
+            { id: 'range3', label: '₹10,001 – ₹50,000', min: 10001, max: 50000, feeAmount: 100, userCapLimit: 0, sellerCapLimit: 0 },
+            { id: 'range4', label: '₹50,001 & above',   min: 50001, max: null,  feeAmount: 200, userCapLimit: 0, sellerCapLimit: 0 },
         ];
+
+        // Migrate existing priceRangeFees to include cap limits if missing
+        let priceRangeFees = adminProfile.priceRangeFees || DEFAULT_PRICE_RANGE_FEES;
+        priceRangeFees = priceRangeFees.map(range => ({
+            ...range,
+            userCapLimit: range.userCapLimit ?? 0,
+            sellerCapLimit: range.sellerCapLimit ?? 0
+        }));
 
         const config = {
             name: adminProfile.name || userData.name || userData.fullName || 'Admin',
@@ -132,10 +146,12 @@ const getAdminConfig = async () => {
             platformFeeBreakdownSeller: platformFeeBreakdownSeller,
             defaultPlatformFeePercent: calculatedPlatformFee,
             defaultPlatformFeePercentSeller: calculatedPlatformFeeSeller,
+            methodAUserCapLimit: adminProfile.methodAUserCapLimit ?? 0,
+            methodASellerCapLimit: adminProfile.methodASellerCapLimit ?? 0,
             defaultGstPercent: adminProfile.defaultGstPercent ?? 18,
             defaultShippingHandlingPercent: adminProfile.defaultShippingHandlingPercent ?? 0,
             categoryGstRates: adminProfile.categoryGstRates || DEFAULT_CATEGORY_GST,
-            priceRangeFees: adminProfile.priceRangeFees || DEFAULT_PRICE_RANGE_FEES,
+            priceRangeFees: priceRangeFees,
             uid: adminUid
         };
 
@@ -175,6 +191,8 @@ const getDefaultConfig = () => {
         platformFeeBreakdownSeller: DEFAULT_PLATFORM_FEE_BREAKDOWN,
         defaultPlatformFeePercent: calculatedPlatformFee,
         defaultPlatformFeePercentSeller: calculatedPlatformFee,
+        methodAUserCapLimit: 0,
+        methodASellerCapLimit: 0,
         defaultGstPercent: 18,
         defaultShippingHandlingPercent: 0,
         categoryGstRates: {

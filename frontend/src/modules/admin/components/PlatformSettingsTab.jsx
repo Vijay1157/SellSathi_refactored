@@ -62,6 +62,12 @@ export default function PlatformSettingsTab() {
     const [origPFSeller, setOrigPFSeller] = useState(PLATFORM_FEE_BREAKDOWN);
     const [origGST, setOrigGST] = useState(DEFAULT_GST);
 
+    // FIX 2: Method A cap limits
+    const [methodAUserCap, setMethodAUserCap] = useState(0);
+    const [methodASellerCap, setMethodASellerCap] = useState(0);
+    const [origMethodAUserCap, setOrigMethodAUserCap] = useState(0);
+    const [origMethodASellerCap, setOrigMethodASellerCap] = useState(0);
+
     // Price range fees
     const [priceRangeFees, setPriceRangeFees] = useState(DEFAULT_PRICE_RANGE_FEES);
     const [origPriceRangeFees, setOrigPriceRangeFees] = useState(DEFAULT_PRICE_RANGE_FEES);
@@ -103,6 +109,15 @@ export default function PlatformSettingsTab() {
                 } else {
                     setPlatformFeeBreakdownSeller(PLATFORM_FEE_BREAKDOWN); setOrigPFSeller(PLATFORM_FEE_BREAKDOWN);
                 }
+                // FIX 2: Load Method A caps
+                if (data.config.methodAUserCapLimit !== undefined) {
+                    setMethodAUserCap(data.config.methodAUserCapLimit);
+                    setOrigMethodAUserCap(data.config.methodAUserCapLimit);
+                }
+                if (data.config.methodASellerCapLimit !== undefined) {
+                    setMethodASellerCap(data.config.methodASellerCapLimit);
+                    setOrigMethodASellerCap(data.config.methodASellerCapLimit);
+                }
                 if (data.config.priceRangeFees) {
                     setPriceRangeFees(data.config.priceRangeFees);
                     setOrigPriceRangeFees(data.config.priceRangeFees);
@@ -127,9 +142,10 @@ export default function PlatformSettingsTab() {
         try {
             const bd = {};
             Object.entries(currentBreakdown).forEach(([k, val]) => { bd[k] = val.percent; });
+            // FIX 2: Include Method A caps in save payload
             const payload = feeBreakdownMode === 'user' 
-                ? { platformFeeBreakdown: bd }
-                : { platformFeeBreakdownSeller: bd };
+                ? { platformFeeBreakdown: bd, methodAUserCapLimit: methodAUserCap }
+                : { platformFeeBreakdownSeller: bd, methodASellerCapLimit: methodASellerCap };
             const data = await saveToBackend(payload);
             if (data.success) { 
                 alert(`${feeBreakdownMode === 'user' ? 'User' : 'Seller'} Platform Fee saved!`); 
@@ -162,7 +178,25 @@ export default function PlatformSettingsTab() {
             if (amount < 0) {
                 alert('Fee amount must be 0 or greater'); return;
             }
+            // Validate cap limits
+            const userCap = r.userCapLimit ?? 0;
+            const sellerCap = r.sellerCapLimit ?? 0;
+            if (userCap < 0 || sellerCap < 0) {
+                alert('Cap limits cannot be negative'); return;
+            }
         }
+        
+        // FIX 5: Block save when cap < fee amount (not just warn)
+        const invalidRanges = priceRangeFees.filter(range => 
+            (range.userCapLimit > 0 && range.userCapLimit < range.feeAmount) ||
+            (range.sellerCapLimit > 0 && range.sellerCapLimit < range.feeAmount)
+        );
+        
+        if (invalidRanges.length > 0) {
+            alert(`Cap limit cannot be less than fee amount for: ${invalidRanges.map(r => r.label).join(', ')}`);
+            return;
+        }
+        
         setSavingPRF(true);
         try {
             const data = await saveToBackend({ priceRangeFees });
@@ -211,35 +245,108 @@ export default function PlatformSettingsTab() {
                         onEdit={() => setEditingPRF(true)} onSave={handleSavePRF}
                         onCancel={() => { setPriceRangeFees(origPriceRangeFees); setEditingPRF(false); }} />
                 </div>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '1rem', opacity: editingPRF ? 1 : 0.75 }}>
-                    {priceRangeFees.map((range, idx) => (
-                        <div key={range.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '1rem 1.25rem', borderRadius: '10px', background: 'var(--surface)', border: '1px solid var(--border)' }}>
-                            <div style={{ flex: 1 }}>
-                                <div style={{ fontSize: '0.82rem', fontWeight: 700, color: 'var(--text)', marginBottom: '2px' }}>{range.label}</div>
-                                <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>Fixed platform fee for this range</div>
-                            </div>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginLeft: '1rem' }}>
-                                <span style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--text-muted)' }}>₹</span>
-                                <input
-                                    type="number"
-                                    value={range.feeAmount || range.feePercent || 0}
-                                    disabled={!editingPRF}
-                                    onChange={e => {
-                                        const v = parseFloat(e.target.value);
-                                        if (!isNaN(v) && v >= 0) {
-                                            setPriceRangeFees(prev => prev.map((r, i) => i === idx ? { ...r, feeAmount: v } : r));
-                                        }
-                                    }}
-                                    min="0" step="1"
-                                    style={{ ...iStyle, width: '100px', cursor: editingPRF ? 'text' : 'not-allowed' }}
-                                />
-                            </div>
-                        </div>
-                    ))}
+                
+                {/* Table Header */}
+                <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr 1fr', gap: '1rem', padding: '0.75rem 1rem', background: 'var(--surface)', borderRadius: '8px', marginBottom: '0.75rem', border: '1px solid var(--border)' }}>
+                    <div style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Price Range</div>
+                    <div style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', textAlign: 'center' }}>Fee Amount (₹)</div>
+                    <div style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', textAlign: 'center' }}>User Cap (₹)</div>
+                    <div style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', textAlign: 'center' }}>Seller Cap (₹)</div>
                 </div>
+                
+                {/* Table Rows */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', opacity: editingPRF ? 1 : 0.75 }}>
+                    {priceRangeFees.map((range, idx) => {
+                        const feeAmount = range.feeAmount || range.feePercent || 0;
+                        const userCap = range.userCapLimit ?? 0;
+                        const sellerCap = range.sellerCapLimit ?? 0;
+                        const userCapWarning = userCap > 0 && userCap < feeAmount;
+                        const sellerCapWarning = sellerCap > 0 && sellerCap < feeAmount;
+                        
+                        return (
+                            <div key={range.id} style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr 1fr', gap: '1rem', alignItems: 'center', padding: '1rem', borderRadius: '10px', background: 'var(--surface)', border: '1px solid var(--border)' }}>
+                                <div>
+                                    <div style={{ fontSize: '0.88rem', fontWeight: 700, color: 'var(--text)', marginBottom: '2px' }}>{range.label}</div>
+                                    <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>Fixed platform fee for this range</div>
+                                </div>
+                                
+                                {/* Fee Amount */}
+                                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}>
+                                    <span style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--text-muted)' }}>₹</span>
+                                    <input
+                                        type="number"
+                                        value={feeAmount}
+                                        disabled={!editingPRF}
+                                        onChange={e => {
+                                            const v = parseFloat(e.target.value);
+                                            if (!isNaN(v) && v >= 0) {
+                                                setPriceRangeFees(prev => prev.map((r, i) => i === idx ? { ...r, feeAmount: v } : r));
+                                            }
+                                        }}
+                                        min="0" step="1"
+                                        style={{ ...iStyle, width: '90px', textAlign: 'center', cursor: editingPRF ? 'text' : 'not-allowed' }}
+                                    />
+                                </div>
+                                
+                                {/* User Cap */}
+                                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.25rem' }}>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                        <span style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--text-muted)' }}>₹</span>
+                                        <input
+                                            type="number"
+                                            value={userCap}
+                                            disabled={!editingPRF}
+                                            placeholder="No cap"
+                                            onChange={e => {
+                                                const v = parseFloat(e.target.value);
+                                                if (!isNaN(v) && v >= 0) {
+                                                    setPriceRangeFees(prev => prev.map((r, i) => i === idx ? { ...r, userCapLimit: v } : r));
+                                                } else if (e.target.value === '') {
+                                                    setPriceRangeFees(prev => prev.map((r, i) => i === idx ? { ...r, userCapLimit: 0 } : r));
+                                                }
+                                            }}
+                                            min="0" step="1"
+                                            style={{ ...iStyle, width: '90px', textAlign: 'center', cursor: editingPRF ? 'text' : 'not-allowed', borderColor: userCapWarning ? '#dc2626' : undefined }}
+                                        />
+                                    </div>
+                                    {userCapWarning && editingPRF && (
+                                        <span style={{ fontSize: '0.65rem', color: '#dc2626', fontWeight: 600 }}>Cap &lt; Fee</span>
+                                    )}
+                                </div>
+                                
+                                {/* Seller Cap */}
+                                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.25rem' }}>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                        <span style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--text-muted)' }}>₹</span>
+                                        <input
+                                            type="number"
+                                            value={sellerCap}
+                                            disabled={!editingPRF}
+                                            placeholder="No cap"
+                                            onChange={e => {
+                                                const v = parseFloat(e.target.value);
+                                                if (!isNaN(v) && v >= 0) {
+                                                    setPriceRangeFees(prev => prev.map((r, i) => i === idx ? { ...r, sellerCapLimit: v } : r));
+                                                } else if (e.target.value === '') {
+                                                    setPriceRangeFees(prev => prev.map((r, i) => i === idx ? { ...r, sellerCapLimit: 0 } : r));
+                                                }
+                                            }}
+                                            min="0" step="1"
+                                            style={{ ...iStyle, width: '90px', textAlign: 'center', cursor: editingPRF ? 'text' : 'not-allowed', borderColor: sellerCapWarning ? '#dc2626' : undefined }}
+                                        />
+                                    </div>
+                                    {sellerCapWarning && editingPRF && (
+                                        <span style={{ fontSize: '0.65rem', color: '#dc2626', fontWeight: 600 }}>Cap &lt; Fee</span>
+                                    )}
+                                </div>
+                            </div>
+                        );
+                    })}
+                </div>
+                
                 <div style={{ marginTop: '1rem', padding: '0.85rem 1rem', background: 'rgba(59,124,241,0.05)', borderRadius: '8px', border: '1px solid rgba(59,124,241,0.2)' }}>
                     <p style={{ margin: 0, fontSize: '0.82rem', color: '#1D5FD4', lineHeight: 1.6 }}>
-                        When a seller adds a product, the fixed platform fee is automatically assigned based on the product price range. Consumers are charged this fixed amount at checkout.
+                        <strong>Fee Amount:</strong> Fixed platform fee for this price range. <strong>Cap Limits:</strong> Maximum fee charged (0 = no cap). If calculated fee exceeds cap, the cap value is used instead. User cap applies to consumers, seller cap applies to sellers.
                     </p>
                 </div>
             </div>
@@ -256,8 +363,10 @@ export default function PlatformSettingsTab() {
                         onCancel={() => { 
                             if (feeBreakdownMode === 'user') {
                                 setPlatformFeeBreakdown(origPF);
+                                setMethodAUserCap(origMethodAUserCap);
                             } else {
                                 setPlatformFeeBreakdownSeller(origPFSeller);
+                                setMethodASellerCap(origMethodASellerCap);
                             }
                             setEditingPF(false); 
                         }} />
@@ -344,6 +453,45 @@ export default function PlatformSettingsTab() {
                         </div>
                     ))}
                 </div>
+                
+                {/* FIX 2: Method A Global Cap Limit */}
+                <div style={{ marginTop: '1.5rem', padding: '1rem', background: 'var(--surface)', borderRadius: '10px', border: '1px solid var(--border)' }}>
+                    <label style={{ ...lStyle, marginBottom: '0.75rem', display: 'block' }}>
+                        Global Cap Limit (₹) — 0 for no cap
+                    </label>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                        <span style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--text-muted)' }}>₹</span>
+                        <input
+                            type="number"
+                            value={feeBreakdownMode === 'user' ? (methodAUserCap ?? 0) : (methodASellerCap ?? 0)}
+                            disabled={!editingPF}
+                            placeholder="No cap"
+                            onChange={e => {
+                                const v = parseFloat(e.target.value);
+                                if (!isNaN(v) && v >= 0) {
+                                    if (feeBreakdownMode === 'user') {
+                                        setMethodAUserCap(v);
+                                    } else {
+                                        setMethodASellerCap(v);
+                                    }
+                                } else if (e.target.value === '') {
+                                    if (feeBreakdownMode === 'user') {
+                                        setMethodAUserCap(0);
+                                    } else {
+                                        setMethodASellerCap(0);
+                                    }
+                                }
+                            }}
+                            min="0"
+                            step="1"
+                            style={{ ...iStyle, width: '150px', cursor: editingPF ? 'text' : 'not-allowed' }}
+                        />
+                    </div>
+                    <p style={{ margin: '0.5rem 0 0 0', fontSize: '0.75rem', color: 'var(--text-muted)', lineHeight: 1.4 }}>
+                        Maximum platform fee for percentage-based calculation. If calculated fee exceeds this amount, the cap is applied.
+                    </p>
+                </div>
+                
                 <div style={{ marginTop: '1.5rem', padding: '1rem', background: 'rgba(245,158,11,0.05)', borderRadius: '10px', border: '1px solid rgba(245,158,11,0.2)' }}>
                     <p style={{ margin: 0, fontSize: '0.85rem', color: '#92400e', lineHeight: 1.6, fontWeight: 500 }}>
                         {feeBreakdownMode === 'user' 

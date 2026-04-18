@@ -182,7 +182,10 @@ function renderItemsTable(doc, order, y, showPlatformFee) {
     doc.text('Particulars', 35, y);
     doc.text('Qty', 180, y);
     const colPFee = 210;
-    if (showPlatformFee) doc.text('Platform', colPFee, y);
+    if (showPlatformFee) {
+        const capAppliedNote = order.userCapApplied ? ' (cap)' : '';
+        doc.text('Platform' + capAppliedNote, colPFee, y);
+    }
     doc.text('Gross', 260, y);
     doc.text('Taxable', 320, y);
     doc.text('GST', 390, y);
@@ -196,6 +199,9 @@ function renderItemsTable(doc, order, y, showPlatformFee) {
     };
     const pfPercent = Object.values(platformFeeBreakdown).reduce((s, v) => s + (typeof v === 'number' ? v : (v.percent || 0)), 0);
     const effectivePFPercent = pfPercent * 1.18;
+    
+    // Use effective platform fee if cap was applied
+    const effectivePlatformFee = order.effectivePlatformFee || null;
 
     let tQty = 0, tGross = 0, tTaxable = 0, tGST = 0, tPFee = 0;
 
