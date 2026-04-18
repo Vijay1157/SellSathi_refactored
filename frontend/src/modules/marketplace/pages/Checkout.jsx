@@ -83,6 +83,7 @@ export default function Checkout() {
     // GST Number states
     const [hasGST, setHasGST] = useState(false);
     const [gstNumber, setGstNumber] = useState('');
+    const [businessName, setBusinessName] = useState(''); // Add business name state
     const [gstError, setGstError] = useState('');
     
     const [adminConfig, setAdminConfig] = useState({
@@ -378,7 +379,7 @@ export default function Checkout() {
             selectedItems.has(item.id || item.productId)
         );
         
-        console.log('Shipping estimation check:', {
+        console.log('🚢 Shipping estimation check:', {
             pincode: shippingAddress.pincode,
             pincodeLength: shippingAddress.pincode?.length,
             checkoutItemsCount: checkoutItems.length,
@@ -388,14 +389,19 @@ export default function Checkout() {
         });
         
         if (shippingAddress.pincode && shippingAddress.pincode.length === 6 && selectedItems_filtered.length > 0) {
-            console.log('✅ Triggering shipping estimation');
+            console.log('✅ Conditions met - Triggering shipping estimation');
             estimateShippingCharges(shippingAddress, selectedItems_filtered);
         } else {
-            console.log('❌ Shipping estimation not triggered');
+            console.log('❌ Shipping estimation not triggered - Conditions:', {
+                hasPincode: !!shippingAddress.pincode,
+                pincodeLength: shippingAddress.pincode?.length,
+                hasItems: selectedItems_filtered.length > 0
+            });
             // Reset shipping if conditions not met
-            if (shippingFee > 0) {
+            if (shippingFee > 0 || shippingEstimated) {
                 setShippingFee(0);
                 setShippingEstimated(false);
+                setEstimatedDeliveryDays('');
             }
         }
     }, [shippingAddress, checkoutItems, selectedItems]);
@@ -429,6 +435,7 @@ export default function Checkout() {
                 shippingAddress: shippingAddress,
                 billingAddress: finalBillingAddress,
                 gstNumber: hasGST ? cleanGST(gstNumber) : null,
+                businessName: hasGST && businessName ? businessName.trim() : null,
                 estimatedShippingCharge: shippingFee // Pass estimated shipping to backend
             };
 
@@ -482,6 +489,7 @@ export default function Checkout() {
                                 shippingAddress: shippingAddress,
                                 billingAddress: finalBillingAddress,
                                 gstNumber: hasGST ? cleanGST(gstNumber) : null,
+                                businessName: hasGST && businessName ? businessName.trim() : null,
                                 estimatedShippingCharge: shippingFee // Pass estimated shipping to backend
                             };
                             
@@ -602,6 +610,7 @@ export default function Checkout() {
                 shippingAddress: shippingAddress,
                 billingAddress: finalBillingAddress,
                 gstNumber: hasGST ? cleanGST(gstNumber) : null,
+                businessName: hasGST && businessName ? businessName.trim() : null,
                 estimatedShippingCharge: shippingFee // Pass estimated shipping to backend
             };
 
@@ -1094,6 +1103,8 @@ export default function Checkout() {
                             setHasGST={setHasGST}
                             gstNumber={gstNumber}
                             setGstNumber={setGstNumber}
+                            businessName={businessName}
+                            setBusinessName={setBusinessName}
                             gstError={gstError}
                             setGstError={setGstError}
                         />
@@ -1176,6 +1187,7 @@ export default function Checkout() {
                         adminConfig={adminConfig}
                         shippingFee={shippingFee}
                         estimatingShipping={estimatingShipping}
+                        shippingEstimated={shippingEstimated}
                         estimatedDeliveryDays={estimatedDeliveryDays}
                     />
                 </div>
