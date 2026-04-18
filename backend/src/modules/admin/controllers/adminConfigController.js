@@ -37,7 +37,7 @@ const getPublicAdminConfig = async (req, res) => {
             defaultGstPercent: config.defaultGstPercent,
             defaultShippingHandlingPercent: config.defaultShippingHandlingPercent,
             categoryGstRates: config.categoryGstRates || {},
-            priceRangeFees: config.priceRangeFees || []
+            platformFeeCapRanges: config.platformFeeCapRanges || []
         };
         
         return res.status(200).json({ success: true, config: publicConfig });
@@ -66,7 +66,7 @@ const getPublicAdminConfig = async (req, res) => {
                 defaultGstPercent: 18,
                 defaultShippingHandlingPercent: 0,
                 categoryGstRates: {},
-                priceRangeFees: []
+                platformFeeCapRanges: []
             }
         });
     }

@@ -165,14 +165,42 @@ export const validatePlatformFeeBreakdown = (breakdown) => {
 };
 
 /**
- * Apply cap limit to calculated platform fee
- * @param {number} calculatedFee - The calculated platform fee amount
- * @param {number} capLimit - The maximum cap limit (0 = no cap)
- * @returns {number} - Fee after applying cap
+ * Get cap amount for a given product price from platformFeeCapRanges
+ * @param {number} basePrice - Product base price
+ * @param {Array} platformFeeCapRanges - Array of cap range configs from adminConfig
+ * @returns {number} - Cap amount in ₹ (0 = no cap)
  */
-export const applyCapLimit = (calculatedFee, capLimit) => {
-    if (!capLimit || capLimit <= 0) return calculatedFee;
-    return Math.min(calculatedFee, capLimit);
+export const getCapAmountForPrice = (basePrice, platformFeeCapRanges) => {
+    if (!platformFeeCapRanges || platformFeeCapRanges.length === 0) return 0;
+    
+    const matched = platformFeeCapRanges.find(range =>
+        basePrice >= range.min && (range.max === null || basePrice <= range.max)
+    );
+    
+    return matched ? (matched.capAmount ?? 0) : 0;
+};
+
+/**
+ * Split cap amount proportionally across breakdown components
+ * @param {number} capAmount - The cap amount to split
+ * @param {Object} breakdown - Platform fee breakdown with percentages
+ * @returns {Object} - Breakdown with amounts split proportionally
+ */
+export const splitCapAmountByBreakdown = (capAmount, breakdown) => {
+    const total = Object.values(breakdown).reduce((sum, v) => sum + (v.percent || v), 0);
+    if (total === 0) return breakdown; // avoid divide by zero
+    
+    const result = {};
+    Object.entries(breakdown).forEach(([key, value]) => {
+        const percent = value.percent || value;
+        const amount = parseFloat(((percent / total) * capAmount).toFixed(2));
+        result[key] = {
+            ...value,
+            amount: amount
+        };
+    });
+    
+    return result;
 };
 
 /**
@@ -185,27 +213,23 @@ export const formatCurrency = (amount) => {
 };
 
 /**
- * Calculate order totals with GST-inclusive product pricing (NEW STRUCTURE)
- * Product prices already include GST, platform fee is calculated on base price
- * If priceRangeFees are configured in adminConfig, they override the breakdown per item
- * Cap limits are applied after fee calculation if configured
+ * Calculate order totals with GST-inclusive product pricing
+ * Platform fee is calculated as percentage of base price, then capped if configured
  * 
  * @param {Array} items - Cart items with price info
  * @param {Object} options - Configuration options
  * @param {Object} options.adminConfig - The full admin config from Firebase
  * @param {number} options.couponDiscount - Discount amount in ₹
  * @param {number} options.shippingFee - Shipping fee in ₹
- * @param {'user'|'seller'} options.feeType - Whether to apply user-facing or
- *   seller-facing cap limits. 'user' reads userCapLimit and methodAUserCapLimit.
- *   'seller' reads sellerCapLimit and methodASellerCapLimit. Defaults to 'user'.
- * @returns {Object} - Complete order calculation with new structure
+ * @returns {Object} - Complete order calculation
  */
 export const calculateOrderTotalsWithGSTInclusive = (items, options = {}) => {
-    const { adminConfig, couponDiscount = 0, shippingFee = 0, feeType = 'user' } = options;
+    const { adminConfig, couponDiscount = 0, shippingFee = 0 } = options;
     
     let productPricingTotal = 0;
     let totalBasePrice = 0;
     
+    // Calculate product totals
     items.forEach(item => {
         const gstPercent = item.gstPercent || 18;
         const basePrice = item.basePrice || item.price;
@@ -215,101 +239,82 @@ export const calculateOrderTotalsWithGSTInclusive = (items, options = {}) => {
         totalBasePrice += basePrice * item.quantity;
     });
 
-    // Check if price-range fees are configured
-    const priceRangeFees = adminConfig?.priceRangeFees;
-    let platformFeeDetails;
-    let capApplied = false;
-
-    if (priceRangeFees && priceRangeFees.length > 0) {
-        // Calculate platform fee per item based on its price range (FIXED AMOUNT)
-        let totalPlatformFee = 0;
-        let totalPreCapFee = 0;
+    // Get platform fee breakdown from config
+    const breakdown = getPlatformFeeBreakdownFromConfig(adminConfig);
+    const percentageTotal = Object.values(breakdown).reduce((sum, v) => sum + (v.percent || v), 0);
+    
+    // Calculate platform fee for each item
+    let totalPlatformFee = 0;
+    const mergedBreakdown = {};
+    
+    items.forEach(item => {
+        const basePrice = item.basePrice || item.price;
+        const quantity = item.quantity;
         
-        items.forEach(item => {
-            const basePrice = item.basePrice || item.price;
-            const feeAmount = getPlatformFeeAmountForPrice(basePrice, priceRangeFees);
-            
-            if (feeAmount !== null) {
-                // Get the matched range for cap limit
-                const matchedRange = priceRangeFees.find(range => 
-                    basePrice >= range.min && (range.max === null || basePrice <= range.max)
-                );
-                
-                const capLimit = feeType === 'seller' 
-                    ? (matchedRange?.sellerCapLimit ?? 0)
-                    : (matchedRange?.userCapLimit ?? 0);
-                
-                // FIX 1: Apply cap per item unit, then multiply by quantity
-                const feePerItem = feeAmount;
-                const cappedFeePerItem = (capLimit > 0) 
-                    ? Math.min(feePerItem, capLimit)
-                    : feePerItem;
-                
-                // Track pre-cap amount
-                totalPreCapFee += feePerItem * item.quantity;
-                
-                // Check if cap was applied for this item
-                if (capLimit > 0 && cappedFeePerItem < feePerItem) {
-                    capApplied = true;
+        // Calculate percentage-based fee for this item
+        const calculatedFee = (basePrice * percentageTotal / 100) * quantity;
+        
+        // Check if a cap applies for this item's price
+        const capAmount = getCapAmountForPrice(basePrice, adminConfig.platformFeeCapRanges);
+        
+        let effectiveFee;
+        let effectiveBreakdown;
+        
+        if (capAmount > 0 && calculatedFee > capAmount * quantity) {
+            // Cap applies — use cap amount × quantity as effective fee
+            effectiveFee = capAmount * quantity;
+            // Split cap proportionally for display
+            effectiveBreakdown = splitCapAmountByBreakdown(capAmount, breakdown);
+        } else {
+            // No cap — use calculated fee
+            effectiveFee = calculatedFee;
+            // Calculate breakdown normally
+            effectiveBreakdown = calculatePlatformFeeBreakdown(basePrice * quantity, breakdown);
+        }
+        
+        totalPlatformFee += effectiveFee;
+        
+        // Merge breakdown amounts across all items
+        Object.entries(effectiveBreakdown).forEach(([key, value]) => {
+            if (key !== 'total') {
+                if (!mergedBreakdown[key]) {
+                    mergedBreakdown[key] = { ...value, amount: 0 };
                 }
-                
-                // Calculate total fee for this item (capped fee × quantity)
-                totalPlatformFee += cappedFeePerItem * item.quantity;
-            } else {
-                // Fallback to 3.5% if no range found
-                const fallbackFee = (basePrice * item.quantity * 3.5) / 100;
-                totalPlatformFee += fallbackFee;
-                totalPreCapFee += fallbackFee;
+                mergedBreakdown[key].amount += value.amount;
             }
         });
-        
-        totalPlatformFee = Math.round(totalPlatformFee * 100) / 100;
-        platformFeeDetails = {
-            total: { amount: totalPlatformFee, percent: null },
-            capApplied: capApplied,
-            preCapAmount: Math.round(totalPreCapFee * 100) / 100
-        };
-    } else {
-        // Fall back to breakdown-based calculation (Method A)
-        const breakdown = getPlatformFeeBreakdownFromConfig(adminConfig);
-        platformFeeDetails = calculatePlatformFeeBreakdown(totalBasePrice, breakdown);
-        
-        // FIX 2: Apply Method A cap limit
-        const methodACap = feeType === 'seller'
-            ? (adminConfig.methodASellerCapLimit ?? 0)
-            : (adminConfig.methodAUserCapLimit ?? 0);
-        
-        const preCapPlatformFee = platformFeeDetails.total.amount;
-        
-        if (methodACap > 0 && preCapPlatformFee > methodACap) {
-            platformFeeDetails.total.amount = methodACap;
-            platformFeeDetails.capApplied = true;
-            platformFeeDetails.preCapAmount = preCapPlatformFee;
-            capApplied = true;
-        } else {
-            platformFeeDetails.capApplied = false;
-            platformFeeDetails.preCapAmount = preCapPlatformFee;
-        }
-    }
+    });
+    
+    // Round total platform fee
+    totalPlatformFee = Math.round(totalPlatformFee * 100) / 100;
+    
+    // Round merged breakdown amounts
+    Object.keys(mergedBreakdown).forEach(key => {
+        mergedBreakdown[key].amount = Math.round(mergedBreakdown[key].amount * 100) / 100;
+    });
+    
+    // Add total to breakdown
+    mergedBreakdown.total = {
+        percent: percentageTotal,
+        amount: totalPlatformFee
+    };
 
-    const serviceGST = Math.round((platformFeeDetails.total.amount * 0.18) * 100) / 100;
-    const platformFeeAndServiceGST = platformFeeDetails.total.amount + serviceGST;
+    const serviceGST = Math.round((totalPlatformFee * 0.18) * 100) / 100;
+    const platformFeeAndServiceGST = totalPlatformFee + serviceGST;
     const total = productPricingTotal + platformFeeAndServiceGST + shippingFee - couponDiscount;
 
     return {
         productPricingTotal: Math.round(productPricingTotal * 100) / 100,
         basePrice: Math.round(totalBasePrice * 100) / 100,
-        platformFee: platformFeeDetails.total.amount,
-        platformFeeBreakdown: platformFeeDetails,
+        platformFee: totalPlatformFee,
+        platformFeeBreakdown: mergedBreakdown,
         serviceGST,
         platformFeeAndServiceGST: Math.round(platformFeeAndServiceGST * 100) / 100,
         shippingFee,
         couponDiscount,
         total: Math.round(total * 100) / 100,
-        capApplied: platformFeeDetails.capApplied,
-        preCapPlatformFee: platformFeeDetails.preCapAmount,
         breakdown: {
-            ...platformFeeDetails,
+            ...mergedBreakdown,
             serviceGST: {
                 label: 'GST (18% on Platform Fee)',
                 amount: serviceGST,
@@ -355,21 +360,3 @@ export const calculateOrderTotals = (items, options = {}) => {
         total: Math.round(total * 100) / 100
     };
 };
-
-/**
- * Get platform fee amount for a given product price based on price range config
- * @param {number} price - Product price
- * @param {Array} priceRangeFees - Array of price range fee configs from adminConfig
- * @returns {number} - Fixed fee amount to apply
- */
-export const getPlatformFeeAmountForPrice = (price, priceRangeFees) => {
-    if (!priceRangeFees || priceRangeFees.length === 0) return null; // fall back to breakdown
-    for (const range of priceRangeFees) {
-        const inRange = price >= range.min && (range.max === null || price <= range.max);
-        if (inRange) return range.feeAmount || range.feePercent || 0; // Support both old and new format
-    }
-    return priceRangeFees[priceRangeFees.length - 1]?.feeAmount || priceRangeFees[priceRangeFees.length - 1]?.feePercent || null;
-};
-
-// Backward compatibility - keep old function name but use new logic
-export const getPlatformFeePercentForPrice = getPlatformFeeAmountForPrice;
