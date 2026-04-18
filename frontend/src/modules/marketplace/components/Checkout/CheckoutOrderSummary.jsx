@@ -99,9 +99,6 @@ export default function CheckoutOrderSummary({
                             <div className="flex items-center gap-2 min-w-0">
                                 <span className="text-sm text-gray-400 font-normal">
                                     Platform Fee & Service GST
-                                    {orderTotals.capApplied && (
-                                        <span className="text-xs text-orange-600 font-semibold ml-2">(max limit applied)</span>
-                                    )}
                                 </span>
                                 {showPlatformFeeBreakdown ? (
                                     <ChevronUp size={14} className="text-gray-400 flex-shrink-0" />

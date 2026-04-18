@@ -183,8 +183,7 @@ function renderItemsTable(doc, order, y, showPlatformFee) {
     doc.text('Qty', 180, y);
     const colPFee = 210;
     if (showPlatformFee) {
-        const capAppliedNote = order.userCapApplied ? ' (cap)' : '';
-        doc.text('Platform' + capAppliedNote, colPFee, y);
+        doc.text('Platform Fee', colPFee, y);
     }
     doc.text('Gross', 260, y);
     doc.text('Taxable', 320, y);

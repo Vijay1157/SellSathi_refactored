@@ -119,18 +119,32 @@ const getAdminConfig = async () => {
         const calculatedPlatformFeeSeller = Object.values(platformFeeBreakdownSeller).reduce((sum, val) => sum + val, 0);
 
         const DEFAULT_PRICE_RANGE_FEES = [
-            { id: 'range1', label: '₹0 – ₹1,000',       min: 0,     max: 1000,  feeAmount: 35,  userCapLimit: 0, sellerCapLimit: 0 },
-            { id: 'range2', label: '₹1,001 – ₹10,000',  min: 1001,  max: 10000, feeAmount: 50,  userCapLimit: 0, sellerCapLimit: 0 },
-            { id: 'range3', label: '₹10,001 – ₹50,000', min: 10001, max: 50000, feeAmount: 100, userCapLimit: 0, sellerCapLimit: 0 },
-            { id: 'range4', label: '₹50,001 & above',   min: 50001, max: null,  feeAmount: 200, userCapLimit: 0, sellerCapLimit: 0 },
+            { id: 'range1', label: '₹0 – ₹1,000',       min: 0,     max: 1000,  feeAmount: 35 },
+            { id: 'range2', label: '₹1,001 – ₹10,000',  min: 1001,  max: 10000, feeAmount: 50 },
+            { id: 'range3', label: '₹10,001 – ₹50,000', min: 10001, max: 50000, feeAmount: 100 },
+            { id: 'range4', label: '₹50,001 & above',   min: 50001, max: null,  feeAmount: 200 },
         ];
 
-        // Migrate existing priceRangeFees to include cap limits if missing
+        // Default platform fee cap ranges (separate from price range fees)
+        const DEFAULT_PLATFORM_FEE_CAP_RANGES = [
+            { id: 'caprange1', label: '₹0 – ₹1,000',       min: 0,     max: 1000,  capAmount: 0 },
+            { id: 'caprange2', label: '₹1,001 – ₹10,000',  min: 1001,  max: 10000, capAmount: 0 },
+            { id: 'caprange3', label: '₹10,001 – ₹50,000', min: 10001, max: 50000, capAmount: 0 },
+            { id: 'caprange4', label: '₹50,001 & above',   min: 50001, max: null,  capAmount: 0 },
+        ];
+
+        // Clean up priceRangeFees - remove old cap fields
         let priceRangeFees = adminProfile.priceRangeFees || DEFAULT_PRICE_RANGE_FEES;
-        priceRangeFees = priceRangeFees.map(range => ({
+        priceRangeFees = priceRangeFees.map(range => {
+            const { userCapLimit, sellerCapLimit, ...cleanRange } = range;
+            return cleanRange;
+        });
+
+        // Get platform fee cap ranges (new structure)
+        let platformFeeCapRanges = adminProfile.platformFeeCapRanges || DEFAULT_PLATFORM_FEE_CAP_RANGES;
+        platformFeeCapRanges = platformFeeCapRanges.map(range => ({
             ...range,
-            userCapLimit: range.userCapLimit ?? 0,
-            sellerCapLimit: range.sellerCapLimit ?? 0
+            capAmount: range.capAmount ?? 0
         }));
 
         const config = {
@@ -146,12 +160,11 @@ const getAdminConfig = async () => {
             platformFeeBreakdownSeller: platformFeeBreakdownSeller,
             defaultPlatformFeePercent: calculatedPlatformFee,
             defaultPlatformFeePercentSeller: calculatedPlatformFeeSeller,
-            methodAUserCapLimit: adminProfile.methodAUserCapLimit ?? 0,
-            methodASellerCapLimit: adminProfile.methodASellerCapLimit ?? 0,
             defaultGstPercent: adminProfile.defaultGstPercent ?? 18,
             defaultShippingHandlingPercent: adminProfile.defaultShippingHandlingPercent ?? 0,
             categoryGstRates: adminProfile.categoryGstRates || DEFAULT_CATEGORY_GST,
             priceRangeFees: priceRangeFees,
+            platformFeeCapRanges: platformFeeCapRanges,
             uid: adminUid
         };
 
@@ -191,8 +204,6 @@ const getDefaultConfig = () => {
         platformFeeBreakdownSeller: DEFAULT_PLATFORM_FEE_BREAKDOWN,
         defaultPlatformFeePercent: calculatedPlatformFee,
         defaultPlatformFeePercentSeller: calculatedPlatformFee,
-        methodAUserCapLimit: 0,
-        methodASellerCapLimit: 0,
         defaultGstPercent: 18,
         defaultShippingHandlingPercent: 0,
         categoryGstRates: {
@@ -205,6 +216,12 @@ const getDefaultConfig = () => {
             "Automotive & Accessories": 18, "Travel & Utility": 18,
             "Sustainability & Eco-Friendly": 12, "Others": 18
         },
+        platformFeeCapRanges: [
+            { id: 'caprange1', label: '₹0 – ₹1,000',       min: 0,     max: 1000,  capAmount: 0 },
+            { id: 'caprange2', label: '₹1,001 – ₹10,000',  min: 1001,  max: 10000, capAmount: 0 },
+            { id: 'caprange3', label: '₹10,001 – ₹50,000', min: 10001, max: 50000, capAmount: 0 },
+            { id: 'caprange4', label: '₹50,001 & above',   min: 50001, max: null,  capAmount: 0 },
+        ],
         uid: null
     };
 };

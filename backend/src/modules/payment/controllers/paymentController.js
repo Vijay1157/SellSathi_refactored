@@ -86,18 +86,13 @@ const processPostOrderTasks = async (orderData, orderRef) => {
  */
 const verifyPayment = async (req, res) => {
     try {
-        const { razorpay_payment_id, razorpay_order_id, razorpay_signature, cartItems, customerInfo, amount, uid, platformFeeBreakdown, couponDiscount, userCapApplied, effectivePlatformFee } = req.body;
+        const { razorpay_payment_id, razorpay_order_id, razorpay_signature, cartItems, customerInfo, amount, uid, platformFeeBreakdown, couponDiscount, effectivePlatformFee } = req.body;
         const expected = crypto.createHmac('sha256', process.env.RAZORPAY_KEY_SECRET).update(razorpay_order_id + "|" + razorpay_payment_id).digest('hex');
 
         if (expected !== razorpay_signature) return res.status(400).json({ success: false, message: "Invalid signature" });
 
         const orderId = "OD" + Date.now();
         const sellerId = (cartItems || []).find(i => i?.sellerId)?.sellerId || null;
-
-        // FIX 3: Calculate sellerCapApplied server-side
-        // TODO: Implement seller fee calculation with cap logic here
-        // For now, set to false as placeholder
-        const sellerCapApplied = false;
 
         const orderData = {
             orderId, userId: uid || "guest", sellerId,
@@ -113,8 +108,6 @@ const verifyPayment = async (req, res) => {
             actualShippingCharge: null,
             platformFeeBreakdown: platformFeeBreakdown || null,
             effectivePlatformFee: effectivePlatformFee || null,
-            userCapApplied: userCapApplied || false,
-            sellerCapApplied: sellerCapApplied,
             couponDiscount: couponDiscount || 0,
             paymentStatus: "Completed",
             status: "Processing", createdAt: admin.firestore.FieldValue.serverTimestamp(),
@@ -134,14 +127,9 @@ const verifyPayment = async (req, res) => {
 
 const codOrder = async (req, res) => {
     try {
-        const { cartItems, customerInfo, amount, uid, platformFeeBreakdown, couponDiscount, userCapApplied, effectivePlatformFee } = req.body;
+        const { cartItems, customerInfo, amount, uid, platformFeeBreakdown, couponDiscount, effectivePlatformFee } = req.body;
         const orderId = "OD" + Date.now();
         const resolvedSellerId = (cartItems || []).find(i => i?.sellerId)?.sellerId || null;
-
-        // FIX 3: Calculate sellerCapApplied server-side
-        // TODO: Implement seller fee calculation with cap logic here
-        // For now, set to false as placeholder
-        const sellerCapApplied = false;
 
         const orderData = {
             orderId,
@@ -161,8 +149,6 @@ const codOrder = async (req, res) => {
             actualShippingCharge: null,
             platformFeeBreakdown: platformFeeBreakdown || null,
             effectivePlatformFee: effectivePlatformFee || null,
-            userCapApplied: userCapApplied || false,
-            sellerCapApplied: sellerCapApplied,
             couponDiscount: couponDiscount || 0,
             paymentMethod: "COD",
             paymentStatus: "Pending",
