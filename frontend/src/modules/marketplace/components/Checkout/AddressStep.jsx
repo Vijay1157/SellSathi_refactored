@@ -39,6 +39,8 @@ export default function AddressStep({
     setHasGST,
     gstNumber,
     setGstNumber,
+    businessName,
+    setBusinessName,
     gstError,
     setGstError
 }) {
@@ -47,7 +49,7 @@ export default function AddressStep({
             <div className="p-4 border-b border-gray-50 flex items-center justify-between">
                 <h3 className="text-base font-bold text-gray-900 flex items-center gap-2">
                     <div className="w-6 h-6 bg-primary rounded-lg flex items-center justify-center text-white text-xs font-bold">1</div>
-                    Shipping Information
+                    Shipping & Billing Information
                 </h3>
                 {step === 2 && (
                     <button
@@ -98,7 +100,22 @@ export default function AddressStep({
                                 <div className="flex-1">
                                     <h4 className="text-sm font-bold text-gray-900 mb-1">Billing Address</h4>
                                     {sameAsBilling ? (
-                                        <p className="text-xs text-gray-600 italic">Same as delivery address</p>
+                                        <>
+                                            <p className="text-sm font-semibold text-gray-900">
+                                                {shippingAddress.firstName} {shippingAddress.lastName}
+                                            </p>
+                                            <p className="text-xs text-gray-700 mt-1">
+                                                {shippingAddress.addressLine}
+                                            </p>
+                                            <p className="text-xs text-gray-700">
+                                                {shippingAddress.city}, {shippingAddress.state} - {shippingAddress.pincode}
+                                            </p>
+                                            {shippingAddress.phone && (
+                                                <p className="text-xs text-gray-600 mt-1">
+                                                    Phone: {shippingAddress.phone}
+                                                </p>
+                                            )}
+                                        </>
                                     ) : (
                                         <>
                                             <p className="text-sm font-semibold text-gray-900">
@@ -117,147 +134,191 @@ export default function AddressStep({
                                             )}
                                         </>
                                     )}
+                                    
+                                    {/* GST Details - Show if GST is provided */}
+                                    {hasGST && gstNumber && (
+                                        <div className="mt-2 pt-2 border-t border-gray-300">
+                                            <p className="text-xs font-semibold text-gray-900">
+                                                GST: {gstNumber}
+                                            </p>
+                                            {businessName && (
+                                                <p className="text-xs text-gray-700 mt-0.5">
+                                                    <span className="font-semibold">Business:</span> {businessName}
+                                                </p>
+                                            )}
+                                        </div>
+                                    )}
                                 </div>
                             </div>
                         </div>
                     </div>
                 )}
                 
-                {/* Saved Address / New Address Toggle - Always show if user has addresses */}
-                {step === 1 && savedAddresses.length > 0 && (
-                    <div className="mb-4">
-                        <div className="flex gap-2">
-                            <button
-                                onClick={() => {
-                                    setAddressMode('saved');
-                                    if (selectedAddressIndex !== null) {
-                                        setShippingAddress(savedAddresses[selectedAddressIndex]);
-                                    }
-                                }}
-                                className={`flex-1 py-2 px-3 rounded-lg text-sm font-semibold transition-all ${addressMode === 'saved'
-                                    ? 'bg-primary text-white'
-                                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                                    }`}
-                            >
-                                Saved Address
-                            </button>
-                            <button
-                                onClick={() => {
-                                    setAddressMode('new');
-                                    setShippingAddress({
-                                        firstName: '',
-                                        lastName: '',
-                                        addressLine: '',
-                                        city: '',
-                                        state: '',
-                                        pincode: '',
-                                        phone: '',
-                                        type: 'shipping'
-                                    });
-                                }}
-                                className={`flex-1 py-2 px-3 rounded-lg text-sm font-semibold transition-all ${addressMode === 'new'
-                                    ? 'bg-primary text-white'
-                                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                                    }`}
-                            >
-                                New Address
-                            </button>
+                {/* Shipping Address Section - With border like Billing */}
+                {step === 1 && (
+                    <div className="mt-3 p-3 bg-white border border-gray-200 rounded-lg space-y-3">
+                        {/* Shipping Address Header - Always visible */}
+                        <div className="flex items-center gap-2 mb-3">
+                            <svg className="w-5 h-5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+                            </svg>
+                            <h4 className="text-sm font-bold text-gray-900">Shipping Address</h4>
                         </div>
-                    </div>
-                )}
+                        
+                        {/* Saved Address / New Address Toggle */}
+                        {savedAddresses.length > 0 && (
+                            <div className="flex gap-2 mb-3">
+                                <button
+                                    onClick={() => {
+                                        setAddressMode('saved');
+                                        if (selectedAddressIndex !== null) {
+                                            setShippingAddress(savedAddresses[selectedAddressIndex]);
+                                        }
+                                    }}
+                                    className={`flex-1 py-2 px-3 rounded-lg text-sm font-semibold transition-all ${addressMode === 'saved'
+                                        ? 'bg-primary text-white'
+                                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                                        }`}
+                                >
+                                    Saved Address
+                                </button>
+                                <button
+                                    onClick={() => {
+                                        setAddressMode('new');
+                                        setShippingAddress({
+                                            firstName: '',
+                                            lastName: '',
+                                            addressLine: '',
+                                            city: '',
+                                            state: '',
+                                            pincode: '',
+                                            phone: '',
+                                            type: 'shipping'
+                                        });
+                                    }}
+                                    className={`flex-1 py-2 px-3 rounded-lg text-sm font-semibold transition-all ${addressMode === 'new'
+                                        ? 'bg-primary text-white'
+                                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                                        }`}
+                                >
+                                    New Address
+                                </button>
+                            </div>
+                        )}
 
-                {addressMode === 'saved' && savedAddresses.length > 0 && step === 1 ? (
-                    <div className="space-y-3">
-                        <select
-                            value={selectedAddressIndex !== null ? selectedAddressIndex : ''}
-                            onChange={(e) => {
-                                const value = e.target.value;
-                                if (value === '') {
-                                    setSelectedAddressIndex(null);
-                                    setShippingAddress({
-                                        firstName: '',
-                                        lastName: '',
-                                        addressLine: '',
-                                        city: '',
-                                        state: '',
-                                        pincode: '',
-                                        phone: '',
-                                        type: 'shipping'
-                                    });
-                                } else {
-                                    const index = parseInt(value);
-                                    setSelectedAddressIndex(index);
-                                    setShippingAddress(savedAddresses[index]);
-                                }
-                            }}
-                            className="w-full px-4 py-2.5 bg-gray-50 border-none rounded-lg text-sm font-medium focus:ring-2 ring-primary/20 transition-all outline-none"
-                        >
-                            <option value="" disabled hidden>Choose a shipping address</option>
-                            {savedAddresses
-                                .filter(addr => !addr.type || addr.type === 'shipping')
-                                .map((addr, index) => {
-                                    const originalIndex = savedAddresses.indexOf(addr);
-                                    return (
-                                        <option key={originalIndex} value={originalIndex}>
-                                            {addr.firstName} {addr.lastName}, {addr.city}
-                                            {addr.isDefault ? ' (Default)' : ''}
-                                        </option>
-                                    );
-                                })}
-                        </select>
+                        {addressMode === 'saved' && savedAddresses.length > 0 ? (
+                            <div className="space-y-2">
+                                <select
+                                    value={selectedAddressIndex !== null ? selectedAddressIndex : ''}
+                                    onChange={(e) => {
+                                        const value = e.target.value;
+                                        if (value === '') {
+                                            setSelectedAddressIndex(null);
+                                            setShippingAddress({
+                                                firstName: '',
+                                                lastName: '',
+                                                addressLine: '',
+                                                city: '',
+                                                state: '',
+                                                pincode: '',
+                                                phone: '',
+                                                type: 'shipping'
+                                            });
+                                        } else {
+                                            const index = parseInt(value);
+                                            setSelectedAddressIndex(index);
+                                            setShippingAddress(savedAddresses[index]);
+                                        }
+                                    }}
+                                    className="w-full px-3 py-2 bg-gray-50 border-none rounded-lg text-sm font-medium focus:ring-2 ring-primary/20 transition-all outline-none"
+                                >
+                                    <option value="" disabled hidden>Choose a shipping address</option>
+                                    {savedAddresses
+                                        .filter(addr => !addr.type || addr.type === 'shipping')
+                                        .map((addr, index) => {
+                                            const originalIndex = savedAddresses.indexOf(addr);
+                                            return (
+                                                <option key={originalIndex} value={originalIndex}>
+                                                    {addr.firstName} {addr.lastName}, {addr.city}
+                                                    {addr.isDefault ? ' (Default)' : ''}
+                                                </option>
+                                            );
+                                        })}
+                                </select>
 
-                        {selectedAddressIndex !== null && savedAddresses[selectedAddressIndex] && (
-                            <div className="bg-blue-50/50 p-3 rounded-lg border border-blue-100">
-                                <div className="flex items-start gap-2">
-                                    <MapPin size={16} className="text-primary mt-0.5 flex-shrink-0" />
-                                    <div className="flex-1 text-sm">
-                                        <p className="font-semibold text-gray-900">
-                                            {savedAddresses[selectedAddressIndex].firstName} {savedAddresses[selectedAddressIndex].lastName}
-                                        </p>
-                                        <p className="text-gray-600 text-xs mt-0.5">
-                                            {savedAddresses[selectedAddressIndex].addressLine}, {savedAddresses[selectedAddressIndex].city}, {savedAddresses[selectedAddressIndex].state} {savedAddresses[selectedAddressIndex].pincode}
-                                        </p>
+                                {selectedAddressIndex !== null && savedAddresses[selectedAddressIndex] && (
+                                    <div className="bg-gray-50 p-2 rounded-lg border border-gray-200">
+                                        <div className="flex items-start gap-2">
+                                            <svg className="w-4 h-4 text-primary mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                                            </svg>
+                                            <div className="flex-1 text-xs">
+                                                <p className="font-semibold text-gray-900">
+                                                    {savedAddresses[selectedAddressIndex].firstName} {savedAddresses[selectedAddressIndex].lastName}
+                                                </p>
+                                                <p className="text-gray-600 mt-0.5">
+                                                    {savedAddresses[selectedAddressIndex].addressLine}, {savedAddresses[selectedAddressIndex].city}, {savedAddresses[selectedAddressIndex].state} {savedAddresses[selectedAddressIndex].pincode}
+                                                </p>
+                                            </div>
+                                        </div>
                                     </div>
+                                )}
+                            </div>
+                        ) : (
+                            <div className="grid grid-cols-2 gap-2">
+                                <div>
+                                    <input type="text" name="firstName" value={shippingAddress.firstName} onChange={handleAddressChange} placeholder="First Name"
+                                        className={`w-full px-3 py-2 bg-gray-50 border-none rounded-lg text-sm font-medium focus:ring-2 ring-primary/20 transition-all outline-none ${errors.firstName ? 'ring-2 ring-red-500/20' : ''}`}
+                                        readOnly={step === 2} />
+                                </div>
+                                <div>
+                                    <input type="text" name="lastName" value={shippingAddress.lastName} onChange={handleAddressChange} placeholder="Last Name"
+                                        className={`w-full px-3 py-2 bg-gray-50 border-none rounded-lg text-sm font-medium focus:ring-2 ring-primary/20 transition-all outline-none ${errors.lastName ? 'ring-2 ring-red-500/20' : ''}`}
+                                        readOnly={step === 2} />
+                                </div>
+                                <div className="col-span-2">
+                                    <input type="text" name="addressLine" value={shippingAddress.addressLine} onChange={handleAddressChange} placeholder="Street, Building, Flat"
+                                        className={`w-full px-3 py-2 bg-gray-50 border-none rounded-lg text-sm font-medium focus:ring-2 ring-primary/20 transition-all outline-none ${errors.addressLine ? 'ring-2 ring-red-500/20' : ''}`}
+                                        readOnly={step === 2} />
+                                </div>
+                                <div>
+                                    <input type="text" name="city" value={shippingAddress.city} onChange={handleAddressChange} placeholder="City"
+                                        className={`w-full px-3 py-2 bg-gray-50 border-none rounded-lg text-sm font-medium focus:ring-2 ring-primary/20 transition-all outline-none ${errors.city ? 'ring-2 ring-red-500/20' : ''}`}
+                                        readOnly={step === 2} />
+                                </div>
+                                <div>
+                                    <input type="text" name="state" value={shippingAddress.state} onChange={handleAddressChange} placeholder="State"
+                                        className={`w-full px-3 py-2 bg-gray-50 border-none rounded-lg text-sm font-medium focus:ring-2 ring-primary/20 transition-all outline-none ${errors.state ? 'ring-2 ring-red-500/20' : ''}`}
+                                        readOnly={step === 2} />
+                                </div>
+                                <div className="col-span-2">
+                                    <input type="text" name="pincode" value={shippingAddress.pincode} onChange={handleAddressChange} placeholder="Pincode (6 digits)" maxLength={6}
+                                        className={`w-full px-3 py-2 bg-gray-50 border-none rounded-lg text-sm font-medium focus:ring-2 ring-primary/20 transition-all outline-none ${errors.pincode ? 'ring-2 ring-red-500/20' : ''}`}
+                                        readOnly={step === 2} />
                                 </div>
                             </div>
                         )}
+                        
+                        {/* Save shipping address checkbox - Only for new address when all fields filled */}
+                        {addressMode === 'new' && 
+                         shippingAddress.firstName && 
+                         shippingAddress.lastName && 
+                         shippingAddress.addressLine && 
+                         shippingAddress.city && 
+                         shippingAddress.state && 
+                         shippingAddress.pincode && 
+                         shippingAddress.pincode.length === 6 && (
+                            <div className="pt-2 border-t border-gray-200">
+                                <label className="flex items-center gap-2 cursor-pointer">
+                                    <input type="checkbox" checked={saveAddressForFuture} onChange={(e) => setSaveAddressForFuture(e.target.checked)} 
+                                        className="w-4 h-4 rounded border-gray-300 text-primary focus:ring-primary" />
+                                    <span className="text-xs font-medium text-gray-600">Save this shipping address for future orders</span>
+                                </label>
+                            </div>
+                        )}
                     </div>
-                ) : step === 1 ? (
-                    <div className="space-y-2">
-                        <div className="grid grid-cols-2 gap-2">
-                            <div>
-                                <input type="text" name="firstName" value={shippingAddress.firstName} onChange={handleAddressChange} placeholder="First Name"
-                                    className={`w-full px-3 py-2 bg-gray-50 border-none rounded-lg text-sm font-medium focus:ring-2 ring-primary/20 transition-all outline-none ${errors.firstName ? 'ring-2 ring-red-500/20' : ''}`}
-                                    readOnly={step === 2} />
-                            </div>
-                            <div>
-                                <input type="text" name="lastName" value={shippingAddress.lastName} onChange={handleAddressChange} placeholder="Last Name"
-                                    className={`w-full px-3 py-2 bg-gray-50 border-none rounded-lg text-sm font-medium focus:ring-2 ring-primary/20 transition-all outline-none ${errors.lastName ? 'ring-2 ring-red-500/20' : ''}`}
-                                    readOnly={step === 2} />
-                            </div>
-                            <div className="col-span-2">
-                                <input type="text" name="addressLine" value={shippingAddress.addressLine} onChange={handleAddressChange} placeholder="Street, Building, Flat"
-                                    className={`w-full px-3 py-2 bg-gray-50 border-none rounded-lg text-sm font-medium focus:ring-2 ring-primary/20 transition-all outline-none ${errors.addressLine ? 'ring-2 ring-red-500/20' : ''}`}
-                                    readOnly={step === 2} />
-                            </div>
-                            <div>
-                                <input type="text" name="city" value={shippingAddress.city} onChange={handleAddressChange} placeholder="City"
-                                    className={`w-full px-3 py-2 bg-gray-50 border-none rounded-lg text-sm font-medium focus:ring-2 ring-primary/20 transition-all outline-none ${errors.city ? 'ring-2 ring-red-500/20' : ''}`}
-                                    readOnly={step === 2} />
-                            </div>
-                            <div>
-                                <input type="text" name="state" value={shippingAddress.state} onChange={handleAddressChange} placeholder="State"
-                                    className={`w-full px-3 py-2 bg-gray-50 border-none rounded-lg text-sm font-medium focus:ring-2 ring-primary/20 transition-all outline-none ${errors.state ? 'ring-2 ring-red-500/20' : ''}`}
-                                    readOnly={step === 2} />
-                            </div>
-                            <div className="col-span-2">
-                                <input type="text" name="pincode" value={shippingAddress.pincode} onChange={handleAddressChange} placeholder="Pincode (6 digits)" maxLength={6}
-                                    className={`w-full px-3 py-2 bg-gray-50 border-none rounded-lg text-sm font-medium focus:ring-2 ring-primary/20 transition-all outline-none ${errors.pincode ? 'ring-2 ring-red-500/20' : ''}`}
-                                    readOnly={step === 2} />
-                            </div>
-                        </div>
-                    </div>
-                ) : null}
+                )}
 
                 {step === 1 && (
                     <div className="mt-3 pt-3 border-t border-gray-100 space-y-2">
@@ -455,9 +516,16 @@ export default function AddressStep({
                                     </div>
                                 )}
                                 
-                                {/* Save billing address for future */}
-                                {billingAddressMode === 'new' && (
-                                    <div className="space-y-2 pt-2 border-t border-gray-200">
+                                {/* Save billing address for future - Only show when all fields filled */}
+                                {billingAddressMode === 'new' && 
+                                 billingAddress.firstName && 
+                                 billingAddress.lastName && 
+                                 billingAddress.addressLine && 
+                                 billingAddress.city && 
+                                 billingAddress.state && 
+                                 billingAddress.pincode && 
+                                 billingAddress.pincode.length === 6 && (
+                                    <div className="pt-2 border-t border-gray-200">
                                         <label className="flex items-center gap-2 cursor-pointer">
                                             <input 
                                                 type="checkbox" 
@@ -467,35 +535,7 @@ export default function AddressStep({
                                             />
                                             <span className="text-xs font-medium text-gray-600">Save this billing address for future orders</span>
                                         </label>
-                                        {saveBillingForFuture && (
-                                            <label className="flex items-center gap-2 cursor-pointer ml-6">
-                                                <input 
-                                                    type="checkbox" 
-                                                    checked={setBillingAsDefault} 
-                                                    onChange={(e) => setSetBillingAsDefault(e.target.checked)} 
-                                                    className="w-4 h-4 rounded border-gray-300 text-green-500 focus:ring-green-500" 
-                                                />
-                                                <span className="text-xs font-medium text-gray-600">Set as default billing address</span>
-                                            </label>
-                                        )}
                                     </div>
-                                )}
-                            </div>
-                        )}
-                        
-                        {addressMode === 'new' && (
-                            <div className="space-y-2">
-                                <label className="flex items-center gap-2 cursor-pointer">
-                                    <input type="checkbox" checked={saveAddressForFuture} onChange={(e) => setSaveAddressForFuture(e.target.checked)} 
-                                        className="w-4 h-4 rounded border-gray-300 text-primary focus:ring-primary" />
-                                    <span className="text-xs font-medium text-gray-600">Save this shipping address for future orders</span>
-                                </label>
-                                {saveAddressForFuture && (
-                                    <label className="flex items-center gap-2 cursor-pointer ml-6">
-                                        <input type="checkbox" checked={setAsDefault} onChange={(e) => setSetAsDefault(e.target.checked)} 
-                                            className="w-4 h-4 rounded border-gray-300 text-green-500 focus:ring-green-500" />
-                                        <span className="text-xs font-medium text-gray-600">Set as default shipping address</span>
-                                    </label>
                                 )}
                             </div>
                         )}
@@ -529,19 +569,7 @@ export default function AddressStep({
                                         
                                         {hasGST && (
                                             <div className="mt-3 ml-6 space-y-3">
-                                                {/* Business/Company Name Field */}
-                                                <div>
-                                                    <label className="block text-xs font-semibold text-gray-700 mb-1.5">
-                                                        Business/Company Name
-                                                    </label>
-                                                    <input
-                                                        type="text"
-                                                        placeholder="Enter your business or company name"
-                                                        className="w-full px-4 py-2.5 bg-white border border-gray-300 rounded-lg text-sm font-medium focus:ring-2 focus:ring-blue-200 transition-all outline-none"
-                                                    />
-                                                </div>
-
-                                                {/* GST Number Field */}
+                                                {/* GST Number Field - FIRST */}
                                                 <div>
                                                     <label className="block text-xs font-semibold text-gray-700 mb-1.5">
                                                         GST Number
@@ -582,11 +610,20 @@ export default function AddressStep({
                                                             Valid GST Number
                                                         </p>
                                                     )}
-                                                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-2 mt-2">
-                                                        <p className="text-xs text-blue-800 font-medium">
-                                                            <span className="font-bold">Format:</span> 2 digits (state code) + 5 letters (PAN) + 4 digits + 1 letter + 1 letter/digit + Z + 1 letter/digit
-                                                        </p>
-                                                    </div>
+                                                </div>
+
+                                                {/* Business/Company Name Field - SECOND */}
+                                                <div>
+                                                    <label className="block text-xs font-semibold text-gray-700 mb-1.5">
+                                                        Business/Company Name
+                                                    </label>
+                                                    <input
+                                                        type="text"
+                                                        value={businessName}
+                                                        onChange={(e) => setBusinessName(e.target.value)}
+                                                        placeholder="Enter your business or company name"
+                                                        className="w-full px-4 py-2.5 bg-white border border-gray-300 rounded-lg text-sm font-medium focus:ring-2 focus:ring-blue-200 transition-all outline-none"
+                                                    />
                                                 </div>
                                             </div>
                                         )}

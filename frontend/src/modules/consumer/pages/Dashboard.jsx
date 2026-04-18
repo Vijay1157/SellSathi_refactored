@@ -231,7 +231,7 @@ export default function ConsumerDashboard() {
                     await fetchAddresses(user.uid);
                 }
                 setEditingAddress(null);
-                alert('Address saved successfully');
+                // Address saved - list updates automatically, no alert needed
             } else {
                 alert(data.message || 'Failed to save address');
             }

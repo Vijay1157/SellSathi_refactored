@@ -416,6 +416,104 @@ export default function PlatformSettingsTab() {
                 </div>
             </div>
 
+            {/* Shipping Analytics & Handling */}
+            <div className="glass-card" style={{ padding: '1.5rem' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', paddingBottom: '0.5rem', marginBottom: '1rem', borderBottom: '2px solid var(--border)' }}>
+                    <Truck size={16} style={{ color: 'var(--primary)' }} />
+                    <span style={{ fontWeight: 700, fontSize: '0.85rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Shipping Analytics & Handling</span>
+                </div>
+                
+                <div style={{ display: 'grid', gap: '1rem' }}>
+                    {/* Calculation Method */}
+                    <div style={{ padding: '1rem', background: 'var(--surface)', borderRadius: '10px', border: '1px solid var(--border)' }}>
+                        <h4 style={{ margin: '0 0 0.5rem 0', fontSize: '0.9rem', fontWeight: 700, color: 'var(--text)' }}>
+                            Shipping Calculation Method
+                        </h4>
+                        <p style={{ margin: '0 0 0.75rem 0', fontSize: '0.8rem', color: 'var(--text-muted)', lineHeight: 1.5 }}>
+                            Shipping charges are calculated using Shiprocket-based estimation logic with the following factors:
+                        </p>
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '0.5rem' }}>
+                            <div style={{ padding: '0.6rem', background: 'rgba(59,124,241,0.05)', borderRadius: '8px', border: '1px solid rgba(59,124,241,0.2)' }}>
+                                <div style={{ fontSize: '0.7rem', fontWeight: 700, color: 'var(--text-muted)', marginBottom: '0.2rem' }}>BASE RATE</div>
+                                <div style={{ fontSize: '1rem', fontWeight: 700, color: 'var(--primary)' }}>₹40</div>
+                                <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginTop: '0.2rem' }}>Fixed base charge</div>
+                            </div>
+                            <div style={{ padding: '0.6rem', background: 'rgba(59,124,241,0.05)', borderRadius: '8px', border: '1px solid rgba(59,124,241,0.2)' }}>
+                                <div style={{ fontSize: '0.7rem', fontWeight: 700, color: 'var(--text-muted)', marginBottom: '0.2rem' }}>WEIGHT</div>
+                                <div style={{ fontSize: '1rem', fontWeight: 700, color: 'var(--primary)' }}>₹20/kg</div>
+                                <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginTop: '0.2rem' }}>Per kilogram</div>
+                            </div>
+                            <div style={{ padding: '0.6rem', background: 'rgba(59,124,241,0.05)', borderRadius: '8px', border: '1px solid rgba(59,124,241,0.2)' }}>
+                                <div style={{ fontSize: '0.7rem', fontWeight: 700, color: 'var(--text-muted)', marginBottom: '0.2rem' }}>ITEM</div>
+                                <div style={{ fontSize: '1rem', fontWeight: 700, color: 'var(--primary)' }}>₹10/item</div>
+                                <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginTop: '0.2rem' }}>Additional items</div>
+                            </div>
+                            <div style={{ padding: '0.6rem', background: 'rgba(59,124,241,0.05)', borderRadius: '8px', border: '1px solid rgba(59,124,241,0.2)' }}>
+                                <div style={{ fontSize: '0.7rem', fontWeight: 700, color: 'var(--text-muted)', marginBottom: '0.2rem' }}>ZONE</div>
+                                <div style={{ fontSize: '1rem', fontWeight: 700, color: 'var(--primary)' }}>1.0x / 1.2x</div>
+                                <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginTop: '0.2rem' }}>Metro/Non-Metro</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Calculation Formula & Metro Zones - Combined */}
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '1rem' }}>
+                        <div style={{ padding: '1rem', background: 'rgba(99,102,241,0.05)', borderRadius: '10px', border: '1px solid rgba(99,102,241,0.2)' }}>
+                            <h4 style={{ margin: '0 0 0.5rem 0', fontSize: '0.9rem', fontWeight: 700, color: 'var(--text)' }}>
+                                Calculation Formula
+                            </h4>
+                            <div style={{ padding: '0.75rem', background: 'white', borderRadius: '8px', border: '1px solid rgba(99,102,241,0.3)', fontFamily: 'monospace', fontSize: '0.75rem', color: '#1e40af', lineHeight: 1.6 }}>
+                                <div>Total = (Base + Weight + Item) × Zone</div>
+                                <div style={{ marginTop: '0.4rem', color: 'var(--text-muted)', fontSize: '0.7rem' }}>Example: (₹40 + ₹20 + ₹10) × 1.2 = ₹84</div>
+                            </div>
+                        </div>
+
+                        <div style={{ padding: '1rem', background: 'var(--surface)', borderRadius: '10px', border: '1px solid var(--border)' }}>
+                            <h4 style={{ margin: '0 0 0.5rem 0', fontSize: '0.9rem', fontWeight: 700, color: 'var(--text)' }}>
+                                Metro Zone Pincodes (1.0x)
+                            </h4>
+                            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.4rem' }}>
+                                {['110 (Delhi)', '400 (Mumbai)', '560 (Bangalore)', '600 (Chennai)', '700 (Kolkata)', '800 (Hyderabad)'].map(zone => (
+                                    <span key={zone} style={{ padding: '0.3rem 0.6rem', background: 'rgba(34,197,94,0.1)', color: '#15803d', borderRadius: '6px', fontSize: '0.7rem', fontWeight: 600, border: '1px solid rgba(34,197,94,0.3)' }}>
+                                        {zone}
+                                    </span>
+                                ))}
+                            </div>
+                            <p style={{ margin: '0.5rem 0 0 0', fontSize: '0.7rem', color: 'var(--text-muted)', fontStyle: 'italic' }}>
+                                Others: Non-Metro (1.2x)
+                            </p>
+                        </div>
+                    </div>
+
+                    {/* Delivery Estimates */}
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '0.75rem' }}>
+                        <div style={{ padding: '0.75rem', background: 'rgba(34,197,94,0.05)', borderRadius: '8px', border: '1px solid rgba(34,197,94,0.2)' }}>
+                            <div style={{ fontSize: '0.7rem', fontWeight: 700, color: 'var(--text-muted)', marginBottom: '0.2rem' }}>METRO ZONES</div>
+                            <div style={{ fontSize: '1rem', fontWeight: 700, color: '#15803d' }}>2-4 days</div>
+                            <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginTop: '0.2rem' }}>Faster delivery to major cities</div>
+                        </div>
+                        <div style={{ padding: '0.75rem', background: 'rgba(245,158,11,0.05)', borderRadius: '8px', border: '1px solid rgba(245,158,11,0.2)' }}>
+                            <div style={{ fontSize: '0.7rem', fontWeight: 700, color: 'var(--text-muted)', marginBottom: '0.2rem' }}>NON-METRO ZONES</div>
+                            <div style={{ fontSize: '1rem', fontWeight: 700, color: '#d97706' }}>3-6 days</div>
+                            <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginTop: '0.2rem' }}>Standard delivery to other areas</div>
+                        </div>
+                    </div>
+
+                    {/* Important Notes */}
+                    <div style={{ padding: '0.85rem', background: 'rgba(245,158,11,0.05)', borderRadius: '10px', border: '1px solid rgba(245,158,11,0.2)' }}>
+                        <h4 style={{ margin: '0 0 0.5rem 0', fontSize: '0.85rem', fontWeight: 700, color: '#92400e' }}>
+                            Important Notes
+                        </h4>
+                        <ul style={{ margin: 0, paddingLeft: '1.1rem', fontSize: '0.78rem', color: '#92400e', lineHeight: 1.6 }}>
+                            <li>Real-time calculation at checkout based on delivery pincode</li>
+                            <li>No admin configuration required - uses Shiprocket estimation automatically</li>
+                            <li>Default weight: 0.5kg per item (overridable with actual product weight)</li>
+                            <li>Final charges rounded to nearest ₹5 for cleaner pricing</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
         </div>
     );
 }

@@ -45,7 +45,7 @@ export default function ReviewModal({ isOpen, onClose, productId, productName, o
             const data = await response.json();
 
             if (data.success) {
-                alert('Review submitted successfully!');
+                // Review submitted - modal closes and list updates automatically
                 onClose();
                 setTitle('');
                 setBody('');

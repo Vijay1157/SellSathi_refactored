@@ -136,7 +136,7 @@ export default function SellerDashboard() {
         });
         const data = await response.json();
         if (data.success) {
-            alert("Product updated successfully!");
+            // Product updated - list updates automatically, no alert needed
             setSelectedProduct({ ...payloadData });
             setProducts(products.map(p => p.id === selectedProduct.id ? { ...payloadData, id: p.id } : p));
         } else {
