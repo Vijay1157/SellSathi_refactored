@@ -441,6 +441,27 @@ const adminRemoveProduct = async (req, res) => {
             adminRemovedAt: new Date().toISOString()
         });
 
+        // Add dashboard notification for seller
+        if (sellerId) {
+            await db.collection('sellers').doc(sellerId).update({
+                productRemovedNotification: {
+                    productName: productData.name || productData.title || 'Product',
+                    productId: id,
+                    removedAt: new Date().toISOString(),
+                    seen: false,
+                    type: 'REMOVAL'
+                }
+            }).catch(err => console.error('[AdminRemoveProduct] Notification error:', err));
+
+            // ALSO update listedproducts sub-collection so dashboard shows it correctly
+            await db.collection('sellers').doc(sellerId).collection('listedproducts').doc(id).update({
+                adminRemoved: true,
+                adminRemovedAt: new Date().toISOString()
+            }).catch(() => {});
+            
+            cache.invalidate(`sellerDash_${sellerId}`, `sellerProducts_${sellerId}`);
+        }
+
         cache.invalidate('adminStats');
         cache.invalidatePrefix('products_');
 
@@ -549,6 +570,27 @@ const restoreAdminRemovedProduct = async (req, res) => {
             adminRemoved: admin.firestore.FieldValue.delete(),
             adminRemovedAt: admin.firestore.FieldValue.delete()
         });
+
+        // Add dashboard notification for seller (Restoration)
+        if (sellerId) {
+            await db.collection('sellers').doc(sellerId).update({
+                productRemovedNotification: {
+                    productName: productData.name || productData.title || 'Product',
+                    productId: id,
+                    restoredAt: new Date().toISOString(),
+                    seen: false,
+                    type: 'RESTORATION'
+                }
+            }).catch(err => console.error('[RestoreProduct] Notification error:', err));
+
+            // ALSO update listedproducts sub-collection
+            await db.collection('sellers').doc(sellerId).collection('listedproducts').doc(id).update({
+                adminRemoved: admin.firestore.FieldValue.delete(),
+                adminRemovedAt: admin.firestore.FieldValue.delete()
+            }).catch(() => {});
+
+            cache.invalidate(`sellerDash_${sellerId}`, `sellerProducts_${sellerId}`);
+        }
 
         cache.invalidate('adminStats');
         cache.invalidatePrefix('products_');
