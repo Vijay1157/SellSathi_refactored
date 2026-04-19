@@ -94,6 +94,7 @@ export default function Checkout() {
             platformMaintenance: 0.5,
             qualityHandling: 0.0
         },
+        platformFeeCapRanges: [],
         defaultPlatformFeePercent: 3.5,
         defaultGstPercent: 18,
         defaultShippingHandlingPercent: 0
@@ -137,11 +138,11 @@ export default function Checkout() {
                             platformMaintenance: 0.5,
                             qualityHandling: 0.0
                         },
+                        platformFeeCapRanges: data.config.platformFeeCapRanges || [],
                         defaultPlatformFeePercent: data.config.defaultPlatformFeePercent ?? 3.5,
                         defaultGstPercent: data.config.defaultGstPercent ?? 18,
                         defaultShippingHandlingPercent: data.config.defaultShippingHandlingPercent ?? 0
                     });
-                    console.log('[Checkout] Admin config loaded:', data.config.platformFeeBreakdown);
                 }
             } catch (error) {
                 console.error('Failed to fetch admin config:', error);
@@ -317,20 +318,15 @@ export default function Checkout() {
     
     // Estimate shipping charges when address is complete
     const estimateShippingCharges = async (address, items) => {
-        console.log('🚀 estimateShippingCharges called with:', { address, items });
-        
         // Check if address has required fields
         if (!address.pincode || address.pincode.length !== 6) {
-            console.log('❌ Invalid pincode:', address.pincode);
             return;
         }
         
         if (!items || items.length === 0) {
-            console.log('❌ No items:', items);
             return;
         }
         
-        console.log('✅ Starting shipping estimation API call...');
         setEstimatingShipping(true);
         try {
             const requestBody = {
@@ -338,7 +334,6 @@ export default function Checkout() {
                 cartItems: items,
                 totalWeight: items.length * 0.5 // Estimate 0.5kg per item
             };
-            console.log('📤 Request body:', requestBody);
             
             const response = await authFetch('/shipping/estimate', {
                 method: 'POST',
@@ -347,16 +342,11 @@ export default function Checkout() {
             });
             
             const data = await response.json();
-            console.log('📥 API Response:', data);
             
             if (data.success) {
                 setShippingFee(data.shippingCharge || 0);
                 setEstimatedDeliveryDays(data.estimatedDeliveryDays || '');
                 setShippingEstimated(true);
-                console.log('✅ Shipping estimated successfully:', {
-                    shippingCharge: data.shippingCharge,
-                    estimatedDeliveryDays: data.estimatedDeliveryDays
-                });
             } else {
                 console.error('❌ Shipping estimation failed:', data.message);
                 setShippingFee(0);
@@ -368,7 +358,6 @@ export default function Checkout() {
             setShippingEstimated(false);
         } finally {
             setEstimatingShipping(false);
-            console.log('🏁 Shipping estimation complete');
         }
     };
     
@@ -379,24 +368,9 @@ export default function Checkout() {
             selectedItems.has(item.id || item.productId)
         );
         
-        console.log('🚢 Shipping estimation check:', {
-            pincode: shippingAddress.pincode,
-            pincodeLength: shippingAddress.pincode?.length,
-            checkoutItemsCount: checkoutItems.length,
-            selectedItemsSize: selectedItems.size,
-            filteredItemsCount: selectedItems_filtered.length,
-            address: shippingAddress
-        });
-        
         if (shippingAddress.pincode && shippingAddress.pincode.length === 6 && selectedItems_filtered.length > 0) {
-            console.log('✅ Conditions met - Triggering shipping estimation');
             estimateShippingCharges(shippingAddress, selectedItems_filtered);
         } else {
-            console.log('❌ Shipping estimation not triggered - Conditions:', {
-                hasPincode: !!shippingAddress.pincode,
-                pincodeLength: shippingAddress.pincode?.length,
-                hasItems: selectedItems_filtered.length > 0
-            });
             // Reset shipping if conditions not met
             if (shippingFee > 0 || shippingEstimated) {
                 setShippingFee(0);

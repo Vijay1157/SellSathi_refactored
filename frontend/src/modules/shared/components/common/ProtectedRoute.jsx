@@ -13,7 +13,6 @@ export default function ProtectedRoute({ children, requiredRole = null }) {
             const user = localStorage.getItem(key);
 
             if (!user) {
-                console.log('No user in localStorage - Unauthorized');
                 setIsAuthorized(false);
                 return;
             }
@@ -68,7 +67,6 @@ export default function ProtectedRoute({ children, requiredRole = null }) {
 
         // Listen for custom userDataChanged event
         const handleUserChange = () => {
-            console.log('User data changed - Re-checking authorization');
             checkAuthorization();
         };
 
@@ -86,8 +84,7 @@ export default function ProtectedRoute({ children, requiredRole = null }) {
     useEffect(() => {
         if (isAuthorized === false) {
             const redirectPath = requiredRole === 'SELLER' ? '/seller' : '/';
-            console.log(`[ProtectedRoute] Auth lost! requiredRole: ${requiredRole}, redirecting to: ${redirectPath}`);
-            navigate(redirectPath, { replace: true });
+            navigate(redirectPath, { replace: true});
 
             // Only trigger the login modal for general consumer routes
             if (requiredRole === 'CONSUMER' || !requiredRole) {

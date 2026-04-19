@@ -51,7 +51,7 @@ const getAdminProfile = async (req, res) => {
 const updateAdminProfile = async (req, res) => {
     try {
         const uid = req.user.uid;
-        const { name, dateOfBirth, address, websiteName, websiteInfo, adminEmail, phone, defaultPlatformFeePercent, defaultGstPercent, defaultShippingHandlingPercent, categoryGstRates, platformFeeBreakdown, platformFeeBreakdownSeller, priceRangeFees } = req.body;
+        const { name, dateOfBirth, address, websiteName, websiteInfo, adminEmail, phone, defaultPlatformFeePercent, defaultGstPercent, defaultShippingHandlingPercent, categoryGstRates, platformFeeBreakdown, platformFeeBreakdownSeller, priceRangeFees, platformFeeCapRanges } = req.body;
         
         // Validate required fields — name only required for profile updates, not settings-only updates
         if (name !== undefined && (!name || !name.trim())) {
@@ -189,6 +189,17 @@ const updateAdminProfile = async (req, res) => {
                 min: r.min,
                 max: r.max ?? null,
                 feeAmount: parseFloat(r.feeAmount || r.feePercent) || 0
+            }));
+        }
+        
+        // Add platform fee cap ranges if provided
+        if (platformFeeCapRanges !== undefined && Array.isArray(platformFeeCapRanges)) {
+            updateData.platformFeeCapRanges = platformFeeCapRanges.map(r => ({
+                id: r.id,
+                label: r.label,
+                min: parseFloat(r.min) || 0,
+                max: r.max !== null ? parseFloat(r.max) : null,
+                capAmount: parseFloat(r.capAmount) || 0
             }));
         }
         

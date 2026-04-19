@@ -85,15 +85,11 @@ const SellerOnboarding = () => {
         const stored = localStorage.getItem('sellerAadhaarData');
         if (stored) {
           extractedData = JSON.parse(stored);
-          console.log("[SellerOnboarding] Loaded fallback from localStorage:", extractedData);
         }
       } catch (err) { /* ignore parse error */ }
-    } else {
-      console.log("[SellerOnboarding] Received data from navigate state:", extractedData);
     }
 
     if (extractedData && (extractedData.fullName || extractedData.aadhaarNumber || extractedData.name || extractedData.aadhaar_no)) {
-      console.log("[SellerOnboarding] Applying extracted data to state...");
       setSellerData(prev => ({
         ...prev,
         fullName: extractedData.fullName || extractedData.name || prev.fullName,

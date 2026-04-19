@@ -59,9 +59,6 @@ export default function SellerInvoiceModal({ seller, onClose, onDownloadPDF, isD
     const amountToReceive = totalRevenue * 0.9;
     const deliveredCount = seller.financials?.deliveredCount || 0;
     
-    // Debug log
-    console.log('[INVOICE MODAL] Seller:', seller.shopName, 'UID:', seller.uid, 'Products:', totalProducts, 'Financials:', seller.financials);
-
     return (
         <div className="flex-1 flex flex-col" style={{ width: '100%', height: '100%' }}>
             {/* Header */}

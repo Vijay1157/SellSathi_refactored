@@ -146,20 +146,33 @@ function renderAddresses(doc, order, y, getName, showShipping) {
     // Billed To
     doc.fontSize(9).font('Helvetica-Bold').text('Billed To', 350, y);
     
-    // Show business/company name if GST number is provided
-    if (order.customerInfo?.businessName || order.businessName) {
-        doc.fontSize(8).font('Helvetica').text(order.customerInfo?.businessName || order.businessName, 350, y + 15);
-        doc.fontSize(7).text(getName(order.billingAddress || order.shippingAddress), 350, y + 27);
-    } else {
-        doc.fontSize(8).font('Helvetica').text(getName(order.billingAddress || order.shippingAddress), 350, y + 15);
-    }
+    let currentY = y + 15;
+    
+    // Customer name first
+    doc.fontSize(8).font('Helvetica').fillColor('#000000').text(getName(order.billingAddress || order.shippingAddress), 350, currentY);
+    currentY += 12;
     
     const bAddr = order.billingAddress || order.shippingAddress || {};
-    const addressY = (order.customerInfo?.businessName || order.businessName) ? y + 37 : y + 27;
-    doc.fontSize(7).text(`${bAddr.addressLine || 'N/A'}, ${bAddr.city || ''}`, 350, addressY);
+    doc.fontSize(7).text(`${bAddr.addressLine || 'N/A'}, ${bAddr.city || ''}`, 350, currentY);
+    currentY += 10;
     
-    if (order.customerInfo?.gstNumber || order.gstNumber) {
-        doc.text(`GSTIN: ${order.customerInfo?.gstNumber || order.gstNumber}`, 350, addressY + 10);
+    // GST Number
+    const gstNumber = order.gstNumber || order.customerInfo?.gstNumber || bAddr.gstNumber || null;
+    if (gstNumber) {
+        doc.text(`GSTIN: ${gstNumber}`, 350, currentY);
+        currentY += 10;
+    }
+    
+    // Business/Company name BELOW GST number
+    const businessName = order.businessName || 
+                        order.customerInfo?.businessName || 
+                        bAddr.businessName || 
+                        order.shippingAddress?.businessName || 
+                        null;
+    if (businessName) {
+        doc.fontSize(7).font('Helvetica').fillColor('#666666').text('Business: ', 350, currentY, { continued: true });
+        doc.font('Helvetica-Bold').fillColor('#000000').text(businessName);
+        currentY += 10;
     }
 
     if (showShipping) {

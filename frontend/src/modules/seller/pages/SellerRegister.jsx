@@ -44,7 +44,6 @@ export const SellerRegister = () => {
       });
 
       const result = await response.json();
-      console.log("[SellerRegister] Aadhaar Extraction FULL Result Object:", JSON.stringify(result, null, 2));
 
       if (result.success && result.data) {
         // Save to localStorage as a primary backup for the next page
