@@ -16,5 +16,6 @@ router.post('/correction-request', sellerController.submitCorrectionRequest);
 router.post('/edit-request', sellerController.submitEditRequest);
 router.put('/order/:id/status', sellerController.updateOrderStatus);
 router.put('/:uid/notification-seen', sellerController.markNotificationSeen);
+router.put('/:uid/product-notification-seen', sellerController.markProductNotificationSeen);
 
 module.exports = router;

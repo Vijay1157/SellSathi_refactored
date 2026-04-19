@@ -136,9 +136,14 @@ export default function SellerDashboard() {
         });
         const data = await response.json();
         if (data.success) {
-            // Product updated - list updates automatically, no alert needed
-            setSelectedProduct({ ...payloadData });
-            setProducts(products.map(p => p.id === selectedProduct.id ? { ...payloadData, id: p.id } : p));
+            // Product updated - respect any server-side forcing of GST
+            const updatedProduct = { 
+                ...payloadData, 
+                id: selectedProduct.id,
+                gstPercent: data.forcedGst !== undefined ? data.forcedGst : payloadData.gstPercent
+            };
+            setSelectedProduct(updatedProduct);
+            setProducts(products.map(p => p.id === selectedProduct.id ? updatedProduct : p));
         } else {
             alert("Failed to update: " + data.message);
         }
@@ -475,6 +480,56 @@ export default function SellerDashboard() {
                     </div>
                 </div>
 
+                {/* Product Removal/Restoration Notification Banner */}
+                {profile?.productRemovedNotification?.seen === false && (
+                    <div style={{
+                        position: 'fixed', top: '1.5rem', right: '1.5rem', zIndex: 9999,
+                        background: 'white', borderRadius: '16px', padding: '1.25rem 1.5rem',
+                        boxShadow: '0 10px 40px rgba(0,0,0,0.15)', maxWidth: '380px',
+                        border: profile.productRemovedNotification.type === 'REMOVAL' ? '1.5px solid #fee2e2' : '1.5px solid #dcfce7',
+                        animation: 'fadeInUp 0.3s ease-out',
+                        display: 'flex', gap: '12px', alignItems: 'flex-start'
+                    }}>
+                        <div style={{
+                            width: '40px', height: '40px', borderRadius: '50%',
+                            background: profile.productRemovedNotification.type === 'REMOVAL' ? '#fef2f2' : '#f0fdf4',
+                            display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0
+                        }}>
+                            {profile.productRemovedNotification.type === 'REMOVAL' ? <X size={22} color="#ef4444" /> : <Package size={22} color="#22c55e" />}
+                        </div>
+                        <div style={{ flex: 1 }}>
+                            <p style={{ margin: 0, fontWeight: 700, color: '#1e293b', fontSize: '0.95rem' }}>
+                                Product {profile.productRemovedNotification.type === 'REMOVAL' ? 'Removed' : 'Restored'}
+                            </p>
+                            <p style={{ margin: '0.25rem 0 0', color: '#64748b', fontSize: '0.85rem' }}>
+                                Your product <strong>{profile.productRemovedNotification.productName}</strong> has been {profile.productRemovedNotification.type === 'REMOVAL' ? 'removed from the store by admin.' : 'restored and is now active.'}
+                            </p>
+                            <button
+                                onClick={async () => {
+                                    try {
+                                        const uid = sellerUid || getUserUid();
+                                        if (uid) {
+                                            await authFetch(`/seller/${uid}/product-notification-seen`, { method: 'PUT' });
+                                            setProfile(prev => ({
+                                                ...prev,
+                                                productRemovedNotification: { ...prev.productRemovedNotification, seen: true }
+                                            }));
+                                        }
+                                    } catch (e) { console.error(e); }
+                                }}
+                                style={{
+                                    marginTop: '0.75rem', padding: '0.4rem 1rem',
+                                    background: 'linear-gradient(135deg, #0f172a, #1e293b)',
+                                    color: 'white', border: 'none', borderRadius: '8px',
+                                    fontSize: '0.8rem', fontWeight: 600, cursor: 'pointer'
+                                }}
+                            >
+                                Dismiss
+                            </button>
+                        </div>
+                    </div>
+                )}
+
                 {/* Modals */}
                 <ProductViewModal
                     show={showViewModal}
@@ -484,6 +539,7 @@ export default function SellerDashboard() {
                     products={products}
                     setProducts={setProducts}
                     setSelectedProduct={setSelectedProduct}
+                    sellerProfile={profile}
                 />
 
                 <TrackOrderModal

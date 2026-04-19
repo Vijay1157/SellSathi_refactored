@@ -71,7 +71,6 @@ const getSellerProducts = async (req, res) => {
 
         const snapshot = await db.collection('products').where('sellerId', '==', uid).get();
         const products = snapshot.docs
-            .filter(doc => !doc.data().adminRemoved)
             .map(doc => ({ id: doc.id, ...doc.data() }));
         cache.set(cacheKey, products, PRODUCTS_CACHE_TTL);
         return res.status(200).json({ success: true, products });
@@ -97,6 +96,28 @@ const updateProduct = async (req, res) => {
 
         const resolvedSellerId = sellerId || productSnap.data().sellerId;
 
+        // --- GST Validation for Sellers without GST Number ---
+        if (resolvedSellerId) {
+            const sellerSnap = await db.collection('sellers').doc(resolvedSellerId).get();
+            const sellerData = sellerSnap.exists ? sellerSnap.data() : {};
+            const hasGST = sellerData.hasGST === 'yes' && !!sellerData.gstNumber;
+
+            if (!hasGST) {
+                // If seller doesn't have GST, force category-based GST or keep existing
+                // This prevents manual overrides from the client
+                const adminConfigSnap = await db.collection('admin').doc('settings').get();
+                const adminConfig = adminConfigSnap.exists ? adminConfigSnap.data() : {};
+                const categoryGstRates = adminConfig.categoryGstRates || {};
+                
+                const category = productData.category || productSnap.data().category;
+                const expectedGst = categoryGstRates[category] || adminConfig.defaultGstPercent || 18;
+
+                if (productData.gstPercent !== undefined && Number(productData.gstPercent) !== Number(expectedGst)) {
+                    productData.gstPercent = expectedGst; // Force the correct one
+                }
+            }
+        }
+
         const updatePayload = { ...productData, updatedAt: admin.firestore.FieldValue.serverTimestamp() };
         delete updatePayload.id;
 
@@ -111,7 +132,7 @@ const updateProduct = async (req, res) => {
         cache.invalidate(`product_${id}`, `sellerProducts_${resolvedSellerId}`);
         cache.invalidatePrefix('products_');
 
-        return res.status(200).json({ success: true, message: 'Product updated successfully' });
+        return res.status(200).json({ success: true, message: 'Product updated successfully', forcedGst: productData.gstPercent });
     } catch (error) {
         console.error('[UpdateProduct] ERROR:', error);
         return res.status(500).json({ success: false, message: 'Failed to update product' });

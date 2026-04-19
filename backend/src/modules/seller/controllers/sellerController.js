@@ -362,4 +362,20 @@ const markNotificationSeen = async (req, res) => {
     }
 };
 
-module.exports = { getDashboardData, addProduct, createPickupAddress, getPublicProfile, updateOrderStatus, submitCorrectionRequest, submitEditRequest, markNotificationSeen };
+/**
+ * Mark product removal/restoration notification as seen.
+ */
+const markProductNotificationSeen = async (req, res) => {
+    try {
+        const { uid } = req.params;
+        await db.collection('sellers').doc(uid).update({
+            'productRemovedNotification.seen': true
+        });
+        return res.status(200).json({ success: true });
+    } catch (error) {
+        console.error('[MarkProductNotificationSeen] ERROR:', error);
+        return res.status(500).json({ success: false, message: 'Failed to mark notification seen' });
+    }
+};
+
+module.exports = { getDashboardData, addProduct, createPickupAddress, getPublicProfile, updateOrderStatus, submitCorrectionRequest, submitEditRequest, markNotificationSeen, markProductNotificationSeen };

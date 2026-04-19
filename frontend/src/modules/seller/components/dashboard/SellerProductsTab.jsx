@@ -28,9 +28,15 @@ export default function SellerProductsTab({ products, onViewProduct, onDeletePro
                                         const pricing = getProductPricing(p);
                                         return (
                                             <tr key={p.id}
-                                                style={{ borderBottom: '1px solid #f1f5f9', background: 'white', transition: 'background 0.15s ease' }}
-                                                onMouseEnter={e => e.currentTarget.style.background = '#f8fafc'}
-                                                onMouseLeave={e => e.currentTarget.style.background = 'white'}
+                                                style={{ 
+                                                    borderBottom: '1px solid #f1f5f9', 
+                                                    background: p.adminRemoved ? '#f8fafc' : 'white', 
+                                                    transition: 'all 0.15s ease',
+                                                    filter: p.adminRemoved ? 'grayscale(0.9)' : 'none',
+                                                    opacity: p.adminRemoved ? 0.75 : 1
+                                                }}
+                                                onMouseEnter={e => { if (!p.adminRemoved) e.currentTarget.style.background = '#f8fafc'; }}
+                                                onMouseLeave={e => { if (!p.adminRemoved) e.currentTarget.style.background = 'white'; }}
                                             >
                                                 <td style={{ padding: '1.25rem 1.5rem' }}>
                                                     <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
@@ -43,11 +49,17 @@ export default function SellerProductsTab({ products, onViewProduct, onDeletePro
                                                         )}
                                                         <div>
                                                             <p style={{ fontWeight: 700, color: '#1e293b', margin: 0, fontSize: '0.95rem', letterSpacing: '-0.2px' }}>{p.title}</p>
-                                                            <div style={{ display: 'flex', gap: '0.35rem', marginTop: '6px', flexWrap: 'wrap' }}>
+                                                            <div style={{ display: 'flex', gap: '0.35rem', marginTop: '6px', flexWrap: 'wrap', alignItems: 'center' }}>
                                                                 <span style={{ color: '#94a3b8', fontSize: '0.7rem', fontWeight: 500 }}>ID: {p.id?.substring(0, 8)}</span>
-                                                                {p.sizes && p.sizes.length > 0 && <span style={{ background: '#f3e8ff', color: '#3B7CF1', padding: '0.1rem 0.55rem', borderRadius: '12px', fontSize: '0.65rem', fontWeight: 600 }}>{p.sizes.length} SIZES</span>}
-                                                                {p.colors && p.colors.length > 0 && <span style={{ background: '#fce7f3', color: '#db2777', padding: '0.1rem 0.55rem', borderRadius: '12px', fontSize: '0.65rem', fontWeight: 600 }}>{p.colors.length} COLORS</span>}
-                                                                {p.pricingType === 'varied' && <span style={{ background: '#ecfdf5', color: '#059669', padding: '0.1rem 0.55rem', borderRadius: '12px', fontSize: '0.65rem', fontWeight: 700 }}>VARIED PRICE</span>}
+                                                                {p.adminRemoved ? (
+                                                                    <span style={{ background: '#fee2e2', color: '#ef4444', padding: '0.1rem 0.6rem', borderRadius: '12px', fontSize: '0.7rem', fontWeight: 800, border: '1px solid #fca5a5' }}>REMOVED BY ADMIN</span>
+                                                                ) : (
+                                                                    <>
+                                                                        {p.sizes && p.sizes.length > 0 && <span style={{ background: '#f3e8ff', color: '#3B7CF1', padding: '0.1rem 0.55rem', borderRadius: '12px', fontSize: '0.65rem', fontWeight: 600 }}>{p.sizes.length} SIZES</span>}
+                                                                        {p.colors && p.colors.length > 0 && <span style={{ background: '#fce7f3', color: '#db2777', padding: '0.1rem 0.55rem', borderRadius: '12px', fontSize: '0.65rem', fontWeight: 600 }}>{p.colors.length} COLORS</span>}
+                                                                        {p.pricingType === 'varied' && <span style={{ background: '#ecfdf5', color: '#059669', padding: '0.1rem 0.55rem', borderRadius: '12px', fontSize: '0.65rem', fontWeight: 700 }}>VARIED PRICE</span>}
+                                                                    </>
+                                                                )}
                                                             </div>
                                                         </div>
                                                     </div>
@@ -95,7 +107,9 @@ export default function SellerProductsTab({ products, onViewProduct, onDeletePro
                             {products.map(p => {
                                 const pricing = getProductPricing(p);
                                 return (
-                                    <div key={p.id} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4">
+                                    <div key={p.id} 
+                                        className={`rounded-2xl border border-gray-100 shadow-sm p-4 transition-all ${p.adminRemoved ? 'bg-gray-50 opacity-75 grayscale' : 'bg-white'}`}
+                                    >
                                         <div className="flex items-start gap-3 mb-3">
                                             {p.image ? (
                                                 <img src={p.image} className="w-14 h-14 rounded-xl object-cover border border-gray-200 shrink-0" />
@@ -105,12 +119,20 @@ export default function SellerProductsTab({ products, onViewProduct, onDeletePro
                                                 </div>
                                             )}
                                             <div className="flex-1 min-w-0">
-                                                <p className="font-bold text-slate-800 text-sm truncate">{p.title}</p>
-                                                <span className="inline-block mt-1 bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full text-xs font-semibold">{p.category}</span>
-                                                <div className="flex gap-1 mt-1.5 flex-wrap">
-                                                    {p.sizes && p.sizes.length > 0 && <span className="bg-purple-50 text-blue-600 px-2 py-0.5 rounded-full text-[10px] font-semibold">{p.sizes.length} SIZES</span>}
-                                                    {p.colors && p.colors.length > 0 && <span className="bg-pink-50 text-pink-600 px-2 py-0.5 rounded-full text-[10px] font-semibold">{p.colors.length} COLORS</span>}
+                                                <div className="flex flex-col gap-1">
+                                                    <p className="font-bold text-slate-800 text-sm truncate">{p.title}</p>
+                                                    {p.adminRemoved ? (
+                                                        <span className="inline-block self-start bg-red-50 text-red-500 px-2 py-0.5 rounded-md text-[10px] font-extrabold border border-red-100 uppercase">Removed by Admin</span>
+                                                    ) : (
+                                                        <span className="inline-block self-start bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full text-xs font-semibold">{p.category}</span>
+                                                    )}
                                                 </div>
+                                                {!p.adminRemoved && (
+                                                    <div className="flex gap-1 mt-1.5 flex-wrap">
+                                                        {p.sizes && p.sizes.length > 0 && <span className="bg-purple-50 text-blue-600 px-2 py-0.5 rounded-full text-[10px] font-semibold">{p.sizes.length} SIZES</span>}
+                                                        {p.colors && p.colors.length > 0 && <span className="bg-pink-50 text-pink-600 px-2 py-0.5 rounded-full text-[10px] font-semibold">{p.colors.length} COLORS</span>}
+                                                    </div>
+                                                )}
                                             </div>
                                         </div>
 
@@ -125,17 +147,23 @@ export default function SellerProductsTab({ products, onViewProduct, onDeletePro
                                                 )}
                                             </div>
                                             <div className="flex items-center gap-1.5">
-                                                <div className="w-2 h-2 rounded-full" style={{ background: p.stock > 0 ? '#22c55e' : '#ef4444' }}></div>
+                                                <div className="w-2 h-2 rounded-full" style={{ background: p.stock > 0 && !p.adminRemoved ? '#22c55e' : '#ef4444' }}></div>
                                                 <span className="text-sm font-bold text-slate-800">{p.stock || 0}</span>
                                                 <span className="text-[10px] text-gray-400 font-medium">STK</span>
                                             </div>
                                         </div>
 
                                         <div className="flex gap-2">
-                                            <button className="flex-1 flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl border border-gray-200 bg-white text-blue-600 text-sm font-medium" onClick={() => onViewProduct(p)}>
-                                                <Eye size={14} /> View
+                                            <button 
+                                                className="flex-1 flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl border border-gray-200 bg-white text-blue-600 text-sm font-medium" 
+                                                onClick={() => onViewProduct(p)}
+                                            >
+                                                <Eye size={14} /> {p.adminRemoved ? 'Details' : 'View'}
                                             </button>
-                                            <button className="flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl border border-red-200 bg-red-50 text-red-500 text-sm font-medium" onClick={() => onDeleteProduct(p.id)}>
+                                            <button 
+                                                className="flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl border border-red-200 bg-red-50 text-red-500 text-sm font-medium" 
+                                                onClick={() => onDeleteProduct(p.id)}
+                                            >
                                                 <Trash2 size={14} />
                                             </button>
                                         </div>

@@ -20,10 +20,14 @@ import VariantsEditor from '../AddProduct/VariantsEditor';
 const CATEGORY_CONFIG = VARIANT_CONFIGS;
 
 export default function ProductViewModal({
-    show, selectedProduct, onClose, onUpdateProduct
+    show, selectedProduct, onClose, onUpdateProduct, sellerProfile
 }) {
     const [isEditing, setIsEditing] = useState(false);
     const [updateLoading, setUpdateLoading] = useState(false);
+
+    // GST logic
+    const [categoryGstRates, setCategoryGstRates] = useState(CATEGORY_GST_RATES);
+    const sellerHasGST = sellerProfile?.hasGST === 'yes' && !!sellerProfile?.gstNumber;
 
     // Edit states
     const [editData, setEditData] = useState(null);
@@ -44,6 +48,19 @@ export default function ProductViewModal({
     const [newSpecVal, setNewSpecVal] = useState('');
     
     const [variantImages, setVariantImages] = useState({});
+
+    useEffect(() => {
+        if (show) {
+            authFetch('/admin/config/public')
+                .then(r => r.json())
+                .then(d => {
+                    if (d.success && d.config?.categoryGstRates) {
+                        setCategoryGstRates(d.config.categoryGstRates);
+                    }
+                })
+                .catch(console.error);
+        }
+    }, [show]);
 
     useEffect(() => {
         if (selectedProduct) {
@@ -310,7 +327,7 @@ export default function ProductViewModal({
                                                             value={editData.category}
                                                             onChange={e => {
                                                                 const newCat = e.target.value;
-                                                                const newGst = CATEGORY_GST_RATES[newCat] || 18;
+                                                                const newGst = categoryGstRates[newCat] || 18;
                                                                 setEditData({ ...editData, category: newCat, gstPercent: newGst });
                                                                 setSelectedSizes([]); setSelectedColors([]); setVariants({});
                                                                 setSpecifications([]); setPricingType('same'); setSizePrices({});
@@ -337,9 +354,27 @@ export default function ProductViewModal({
                                                             value={editData.stock} onChange={e => setEditData({ ...editData, stock: e.target.value })} />
                                                     </div>
                                                     <div>
-                                                        <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem', fontWeight: 600 }}>GST Percent (%) <span style={{color: 'red'}}>*</span></label>
-                                                        <input type="number" required min="0" max="100" style={{ width: '100%', padding: '0.875rem 1rem', border: '1.5px solid #e2e8f0', borderRadius: '12px' }}
-                                                            value={editData.gstPercent} onChange={e => setEditData({ ...editData, gstPercent: e.target.value })} />
+                                                        <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem', fontWeight: 600 }}>
+                                                            GST Percent (%) <span style={{color: 'red'}}>*</span>
+                                                            {!sellerHasGST && <span style={{fontSize: '0.7rem', color: '#64748b', marginLeft: '8px', fontWeight: 400}}>(Fixed by Admin)</span>}
+                                                        </label>
+                                                        <input 
+                                                            type="number" 
+                                                            required 
+                                                            min="0" 
+                                                            max="100" 
+                                                            style={{ 
+                                                                width: '100%', 
+                                                                padding: '0.875rem 1rem', 
+                                                                border: '1.5px solid #e2e8f0', 
+                                                                borderRadius: '12px',
+                                                                background: !sellerHasGST ? '#f1f5f9' : 'white',
+                                                                cursor: !sellerHasGST ? 'not-allowed' : 'text'
+                                                            }}
+                                                            readOnly={!sellerHasGST}
+                                                            value={editData.gstPercent} 
+                                                            onChange={e => sellerHasGST && setEditData({ ...editData, gstPercent: e.target.value })} 
+                                                        />
                                                     </div>
                                                     {editData.category === 'Other' && (
                                                         <div>
