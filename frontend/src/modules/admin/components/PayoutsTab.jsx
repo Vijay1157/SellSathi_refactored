@@ -102,8 +102,6 @@ export default function PayoutsTab({ analytics, setSelectedAnalyticsSeller, fetc
                                             <button 
                                                 className="btn btn-secondary" 
                                                 onClick={() => {
-                                                    console.log('[PayoutsTab] View button clicked for seller:', s.shopName, 'UID:', s.uid);
-                                                    console.log('[PayoutsTab] Seller data:', s);
                                                     setSelectedAnalyticsSeller(s);
                                                 }} 
                                                 style={{ padding: '3px 8px', fontSize: '0.65rem', fontWeight: 600 }}

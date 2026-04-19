@@ -397,7 +397,6 @@ export default function ConsumerDashboard() {
     ];
 
     const handleCancelOrder = async (orderId) => {
-        console.log(`[CANCEL] Triggered for order: ${orderId}`);
         const order = orders.find(o => o.id === orderId);
         if (!order) return;
         
@@ -421,25 +420,20 @@ export default function ConsumerDashboard() {
 
         const finalReason = cancellationReason === 'Other' ? customReason : cancellationReason;
 
-        console.log(`[CANCEL] Confirming cancellation for order: ${orderToCancel.id} with reason: ${finalReason}`);
         setCancelling(true);
         try {
             const url = `/orders/${orderToCancel.id}/cancel`;
-            console.log(`[CANCEL] Sending request to: ${url}`);
             const response = await authFetch(url, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ cancellationReason: finalReason })
             });
-            console.log(`[CANCEL] Response status: ${response.status}`);
             
             const text = await response.text();
-            console.log(`[CANCEL] Raw response text: ${text.substring(0, 500)}`);
             
             let data;
             try {
                 data = JSON.parse(text);
-                console.log(`[CANCEL] Parsed response data:`, data);
             } catch (e) {
                 console.error('[CANCEL] Failed to parse JSON:', e);
                 throw new Error(`Invalid server response: ${text.substring(0, 100)}`);

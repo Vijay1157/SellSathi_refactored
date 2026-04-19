@@ -12,8 +12,6 @@ import SellerProfileTab from '@/modules/seller/components/dashboard/SellerProfil
 import ProductViewModal from '@/modules/seller/components/dashboard/ProductViewModal';
 import TrackOrderModal from '@/modules/seller/components/dashboard/TrackOrderModal';
 
-console.log("[SellerDashboard] Component Loading...");
-
 // Helper to get current user UID (works for both Firebase and test login)
 const getUserUid = () => {
     try {
@@ -71,7 +69,6 @@ export default function SellerDashboard() {
     useEffect(() => {
         const loadDashboard = async () => {
             const uid = getUserUid();
-            console.log(`[SellerDashboard] Loading UID: ${uid}`);
             setSellerUid(uid);
             if (!uid) {
                 console.warn("[SellerDashboard] No UID found in session.");
@@ -83,9 +80,7 @@ export default function SellerDashboard() {
             try {
                 setLoading(true);
                 setError(null);
-                console.log(`[SellerDashboard] Calling API: /seller/${uid}/dashboard-data`);
                 const response = await authFetch(`/seller/${uid}/dashboard-data`);
-                console.log(`[SellerDashboard] API Response Status: ${response.status}`);
 
                 if (response.status === 404) {
                     setError("Seller profile not found. Have you completed onboarding?");
@@ -94,7 +89,6 @@ export default function SellerDashboard() {
                 }
 
                 const data = await response.json();
-                console.log("[SellerDashboard] API Response Body:", data);
                 if (data.success) {
                     const sellerProfile = data.profile || {};
                     setProfile(sellerProfile);
@@ -106,7 +100,6 @@ export default function SellerDashboard() {
                     setProducts(data.products || []);
                     setOrders(data.orders || []);
                     if (data.quotaExceeded) setQuotaExceeded(true);
-                    console.log("[SellerDashboard] State Update Complete.");
                 } else {
                     setError(data.message || "Failed to load dashboard data");
                 }
@@ -115,7 +108,6 @@ export default function SellerDashboard() {
                 setError("Unable to connect to the server. Please check your connection.");
             } finally {
                 setLoading(false);
-                console.log("[SellerDashboard] Loading State: false");
             }
         };
         loadDashboard();
@@ -162,7 +154,6 @@ export default function SellerDashboard() {
     };
 
     const handleLogout = async () => {
-        console.log("[SellerDashboard] Logout button clicked. Starting signout process...");
         try {
             await auth.signOut();
         } catch (error) {
@@ -210,7 +201,6 @@ export default function SellerDashboard() {
 
     try {
         if (loading) {
-            console.log("[SellerDashboard] Rendering LOADING state...");
             return (
                 <div className="flex flex-col justify-center items-center h-screen gap-4" style={{ background: 'var(--background)' }}>
                     <div style={{ position: 'relative', width: '60px', height: '60px', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
@@ -223,7 +213,6 @@ export default function SellerDashboard() {
         }
 
         if (error) {
-            console.log("[SellerDashboard] Rendering ERROR state...");
             return (
                 <div className="flex flex-col justify-center items-center h-screen gap-6 p-8 text-center" style={{ background: 'var(--background)' }}>
                     <div style={{ padding: '2rem', background: 'var(--error)15', borderRadius: '50%', color: 'var(--error)' }}><AlertCircle size={64} /></div>

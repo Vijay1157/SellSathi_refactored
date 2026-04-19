@@ -56,7 +56,6 @@ export default function SellerProfileTab({ profile, sellerUid }) {
         setSendingRequest(true);
         setRequestError('');
         try {
-            console.log('Sending correction request with UID:', sellerUid);
             
             const response = await authFetch('/seller/correction-request', {
                 method: 'POST',

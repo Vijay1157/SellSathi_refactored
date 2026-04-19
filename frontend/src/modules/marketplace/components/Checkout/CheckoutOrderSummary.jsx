@@ -107,7 +107,7 @@ export default function CheckoutOrderSummary({
                                 )}
                             </div>
                             <span className="text-base text-gray-500 font-medium flex-shrink-0">
-                                ₹{Math.round(orderTotals.platformFeeAndServiceGST).toLocaleString('en-IN')}
+                                ₹{orderTotals.platformFeeAndServiceGST.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                             </span>
                         </div>
                         
@@ -123,7 +123,7 @@ export default function CheckoutOrderSummary({
                                             {item.label}
                                         </span>
                                         <span className="text-sm text-gray-700 font-medium flex-shrink-0">
-                                            ₹{Math.round(item.amount).toLocaleString('en-IN')}
+                                            ₹{item.amount.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                                         </span>
                                     </div>
                                 ))}
@@ -133,7 +133,7 @@ export default function CheckoutOrderSummary({
                                         GST (18% on Platform Fee)
                                     </span>
                                     <span className="text-sm text-gray-700 font-medium flex-shrink-0">
-                                        ₹{Math.round(orderTotals.serviceGST).toLocaleString('en-IN')}
+                                        ₹{orderTotals.serviceGST.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                                     </span>
                                 </div>
                             </div>

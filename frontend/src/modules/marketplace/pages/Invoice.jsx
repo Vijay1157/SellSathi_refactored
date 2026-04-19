@@ -41,7 +41,7 @@ export default function Invoice() {
                     }
                 }
             } catch (error) {
-                console.error('Error fetching order:', error);
+                // Error fetching order - silent fail
             } finally {
                 setLoading(false);
             }
@@ -77,11 +77,28 @@ export default function Invoice() {
         
         const element = document.getElementById('invoice-card');
         const opt = {
-            margin: 0,
+            margin: [0.5, 0.5, 0.5, 0.5],
             filename: `GudKart_Invoice_${order.orderId || order.id}.pdf`,
             image: { type: 'jpeg', quality: 0.98 },
-            html2canvas: { scale: 2, useCORS: true, allowTaint: true, logging: false },
-            jsPDF: { unit: 'in', format: 'a4', orientation: 'portrait' }
+            html2canvas: { 
+                scale: 2, 
+                useCORS: true, 
+                allowTaint: true, 
+                logging: false,
+                windowHeight: element.scrollHeight,
+                windowWidth: element.scrollWidth
+            },
+            jsPDF: { 
+                unit: 'in', 
+                format: 'a4', 
+                orientation: 'portrait',
+                compress: true
+            },
+            pagebreak: { 
+                mode: ['avoid-all', 'css', 'legacy'],
+                before: '.page-break',
+                after: '.invoice-page'
+            }
         };
 
         html2pdf().from(element).set(opt).save();
@@ -185,6 +202,9 @@ export default function Invoice() {
                     {order.billingAddress?.city || order.shippingAddress?.city || order.address?.city || 'N/A'}, {order.billingAddress?.state || order.shippingAddress?.state || order.address?.state || 'Karnataka'} - {order.billingAddress?.pincode || order.shippingAddress?.pincode || order.address?.pincode || 'N/A'}<br />
                     {(order.customerInfo?.gstNumber || order.gstNumber) && (
                         <><span style={{ fontWeight: '700', color: '#000' }}>GSTIN:</span> {order.customerInfo?.gstNumber || order.gstNumber}<br /></>
+                    )}
+                    {(order.businessName || order.customerInfo?.businessName) && (
+                        <><span style={{ color: '#000' }}>Business: </span><span style={{ fontWeight: '700', color: '#000' }}>{order.businessName || order.customerInfo?.businessName}</span><br /></>
                     )}
                     <span style={{ fontWeight: '700', color: '#000' }}>State:</span> {order.billingAddress?.state || order.shippingAddress?.state || order.address?.state || 'Karnataka'}<br />
                     <span style={{ fontWeight: '700', color: '#000' }}>State Code:</span> IN-KA<br />
@@ -569,7 +589,12 @@ export default function Invoice() {
                 lineHeight: '1.5'
             }}>
                 {/* --- PAGE 1: ORIGINAL INVOICE --- */}
-                <div className="invoice-page" style={{ padding: '2rem' }}>
+                <div className="invoice-page" style={{ 
+                    padding: '2rem', 
+                    minHeight: '11in',
+                    pageBreakAfter: 'always',
+                    position: 'relative'
+                }}>
                     <InvoiceHeader title="Bill of Supply" />
                     <div style={{ marginBottom: '1.5rem', paddingBottom: '1rem', borderBottom: '1px solid #000' }}>
                         <InvoiceDetails />
@@ -582,18 +607,27 @@ export default function Invoice() {
 
                 {/* --- PAGE BREAK FOR PDF --- */}
                 <div className="page-break" style={{ 
-                    pageBreakBefore: 'always', 
+                    pageBreakBefore: 'always',
+                    pageBreakAfter: 'always',
+                    height: '0.5in',
                     borderTop: '2px dashed #eee', 
-                    margin: '3rem 0',
+                    margin: '0',
                     textAlign: 'center',
                     color: '#999',
-                    fontSize: '10px'
+                    fontSize: '10px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center'
                 }}>
                     <span className="no-print">Page Break for PDF</span>
                 </div>
 
                 {/* --- PAGE 2: PLATFORM CHARGES BREAKDOWN --- */}
-                <div className="invoice-page" style={{ padding: '2rem' }}>
+                <div className="invoice-page" style={{ 
+                    padding: '2rem',
+                    minHeight: '11in',
+                    position: 'relative'
+                }}>
                     <InvoiceHeader title="Bill of Supply - Platform Charges" />
                     <div style={{ marginBottom: '1.5rem', paddingBottom: '1rem', borderBottom: '1px solid #000' }}>
                         <InvoiceDetails />
@@ -608,20 +642,47 @@ export default function Invoice() {
                 {`
                     @media print {
                         .no-print { display: none !important; }
-                        body { background: white !important; padding: 0 !important; }
-                        .container { padding: 0 !important; max-width: 100% !important; }
+                        body { background: white !important; padding: 0 !important; margin: 0 !important; }
+                        .container { padding: 0 !important; max-width: 100% !important; margin: 0 !important; }
                         #invoice-card { 
                             box-shadow: none !important; 
                             border: none !important;
                             width: 100% !important;
                             max-width: 100% !important;
+                            margin: 0 !important;
                         }
                         .invoice-page { 
-                            padding: 2rem !important; 
-                            page-break-after: always;
-                            min-height: 29.7cm; /* A4 Height */
+                            padding: 0.5in !important;
+                            page-break-after: always !important;
+                            page-break-inside: avoid !important;
+                            min-height: 10.5in !important;
+                            max-height: 10.5in !important;
+                            position: relative !important;
+                            box-sizing: border-box !important;
                         }
-                        .page-break { border: none !important; margin: 0 !important; }
+                        .invoice-page:last-child {
+                            page-break-after: auto !important;
+                        }
+                        .page-break { 
+                            display: none !important;
+                            height: 0 !important;
+                            margin: 0 !important;
+                            padding: 0 !important;
+                        }
+                        table { page-break-inside: auto !important; }
+                        tr { page-break-inside: avoid !important; page-break-after: auto !important; }
+                        thead { display: table-header-group !important; }
+                        tfoot { display: table-footer-group !important; }
+                    }
+                    
+                    /* Ensure proper page breaks for PDF generation */
+                    .invoice-page {
+                        page-break-after: always;
+                        page-break-inside: avoid;
+                    }
+                    
+                    .invoice-page:last-child {
+                        page-break-after: auto;
                     }
                 `}
             </style>

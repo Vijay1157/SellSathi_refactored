@@ -35,7 +35,7 @@ export default function SellerAuthModal({ isOpen, onClose, onSuccess }) {
             try {
                 window.recaptchaVerifierSeller.clear();
             } catch (e) {
-                console.log('Recaptcha clear error:', e);
+                // Recaptcha clear error - silent fail
             }
             window.recaptchaVerifierSeller = null;
         }

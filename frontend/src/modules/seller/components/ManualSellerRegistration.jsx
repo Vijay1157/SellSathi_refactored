@@ -102,15 +102,6 @@ export default function ManualSellerRegistration({ onClose }) {
         setLoading(true);
         
         try {
-            // Console log all form data (as requested - no backend call)
-            console.log('Manual Seller Registration Data:', {
-                personalDetails: formData.personalDetails,
-                bankDetails: formData.bankDetails,
-                companyDetails: formData.companyDetails,
-                pickupAddress: formData.pickupAddress,
-                status: 'pending'
-            });
-
             // Show success message
             setShowSuccess(true);
             

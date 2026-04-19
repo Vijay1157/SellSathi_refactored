@@ -46,20 +46,9 @@ export default function AdminDashboard() {
             const updatedSeller = allSellers.find(s => s.uid === selectedInvoiceSeller.uid);
             if (updatedSeller) {
                 setSelectedInvoiceSeller(updatedSeller);
-                console.log('[Dashboard] Auto-updated selected invoice seller:', updatedSeller.shopName, 'Products:', updatedSeller.financials?.totalProducts);
             }
         }
     }, [allSellers]);
-
-    // Log when selectedAnalyticsSeller changes
-    useEffect(() => {
-        if (selectedAnalyticsSeller) {
-            console.log('[Dashboard] selectedAnalyticsSeller changed:', selectedAnalyticsSeller.shopName, 'UID:', selectedAnalyticsSeller.uid);
-            console.log('[Dashboard] Full seller data:', selectedAnalyticsSeller);
-        } else {
-            console.log('[Dashboard] selectedAnalyticsSeller cleared');
-        }
-    }, [selectedAnalyticsSeller]);
 
     // Update selected analytics seller when analytics data changes
     useEffect(() => {
@@ -67,7 +56,6 @@ export default function AdminDashboard() {
             const updatedSeller = analytics.find(s => s.uid === selectedAnalyticsSeller.uid);
             if (updatedSeller) {
                 setSelectedAnalyticsSeller(updatedSeller);
-                console.log('[Dashboard] Auto-updated selected analytics seller:', updatedSeller.shopName, 'Products:', updatedSeller.metrics?.totalProducts);
             }
         }
     }, [analytics]);
@@ -140,12 +128,10 @@ export default function AdminDashboard() {
                     const d = await allSellersRes.value.json();
                     if (d.success) {
                         setAllSellers(d.sellers);
-                        console.log('[fetchTabData] Fetched', d.sellers.length, 'sellers');
                         if (selectedInvoiceSeller) {
                             const updated = d.sellers.find(s => s.uid === selectedInvoiceSeller.uid);
                             if (updated) {
                                 setSelectedInvoiceSeller(updated);
-                                console.log('[fetchTabData] Updated selected invoice seller:', updated.shopName, 'Products:', updated.financials?.totalProducts);
                             }
                         }
                     }
@@ -179,12 +165,10 @@ export default function AdminDashboard() {
                     const d = await res.json();
                     if (d.success && d.analytics) {
                         setAnalytics(d.analytics);
-                        console.log('[fetchTabData:payout] Fetched', d.analytics.length, 'analytics');
                         if (selectedAnalyticsSeller) {
                             const updated = d.analytics.find(s => s.uid === selectedAnalyticsSeller.uid);
                             if (updated) {
                                 setSelectedAnalyticsSeller(updated);
-                                console.log('[fetchTabData:payout] Updated selected analytics seller:', updated.shopName, 'Products:', updated.metrics?.totalProducts);
                             }
                         }
                     }
@@ -195,12 +179,10 @@ export default function AdminDashboard() {
                     const d = await allSellersRes.json();
                     if (d.success) {
                         setAllSellers(d.sellers);
-                        console.log('[fetchTabData:invoice] Fetched', d.sellers.length, 'sellers');
                         if (selectedInvoiceSeller) {
                             const updated = d.sellers.find(s => s.uid === selectedInvoiceSeller.uid);
                             if (updated) {
                                 setSelectedInvoiceSeller(updated);
-                                console.log('[fetchTabData:invoice] Updated selected invoice seller:', updated.shopName, 'Products:', updated.financials?.totalProducts);
                             }
                         }
                     }
@@ -216,9 +198,6 @@ export default function AdminDashboard() {
     };
 
     const fetchAllData = async () => {
-        // Force refresh current tab data
-        console.log('[fetchAllData] Force refreshing tab:', activeTab);
-        
         // Clear the loaded tabs cache to force refetch
         setLoadedTabs(new Set());
         
@@ -226,8 +205,6 @@ export default function AdminDashboard() {
             fetchStats(),
             fetchTabData(activeTab, true) // Force refresh
         ]);
-        
-        console.log('[fetchAllData] Refresh complete');
     };
 
     const handleDownloadPDF = async (url, filename) => {

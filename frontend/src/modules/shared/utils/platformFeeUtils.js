@@ -44,7 +44,10 @@ export const PLATFORM_FEE_BREAKDOWN = {
  * @returns {number} - Total percentage
  */
 export const calculateTotalPlatformFeePercent = (breakdown = PLATFORM_FEE_BREAKDOWN) => {
-    return Object.values(breakdown).reduce((sum, item) => sum + (item.percent || 0), 0);
+    return Object.values(breakdown).reduce((sum, item) => {
+        const percent = typeof item === 'object' ? (item.percent || 0) : (item || 0);
+        return sum + percent;
+    }, 0);
 };
 
 /**
@@ -54,21 +57,29 @@ export const calculateTotalPlatformFeePercent = (breakdown = PLATFORM_FEE_BREAKD
  * @returns {Object} - Breakdown with calculated amounts
  */
 export const calculatePlatformFeeBreakdown = (amount, breakdown = PLATFORM_FEE_BREAKDOWN) => {
+    if (!amount || isNaN(amount)) amount = 0;
+    if (!breakdown || typeof breakdown !== 'object') breakdown = PLATFORM_FEE_BREAKDOWN;
+    
     const result = {};
     let total = 0;
     
     Object.entries(breakdown).forEach(([key, value]) => {
-        const feeAmount = (amount * value.percent) / 100;
+        // Handle both formats: {percent: 1.2, label: "..."} and just the number 1.2
+        const percent = typeof value === 'object' ? (value.percent || 0) : (value || 0);
+        const feeAmount = (amount * percent) / 100;
+        
         result[key] = {
-            ...value,
-            amount: Math.round(feeAmount * 100) / 100 // Round to 2 decimal places
+            percent: percent,
+            label: typeof value === 'object' ? value.label : key,
+            description: typeof value === 'object' ? value.description : '',
+            amount: isNaN(feeAmount) ? 0 : Math.round(feeAmount * 100) / 100
         };
-        total += feeAmount;
+        total += isNaN(feeAmount) ? 0 : feeAmount;
     });
     
     result.total = {
         percent: calculateTotalPlatformFeePercent(breakdown),
-        amount: Math.round(total * 100) / 100
+        amount: isNaN(total) ? 0 : Math.round(total * 100) / 100
     };
     
     return result;
@@ -171,10 +182,11 @@ export const validatePlatformFeeBreakdown = (breakdown) => {
  * @returns {number} - Cap amount in ₹ (0 = no cap)
  */
 export const getCapAmountForPrice = (basePrice, platformFeeCapRanges) => {
-    if (!platformFeeCapRanges || platformFeeCapRanges.length === 0) return 0;
+    if (!platformFeeCapRanges || !Array.isArray(platformFeeCapRanges) || platformFeeCapRanges.length === 0) return 0;
+    if (!basePrice || isNaN(basePrice)) return 0;
     
     const matched = platformFeeCapRanges.find(range =>
-        basePrice >= range.min && (range.max === null || basePrice <= range.max)
+        range && basePrice >= range.min && (range.max === null || basePrice <= range.max)
     );
     
     return matched ? (matched.capAmount ?? 0) : 0;
@@ -187,16 +199,27 @@ export const getCapAmountForPrice = (basePrice, platformFeeCapRanges) => {
  * @returns {Object} - Breakdown with amounts split proportionally
  */
 export const splitCapAmountByBreakdown = (capAmount, breakdown) => {
-    const total = Object.values(breakdown).reduce((sum, v) => sum + (v.percent || v), 0);
+    if (!capAmount || isNaN(capAmount)) capAmount = 0;
+    if (!breakdown || typeof breakdown !== 'object') return {};
+    
+    // Calculate total percentage, handling both object and number formats
+    const total = Object.values(breakdown).reduce((sum, v) => {
+        const percent = typeof v === 'object' ? (v.percent || 0) : (v || 0);
+        return sum + percent;
+    }, 0);
+    
     if (total === 0) return breakdown; // avoid divide by zero
     
     const result = {};
     Object.entries(breakdown).forEach(([key, value]) => {
-        const percent = value.percent || value;
+        const percent = typeof value === 'object' ? (value.percent || 0) : (value || 0);
         const amount = parseFloat(((percent / total) * capAmount).toFixed(2));
+        
         result[key] = {
-            ...value,
-            amount: amount
+            percent: percent,
+            label: typeof value === 'object' ? value.label : key,
+            description: typeof value === 'object' ? value.description : '',
+            amount: isNaN(amount) ? 0 : amount
         };
     });
     
@@ -226,36 +249,56 @@ export const formatCurrency = (amount) => {
 export const calculateOrderTotalsWithGSTInclusive = (items, options = {}) => {
     const { adminConfig, couponDiscount = 0, shippingFee = 0 } = options;
     
+    // Validate inputs
+    if (!items || items.length === 0) {
+        return {
+            productPricingTotal: 0,
+            basePrice: 0,
+            platformFee: 0,
+            platformFeeBreakdown: {},
+            serviceGST: 0,
+            platformFeeAndServiceGST: 0,
+            shippingFee: 0,
+            couponDiscount: 0,
+            total: 0,
+            breakdown: {}
+        };
+    }
+    
     let productPricingTotal = 0;
     let totalBasePrice = 0;
     
     // Calculate product totals
     items.forEach(item => {
         const gstPercent = item.gstPercent || 18;
-        const basePrice = item.basePrice || item.price;
+        const basePrice = item.basePrice || item.price || 0;
         const priceWithGST = item.priceWithGST || (basePrice * (1 + gstPercent / 100));
-        const itemTotal = priceWithGST * item.quantity;
+        const itemTotal = priceWithGST * (item.quantity || 1);
         productPricingTotal += itemTotal;
-        totalBasePrice += basePrice * item.quantity;
+        totalBasePrice += basePrice * (item.quantity || 1);
     });
 
     // Get platform fee breakdown from config
     const breakdown = getPlatformFeeBreakdownFromConfig(adminConfig);
-    const percentageTotal = Object.values(breakdown).reduce((sum, v) => sum + (v.percent || v), 0);
+    const percentageTotal = Object.values(breakdown).reduce((sum, v) => {
+        const percent = typeof v === 'object' ? (v.percent || 0) : (v || 0);
+        return sum + percent;
+    }, 0);
     
     // Calculate platform fee for each item
     let totalPlatformFee = 0;
     const mergedBreakdown = {};
     
     items.forEach(item => {
-        const basePrice = item.basePrice || item.price;
-        const quantity = item.quantity;
+        const basePrice = item.basePrice || item.price || 0;
+        const quantity = item.quantity || 1;
         
         // Calculate percentage-based fee for this item
         const calculatedFee = (basePrice * percentageTotal / 100) * quantity;
         
         // Check if a cap applies for this item's price
-        const capAmount = getCapAmountForPrice(basePrice, adminConfig.platformFeeCapRanges);
+        const platformFeeCapRanges = adminConfig?.platformFeeCapRanges || [];
+        const capAmount = getCapAmountForPrice(basePrice, platformFeeCapRanges);
         
         let effectiveFee;
         let effectiveBreakdown;
@@ -295,29 +338,32 @@ export const calculateOrderTotalsWithGSTInclusive = (items, options = {}) => {
     
     // Add total to breakdown
     mergedBreakdown.total = {
-        percent: percentageTotal,
-        amount: totalPlatformFee
+        percent: percentageTotal || 0,
+        amount: isNaN(totalPlatformFee) ? 0 : totalPlatformFee
     };
 
-    const serviceGST = Math.round((totalPlatformFee * 0.18) * 100) / 100;
-    const platformFeeAndServiceGST = totalPlatformFee + serviceGST;
-    const total = productPricingTotal + platformFeeAndServiceGST + shippingFee - couponDiscount;
+    const serviceGST = isNaN(totalPlatformFee) ? 0 : Math.round((totalPlatformFee * 0.18) * 100) / 100;
+    const platformFeeAndServiceGST = (isNaN(totalPlatformFee) ? 0 : totalPlatformFee) + (isNaN(serviceGST) ? 0 : serviceGST);
+    const total = (isNaN(productPricingTotal) ? 0 : productPricingTotal) + 
+                  (isNaN(platformFeeAndServiceGST) ? 0 : platformFeeAndServiceGST) + 
+                  (isNaN(shippingFee) ? 0 : shippingFee) - 
+                  (isNaN(couponDiscount) ? 0 : couponDiscount);
 
     return {
-        productPricingTotal: Math.round(productPricingTotal * 100) / 100,
-        basePrice: Math.round(totalBasePrice * 100) / 100,
-        platformFee: totalPlatformFee,
+        productPricingTotal: isNaN(productPricingTotal) ? 0 : Math.round(productPricingTotal * 100) / 100,
+        basePrice: isNaN(totalBasePrice) ? 0 : Math.round(totalBasePrice * 100) / 100,
+        platformFee: isNaN(totalPlatformFee) ? 0 : totalPlatformFee,
         platformFeeBreakdown: mergedBreakdown,
-        serviceGST,
-        platformFeeAndServiceGST: Math.round(platformFeeAndServiceGST * 100) / 100,
-        shippingFee,
-        couponDiscount,
-        total: Math.round(total * 100) / 100,
+        serviceGST: isNaN(serviceGST) ? 0 : serviceGST,
+        platformFeeAndServiceGST: isNaN(platformFeeAndServiceGST) ? 0 : Math.round(platformFeeAndServiceGST * 100) / 100,
+        shippingFee: isNaN(shippingFee) ? 0 : shippingFee,
+        couponDiscount: isNaN(couponDiscount) ? 0 : couponDiscount,
+        total: isNaN(total) ? 0 : Math.round(total * 100) / 100,
         breakdown: {
             ...mergedBreakdown,
             serviceGST: {
                 label: 'GST (18% on Platform Fee)',
-                amount: serviceGST,
+                amount: isNaN(serviceGST) ? 0 : serviceGST,
                 percent: 18
             }
         }

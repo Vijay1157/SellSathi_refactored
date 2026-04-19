@@ -84,11 +84,9 @@ export default function OrderTracking() {
 
         const finalReason = cancellationReason === 'Other' ? customReason : cancellationReason;
 
-        console.log(`[CANCEL-TRACK] Triggered for order: ${order.id} with reason: ${finalReason}`);
         setCancelling(true);
         try {
             const url = `/orders/${order.id}/cancel`;
-            console.log(`[CANCEL-TRACK] Sending request to: ${url}`);
             const response = await authFetch(url, {
                 method: 'POST',
                 headers: {
@@ -97,14 +95,11 @@ export default function OrderTracking() {
                 body: JSON.stringify({ cancellationReason: finalReason })
             });
 
-            console.log(`[CANCEL-TRACK] Response status: ${response.status}`);
             const text = await response.text();
-            console.log(`[CANCEL-TRACK] Raw response: ${text.substring(0, 500)}`);
 
             let data;
             try {
                 data = JSON.parse(text);
-                console.log(`[CANCEL-TRACK] Parsed data:`, data);
             } catch (e) {
                 console.error('[CANCEL-TRACK] JSON parse failure:', e);
                 throw new Error(`Invalid server response: ${text.substring(0, 100)}`);

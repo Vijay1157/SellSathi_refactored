@@ -1,5 +1,5 @@
 ﻿import { useState, useEffect } from 'react';
-import { Settings, Save, Loader, RefreshCw, Truck, Tag, DollarSign, CheckCircle, XCircle, AlertCircle } from 'lucide-react';
+import { Settings, Save, Loader, Truck, Tag, DollarSign, CheckCircle, XCircle, AlertCircle } from 'lucide-react';
 import { authFetch } from '@/modules/shared/utils/api';
 import { SELLER_CATEGORIES } from '@/modules/shared/config/categories';
 import { PLATFORM_FEE_BREAKDOWN, calculateTotalPlatformFeePercent, validatePlatformFeeBreakdown } from '@/modules/shared/utils/platformFeeUtils';
@@ -27,12 +27,13 @@ const iStyle = {
     borderRadius: '8px', 
     border: '1px solid var(--border)', 
     fontSize: '0.95rem', 
-    background: 'var(--surface)', 
-    color: 'var(--text)', 
+    background: 'white', 
+    color: '#000000', 
     width: '90px', 
     outline: 'none', 
     textAlign: 'center',
-    transition: 'all 0.2s'
+    transition: 'all 0.2s',
+    fontWeight: 600
 };
 
 const SectionButtons = ({ editing, saving, onEdit, onSave, onCancel }) => (
@@ -330,6 +331,17 @@ export default function PlatformSettingsTab() {
                         opacity: 1;
                     }
                 }
+                
+                /* Hide number input spinners */
+                input[type=number]::-webkit-inner-spin-button,
+                input[type=number]::-webkit-outer-spin-button {
+                    -webkit-appearance: none;
+                    margin: 0;
+                }
+                input[type=number] {
+                    -moz-appearance: textfield;
+                    appearance: textfield;
+                }
             `}</style>
 
             <div className="animate-fade-in flex flex-col gap-8">
@@ -343,9 +355,6 @@ export default function PlatformSettingsTab() {
                         <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--text-muted)' }}>Configure platform charges and category GST rates</p>
                     </div>
                 </div>
-                <button className="btn btn-secondary" onClick={fetchConfig} style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '0.5rem 1rem' }}>
-                    <RefreshCw size={15} /> Refresh
-                </button>
             </div>
 
             {/* Platform Fee Cap Limits */}
@@ -366,171 +375,268 @@ export default function PlatformSettingsTab() {
                     </p>
                 </div>
 
-                {/* Cap Ranges Table Header */}
-                <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr 1fr 80px', gap: '1rem', padding: '0.75rem 1rem', background: 'var(--surface)', borderRadius: '8px', marginBottom: '0.75rem', border: '1px solid var(--border)' }}>
-                    <div style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Price Range Label</div>
-                    <div style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', textAlign: 'center' }}>Min (₹)</div>
-                    <div style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', textAlign: 'center' }}>Max (₹)</div>
-                    <div style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', textAlign: 'center' }}>Cap Amount (₹)</div>
-                    <div style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', textAlign: 'center' }}>Action</div>
-                </div>
-
-                {/* Cap Ranges Table Rows */}
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', opacity: editingCapRanges ? 1 : 0.75 }}>
-                    {platformFeeCapRanges.map((range, idx) => (
-                        <div key={range.id} style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr 1fr 80px', gap: '1rem', alignItems: 'center', padding: '1rem', borderRadius: '10px', background: 'var(--surface)', border: '1px solid var(--border)' }}>
-                            {/* Label */}
-                            <input
-                                type="text"
-                                value={range.label}
-                                disabled={!editingCapRanges}
-                                onChange={e => {
-                                    setPlatformFeeCapRanges(prev => prev.map((r, i) => i === idx ? { ...r, label: e.target.value } : r));
-                                }}
-                                style={{ 
-                                    ...iStyle, 
-                                    width: '100%', 
-                                    textAlign: 'left', 
-                                    cursor: editingCapRanges ? 'text' : 'not-allowed',
-                                    border: editingCapRanges ? '2px solid var(--primary)' : '1px solid var(--border)',
-                                    fontWeight: editingCapRanges ? 600 : 400
-                                }}
-                            />
-                            
-                            {/* Min */}
-                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}>
-                                <span style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--text-muted)' }}>₹</span>
-                                <input
-                                    type="number"
-                                    value={range.min}
-                                    disabled={!editingCapRanges}
-                                    onChange={e => {
-                                        const v = parseFloat(e.target.value);
-                                        if (!isNaN(v) && v >= 0) {
-                                            setPlatformFeeCapRanges(prev => prev.map((r, i) => i === idx ? { ...r, min: v } : r));
-                                        }
-                                    }}
-                                    min="0" step="1"
-                                    style={{ 
-                                        ...iStyle, 
-                                        width: '90px', 
-                                        textAlign: 'center', 
-                                        cursor: editingCapRanges ? 'text' : 'not-allowed',
-                                        border: editingCapRanges ? '2px solid var(--primary)' : '1px solid var(--border)',
-                                        fontWeight: editingCapRanges ? 600 : 400
-                                    }}
-                                />
-                            </div>
-                            
-                            {/* Max */}
-                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}>
-                                <span style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--text-muted)' }}>₹</span>
-                                <input
-                                    type="number"
-                                    value={range.max ?? ''}
-                                    disabled={!editingCapRanges}
-                                    placeholder="& above"
-                                    onChange={e => {
-                                        if (e.target.value === '') {
-                                            setPlatformFeeCapRanges(prev => prev.map((r, i) => i === idx ? { ...r, max: null } : r));
-                                        } else {
-                                            const v = parseFloat(e.target.value);
-                                            if (!isNaN(v) && v >= 0) {
-                                                setPlatformFeeCapRanges(prev => prev.map((r, i) => i === idx ? { ...r, max: v } : r));
-                                            }
-                                        }
-                                    }}
-                                    min="0" step="1"
-                                    style={{ 
-                                        ...iStyle, 
-                                        width: '90px', 
-                                        textAlign: 'center', 
-                                        cursor: editingCapRanges ? 'text' : 'not-allowed',
-                                        border: editingCapRanges ? '2px solid var(--primary)' : '1px solid var(--border)',
-                                        fontWeight: editingCapRanges ? 600 : 400
-                                    }}
-                                />
-                            </div>
-                            
-                            {/* Cap Amount */}
-                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}>
-                                <span style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--text-muted)' }}>₹</span>
-                                <input
-                                    type="number"
-                                    value={range.capAmount}
-                                    disabled={!editingCapRanges}
-                                    placeholder="No cap"
-                                    onChange={e => {
-                                        const v = parseFloat(e.target.value);
-                                        if (!isNaN(v) && v >= 0) {
-                                            setPlatformFeeCapRanges(prev => prev.map((r, i) => i === idx ? { ...r, capAmount: v } : r));
-                                        } else if (e.target.value === '') {
-                                            setPlatformFeeCapRanges(prev => prev.map((r, i) => i === idx ? { ...r, capAmount: 0 } : r));
-                                        }
-                                    }}
-                                    min="0" step="1"
-                                    style={{ 
-                                        ...iStyle, 
-                                        width: '90px', 
-                                        textAlign: 'center', 
-                                        cursor: editingCapRanges ? 'text' : 'not-allowed',
-                                        border: editingCapRanges ? '2px solid var(--primary)' : '1px solid var(--border)',
-                                        fontWeight: editingCapRanges ? 600 : 400
-                                    }}
-                                />
-                            </div>
-                            
-                            {/* Delete Button */}
-                            <div style={{ display: 'flex', justifyContent: 'center' }}>
-                                <button
-                                    onClick={() => deleteCapRange(range.id)}
-                                    disabled={!editingCapRanges || platformFeeCapRanges.length <= 1}
-                                    style={{
-                                        padding: '0.4rem 0.6rem',
-                                        borderRadius: '6px',
-                                        border: 'none',
-                                        background: editingCapRanges && platformFeeCapRanges.length > 1 ? '#dc2626' : 'var(--border)',
-                                        color: 'white',
-                                        fontSize: '0.75rem',
+                {!editingCapRanges ? (
+                    // NON-EDITING STATE - Card Style with Min/Max boxes in center
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                        {platformFeeCapRanges.map((range, idx) => (
+                            <div key={range.id} style={{ 
+                                display: 'grid',
+                                gridTemplateColumns: '1.5fr 1fr 1fr 1fr',
+                                gap: '1rem',
+                                alignItems: 'center',
+                                padding: '1rem 1.5rem', 
+                                background: 'var(--background)', 
+                                borderRadius: '10px', 
+                                border: '1px solid var(--border)',
+                                transition: 'all 0.2s'
+                            }}>
+                                {/* Label */}
+                                <div>
+                                    <div style={{ fontSize: '1rem', fontWeight: 600, color: 'var(--text)' }}>
+                                        {range.label}
+                                    </div>
+                                </div>
+                                
+                                {/* Min Box */}
+                                <div style={{ textAlign: 'center' }}>
+                                    <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginBottom: '0.35rem', fontWeight: 600, textTransform: 'uppercase' }}>Min</div>
+                                    <div style={{ 
+                                        padding: '0.6rem 0.8rem', 
+                                        borderRadius: '8px', 
+                                        border: '1px solid var(--border)', 
+                                        fontSize: '1rem', 
                                         fontWeight: 600,
-                                        cursor: editingCapRanges && platformFeeCapRanges.length > 1 ? 'pointer' : 'not-allowed',
-                                        opacity: editingCapRanges && platformFeeCapRanges.length > 1 ? 1 : 0.5
-                                    }}
-                                >
-                                    Delete
-                                </button>
+                                        background: 'var(--surface)', 
+                                        color: 'var(--text)'
+                                    }}>
+                                        ₹{range.min.toLocaleString()}
+                                    </div>
+                                </div>
+                                
+                                {/* Max Box */}
+                                <div style={{ textAlign: 'center' }}>
+                                    <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginBottom: '0.35rem', fontWeight: 600, textTransform: 'uppercase' }}>Max</div>
+                                    <div style={{ 
+                                        padding: '0.6rem 0.8rem', 
+                                        borderRadius: '8px', 
+                                        border: '1px solid var(--border)', 
+                                        fontSize: '1rem', 
+                                        fontWeight: 600,
+                                        background: 'var(--surface)', 
+                                        color: 'var(--text)'
+                                    }}>
+                                        {range.max ? `₹${range.max.toLocaleString()}` : '& above'}
+                                    </div>
+                                </div>
+                                
+                                {/* Cap Amount Box */}
+                                <div style={{ textAlign: 'center' }}>
+                                    <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginBottom: '0.35rem', fontWeight: 600, textTransform: 'uppercase' }}>Cap Amount</div>
+                                    <div style={{ 
+                                        padding: '0.6rem 0.8rem', 
+                                        borderRadius: '8px', 
+                                        border: '1px solid var(--border)', 
+                                        fontSize: '1rem', 
+                                        fontWeight: 600,
+                                        background: 'var(--surface)', 
+                                        color: 'var(--text)'
+                                    }}>
+                                        ₹{range.capAmount}
+                                    </div>
+                                </div>
                             </div>
+                        ))}
+                    </div>
+                ) : (
+                    // EDITING STATE - Table Style
+                    <>
+                        {/* Cap Ranges Table Header */}
+                        <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr 1fr 80px', gap: '1rem', padding: '0.75rem 1rem', background: 'var(--surface)', borderRadius: '8px', marginBottom: '0.75rem', border: '1px solid var(--border)' }}>
+                            <div style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Price Range Label</div>
+                            <div style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', textAlign: 'center' }}>Min (₹)</div>
+                            <div style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', textAlign: 'center' }}>Max (₹)</div>
+                            <div style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', textAlign: 'center' }}>Cap Amount (₹)</div>
+                            <div style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', textAlign: 'center' }}>Action</div>
                         </div>
-                    ))}
-                </div>
 
-                {/* Add Range Button */}
-                <div style={{ marginTop: '1rem', display: 'flex', justifyContent: 'flex-start' }}>
-                    <button
-                        onClick={addCapRange}
-                        disabled={!editingCapRanges || platformFeeCapRanges.length >= 6}
-                        title={platformFeeCapRanges.length >= 6 ? 'Maximum 6 ranges allowed' : 'Add a new cap range'}
-                        style={{
-                            padding: '0.6rem 1.2rem',
-                            borderRadius: '8px',
-                            border: '1px solid var(--primary)',
-                            background: editingCapRanges && platformFeeCapRanges.length < 6 ? 'var(--primary)' : 'var(--surface)',
-                            color: editingCapRanges && platformFeeCapRanges.length < 6 ? 'white' : 'var(--text-muted)',
-                            fontSize: '0.85rem',
-                            fontWeight: 600,
-                            cursor: editingCapRanges && platformFeeCapRanges.length < 6 ? 'pointer' : 'not-allowed',
-                            opacity: editingCapRanges && platformFeeCapRanges.length < 6 ? 1 : 0.5,
-                            transition: 'all 0.2s'
-                        }}
-                    >
-                        + Add Range
-                    </button>
-                    {platformFeeCapRanges.length >= 6 && editingCapRanges && (
-                        <span style={{ marginLeft: '1rem', fontSize: '0.75rem', color: '#dc2626', fontWeight: 600, alignSelf: 'center' }}>
-                            Maximum 6 ranges allowed
-                        </span>
-                    )}
-                </div>
+                        {/* Cap Ranges Table Rows */}
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                            {platformFeeCapRanges.map((range, idx) => (
+                                <div key={range.id} style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr 1fr 80px', gap: '1rem', alignItems: 'center', padding: '1rem', borderRadius: '10px', background: 'rgba(99,102,241,0.05)', border: '1px solid var(--border)', transition: 'all 0.2s' }}>
+                                    {/* Label */}
+                                    <input
+                                        type="text"
+                                        value={range.label}
+                                        onChange={e => {
+                                            setPlatformFeeCapRanges(prev => prev.map((r, i) => i === idx ? { ...r, label: e.target.value } : r));
+                                        }}
+                                        style={{ 
+                                            padding: '0.55rem 0.85rem',
+                                            borderRadius: '8px',
+                                            fontSize: '0.95rem',
+                                            width: '100%', 
+                                            textAlign: 'left', 
+                                            cursor: 'text',
+                                            border: '2px solid var(--primary)',
+                                            fontWeight: 600,
+                                            background: 'white',
+                                            color: '#000000',
+                                            outline: 'none',
+                                            transition: 'all 0.2s'
+                                        }}
+                                    />
+                                    
+                                    {/* Min */}
+                                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}>
+                                        <span style={{ fontSize: '0.85rem', fontWeight: 700, color: '#6b7280' }}>₹</span>
+                                        <input
+                                            type="number"
+                                            value={range.min}
+                                            onChange={e => {
+                                                const v = parseFloat(e.target.value);
+                                                if (!isNaN(v) && v >= 0) {
+                                                    setPlatformFeeCapRanges(prev => prev.map((r, i) => i === idx ? { ...r, min: v } : r));
+                                                }
+                                            }}
+                                            min="0" step="1"
+                                            style={{ 
+                                                padding: '0.55rem 0.85rem',
+                                                borderRadius: '8px',
+                                                fontSize: '0.95rem',
+                                                width: '90px', 
+                                                textAlign: 'center', 
+                                                cursor: 'text',
+                                                border: '2px solid var(--primary)',
+                                                fontWeight: 600,
+                                                background: 'white',
+                                                color: '#000000',
+                                                outline: 'none',
+                                                transition: 'all 0.2s'
+                                            }}
+                                        />
+                                    </div>
+                                    
+                                    {/* Max */}
+                                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}>
+                                        <span style={{ fontSize: '0.85rem', fontWeight: 700, color: '#6b7280' }}>₹</span>
+                                        <input
+                                            type="number"
+                                            value={range.max ?? ''}
+                                            placeholder="& above"
+                                            onChange={e => {
+                                                if (e.target.value === '') {
+                                                    setPlatformFeeCapRanges(prev => prev.map((r, i) => i === idx ? { ...r, max: null } : r));
+                                                } else {
+                                                    const v = parseFloat(e.target.value);
+                                                    if (!isNaN(v) && v >= 0) {
+                                                        setPlatformFeeCapRanges(prev => prev.map((r, i) => i === idx ? { ...r, max: v } : r));
+                                                    }
+                                                }
+                                            }}
+                                            min="0" step="1"
+                                            style={{ 
+                                                padding: '0.55rem 0.85rem',
+                                                borderRadius: '8px',
+                                                fontSize: '0.95rem',
+                                                width: '90px', 
+                                                textAlign: 'center', 
+                                                cursor: 'text',
+                                                border: '2px solid var(--primary)',
+                                                fontWeight: 600,
+                                                background: 'white',
+                                                color: '#000000',
+                                                outline: 'none',
+                                                transition: 'all 0.2s'
+                                            }}
+                                        />
+                                    </div>
+                                    
+                                    {/* Cap Amount */}
+                                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}>
+                                        <span style={{ fontSize: '0.85rem', fontWeight: 700, color: '#6b7280' }}>₹</span>
+                                        <input
+                                            type="number"
+                                            value={range.capAmount}
+                                            placeholder="No cap"
+                                            onChange={e => {
+                                                const v = parseFloat(e.target.value);
+                                                if (!isNaN(v) && v >= 0) {
+                                                    setPlatformFeeCapRanges(prev => prev.map((r, i) => i === idx ? { ...r, capAmount: v } : r));
+                                                } else if (e.target.value === '') {
+                                                    setPlatformFeeCapRanges(prev => prev.map((r, i) => i === idx ? { ...r, capAmount: 0 } : r));
+                                                }
+                                            }}
+                                            min="0" step="1"
+                                            style={{ 
+                                                padding: '0.55rem 0.85rem',
+                                                borderRadius: '8px',
+                                                fontSize: '0.95rem',
+                                                width: '90px', 
+                                                textAlign: 'center', 
+                                                cursor: 'text',
+                                                border: '2px solid var(--primary)',
+                                                fontWeight: 600,
+                                                background: 'white',
+                                                color: '#000000',
+                                                outline: 'none',
+                                                transition: 'all 0.2s'
+                                            }}
+                                        />
+                                    </div>
+                                    
+                                    {/* Delete Button */}
+                                    <div style={{ display: 'flex', justifyContent: 'center' }}>
+                                        <button
+                                            onClick={() => deleteCapRange(range.id)}
+                                            disabled={platformFeeCapRanges.length <= 1}
+                                            style={{
+                                                padding: '0.4rem 0.6rem',
+                                                borderRadius: '6px',
+                                                border: 'none',
+                                                background: platformFeeCapRanges.length > 1 ? '#dc2626' : 'var(--border)',
+                                                color: 'white',
+                                                fontSize: '0.75rem',
+                                                fontWeight: 600,
+                                                cursor: platformFeeCapRanges.length > 1 ? 'pointer' : 'not-allowed',
+                                                opacity: platformFeeCapRanges.length > 1 ? 1 : 0.5
+                                            }}
+                                        >
+                                            Delete
+                                        </button>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+
+                        {/* Add Range Button */}
+                        <div style={{ marginTop: '1rem', display: 'flex', justifyContent: 'flex-start' }}>
+                            <button
+                                onClick={addCapRange}
+                                disabled={platformFeeCapRanges.length >= 6}
+                                title={platformFeeCapRanges.length >= 6 ? 'Maximum 6 ranges allowed' : 'Add a new cap range'}
+                                style={{
+                                    padding: '0.6rem 1.2rem',
+                                    borderRadius: '8px',
+                                    border: '1px solid var(--primary)',
+                                    background: platformFeeCapRanges.length < 6 ? 'var(--primary)' : 'var(--surface)',
+                                    color: platformFeeCapRanges.length < 6 ? 'white' : 'var(--text-muted)',
+                                    fontSize: '0.85rem',
+                                    fontWeight: 600,
+                                    cursor: platformFeeCapRanges.length < 6 ? 'pointer' : 'not-allowed',
+                                    opacity: platformFeeCapRanges.length < 6 ? 1 : 0.5,
+                                    transition: 'all 0.2s'
+                                }}
+                            >
+                                + Add Range
+                            </button>
+                            {platformFeeCapRanges.length >= 6 && (
+                                <span style={{ marginLeft: '1rem', fontSize: '0.75rem', color: '#dc2626', fontWeight: 600, alignSelf: 'center' }}>
+                                    Maximum 6 ranges allowed
+                                </span>
+                            )}
+                        </div>
+                    </>
+                )}
 
                 <div style={{ marginTop: '1rem', padding: '0.85rem 1rem', background: 'rgba(245,158,11,0.05)', borderRadius: '8px', border: '1px solid rgba(245,158,11,0.2)' }}>
                     <p style={{ margin: 0, fontSize: '0.82rem', color: '#92400e', lineHeight: 1.6 }}>
@@ -720,11 +826,11 @@ export default function PlatformSettingsTab() {
                             onCancel={() => { setCategoryGstRates(origGST); setEditingGST(false); }} />
                     </div>
                 </div>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '0.75rem', maxHeight: '480px', overflowY: 'auto', padding: '0.25rem', opacity: editingGST ? 1 : 0.75 }}>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '0.75rem', maxHeight: '480px', overflowY: 'auto', padding: '0.25rem' }}>
                     {displayCategories.map(cat => {
                         const isCustom = !SELLER_CATEGORIES.includes(cat);
                         return (
-                            <div key={cat} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0.75rem 1rem', borderRadius: '10px', background: 'var(--surface)', border: '1px solid ' + (isCustom ? 'var(--primary)' : 'var(--border)') }}>
+                            <div key={cat} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0.75rem 1rem', borderRadius: '10px', background: editingGST ? 'rgba(99,102,241,0.05)' : 'var(--surface)', border: '1px solid ' + (isCustom ? 'var(--primary)' : 'var(--border)'), transition: 'all 0.2s' }}>
                                 <span style={{ fontSize: '0.88rem', fontWeight: 500, color: 'var(--text)', flex: 1, marginRight: '0.5rem' }}>
                                     {cat}
                                     {isCustom && <span style={{ fontSize: '0.7rem', color: 'var(--primary)', marginLeft: '6px', fontWeight: 700 }}>CUSTOM</span>}
@@ -732,7 +838,20 @@ export default function PlatformSettingsTab() {
                                 <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                                     <input type="number" value={categoryGstRates[cat] ?? 18} disabled={!editingGST}
                                         onChange={e => { const v = parseFloat(e.target.value); if (!isNaN(v) && v >= 0 && v <= 100) setCategoryGstRates(p => ({ ...p, [cat]: v })); }}
-                                        min="0" max="100" step="0.5" style={{ ...iStyle, width: '70px', padding: '0.4rem 0.6rem', cursor: editingGST ? 'text' : 'not-allowed' }} />
+                                        min="0" max="100" step="0.5" style={{ 
+                                            padding: '0.4rem 0.6rem',
+                                            borderRadius: '8px',
+                                            border: editingGST ? '2px solid var(--primary)' : '1px solid #d1d5db',
+                                            fontSize: '0.95rem',
+                                            background: 'white',
+                                            color: '#000000',
+                                            width: '70px',
+                                            outline: 'none',
+                                            textAlign: 'center',
+                                            fontWeight: 600,
+                                            cursor: editingGST ? 'text' : 'not-allowed',
+                                            transition: 'all 0.2s'
+                                        }} />
                                     <span style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--text-muted)' }}>%</span>
                                     {isCustom && editingGST && (
                                         <button onClick={() => { setCategoryGstRates(p => { const n = { ...p }; delete n[cat]; return n; }); setCustomCategories(p => p.filter(c => c !== cat)); }}

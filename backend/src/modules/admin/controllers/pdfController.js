@@ -142,11 +142,32 @@ const generateAnalyticsPDF = async (req, res) => {
             productStats[p.id] = {
                 name: prod.title || 'N/A',
                 price, discountedPrice: prod.discountedPrice || null,
-                stock, sold: 0, revenue: 0
+                stock, sold: 0, revenue: 0,
+                platformFee: 0, platformFeeGST: 0, netEarnings: 0
             };
         });
 
-        let unitsSold = 0, grossRevenue = 0;
+        // Get seller platform fee breakdown and cap ranges
+        const platformFeeBreakdownSeller = adminConfig.platformFeeBreakdownSeller || {};
+        const platformFeeCapRanges = adminConfig.platformFeeCapRanges || [];
+        
+        // Calculate total seller platform fee percentage
+        const sellerFeePercent = Object.values(platformFeeBreakdownSeller).reduce((sum, val) => {
+            return sum + (typeof val === 'number' ? val : (val.percent || 0));
+        }, 0);
+
+        // Helper function to get cap amount for a price
+        const getCapAmount = (price) => {
+            if (!platformFeeCapRanges || platformFeeCapRanges.length === 0) return null;
+            for (const range of platformFeeCapRanges) {
+                if (price >= range.min && (range.max === null || price <= range.max)) {
+                    return range.capAmount || 0;
+                }
+            }
+            return null;
+        };
+
+        let unitsSold = 0, grossRevenue = 0, totalPlatformFees = 0, totalPlatformFeeGST = 0, netPayout = 0;
         const ordersSnap = await db.collection("orders").get();
         ordersSnap.forEach(o => {
             const order = o.data();
@@ -161,12 +182,37 @@ const generateAnalyticsPDF = async (req, res) => {
             if (inRange && Array.isArray(order.items)) {
                 order.items.forEach(item => {
                     if (item.sellerId === uid) {
-                        unitsSold += (item.quantity || 1);
-                        const rev = (item.price || 0) * (item.quantity || 1);
-                        grossRevenue += rev;
+                        const qty = item.quantity || 1;
+                        const itemPrice = item.price || 0;
+                        const itemRevenue = itemPrice * qty;
+                        
+                        // Calculate platform fee for this item
+                        let platformFee = (itemRevenue * sellerFeePercent) / 100;
+                        
+                        // Apply cap if configured
+                        const capAmount = getCapAmount(itemPrice);
+                        if (capAmount && capAmount > 0 && platformFee > capAmount) {
+                            platformFee = capAmount;
+                        }
+                        
+                        // Calculate GST on platform fee (18%)
+                        const platformFeeGST = platformFee * 0.18;
+                        
+                        // Calculate net earnings for this item
+                        const netItemEarnings = itemRevenue - platformFee - platformFeeGST;
+                        
+                        unitsSold += qty;
+                        grossRevenue += itemRevenue;
+                        totalPlatformFees += platformFee;
+                        totalPlatformFeeGST += platformFeeGST;
+                        netPayout += netItemEarnings;
+                        
                         if (productStats[item.productId]) {
-                            productStats[item.productId].sold += (item.quantity || 1);
-                            productStats[item.productId].revenue += rev;
+                            productStats[item.productId].sold += qty;
+                            productStats[item.productId].revenue += itemRevenue;
+                            productStats[item.productId].platformFee += platformFee;
+                            productStats[item.productId].platformFeeGST += platformFeeGST;
+                            productStats[item.productId].netEarnings += netItemEarnings;
                         }
                     }
                 });
@@ -198,19 +244,35 @@ const generateAnalyticsPDF = async (req, res) => {
 
         // Performance Summary
         y = renderSectionHeader(doc, 'PERFORMANCE SUMMARY', y) + 15;
-        const bw = 115, bh = 65, bg = 10;
+        const bw = 99, bh = 65, bg = 8;
         renderStatBox(doc, 50, y, bw, bh, 'Total Products', totalProducts.toString());
         renderStatBox(doc, 50 + bw + bg, y, bw, bh, 'Units Sold', unitsSold.toString());
         renderStatBox(doc, 50 + (bw+bg)*2, y, bw, bh, 'Stock Left', totalStockLeft.toString());
-        renderStatBox(doc, 50 + (bw+bg)*3, y, bw, bh, 'Gross Revenue', `Rs.${grossRevenue.toLocaleString()}`);
+        renderStatBox(doc, 50 + (bw+bg)*3, y, bw, bh, 'Gross Revenue', `Rs.${Math.round(grossRevenue).toLocaleString('en-IN')}`);
+        renderStatBox(doc, 50 + (bw+bg)*4, y, bw, bh, 'Net Payout', `Rs.${Math.round(netPayout).toLocaleString('en-IN')}`);
         y += bh + 20;
 
-        // Product Table
-        y = renderSectionHeader(doc, 'PRODUCT DETAILS', y) + 5;
+        // Platform Fee Summary
+        y = renderSectionHeader(doc, 'PLATFORM FEE SUMMARY', y) + 15;
+        doc.fontSize(10).font('Helvetica').fillColor('#000000');
+        doc.text('Seller Platform Fee Rate:', 55, y);
+        doc.font('Helvetica-Bold').text(`${sellerFeePercent.toFixed(2)}%`, 250, y);
+        doc.font('Helvetica').text('Total Platform Fees:', 320, y);
+        doc.font('Helvetica-Bold').fillColor('#dc2626').text(`Rs.${totalPlatformFees.toFixed(2)}`, 470, y);
+        
+        doc.font('Helvetica').fillColor('#000000').text('GST on Platform Fees (18%):', 55, y + 20);
+        doc.font('Helvetica-Bold').text(`Rs.${totalPlatformFeeGST.toFixed(2)}`, 250, y + 20);
+        doc.font('Helvetica').text('Total Deductions:', 320, y + 20);
+        doc.font('Helvetica-Bold').fillColor('#dc2626').text(`Rs.${(totalPlatformFees + totalPlatformFeeGST).toFixed(2)}`, 470, y + 20);
+        
+        y += 55;
+
+        // Product Table with Platform Fees
+        y = renderSectionHeader(doc, 'PRODUCT EARNINGS BREAKDOWN', y) + 5;
         const prodCols = [
-            { label: 'Product', x: 55 }, { label: 'Price', x: 220 },
-            { label: 'Disc. Price', x: 290 }, { label: 'Stock', x: 365 },
-            { label: 'Sold', x: 415 }, { label: 'Revenue', x: 460 }
+            { label: 'Product', x: 55 }, { label: 'Sold', x: 200 },
+            { label: 'Revenue', x: 240 }, { label: 'Platform Fee', x: 310 },
+            { label: 'GST', x: 395 }, { label: 'Net Earnings', x: 455 }
         ];
         y = renderTableHeader(doc, y, prodCols);
 
@@ -219,12 +281,13 @@ const generateAnalyticsPDF = async (req, res) => {
             if (y > 720) { doc.addPage(); y = 50; y = renderTableHeader(doc, y, prodCols); }
             if (i % 2 === 0) doc.rect(50, y - 3, 495, 18).fillAndStroke('#f9fafb', '#f9fafb');
             doc.fontSize(8).fillColor('#000000').font('Helvetica');
-            doc.text((p.name || '').substring(0, 28), 55, y);
-            doc.text(`Rs.${p.price}`, 220, y);
-            doc.text(p.discountedPrice ? `Rs.${p.discountedPrice}` : '-', 290, y);
-            doc.text(p.stock.toString(), 365, y);
-            doc.text(p.sold.toString(), 415, y);
-            doc.text(`Rs.${p.revenue}`, 460, y);
+            doc.text((p.name || '').substring(0, 22), 55, y);
+            doc.text(p.sold.toString(), 200, y);
+            doc.text(`Rs.${p.revenue.toFixed(0)}`, 240, y);
+            doc.fillColor('#dc2626').text(`-Rs.${p.platformFee.toFixed(2)}`, 310, y);
+            doc.text(`-Rs.${p.platformFeeGST.toFixed(2)}`, 395, y);
+            doc.fillColor('#059669').font('Helvetica-Bold').text(`Rs.${p.netEarnings.toFixed(0)}`, 455, y);
+            doc.fillColor('#000000').font('Helvetica');
             y += 18;
         });
 
@@ -267,17 +330,40 @@ const generateInvoicePDF = async (req, res) => {
         const productsSnap = await db.collection("products").where("sellerId", "==", uid).get();
         const totalProducts = productsSnap.size;
         const sellerProducts = [];
+        const productMap = {};
         productsSnap.forEach(p => {
             const prod = p.data();
-            sellerProducts.push({
+            const productData = {
                 name: prod.title || 'N/A', price: prod.price || 0,
                 discountedPrice: prod.discountedPrice || null,
                 stock: prod.stock || 0, category: prod.category || 'N/A'
-            });
+            };
+            sellerProducts.push(productData);
+            productMap[p.id] = productData;
         });
 
+        // Get seller platform fee breakdown and cap ranges
+        const platformFeeBreakdownSeller = adminConfig.platformFeeBreakdownSeller || {};
+        const platformFeeCapRanges = adminConfig.platformFeeCapRanges || [];
+        
+        // Calculate total seller platform fee percentage
+        const sellerFeePercent = Object.values(platformFeeBreakdownSeller).reduce((sum, val) => {
+            return sum + (typeof val === 'number' ? val : (val.percent || 0));
+        }, 0);
+
+        // Helper function to get cap amount for a price
+        const getCapAmount = (price) => {
+            if (!platformFeeCapRanges || platformFeeCapRanges.length === 0) return null;
+            for (const range of platformFeeCapRanges) {
+                if (price >= range.min && (range.max === null || price <= range.max)) {
+                    return range.capAmount || 0;
+                }
+            }
+            return null;
+        };
+
         const ordersSnap = await db.collection("orders").where("status", "==", "Delivered").get();
-        let totalRevenue = 0, deliveredCount = 0;
+        let totalRevenue = 0, deliveredCount = 0, totalPlatformFees = 0, totalPlatformFeeGST = 0;
         const orderDetails = [];
 
         ordersSnap.forEach(o => {
@@ -291,24 +377,48 @@ const generateInvoicePDF = async (req, res) => {
             if (inRange && Array.isArray(order.items)) {
                 order.items.forEach(item => {
                     if (item.sellerId === uid) {
-                        const rev = (item.price || 0) * (item.quantity || 1);
-                        totalRevenue += rev;
+                        const qty = item.quantity || 1;
+                        const itemPrice = item.price || 0;
+                        const itemRevenue = itemPrice * qty;
+                        
+                        // Calculate platform fee for this item
+                        let platformFee = (itemRevenue * sellerFeePercent) / 100;
+                        
+                        // Apply cap if configured
+                        const capAmount = getCapAmount(itemPrice);
+                        if (capAmount && capAmount > 0 && platformFee > capAmount) {
+                            platformFee = capAmount;
+                        }
+                        
+                        // Calculate GST on platform fee (18%)
+                        const platformFeeGST = platformFee * 0.18;
+                        
+                        // Calculate net earnings for this item
+                        const netItemEarnings = itemRevenue - platformFee - platformFeeGST;
+                        
+                        totalRevenue += itemRevenue;
+                        totalPlatformFees += platformFee;
+                        totalPlatformFeeGST += platformFeeGST;
                         deliveredCount++;
+                        
                         orderDetails.push({
                             orderId: o.id,
                             orderDate: orderDate ? orderDate.toLocaleDateString('en-GB') : 'N/A',
                             productName: item.name || 'N/A',
-                            quantity: item.quantity || 1,
-                            price: item.price || 0,
-                            total: rev
+                            quantity: qty,
+                            price: itemPrice,
+                            total: itemRevenue,
+                            platformFee: platformFee,
+                            platformFeeGST: platformFeeGST,
+                            netEarnings: netItemEarnings
                         });
                     }
                 });
             }
         });
 
-        const platformCharges = totalRevenue * 0.10;
-        const amountToReceive = totalRevenue - platformCharges;
+        const totalDeductions = totalPlatformFees + totalPlatformFeeGST;
+        const amountToReceive = totalRevenue - totalDeductions;
 
         const doc = new PDFDocument({ margin: 50, size: 'A4' });
         res.setHeader('Content-Type', 'application/pdf');
@@ -332,12 +442,33 @@ const generateInvoicePDF = async (req, res) => {
 
         // Invoice Summary
         y = renderSectionHeader(doc, 'INVOICE SUMMARY', y) + 15;
-        const bw = 115, bh = 65, bg = 10;
+        const bw = 99, bh = 65, bg = 8;
         renderStatBox(doc, 50, y, bw, bh, 'Total Products', totalProducts.toString());
-        renderStatBox(doc, 50 + bw + bg, y, bw, bh, 'Total Revenue', `Rs.${totalRevenue.toLocaleString()}`);
-        renderStatBox(doc, 50 + (bw+bg)*2, y, bw, bh, 'Platform Charges', `Rs.${platformCharges.toFixed(0)}`);
-        renderStatBox(doc, 50 + (bw+bg)*3, y, bw, bh, 'Amount to Receive', `Rs.${amountToReceive.toFixed(0)}`);
+        renderStatBox(doc, 50 + bw + bg, y, bw, bh, 'Gross Revenue', `Rs.${Math.round(totalRevenue).toLocaleString('en-IN')}`);
+        renderStatBox(doc, 50 + (bw+bg)*2, y, bw, bh, 'Platform Fees', `Rs.${Math.round(totalPlatformFees).toLocaleString('en-IN')}`);
+        renderStatBox(doc, 50 + (bw+bg)*3, y, bw, bh, 'GST on Fees', `Rs.${Math.round(totalPlatformFeeGST).toLocaleString('en-IN')}`);
+        renderStatBox(doc, 50 + (bw+bg)*4, y, bw, bh, 'Net Payout', `Rs.${Math.round(amountToReceive).toLocaleString('en-IN')}`);
         y += bh + 20;
+
+        // Platform Fee Breakdown
+        y = renderSectionHeader(doc, 'PLATFORM FEE BREAKDOWN', y) + 15;
+        doc.fontSize(10).font('Helvetica').fillColor('#000000');
+        doc.text('Seller Platform Fee Rate:', 55, y);
+        doc.font('Helvetica-Bold').text(`${sellerFeePercent.toFixed(2)}%`, 250, y);
+        doc.font('Helvetica').text('Total Platform Fees:', 320, y);
+        doc.font('Helvetica-Bold').fillColor('#dc2626').text(`Rs.${totalPlatformFees.toFixed(2)}`, 470, y);
+        
+        doc.font('Helvetica').fillColor('#000000').text('GST on Platform Fees (18%):', 55, y + 20);
+        doc.font('Helvetica-Bold').text(`Rs.${totalPlatformFeeGST.toFixed(2)}`, 250, y + 20);
+        doc.font('Helvetica').text('Total Deductions:', 320, y + 20);
+        doc.font('Helvetica-Bold').fillColor('#dc2626').text(`Rs.${totalDeductions.toFixed(2)}`, 470, y + 20);
+        
+        doc.font('Helvetica').fillColor('#000000').text('Gross Revenue:', 55, y + 40);
+        doc.font('Helvetica-Bold').text(`Rs.${totalRevenue.toFixed(2)}`, 250, y + 40);
+        doc.font('Helvetica').fillColor('#059669').text('Amount to Receive:', 320, y + 40);
+        doc.font('Helvetica-Bold').text(`Rs.${amountToReceive.toFixed(2)}`, 470, y + 40);
+        
+        y += 75;
 
         // Products Table
         y = renderSectionHeader(doc, 'PRODUCTS LISTED BY SELLER', y) + 5;
@@ -366,12 +497,13 @@ const generateInvoicePDF = async (req, res) => {
 
         y += 15;
 
-        // Orders Table
-        y = renderSectionHeader(doc, 'DELIVERED ORDER DETAILS', y) + 5;
+        // Orders Table with Platform Fees
+        y = renderSectionHeader(doc, 'DELIVERED ORDER DETAILS WITH EARNINGS', y) + 5;
         const orderCols = [
-            { label: 'Order ID', x: 55 }, { label: 'Date', x: 145 },
-            { label: 'Product', x: 215 }, { label: 'Qty', x: 385 },
-            { label: 'Price', x: 420 }, { label: 'Total', x: 475 }
+            { label: 'Order ID', x: 55 }, { label: 'Date', x: 130 },
+            { label: 'Product', x: 190 }, { label: 'Qty', x: 310 },
+            { label: 'Revenue', x: 345 }, { label: 'Fee', x: 400 },
+            { label: 'GST', x: 445 }, { label: 'Net', x: 485 }
         ];
         y = renderTableHeader(doc, y, orderCols);
 
@@ -385,13 +517,16 @@ const generateInvoicePDF = async (req, res) => {
                     y = renderTableHeader(doc, y, orderCols);
                 }
                 if (i % 2 === 0) doc.rect(50, y - 3, 495, 18).fillAndStroke('#f9fafb', '#f9fafb');
-                doc.fontSize(8).fillColor('#000000').font('Helvetica');
-                doc.text(o.orderId.substring(0, 12) + '...', 55, y);
-                doc.text(o.orderDate, 145, y);
-                doc.text(o.productName.substring(0, 25), 215, y);
-                doc.text(o.quantity.toString(), 385, y);
-                doc.text(`Rs.${o.price}`, 420, y);
-                doc.text(`Rs.${o.total}`, 475, y);
+                doc.fontSize(7).fillColor('#000000').font('Helvetica');
+                doc.text(o.orderId.substring(0, 10) + '...', 55, y);
+                doc.text(o.orderDate, 130, y);
+                doc.text(o.productName.substring(0, 18), 190, y);
+                doc.text(o.quantity.toString(), 310, y);
+                doc.text(`Rs.${o.total.toFixed(0)}`, 345, y);
+                doc.fillColor('#dc2626').text(`-Rs.${o.platformFee.toFixed(0)}`, 400, y);
+                doc.text(`-Rs.${o.platformFeeGST.toFixed(0)}`, 445, y);
+                doc.fillColor('#059669').font('Helvetica-Bold').text(`Rs.${o.netEarnings.toFixed(0)}`, 485, y);
+                doc.fillColor('#000000').font('Helvetica');
                 y += 18;
             });
         }

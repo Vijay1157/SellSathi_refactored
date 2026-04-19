@@ -177,16 +177,6 @@ export default function Navbar() {
                         subGroups[sub].push(p);
                     });
 
-                    // Debug: Show what we found for Fashion categories
-                    if (cat === "Fashion (Men)" || cat === "Fashion (Women)") {
-                        console.log(`\n📊 ${cat} - Found ${catProducts.length} products`);
-                        console.log('Subcategories in DB:', Object.keys(subGroups));
-                        console.log('Expected subcategories:', SUBCATEGORIES[cat]);
-                        Object.keys(subGroups).forEach(sub => {
-                            console.log(`  ✓ ${sub}: ${subGroups[sub].length} products`);
-                        });
-                    }
-
                     // Create mega menu data only if products exist for this category
                     if (catProducts.length > 0) {
                         // Get the predefined subcategory list for this category
@@ -416,7 +406,6 @@ export default function Navbar() {
         // ALWAYS open seller page in new tab on Home Page Navbar,
         // even if user is a SELLER in the database.
         // They must login from /#/seller to access the Seller Dashboard.
-        console.log("[Navbar] Opening /seller in new tab...");
         window.open(`${window.location.origin}${window.location.pathname}#/seller`, '_blank');
     };
 
