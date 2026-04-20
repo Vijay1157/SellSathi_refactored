@@ -86,8 +86,10 @@ export default function AddProduct() {
             authFetch('/admin/config/public').then(r => r.json()).then(d => {
                 if (d.success && d.config) {
                     if (d.config.categoryGstRates) setCategoryGstRates(d.config.categoryGstRates);
-                    if (d.config.platformFeeBreakdown) {
-                        setPlatformFeeBreakdown(getPlatformFeeBreakdownFromConfig(d.config));
+                    // Use seller platform fee breakdown for the seller product listing page
+                    const sellerBreakdown = d.config.platformFeeBreakdownSeller || d.config.platformFeeBreakdown;
+                    if (sellerBreakdown) {
+                        setPlatformFeeBreakdown(getPlatformFeeBreakdownFromConfig({ platformFeeBreakdown: sellerBreakdown }));
                     }
                     // Fetch default GST if available
                     if (d.config.defaultGstPercent) {
