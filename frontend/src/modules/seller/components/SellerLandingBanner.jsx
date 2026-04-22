@@ -28,7 +28,7 @@ export default function SellerLandingBanner() {
                         
                         {/* Sub Heading */}
                         <h2 className="text-xl md:text-2xl lg:text-3xl text-gray-200 font-medium">
-                            Start Your Selling Journey with GudKart
+                            Start Your Selling Journey with Goodkart
                         </h2>
                         
                         {/* Short Description */}

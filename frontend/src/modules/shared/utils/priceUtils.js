@@ -1,5 +1,5 @@
 /**
- * Centralized utility for price calculations across GudKart.
+ * Centralized utility for price calculations across Goodkart.
  */
 
 /**

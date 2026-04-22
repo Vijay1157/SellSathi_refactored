@@ -214,7 +214,7 @@ export default function SellerRegistration() {
 
                     <div className="relative z-10">
                         <Link to="/seller" className="inline-flex items-center gap-2 text-white/80 hover:text-white mb-12 transition-colors">
-                            <ArrowLeft size={20} /> Back to GudKart
+                            <ArrowLeft size={20} /> Back to Goodkart
                         </Link>
 
                         <div className="flex items-center gap-3 mb-12">
@@ -223,12 +223,12 @@ export default function SellerRegistration() {
                             </div>
                             <div>
                                 <h3 className="text-xl font-bold">Seller Center</h3>
-                                <p className="text-white/60 text-sm">GudKart for Business</p>
+                                <p className="text-white/60 text-sm">Goodkart for Business</p>
                             </div>
                         </div>
 
                         <h1 className="text-5xl lg:text-6xl font-bold leading-tight mb-8">
-                            Grow your business with GudKart
+                            Grow your business with Goodkart
                         </h1>
                         <p className="text-xl text-white/80 max-w-md mb-12">
                             Reach millions of customers and scale your brand with powerful selling tools.
@@ -252,7 +252,7 @@ export default function SellerRegistration() {
 
                     <div className="relative z-10 pt-12">
                         <p className="text-sm text-white/60">
-                            By logging in, you agree to GudKart's Seller <Link to="#" className="underline">Terms of Service</Link>
+                            By logging in, you agree to Goodkart's Seller <Link to="#" className="underline">Terms of Service</Link>
                         </p>
                     </div>
                 </div>

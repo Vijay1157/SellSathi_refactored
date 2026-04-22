@@ -131,16 +131,16 @@ export default function SellerRegistration() {
       <div className="lg:w-1/2 p-6 sm:p-10 lg:p-20 text-white flex flex-col justify-center relative min-h-[25vh] lg:min-h-screen" style={{ background: 'linear-gradient(135deg, #3B7CF1 0%, #120085 50%, #0D0070 100%)' }}>
         <div className="relative z-10">
           <Link to="/seller" className="inline-flex items-center gap-2 text-white/80 hover:text-white mb-4 lg:mb-12 transition-colors text-sm">
-            <ArrowLeft size={18} /> Back to GudKart
+            <ArrowLeft size={18} /> Back to Goodkart
           </Link>
           <div className="flex items-center gap-3 mb-4 lg:mb-12">
             <div className="w-10 h-10 lg:w-12 lg:h-12 rounded-xl lg:rounded-2xl bg-white/20 backdrop-blur-md flex items-center justify-center"><Store size={20} /></div>
             <div>
               <h3 className="text-lg lg:text-xl font-bold">Seller Center</h3>
-              <p className="text-white/60 text-xs lg:text-sm">GudKart for Business</p>
+              <p className="text-white/60 text-xs lg:text-sm">Goodkart for Business</p>
             </div>
           </div>
-          <h1 className="text-2xl sm:text-3xl lg:text-6xl font-bold leading-tight mb-3 lg:mb-8">Grow your business with GudKart</h1>
+          <h1 className="text-2xl sm:text-3xl lg:text-6xl font-bold leading-tight mb-3 lg:mb-8">Grow your business with Goodkart</h1>
           <p className="hidden sm:block text-base lg:text-xl text-white/80 max-w-md mb-6 lg:mb-12">Reach millions of customers and scale your brand with powerful selling tools.</p>
           <div className="hidden sm:grid grid-cols-2 gap-4">
             {['Sales Analytics', 'Inventory Mgmt', 'Growth Insights', 'Fast Payouts'].map(feat => (
@@ -148,7 +148,7 @@ export default function SellerRegistration() {
             ))}
           </div>
         </div>
-        <div className="relative z-10 pt-4 lg:pt-12"><p className="text-xs text-white/60">By logging in, you agree to GudKart's Seller <Link to="#" className="underline">Terms of Service</Link></p></div>
+        <div className="relative z-10 pt-4 lg:pt-12"><p className="text-xs text-white/60">By logging in, you agree to Goodkart's Seller <Link to="#" className="underline">Terms of Service</Link></p></div>
       </div>
 
       <div className="lg:w-1/2 bg-gray-50 flex items-center justify-center p-4 sm:p-6 lg:p-12 overflow-y-auto min-h-[60vh] lg:h-screen">

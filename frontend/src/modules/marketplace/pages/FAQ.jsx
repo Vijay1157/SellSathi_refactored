@@ -3,12 +3,12 @@ import './FAQ.css';
 
 const customerFAQs = [
     {
-        q: 'What is GudKart?',
-        a: 'GudKart is an online marketplace where home artists and creators can sell their handmade products, and customers can discover unique handcrafted items.'
+        q: 'What is Goodkart?',
+        a: 'Goodkart is an online marketplace where home artists and creators can sell their handmade products, and customers can discover unique handcrafted items.'
     },
     {
         q: 'Are the products handmade?',
-        a: 'Yes. Most products on GudKart are handmade or created by independent home artists and small creators.'
+        a: 'Yes. Most products on Goodkart are handmade or created by independent home artists and small creators.'
     },
     {
         q: 'How do I place an order?',
@@ -44,7 +44,7 @@ const customerFAQs = [
 
 const sellerFAQs = [
     {
-        q: 'Who can sell on GudKart?',
+        q: 'Who can sell on Goodkart?',
         a: 'Anyone who creates handmade products, crafts, or artistic items from home can register as a seller.'
     },
     {
@@ -109,8 +109,8 @@ export default function FAQ() {
                 </section>
 
                 <div className="faq-footer">
-                    <p>GudKart Help Center · For support, visit our website or contact us through the app</p>
-                    <p>© 2025 GudKart. All rights reserved.</p>
+                    <p>Goodkart Help Center · For support, visit our website or contact us through the app</p>
+                    <p>© 2025 Goodkart. All rights reserved.</p>
                 </div>
             </div>
         </div>

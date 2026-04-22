@@ -17,7 +17,7 @@ try {
 }
 
 const COMPANY_INFO = {
-    name: 'Gudkart Private Limited',
+    name: 'Goodkart Private Limited',
     addressLine1: 'No. 123, MG Road, Koramangala',
     addressLine2: 'Bangalore, Karnataka',
     addressLine3: 'India',
@@ -31,7 +31,7 @@ const COMPANY_INFO = {
 
 async function getLogoBase64() {
     try {
-        const logoPathBackend = path.join(__dirname, '..', 'assets', 'gudkart-logo.png');
+        const logoPathBackend = path.join(__dirname, '..', 'assets', 'goodkart-logo.png');
         if (fs.existsSync(logoPathBackend)) {
             const logoBuffer = fs.readFileSync(logoPathBackend);
             return `data:image/png;base64,${logoBuffer.toString('base64')}`;
@@ -120,9 +120,9 @@ function renderHeader(doc, logoDataUrl, title, orderId) {
             doc.image(logoBuffer, 430, 22, { width: 30 });
         } catch (e) {}
     }
-    doc.fontSize(18).font('Helvetica-Bold').fillColor('#1800AD').text('Gud', 480, 28, { continued: true });
+    doc.fontSize(18).font('Helvetica-Bold').fillColor('#1800AD').text('Good', 480, 28, { continued: true });
     doc.fontSize(18).font('Helvetica').fillColor('#5BB8FF').text('kart');
-    doc.fontSize(7).font('Helvetica').fillColor('#1800AD').text('Gud Deals. Gud Life', 480, 52, { width: 80, align: 'center' });
+    doc.fontSize(7).font('Helvetica').fillColor('#1800AD').text('Good Deals. Good Life', 480, 52, { width: 80, align: 'center' });
 
     doc.fillColor('#000000');
     doc.moveTo(30, 85).lineTo(565, 85).lineWidth(1).strokeColor('#cccccc').stroke();

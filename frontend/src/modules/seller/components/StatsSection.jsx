@@ -4,7 +4,7 @@ import { motion } from 'framer-motion';
 const stats = [
   {
     value: "11 Lakhs+",
-    label: "Sellers trust GudKart to sell online"
+    label: "Sellers trust Goodkart to sell online"
   },
   {
     value: "15 Crores+",

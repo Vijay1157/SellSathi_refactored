@@ -204,7 +204,7 @@ export default function CheckoutOrderSummary({
                             </span>
                         </div>
                         <p className="text-xs text-green-600 font-bold text-right uppercase tracking-wide">
-                            Save with GudKart Premium
+                            Save with Goodkart Premium
                         </p>
                     </div>
                     

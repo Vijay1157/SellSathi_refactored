@@ -9,12 +9,12 @@ const Footer = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 mb-12">
           <div className="lg:col-span-1">
             <Link to="/" className="flex items-center gap-1.5 mb-4">
-              <img src="/gudkart-logo.png" alt="" style={{ height: '60px', width: '60px', objectFit: 'contain' }} />
+              <img src="/goodkart-logo.png" alt="" style={{ height: '60px', width: '60px', objectFit: 'contain' }} />
               <span style={{ lineHeight: 1, display: 'flex', flexDirection: 'column' }}>
                 <span>
-                  <span style={{ fontSize: '2rem', fontWeight: 900, color: '#1800AD' }}>Gud</span><span style={{ fontSize: '2rem', fontWeight: 400, color: '#5BB8FF' }}>kart</span>
+                  <span style={{ fontSize: '2rem', fontWeight: 900, color: '#1800AD' }}>Good</span><span style={{ fontSize: '2rem', fontWeight: 400, color: '#5BB8FF' }}>kart</span>
                 </span>
-                <span style={{ fontSize: '0.65rem', fontWeight: 600, color: '#1800AD', letterSpacing: '0.3px', textAlign: 'center' }}>Gud Deals. Gud Life</span>
+                <span style={{ fontSize: '0.65rem', fontWeight: 600, color: '#1800AD', letterSpacing: '0.3px', textAlign: 'center' }}>Good Deals. Good Life</span>
               </span>
             </Link>
             <p className="text-gray-600 text-sm leading-relaxed mb-6">
@@ -37,7 +37,7 @@ const Footer = () => {
           </div>
 
           <div>
-            <h4 className="font-bold text-gray-900 mb-6">Sell on GudKart</h4>
+            <h4 className="font-bold text-gray-900 mb-6">Sell on Goodkart</h4>
             <ul className="space-y-4 text-sm text-gray-600">
               <li><Link to="#" className="hover:text-[#3B7CF1] transition-colors">Sell Online</Link></li>
               <li><Link to="#" className="hover:text-[#3B7CF1] transition-colors">Pricing & Commission</Link></li>
@@ -51,7 +51,7 @@ const Footer = () => {
             <ul className="space-y-4 text-sm text-gray-600">
               <li><Link to="#" className="hover:text-[#3B7CF1] transition-colors">Grow Your Business</Link></li>
               <li><Link to="#" className="hover:text-[#3B7CF1] transition-colors">Learning Hub</Link></li>
-              <li><Link to="#" className="hover:text-[#3B7CF1] transition-colors">Ads on GudKart</Link></li>
+              <li><Link to="#" className="hover:text-[#3B7CF1] transition-colors">Ads on Goodkart</Link></li>
               <li><Link to="#" className="hover:text-[#3B7CF1] transition-colors">Business Insights</Link></li>
             </ul>
           </div>
@@ -59,7 +59,7 @@ const Footer = () => {
           <div>
             <h4 className="font-bold text-gray-900 mb-6">Contact Us</h4>
             <ul className="space-y-4 text-sm text-gray-600">
-              <li><a href="mailto:support@GudKart.com" className="hover:text-[#3B7CF1] transition-colors">support@GudKart.com</a></li>
+              <li><a href="mailto:support@Goodkart.com" className="hover:text-[#3B7CF1] transition-colors">support@Goodkart.com</a></li>
               <li><Link to="#" className="hover:text-[#3B7CF1] transition-colors">Help Center</Link></li>
               <li><Link to="#" className="hover:text-[#3B7CF1] transition-colors">Seller Support</Link></li>
             </ul>
@@ -68,7 +68,7 @@ const Footer = () => {
         
         <div className="pt-8 border-t border-gray-200 flex flex-col md:flex-row justify-between items-center gap-4">
           <p className="text-xs text-gray-500">
-            © 2026 GudKart Inc. All Rights Reserved.
+            © 2026 Goodkart Inc. All Rights Reserved.
           </p>
           <div className="flex gap-6 text-xs text-gray-500">
             <Link to="#" className="hover:text-[#3B7CF1]">Privacy Policy</Link>

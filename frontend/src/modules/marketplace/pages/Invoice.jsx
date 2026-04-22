@@ -61,7 +61,7 @@ export default function Invoice() {
             canvas.getContext('2d').drawImage(img, 0, 0);
             setLogoBase64(canvas.toDataURL('image/png'));
         };
-        img.src = '/gudkart-logo.png';
+        img.src = '/goodkart-logo.png';
     }, []);
 
     useEffect(() => {
@@ -78,7 +78,7 @@ export default function Invoice() {
         const element = document.getElementById('invoice-card');
         const opt = {
             margin: [0.5, 0.5, 0.5, 0.5],
-            filename: `GudKart_Invoice_${order.orderId || order.id}.pdf`,
+            filename: `Goodkart_Invoice_${order.orderId || order.id}.pdf`,
             image: { type: 'jpeg', quality: 0.98 },
             html2canvas: { 
                 scale: 2, 
@@ -149,12 +149,12 @@ export default function Invoice() {
                 <p style={{ color: '#000', fontSize: '1rem', marginTop: '0.25rem', fontWeight: '600' }}>#{order.orderId || order.id}</p>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                <img src={logoBase64 || '/gudkart-logo.png'} alt="GudKart" style={{ width: '55px', height: '55px', objectFit: 'contain' }} />
+                <img src={logoBase64 || '/goodkart-logo.png'} alt="Goodkart" style={{ width: '55px', height: '55px', objectFit: 'contain' }} />
                 <span style={{ lineHeight: 1, letterSpacing: '-0.3px', display: 'flex', flexDirection: 'column' }}>
                     <span>
-                        <span style={{ fontSize: '1.6rem', fontWeight: 900, color: '#1800AD' }}>Gud</span><span style={{ fontSize: '1.6rem', fontWeight: 400, color: '#5BB8FF' }}>kart</span>
+                        <span style={{ fontSize: '1.6rem', fontWeight: 900, color: '#1800AD' }}>Good</span><span style={{ fontSize: '1.6rem', fontWeight: 400, color: '#5BB8FF' }}>kart</span>
                     </span>
-                    <span style={{ fontSize: '0.6rem', fontWeight: 600, color: '#1800AD', letterSpacing: '0.3px', textAlign: 'center', marginTop: '2px' }}>Gud Deals. Gud Life</span>
+                    <span style={{ fontSize: '0.6rem', fontWeight: 600, color: '#1800AD', letterSpacing: '0.3px', textAlign: 'center', marginTop: '2px' }}>Good Deals. Good Life</span>
                 </span>
             </div>
         </div>
@@ -183,7 +183,7 @@ export default function Invoice() {
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem', marginTop: '1rem', fontSize: '11px' }}>
             <div>
                 <label style={{ color: '#000', fontSize: '11px', fontWeight: '700', textTransform: 'uppercase', display: 'block', marginBottom: '0.4rem', letterSpacing: '0.5px' }}>Billed From</label>
-                <p style={{ fontWeight: '700', fontSize: '12px', marginBottom: '0.2rem', color: '#000' }}>GudKart Private Limited</p>
+                <p style={{ fontWeight: '700', fontSize: '12px', marginBottom: '0.2rem', color: '#000' }}>Goodkart Private Limited</p>
                 <p style={{ color: '#000', lineHeight: '1.6', margin: 0 }}>
                     No. 123, MG Road, Koramangala<br />
                     Bangalore, Karnataka, India<br />
@@ -533,10 +533,10 @@ export default function Invoice() {
             </div>
 
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '0.75rem' }}>
-                <p style={{ fontWeight: '700', color: '#000', fontSize: '11px', margin: 0 }}>GudKart Private Limited - Empowering Local Sellers</p>
+                <p style={{ fontWeight: '700', color: '#000', fontSize: '11px', margin: 0 }}>Goodkart Private Limited - Empowering Local Sellers</p>
                 <div style={{ display: 'flex', gap: '1rem', color: '#000', fontSize: '10px' }}>
                     <span style={{ display: 'flex', alignItems: 'center', gap: '0.3rem' }}><Phone size={12} /> +91 98765 43210</span>
-                    <span style={{ display: 'flex', alignItems: 'center', gap: '0.3rem' }}><Mail size={12} /> support@GudKart.com</span>
+                    <span style={{ display: 'flex', alignItems: 'center', gap: '0.3rem' }}><Mail size={12} /> support@Goodkart.com</span>
                 </div>
             </div>
         </div>
