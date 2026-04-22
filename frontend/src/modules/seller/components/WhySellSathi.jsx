@@ -47,7 +47,7 @@ const features = [
   }
 ];
 
-const WhyGudKart = () => {
+const WhyGoodkart = () => {
   return (
     <section id="grow-business" className="py-24 bg-white">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
@@ -67,7 +67,7 @@ const WhyGudKart = () => {
             transition={{ delay: 0.1 }}
             className="text-4xl md:text-5xl font-bold text-gray-900 mb-6 tracking-tight"
           >
-            Why Suppliers Love GudKart
+            Why Suppliers Love Goodkart
           </motion.h2>
           <motion.p 
             initial={{ opacity: 0, y: 20 }}
@@ -119,7 +119,7 @@ const WhyGudKart = () => {
   );
 };
 
-export default WhyGudKart;
+export default WhyGoodkart;
 
 
 

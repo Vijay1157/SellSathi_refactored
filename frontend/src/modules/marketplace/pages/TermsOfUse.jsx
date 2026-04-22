@@ -2,7 +2,7 @@ import './PolicyPage.css';
 
 const EFFECTIVE_DATE = '27 March 2026';
 const LAST_UPDATED = '27 March 2026';
-const COMPANY = 'GudKart';
+const COMPANY = 'Goodkart';
 const OFFICE = 'Bangalore';
 const EMAIL = 'sumanhp31@gmail.com';
 const CITY_STATE = 'Bangalore, Karnataka, India';

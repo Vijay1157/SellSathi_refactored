@@ -125,7 +125,7 @@ export default function Checkout() {
         const fetchAdminConfig = async () => {
             try {
                 const API_BASE = import.meta.env.PROD
-                    ? (import.meta.env.VITE_API_BASE_URL || 'https://GudKart-refactored.onrender.com')
+                    ? (import.meta.env.VITE_API_BASE_URL || 'https://Goodkart-refactored.onrender.com')
                     : 'http://localhost:5000';
                 const response = await fetch(`${API_BASE}/admin/config/public`);
                 const data = await response.json();
@@ -445,7 +445,7 @@ export default function Checkout() {
                     amount: orderResult.order.amount,
                     currency: orderResult.order.currency,
                     order_id: orderResult.order.id,
-                    name: 'GudKart',
+                    name: 'Goodkart',
                     description: 'Order Payment',
                     image: '/logo.png',
                     handler: async function (response) {
@@ -898,7 +898,7 @@ export default function Checkout() {
                             <h1 className="text-2xl font-black text-gray-900 tracking-tight">
                                 Checkout <span className="text-gray-400 font-light">Process</span>
                             </h1>
-                            <p className="text-sm text-gray-500 font-medium mt-0.5">Securely complete your purchase at GudKart</p>
+                            <p className="text-sm text-gray-500 font-medium mt-0.5">Securely complete your purchase at Goodkart</p>
                         </div>
                     </div>
                 </div>

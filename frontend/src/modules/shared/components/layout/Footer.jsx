@@ -57,12 +57,12 @@ export default function Footer() {
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '2rem' }}>
                         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
                             <div style={{ marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '8px', marginLeft: '-12px' }}>
-                                <img src="/gudkart-logo.png" alt="" style={{ height: '60px', width: '60px', objectFit: 'contain' }} />
+                                <img src="/goodkart-logo.png" alt="" style={{ height: '60px', width: '60px', objectFit: 'contain' }} />
                                 <span style={{ lineHeight: 1, display: 'flex', flexDirection: 'column' }}>
                                     <span>
-                                        <span style={{ fontSize: '2rem', fontWeight: 900, color: '#1800AD' }}>Gud</span><span style={{ fontSize: '2rem', fontWeight: 400, color: '#5BB8FF' }}>kart</span>
+                                        <span style={{ fontSize: '2rem', fontWeight: 900, color: '#1800AD' }}>Good</span><span style={{ fontSize: '2rem', fontWeight: 400, color: '#5BB8FF' }}>kart</span>
                                     </span>
-                                    <span style={{ fontSize: '0.65rem', fontWeight: 600, color: '#1800AD', letterSpacing: '0.3px', marginTop: '2px', textAlign: 'center' }}>Gud Deals. Gud Life</span>
+                                    <span style={{ fontSize: '0.65rem', fontWeight: 600, color: '#1800AD', letterSpacing: '0.3px', marginTop: '2px', textAlign: 'center' }}>Good Deals. Good Life</span>
                                 </span>
                             </div>
                             <p className="text-muted" style={{ lineHeight: 1.6 }}>The future of global marketplace. Fast, secure, and seller-friendly.</p>
@@ -180,7 +180,7 @@ export default function Footer() {
                     </div>
 
                     <div style={{ marginTop: '4rem', paddingTop: '2rem', borderTop: '1px solid var(--border)', textAlign: 'center' }}>
-                        <p className="text-muted" style={{ fontSize: '0.85rem', fontWeight: 500 }}>&copy; 2026 GudKart Inc. All rights reserved.</p>
+                        <p className="text-muted" style={{ fontSize: '0.85rem', fontWeight: 500 }}>&copy; 2026 Goodkart Inc. All rights reserved.</p>
                     </div>
                 </div>
             </footer>

@@ -7,13 +7,13 @@ const { getAdminConfig } = require('../../../shared/services/adminConfigService'
 
 // Brand constants
 const BRAND = {
-    name: 'GudKart',
+    name: 'Goodkart',
     tagline: 'Your Trusted E-Commerce Platform',
     primary: '#3B7CF1',
     dark: '#1D5FD4',
     lightBg: '#EBF0FF',
     border: '#BFCFFA',
-    logoPath: path.join(__dirname, '../../../assets/gudkart-logo.png')
+    logoPath: path.join(__dirname, '../../../assets/goodkart-logo.png')
 };
 
 // Shared PDF header renderer
@@ -32,9 +32,9 @@ function renderPDFHeader(doc, adminConfig, title, subtitle) {
         doc.image(BRAND.logoPath, logoX, logoY, { height: logoH });
     }
 
-    // "Gud" in dark navy bold
-    doc.fontSize(38).fillColor('#1a1a6e').font('Helvetica-Bold').text('Gud', textX, textY, { continued: true });
-    // "kart" in GudKart blue
+    // "Good" in dark navy bold
+    doc.fontSize(38).fillColor('#1a1a6e').font('Helvetica-Bold').text('Good', textX, textY, { continued: true });
+    // "kart" in Goodkart blue
     doc.fontSize(38).fillColor('#3B7CF1').font('Helvetica').text('kart');
 
     // Tagline below brand name

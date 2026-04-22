@@ -30,7 +30,7 @@ export default function AdminLogin() {
                 </div>
                 <h1 style={{ marginBottom: '1rem' }}>Admin <span className="gradient-text">Access</span></h1>
                 <p className="text-muted" style={{ marginBottom: '2.5rem' }}>
-                    Secure portal for GudKart administrators.
+                    Secure portal for Goodkart administrators.
                     Please verify your credentials to continue to the dashboard.
                 </p>
                 <button
