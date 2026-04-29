@@ -38,6 +38,12 @@ export async function authFetch(path, options = {}) {
         const loginCtx = sessionStorage.getItem('loginContext');
         const storageKey = loginCtx === 'SELLER' ? 'seller_user' : 'user';
         localUser = JSON.parse(localStorage.getItem(storageKey));
+        
+        // Fallback: If we're in SELLER context but no seller_user exists yet (e.g. during onboarding),
+        // try to use the regular 'user' credentials.
+        if (!localUser && storageKey === 'seller_user') {
+            localUser = JSON.parse(localStorage.getItem('user'));
+        }
     } catch (_) { /* ignore parse errors */ }
 
     // ── PATH 1: Test-login user ───────────────────────────────────────────────
