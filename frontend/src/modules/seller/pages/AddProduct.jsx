@@ -397,22 +397,31 @@ export default function AddProduct() {
                                     </div>
                                 </div>
 
-                                {sellerHasGST && (
+                                <div>
                                     <div style={{ marginTop: '1.5rem' }}>
                                         <label style={sty.label}>
                                             <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                                                <Percent size={14} /> GST Percent (%) <span style={{ color: 'red' }}>*</span>
+                                                <Percent size={14} /> Product GST Rate (%) <span style={{ color: 'red' }}>*</span>
                                             </span>
                                         </label>
                                         <div style={{ position: 'relative' }}>
-                                            <input type="number" placeholder="e.g. 18" required min="0" max="100" style={sty.priceInput}
-                                                value={product.gstPercent} onChange={e => setProduct({ ...product, gstPercent: e.target.value })} 
-                                            />
-                                            <span style={{ position: 'absolute', right: '0.75rem', top: '50%', transform: 'translateY(-50%)', fontWeight: 'bold', color: '#94a3b8', fontSize: '0.85rem' }}>%</span>
+                                            <select 
+                                                required 
+                                                style={sty.select}
+                                                value={product.gstPercent} 
+                                                onChange={e => setProduct({ ...product, gstPercent: e.target.value })}
+                                            >
+                                                <option value="">Select GST Rate</option>
+                                                {[0, 5, 12, 18, 28].map(rate => (
+                                                    <option key={rate} value={rate}>{rate}%</option>
+                                                ))}
+                                            </select>
                                         </div>
-                                        <p style={{ fontSize: '0.72rem', color: '#94a3b8', marginTop: '0.25rem' }}>Enter applicable GST manually</p>
+                                        <p style={{ fontSize: '0.72rem', color: '#94a3b8', marginTop: '0.25rem' }}>
+                                            {!sellerHasGST ? 'Select applicable GST for this product category' : 'Select applicable GST manually'}
+                                        </p>
                                     </div>
-                                )}
+                                </div>
 
                                 {/* Platform Fee Breakdown */}
                                 <div style={{ marginTop: '1.5rem' }}>
@@ -610,7 +619,7 @@ export default function AddProduct() {
                                             <div><strong>Specs:</strong> {specifications.filter(s => s.value).length} defined</div>
                                         )}
                                         <div><strong>Platform Fee:</strong> {PLATFORM_FEE_PERCENT}%</div>
-                                        {sellerHasGST && product.gstPercent && (
+                                        {product.gstPercent && (
                                             <div><strong>GST:</strong> {product.gstPercent}%</div>
                                         )}
                                     </div>
