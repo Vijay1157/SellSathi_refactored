@@ -57,19 +57,22 @@ export async function authFetch(path, options = {}) {
 
     // ── PATH 2: Real Firebase Auth session ────────────────────────────────────
     const currentUser = auth.currentUser;
-    // Only use Firebase Auth token if it matches our tab's local user context
-    if (currentUser && localUser?.uid === currentUser.uid) {
+    // If Firebase has a user, prioritized sending the real token
+    if (currentUser) {
         try {
+            // Force-refresh to ensure we don't send an expired token
             const idToken = await currentUser.getIdToken(true);
             headers['Authorization'] = `Bearer ${idToken}`;
             return fetch(url, { ...options, headers });
         } catch (err) {
-            console.warn('[authFetch] Token refresh failed, falling back to X-Test-UID:', err.message);
+            console.warn('[authFetch] Firebase token refresh failed, attempting fallback:', err.message);
         }
     }
 
-    // ── PATH 3: No Firebase session — use stored UID ──────────────────────────
+    // ── PATH 3: Fallback — use stored UID (for Test Users or before Firebase Init) ──────────────────
     if (localUser?.uid) {
+        // If it's a test user, Path 1 would have caught it. 
+        // If we're here, it's a regular user whose Firebase session hasn't loaded yet.
         headers['X-Test-UID'] = localUser.uid;
     }
 
