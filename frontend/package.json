@@ -21,7 +21,8 @@
     "react-dom": "^18.3.1",
     "react-i18next": "^14.0.0",
     "react-router-dom": "^7.13.0",
-    "recharts": "^3.7.0"
+    "recharts": "^3.7.0",
+    "sellsathi": "file:.."
   },
   "devDependencies": {
     "@testing-library/jest-dom": "^6.9.1",
