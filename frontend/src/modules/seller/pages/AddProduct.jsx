@@ -397,31 +397,33 @@ export default function AddProduct() {
                                     </div>
                                 </div>
 
-                                <div>
+                                {sellerHasGST ? (
                                     <div style={{ marginTop: '1.5rem' }}>
                                         <label style={sty.label}>
                                             <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                                                <Percent size={14} /> Product GST Rate (%) <span style={{ color: 'red' }}>*</span>
+                                                <Percent size={14} /> GST Percent (%) <span style={{ color: 'red' }}>*</span>
                                             </span>
                                         </label>
                                         <div style={{ position: 'relative' }}>
-                                            <select 
-                                                required 
-                                                style={sty.select}
-                                                value={product.gstPercent} 
-                                                onChange={e => setProduct({ ...product, gstPercent: e.target.value })}
-                                            >
-                                                <option value="">Select GST Rate</option>
-                                                {[0, 5, 12, 18, 28].map(rate => (
-                                                    <option key={rate} value={rate}>{rate}%</option>
-                                                ))}
-                                            </select>
+                                            <input type="number" placeholder="e.g. 18" required min="0" max="100" style={sty.priceInput}
+                                                value={product.gstPercent} onChange={e => setProduct({ ...product, gstPercent: e.target.value })} 
+                                            />
+                                            <span style={{ position: 'absolute', right: '0.75rem', top: '50%', transform: 'translateY(-50%)', fontWeight: 'bold', color: '#94a3b8', fontSize: '0.85rem' }}>%</span>
                                         </div>
-                                        <p style={{ fontSize: '0.72rem', color: '#94a3b8', marginTop: '0.25rem' }}>
-                                            {!sellerHasGST ? 'Select applicable GST for this product category' : 'Select applicable GST manually'}
-                                        </p>
+                                        <p style={{ fontSize: '0.72rem', color: '#94a3b8', marginTop: '0.25rem' }}>Enter applicable GST manually</p>
                                     </div>
-                                </div>
+                                ) : (
+                                    <div style={{ marginTop: '1.5rem', padding: '1rem', background: '#f8fafc', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                                <Percent size={16} style={{ color: 'var(--primary)' }} />
+                                                <span style={{ fontSize: '0.9rem', fontWeight: 600, color: '#475569' }}>Product GST (Fixed)</span>
+                                            </div>
+                                            <span style={{ fontSize: '1rem', fontWeight: 800, color: 'var(--primary)' }}>{product.gstPercent || 0}%</span>
+                                        </div>
+                                        <p style={{ fontSize: '0.7rem', color: '#94a3b8', marginTop: '0.5rem' }}>As a non-GST seller, the GST rate is determined by the admin based on category.</p>
+                                    </div>
+                                )}
 
                                 {/* Platform Fee Breakdown */}
                                 <div style={{ marginTop: '1.5rem' }}>
