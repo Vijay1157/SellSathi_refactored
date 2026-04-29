@@ -2,7 +2,7 @@ const nodemailer = require('nodemailer');
 const path = require('path');
 const { getAdminConfig } = require('./adminConfigService');
 const { db } = require('../../config/firebase');
-const FRONTEND_URL = process.env.FRONTEND_URL || 'https://sellsathifrontend.onrender.com';
+const FRONTEND_URL = process.env.FRONTEND_URL || 'https://goodkart.onrender.com';
 
 
 // Configure credentials via env variables

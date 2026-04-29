@@ -75,7 +75,7 @@ export default function Navbar() {
     useEffect(() => {
         // Fetch custom admin categories using the correct API base
         const API_BASE = import.meta.env.PROD
-            ? (import.meta.env.VITE_API_BASE_URL || 'https://GudKart-refactored.onrender.com')
+            ? (import.meta.env.VITE_API_BASE_URL || 'https://goodkart-backend.onrender.com')
             : 'http://localhost:5000';
         fetch(`${API_BASE}/admin/config/public`)
             .then(r => r.json())

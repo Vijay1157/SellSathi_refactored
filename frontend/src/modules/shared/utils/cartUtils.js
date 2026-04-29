@@ -119,7 +119,7 @@ export const listenToCart = (callback) => {
                             // Fetch fresh product data
                             try {
                                 const API_BASE = import.meta.env.PROD
-                                    ? (import.meta.env.VITE_API_BASE_URL || 'https://sellsathi-refactored.onrender.com')
+                                    ? (import.meta.env.VITE_API_BASE_URL || 'https://goodkart-backend.onrender.com')
                                     : 'http://localhost:5000';
                                 const productRes = await fetch(`${API_BASE}/products/${item.productId}`);
                                 const productData = await productRes.json();
