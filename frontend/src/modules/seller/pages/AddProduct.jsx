@@ -42,7 +42,12 @@ export default function AddProduct() {
     const USER_FEE_PERCENT = 3;
     
     // Platform fee breakdown state
-    const [platformFeeBreakdown, setPlatformFeeBreakdown] = useState(null);
+    const [platformFeeBreakdown, setPlatformFeeBreakdown] = useState({
+        digitalSecurityFee: { percent: 1.2, label: 'Digital Security Fee' },
+        merchantVerification: { percent: 1.0, label: 'Merchant Verification' },
+        transitCare: { percent: 0.8, label: 'Transit Care' },
+        platformMaintenance: { percent: 0.5, label: 'Platform Maintenance' }
+    });
     const [showFeeBreakdown, setShowFeeBreakdown] = useState(false);
     
     // Seller GST status
@@ -431,6 +436,7 @@ export default function AddProduct() {
                                         onClick={() => setShowFeeBreakdown(!showFeeBreakdown)}
                                         style={{
                                             display: 'flex',
+                                            userSelect: 'none',
                                             alignItems: 'center',
                                             justifyContent: 'space-between',
                                             padding: '0.85rem 1rem',
@@ -456,7 +462,7 @@ export default function AddProduct() {
                                     </div>
                                     
                                     <AnimatePresence>
-                                        {showFeeBreakdown && platformFeeBreakdown && product.price && (
+                                        {showFeeBreakdown && platformFeeBreakdown && (
                                             <motion.div
                                                 initial={{ opacity: 0, height: 0 }}
                                                 animate={{ opacity: 1, height: 'auto' }}
