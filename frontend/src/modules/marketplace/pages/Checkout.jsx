@@ -125,7 +125,7 @@ export default function Checkout() {
         const fetchAdminConfig = async () => {
             try {
                 const API_BASE = import.meta.env.PROD
-                    ? (import.meta.env.VITE_API_BASE_URL || 'https://goodkart-backend.onrender.com')
+                    ? (import.meta.env.VITE_API_BASE_URL || 'https://sellsathi-refactored.onrender.com')
                     : 'http://localhost:5000';
                 const response = await fetch(`${API_BASE}/admin/config/public`);
                 const data = await response.json();

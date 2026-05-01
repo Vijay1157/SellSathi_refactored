@@ -4,7 +4,7 @@ import { MAIN_CATEGORIES, getSubcategories } from '@/modules/shared/config/categ
 import { useNavigate } from 'react-router-dom';
 
 const API_BASE = import.meta.env.PROD
-    ? (import.meta.env.VITE_API_BASE_URL || 'https://goodkart-backend.onrender.com')
+    ? (import.meta.env.VITE_API_BASE_URL || 'https://sellsathi-refactored.onrender.com')
     : 'http://localhost:5000';
 
 export default function FilterSidebar({
