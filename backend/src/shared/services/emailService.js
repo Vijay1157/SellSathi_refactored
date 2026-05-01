@@ -33,7 +33,7 @@ const getSenderConfig = async () => {
     };
 };
 
-exports.sendOrderConfirmation = async (email, order, invoicePath) => {
+exports.sendOrderConfirmation = async (email, order, invoiceUrl) => {
     try {
         console.log(`📧 Sending order confirmation email to ${email} for order ${order.orderId}`);
 
@@ -86,7 +86,7 @@ exports.sendOrderConfirmation = async (email, order, invoicePath) => {
             attachments: [
                 {
                     filename: `Invoice-${order.orderId}.pdf`,
-                    path: invoicePath
+                    path: invoiceUrl
                 }
             ]
         };

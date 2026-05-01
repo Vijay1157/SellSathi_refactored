@@ -36,11 +36,11 @@ const processPostOrderTasks = async (orderData, orderRef) => {
 
         // 1. Generate Invoice & Send Emails
         try {
-            const invPath = await invoiceService.generateInvoice({ ...orderData, documentId: orderRef.id });
-            await orderRef.update({ invoiceGenerated: true, invoicePath: invPath });
+            const invoiceUrl = await invoiceService.generateInvoice({ ...orderData, documentId: orderRef.id });
+            await orderRef.update({ invoiceGenerated: true, invoiceUrl: invoiceUrl });
             
             if (orderData.email) {
-                emailService.sendOrderConfirmation(orderData.email, { ...orderData, documentId: orderRef.id }, invPath)
+                emailService.sendOrderConfirmation(orderData.email, { ...orderData, documentId: orderRef.id }, invoiceUrl)
                     .catch(err => console.error('[Background] Confirmation email error:', err));
             }
             

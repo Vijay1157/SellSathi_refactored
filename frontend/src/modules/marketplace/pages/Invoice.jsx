@@ -77,7 +77,7 @@ export default function Invoice() {
         
         const element = document.getElementById('invoice-card');
         const opt = {
-            margin: [0.5, 0.5, 0.5, 0.5],
+            margin: [0.2, 0.3, 0.2, 0.3], // Reduced top/bottom margins to maximize space
             filename: `Goodkart_Invoice_${order.orderId || order.id}.pdf`,
             image: { type: 'jpeg', quality: 0.98 },
             html2canvas: { 
@@ -95,9 +95,7 @@ export default function Invoice() {
                 compress: true
             },
             pagebreak: { 
-                mode: ['avoid-all', 'css', 'legacy'],
-                before: '.page-break',
-                after: '.invoice-page'
+                mode: ['css', 'legacy']
             }
         };
 
@@ -590,8 +588,7 @@ export default function Invoice() {
             }}>
                 {/* --- PAGE 1: ORIGINAL INVOICE --- */}
                 <div className="invoice-page" style={{ 
-                    padding: '2rem', 
-                    minHeight: '11in',
+                    padding: '1rem 1.5rem', // Tighter padding to save space
                     pageBreakAfter: 'always',
                     position: 'relative'
                 }}>
@@ -605,27 +602,11 @@ export default function Invoice() {
                     <InvoiceFooter />
                 </div>
 
-                {/* --- PAGE BREAK FOR PDF --- */}
-                <div className="page-break" style={{ 
-                    pageBreakBefore: 'always',
-                    pageBreakAfter: 'always',
-                    height: '0.5in',
-                    borderTop: '2px dashed #eee', 
-                    margin: '0',
-                    textAlign: 'center',
-                    color: '#999',
-                    fontSize: '10px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center'
-                }}>
-                    <span className="no-print">Page Break for PDF</span>
-                </div>
+                {/* (Page break is handled by CSS page-break-after on invoice-page) */}
 
                 {/* --- PAGE 2: PLATFORM CHARGES BREAKDOWN --- */}
                 <div className="invoice-page" style={{ 
-                    padding: '2rem',
-                    minHeight: '11in',
+                    padding: '1rem 1.5rem', // Tighter padding to save space
                     position: 'relative'
                 }}>
                     <InvoiceHeader title="Bill of Supply - Platform Charges" />
@@ -652,11 +633,8 @@ export default function Invoice() {
                             margin: 0 !important;
                         }
                         .invoice-page { 
-                            padding: 0.5in !important;
                             page-break-after: always !important;
                             page-break-inside: avoid !important;
-                            min-height: 10.5in !important;
-                            max-height: 10.5in !important;
                             position: relative !important;
                             box-sizing: border-box !important;
                         }

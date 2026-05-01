@@ -5,8 +5,6 @@ const invoiceService = require('../../../shared/services/invoiceService');
 const emailService = require('../../../shared/services/emailService');
 const { reduceStock, replenishStock } = require('../../../utils/stockUtils');
 const shiprocketService = require('../../../shared/services/shiprocketService');
-const path = require('path');
-const fs = require('fs');
 
 const ORDERS_CACHE_TTL = 120; // 2 minutes in seconds
 
@@ -30,10 +28,10 @@ const placeOrder = async (req, res) => {
         const fullOrder = { ...orderData, orderId: orderData.orderId || orderId, documentId: orderId };
 
         try {
-            const invoicePath = await invoiceService.generateInvoice(fullOrder);
-            await orderRef.update({ invoiceGenerated: true, invoicePath });
+            const invoiceUrl = await invoiceService.generateInvoice(fullOrder);
+            await orderRef.update({ invoiceGenerated: true, invoiceUrl });
             if (orderData.email) {
-                emailService.sendOrderConfirmation(orderData.email, fullOrder, invoicePath).catch(err => console.error(err));
+                emailService.sendOrderConfirmation(orderData.email, fullOrder, invoiceUrl).catch(err => console.error(err));
             }
             // Notify sellers about the new order
             emailService.notifySellers(fullOrder).catch(err => console.error('[PlaceOrder] Seller notification error:', err));
@@ -345,7 +343,7 @@ const getReviewableOrders = async (req, res) => {
 }
 
 /**
- * Download Invoice
+ * Download/Redirect to Invoice
  */
 const downloadInvoice = async (req, res) => {
     try {
@@ -363,30 +361,11 @@ const downloadInvoice = async (req, res) => {
 
         const order = docSnap.data();
         
-        // If regenerate=true, always generate a fresh invoice
-        if (regenerate === 'true') {
-            console.log(`[INVOICE] Regenerating invoice for order: ${orderId}`);
-            const invPath = await invoiceService.generateInvoice({ ...order, documentId: docSnap.id });
-            await docSnap.ref.update({ invoiceGenerated: true, invoicePath: invPath });
-            return res.sendFile(invPath);
-        }
-        
-        // Otherwise, use cached invoice if available
-        if (!order.invoicePath) {
-            // Generate it on the fly if missing
-            const invPath = await invoiceService.generateInvoice({ ...order, documentId: docSnap.id });
-            await docSnap.ref.update({ invoiceGenerated: true, invoicePath: invPath });
-            return res.sendFile(invPath);
-        }
-
-        if (fs.existsSync(order.invoicePath)) {
-            return res.sendFile(order.invoicePath);
-        } else {
-            // Generate if file is missing from disk
-            const invPath = await invoiceService.generateInvoice({ ...order, documentId: docSnap.id });
-            await docSnap.ref.update({ invoiceGenerated: true, invoicePath: invPath });
-            return res.sendFile(invPath);
-        }
+        // Force regeneration during development/testing to see layout changes immediately
+        console.log(`[INVOICE] Generating fresh invoice for order: ${orderId}`);
+        const invoiceUrl = await invoiceService.generateInvoice({ ...order, documentId: docSnap.id });
+        await docSnap.ref.update({ invoiceGenerated: true, invoiceUrl });
+        return res.redirect(invoiceUrl);
     } catch (error) {
         console.error("Invoice download error:", error);
         return res.status(500).json({ success: false, message: "Failed to download invoice" });

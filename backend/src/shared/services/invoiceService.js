@@ -1,30 +1,19 @@
 const PDFDocument = require('pdfkit');
-const fs = require('fs');
 const path = require('path');
-const QRCode = require('qrcode');
-const axios = require('axios');
-
-const invoicesDir = process.env.NODE_ENV === 'production' 
-    ? path.join('/tmp', 'invoices')
-    : path.join(__dirname, '..', 'invoices');
-
-try {
-    if (!fs.existsSync(invoicesDir)) {
-        fs.mkdirSync(invoicesDir, { recursive: true });
-    }
-} catch (err) {
-    console.error('Failed to create invoices directory:', err.message);
-}
+const fs = require('fs');
+const { PassThrough } = require('stream');
+const cloudinary = require('../../config/cloudinary');
+const { db, admin } = require('../../config/firebase');
 
 const COMPANY_INFO = {
     name: 'Goodkart Private Limited',
     addressLine1: 'No. 123, MG Road, Koramangala',
-    addressLine2: 'Bangalore, Karnataka',
-    addressLine3: 'India',
+    addressLine2: 'Bangalore, Karnataka, India',
+    addressLine3: 'Bangalore, 560034, Karnataka, IN-KA, IN- 560034',
     city: 'Bangalore',
     pincode: '560034',
     state: 'Karnataka',
-    country: 'IN-KA, IN',
+    country: 'IN',
     gstin: '29AABCS1234M1ZX',
     pan: 'AABCS1234M'
 };
@@ -38,38 +27,74 @@ async function getLogoBase64() {
         }
         return null;
     } catch (error) {
-        console.error('Logo loading error:', error);
         return null;
     }
 }
 
-async function getShiprocketQR(order) {
-    return null; // Placeholder
+async function uploadToCloudinary(buffer, orderId) {
+    return new Promise((resolve, reject) => {
+        const uploadStream = cloudinary.uploader.upload_stream(
+            {
+                resource_type: 'raw',
+                public_id: `invoices/Invoice-${orderId}`,
+                format: 'pdf',
+                access_mode: 'public'
+            },
+            (error, result) => {
+                if (error) return reject(error);
+                resolve(result.secure_url);
+            }
+        );
+        uploadStream.end(buffer);
+    });
 }
 
 exports.generateInvoice = async (order) => {
     return new Promise(async (resolve, reject) => {
         try {
-            const doc = new PDFDocument({ margin: 30, size: 'A4' });
-            const invoiceName = `Invoice-${order.orderId}.pdf`;
-            const invoicePath = path.join(invoicesDir, invoiceName);
-            
-            doc.on('error', reject);
-            const stream = fs.createWriteStream(invoicePath);
-            stream.on('finish', () => resolve(invoicePath));
-            stream.on('error', reject);
+            // Disable auto-page creation to have full control
+            const doc = new PDFDocument({ margin: 30, size: 'A4', autoFirstPage: false });
+            const buffers = [];
+            const stream = new PassThrough();
+
             doc.pipe(stream);
+            stream.on('data', chunk => buffers.push(chunk));
+            stream.on('end', async () => {
+                try {
+                    const pdfBuffer = Buffer.concat(buffers);
+                    const invoiceUrl = await uploadToCloudinary(pdfBuffer, order.orderId);
+                    
+                    const invoiceData = {
+                        invoiceId: `INV-${Date.now()}`,
+                        orderId: order.orderId,
+                        userId: order.userId || order.uid || 'guest',
+                        invoiceUrl: invoiceUrl,
+                        amount: order.total || 0,
+                        createdAt: admin.firestore.FieldValue.serverTimestamp()
+                    };
+                    
+                    await db.collection('invoices').add(invoiceData);
+                    resolve(invoiceUrl);
+                } catch (err) {
+                    reject(err);
+                }
+            });
+
+            doc.on('error', reject);
 
             const getName = (addr) => addr ? `${addr.firstName || ''} ${addr.lastName || ''}`.trim() : 'Customer';
             const logoDataUrl = await getLogoBase64();
-            const shiprocketQR = null;
 
-            // PAGE 1
-            await generatePage1(doc, order, logoDataUrl, shiprocketQR, getName);
-            
-            // PAGE 2
+            // PAGE 1: Bill of Supply
             doc.addPage();
-            await generatePage2(doc, order, logoDataUrl, shiprocketQR, getName);
+            await renderPage(doc, order, logoDataUrl, getName, 'Bill of Supply', false);
+            
+            // PAGE 2: Platform Charges
+            // Only add a page if we are still on the first page
+            if (doc.bufferedPageRange().count === 1) {
+                doc.addPage();
+            }
+            await renderPage(doc, order, logoDataUrl, getName, 'Bill of Supply - Platform Charges', true);
 
             doc.end();
         } catch (error) {
@@ -78,203 +103,160 @@ exports.generateInvoice = async (order) => {
     });
 };
 
-async function generatePage1(doc, order, logoDataUrl, shiprocketQR, getName) {
-    renderHeader(doc, logoDataUrl, 'Bill of Supply', order.orderId);
+async function renderPage(doc, order, logoDataUrl, getName, title, isDetailed) {
+    renderHeader(doc, logoDataUrl, title, order.orderId);
     
     let y = 100;
-    renderOrderDetails(doc, order, y);
+    // Section Header
+    doc.fontSize(10).font('Helvetica-Bold').text('BILL OF SUPPLY DETAILS', 30, y);
+    y += 15;
     
-    y = 210;
-    renderAddresses(doc, order, y, getName, true);
+    // Details Grid
+    doc.fontSize(8).font('Helvetica-Bold').text('Bill of Supply Number: ', 30, y, { continued: true }).font('Helvetica').text(order.orderId);
+    doc.font('Helvetica-Bold').text('Nature of transaction: ', 350, y, { continued: true }).font('Helvetica').text('INTRA');
+    y += 12;
+    doc.font('Helvetica-Bold').text('Bill of Supply Date: ', 30, y, { continued: true }).font('Helvetica').text(new Date().toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }));
+    doc.font('Helvetica-Bold').text('Nature Of Supply: ', 350, y, { continued: true }).font('Helvetica').text('Service');
+    y += 12;
+    doc.font('Helvetica-Bold').text('Order Number: ', 30, y, { continued: true }).font('Helvetica').text(order.orderId);
     
-    y = 460;
-    renderItemsTable(doc, order, y, false);
+    y += 25;
+    // Billed From/To headers
+    doc.fontSize(10).font('Helvetica-Bold').text('BILLED FROM', 30, y);
+    doc.text('BILLED TO', 350, y);
+    y += 15;
     
-    renderFooter(doc, order, 750);
-}
+    // Billed From content
+    const fromStart = y;
+    doc.fontSize(9).font('Helvetica-Bold').text(COMPANY_INFO.name, 30, y);
+    y += 12;
+    doc.fontSize(8).font('Helvetica').text(`${COMPANY_INFO.addressLine1}\n${COMPANY_INFO.addressLine2}\n${COMPANY_INFO.addressLine3}`, 30, y, { width: 280 });
+    y += 30;
+    doc.font('Helvetica-Bold').text('GSTIN: ', 30, y, { continued: true }).font('Helvetica').text(COMPANY_INFO.gstin);
+    y += 10;
+    doc.font('Helvetica-Bold').text('PAN: ', 30, y, { continued: true }).font('Helvetica').text(COMPANY_INFO.pan);
+    const fromEnd = y;
+    
+    // Billed To content
+    y = fromStart;
+    const bAddr = order.billingAddress || order.shippingAddress || {};
+    doc.fontSize(9).font('Helvetica-Bold').text(getName(bAddr), 350, y);
+    y += 12;
+    doc.fontSize(8).font('Helvetica').text(`${bAddr.addressLine || 'N/A'}\n${bAddr.city || 'N/A'}, ${bAddr.state || 'Karnataka'} - ${bAddr.pincode || 'N/A'}`, 350, y, { width: 220 });
+    y += 20;
+    const gst = order.gstNumber || order.customerInfo?.gstNumber || bAddr.gstNumber;
+    if (gst) {
+        doc.font('Helvetica-Bold').text('GSTIN: ', 350, y, { continued: true }).font('Helvetica').text(gst);
+        y += 10;
+    }
+    doc.font('Helvetica-Bold').text('State Code: ', 350, y, { continued: true }).font('Helvetica').text('IN-KA');
+    y += 10;
+    doc.font('Helvetica-Bold').text('Place of Supply: ', 350, y, { continued: true }).font('Helvetica').text((bAddr.state || 'KARNATAKA').toUpperCase());
+    const toEnd = y;
 
-async function generatePage2(doc, order, logoDataUrl, shiprocketQR, getName) {
-    renderHeader(doc, logoDataUrl, 'Bill of Supply - Detailed', order.orderId);
+    y = Math.max(fromEnd, toEnd) + 20;
     
-    let y = 100;
-    renderOrderDetails(doc, order, y);
+    if (!isDetailed) {
+        doc.moveTo(30, y).lineTo(565, y).lineWidth(0.5).stroke('#000000');
+        y += 10;
+        doc.fontSize(10).font('Helvetica-Bold').text('SHIPPED FROM', 30, y);
+        doc.text('SHIPPED TO', 350, y);
+        y += 15;
+        
+        const sFromAddr = order.sellerAddress || {};
+        doc.fontSize(8).font('Helvetica').text(`Survey No. 48, 486, 487, 488... Kotur Dharwad Dist.\nKarnataka - 580011, IN-KA`, 30, y, { width: 280 });
+        
+        const sToAddr = order.shippingAddress || bAddr;
+        doc.fontSize(9).font('Helvetica-Bold').text(getName(sToAddr), 350, y);
+        y += 12;
+        doc.fontSize(8).font('Helvetica').text(`${sToAddr.addressLine || 'N/A'}\n${sToAddr.city || 'N/A'}, ${sToAddr.state || 'Karnataka'}, IN-KA`, 350, y, { width: 220 });
+        
+        y += 45;
+        doc.moveTo(30, y).lineTo(565, y).lineWidth(0.5).stroke('#000000');
+        y += 15;
+    } else {
+        y += 5;
+        doc.moveTo(30, y).lineTo(565, y).lineWidth(0.5).stroke('#000000');
+        y += 15;
+    }
+
+    if (isDetailed) {
+        y = renderPlatformTable(doc, order, y);
+    } else {
+        y = renderItemsTable(doc, order, y);
+    }
     
-    y = 210;
-    renderAddresses(doc, order, y, getName, false);
-    
-    y = 350;
-    renderItemsTable(doc, order, y, true); // show platform fees
-    
-    renderFooter(doc, order, 750);
+    renderFooter(doc, order, Math.min(y + 20, 650));
 }
 
 function renderHeader(doc, logoDataUrl, title, orderId) {
-    // Left side: title + order ID
-    doc.fontSize(16).font('Helvetica-Bold').fillColor('#000000').text(title, 30, 35);
-    doc.fontSize(10).font('Helvetica').fillColor('#444444').text(`#${orderId}`, 30, 58);
+    doc.fontSize(22).font('Helvetica-Bold').fillColor('#000000').text(title.toUpperCase(), 30, 35);
+    doc.fontSize(12).font('Helvetica').text(`#${orderId}`, 30, 65);
 
-    // Right side: logo + brand name + tagline
     if (logoDataUrl) {
         try {
             const logoBuffer = Buffer.from(logoDataUrl.split(',')[1], 'base64');
-            doc.image(logoBuffer, 430, 22, { width: 30 });
+            doc.image(logoBuffer, 410, 22, { width: 45 });
         } catch (e) {}
     }
-    doc.fontSize(18).font('Helvetica-Bold').fillColor('#1800AD').text('Good', 480, 28, { continued: true });
+    doc.fontSize(18).font('Helvetica-Bold').fillColor('#1800AD').text('Good', 460, 30, { continued: true });
     doc.fontSize(18).font('Helvetica').fillColor('#5BB8FF').text('kart');
-    doc.fontSize(7).font('Helvetica').fillColor('#1800AD').text('Good Deals. Good Life', 480, 52, { width: 80, align: 'center' });
+    doc.fontSize(7).font('Helvetica-Bold').fillColor('#1800AD').text('Good Deals. Good Life', 460, 52, { width: 80, align: 'center' });
 
-    doc.fillColor('#000000');
-    doc.moveTo(30, 85).lineTo(565, 85).lineWidth(1).strokeColor('#cccccc').stroke();
+    doc.moveTo(30, 90).lineTo(565, 90).lineWidth(1.5).stroke('#000000');
 }
 
-function renderOrderDetails(doc, order, y) {
-    doc.fontSize(9).font('Helvetica-Bold').text('Transaction Details', 50, y);
-    doc.fontSize(8).font('Helvetica');
-    doc.text(`Date: ${new Date().toLocaleDateString('en-GB')}`, 50, y + 15);
-    doc.text(`Nature of Supply: Service`, 50, y + 27);
-    doc.text(`Place of Supply: ${(order.billingAddress?.state || 'KARNATAKA').toUpperCase()}`, 350, y + 15);
-}
-
-function renderAddresses(doc, order, y, getName, showShipping) {
-    // Billed From
-    doc.fontSize(9).font('Helvetica-Bold').text('Billed From', 50, y);
-    doc.fontSize(8).font('Helvetica').text(COMPANY_INFO.name, 50, y + 15);
-    doc.fontSize(7).text(`${COMPANY_INFO.addressLine1}, ${COMPANY_INFO.city}, ${COMPANY_INFO.state}`, 50, y + 27);
-    doc.text(`GSTIN: ${COMPANY_INFO.gstin}`, 50, y + 37);
-
-    // Billed To
-    doc.fontSize(9).font('Helvetica-Bold').text('Billed To', 350, y);
-    
-    let currentY = y + 15;
-    
-    // Customer name first
-    doc.fontSize(8).font('Helvetica').fillColor('#000000').text(getName(order.billingAddress || order.shippingAddress), 350, currentY);
-    currentY += 12;
-    
-    const bAddr = order.billingAddress || order.shippingAddress || {};
-    doc.fontSize(7).text(`${bAddr.addressLine || 'N/A'}, ${bAddr.city || ''}`, 350, currentY);
-    currentY += 10;
-    
-    // GST Number
-    const gstNumber = order.gstNumber || order.customerInfo?.gstNumber || bAddr.gstNumber || null;
-    if (gstNumber) {
-        doc.text(`GSTIN: ${gstNumber}`, 350, currentY);
-        currentY += 10;
-    }
-    
-    // Business/Company name BELOW GST number
-    const businessName = order.businessName || 
-                        order.customerInfo?.businessName || 
-                        bAddr.businessName || 
-                        order.shippingAddress?.businessName || 
-                        null;
-    if (businessName) {
-        doc.fontSize(7).font('Helvetica').fillColor('#666666').text('Business: ', 350, currentY, { continued: true });
-        doc.font('Helvetica-Bold').fillColor('#000000').text(businessName);
-        currentY += 10;
-    }
-
-    if (showShipping) {
-        y += 80;
-        doc.fontSize(9).font('Helvetica-Bold').text('Shipped From', 50, y);
-        doc.fontSize(7).font('Helvetica').text(`Seller Location, ${order.sellerAddress?.city || 'India'}`, 50, y + 15);
-
-        doc.fontSize(9).font('Helvetica-Bold').text('Shipped To', 350, y);
-        const sAddr = order.shippingAddress || bAddr;
-        doc.fontSize(8).font('Helvetica').text(getName(sAddr), 350, y + 15);
-        doc.fontSize(7).text(`${sAddr.addressLine || ''}, ${sAddr.city || ''}`, 350, y + 27);
-    }
-}
-
-function renderItemsTable(doc, order, y, showPlatformFee) {
-    const startY = y;
-    doc.fontSize(8).font('Helvetica-Bold');
-    
-    // Headers
-    doc.text('Particulars', 35, y);
-    doc.text('Qty', 180, y);
-    const colPFee = 210;
-    if (showPlatformFee) {
-        doc.text('Platform Fee', colPFee, y);
-    }
-    doc.text('Gross', 260, y);
-    doc.text('Taxable', 320, y);
-    doc.text('GST', 390, y);
-    doc.text('Total', 480, y);
-    
-    y += 15;
-    doc.moveTo(35, y - 3).lineTo(560, y - 3).lineWidth(0.5).stroke();
-
-    const platformFeeBreakdown = order.platformFeeBreakdown || {
-        digitalSecurityFee: 1.2, merchantVerification: 1.0, transitCare: 0.8, platformMaintenance: 0.5, qualityHandling: 0.0
-    };
-    const pfPercent = Object.values(platformFeeBreakdown).reduce((s, v) => s + (typeof v === 'number' ? v : (v.percent || 0)), 0);
-    const effectivePFPercent = pfPercent * 1.18;
-    
-    // Use effective platform fee if cap was applied
-    const effectivePlatformFee = order.effectivePlatformFee || null;
-
-    let tQty = 0, tGross = 0, tTaxable = 0, tGST = 0, tPFee = 0;
-
-    (order.items || []).forEach(item => {
-        const qty = item.quantity || 1;
-        const inclusivePrice = item.priceWithGST || item.price || 0;
-        const gstP = item.gstPercent || 18;
-        
-        const taxableUnitPrice = inclusivePrice / (1 + (gstP / 100));
-        const taxableAmount = taxableUnitPrice * qty;
-        const grossAmount = inclusivePrice * qty;
-        const gstAmount = grossAmount - taxableAmount;
-        
-        const pFeeAmount = showPlatformFee ? (taxableAmount * effectivePFPercent / 100) : 0;
-        const lineTotal = grossAmount + pFeeAmount;
-
-        tQty += qty; tGross += grossAmount; tTaxable += taxableAmount; tGST += gstAmount; tPFee += pFeeAmount;
-
-        doc.fontSize(7).font('Helvetica');
-        doc.text(item.name || 'Product', 35, y, { width: 140 });
-        doc.text(qty.toFixed(1), 180, y);
-        if (showPlatformFee) doc.text(pFeeAmount.toFixed(2), colPFee, y);
-        doc.text(grossAmount.toFixed(2), 260, y);
-        doc.text(taxableAmount.toFixed(2), 320, y);
-        doc.text(gstAmount.toFixed(2), 390, y);
-        doc.text(lineTotal.toFixed(2), 480, y);
-        y += 20;
-    });
-
-    doc.moveTo(35, y - 5).lineTo(560, y - 5).lineWidth(1).stroke();
-    
-    // Summary
-    doc.font('Helvetica-Bold');
-    doc.text('TOTAL', 35, y);
-    doc.text(tQty.toFixed(1), 180, y);
-    if (showPlatformFee) doc.text(tPFee.toFixed(2), colPFee, y);
-    doc.text(tGross.toFixed(2), 260, y);
-    doc.text(tTaxable.toFixed(2), 320, y);
-    doc.text(tGST.toFixed(2), 390, y);
-    doc.text((tGross + tPFee).toFixed(2), 480, y);
-    
+function renderItemsTable(doc, order, y) {
+    const cols = [30, 210, 250, 280, 350, 420, 475, 525];
+    doc.fontSize(7).font('Helvetica-Bold').rect(30, y, 535, 20).fill('#f9fafb').stroke('#000000');
+    doc.fillColor('#000000').text('Particulars', 35, y + 6).text('SAC', cols[1], y + 6).text('Qty', cols[2], y + 6).text('Gross', cols[3], y + 6).text('Taxable', cols[4], y + 6).text('SGST', cols[5], y + 6).text('CGST', cols[6], y + 6).text('Total', cols[7], y + 6);
     y += 20;
-    doc.fontSize(8);
-    doc.text('Shipping Charges', 320, y);
-    doc.text(`+ ₹${(order.estimatedShippingCharge || 0).toFixed(2)}`, 480, y);
     
-    const disc = order.couponDiscount || order.discountValue || 0;
-    if (disc > 0) {
-        y += 12;
-        doc.fillColor('#059669').font('Helvetica-Bold').text('DISCOUNT VALUE (COUPON)', 320, y);
-        doc.text(`- ₹${disc.toFixed(2)}`, 480, y);
-        doc.fillColor('#000000').font('Helvetica');
-    }
+    let tGross = 0;
+    (order.items || []).forEach(item => {
+        const qty = item.quantity || 1, price = item.priceWithGST || item.price || 0, gst = item.gstPercent || 18;
+        const taxable = price / (1 + (gst / 100)) * qty, gross = price * qty;
+        tGross += gross;
+        
+        doc.fontSize(7).font('Helvetica').rect(30, y, 535, 25).stroke('#000000');
+        doc.text(item.name || 'Product', 35, y + 5, { width: 170 });
+        doc.fontSize(6).fillColor('#666666').text(`SAC: 996511 | GST ${gst}%`, 35, y + 15);
+        doc.fillColor('#000000').fontSize(7).text('996511', cols[1], y + 10).text(qty.toFixed(1), cols[2], y + 10).text(`₹${gross.toFixed(2)}`, cols[3], y + 10).text(`₹${taxable.toFixed(2)}`, cols[4], y + 10).text(`₹${((gross-taxable)/2).toFixed(2)}`, cols[5], y + 10).text(`₹${((gross-taxable)/2).toFixed(2)}`, cols[6], y + 10).font('Helvetica-Bold').text(`₹${gross.toFixed(2)}`, cols[7], y + 10);
+        y += 25;
+    });
     
-    y += 15;
-    doc.fontSize(10).font('Helvetica-Bold').text('GRAND TOTAL', 320, y);
-    const grandTotal = order.total || (tGross + tPFee + (order.estimatedShippingCharge || 0) - disc);
-    doc.text(`₹${grandTotal.toFixed(2)}`, 480, y);
+    doc.rect(30, y, 535, 20).fill('#f3f4f6').stroke('#000000').fillColor('#000000').fontSize(8).text('GRAND TOTAL (PRODUCTS)', 380, y + 6).text(`₹${tGross.toFixed(2)}`, cols[7], y + 6);
+    return y + 20;
+}
+
+function renderPlatformTable(doc, order, y) {
+    const cols = [30, 210, 250, 320, 390, 460, 525];
+    doc.fontSize(7).font('Helvetica-Bold').rect(30, y, 535, 20).fill('#f9fafb').stroke('#000000');
+    doc.fillColor('#000000').text('Particulars', 35, y + 6).text('SAC', cols[1], y + 6).text('Fee', cols[2], y + 6).text('Taxable', cols[3], y + 6).text('CGST', cols[4], y + 6).text('SGST', cols[5], y + 6).text('Total', cols[6], y + 6);
+    y += 20;
+    
+    let tTaxable = 0;
+    (order.items || []).forEach(i => tTaxable += (i.priceWithGST || i.price || 0) / (1 + (i.gstPercent || 18) / 100) * (i.quantity || 1));
+    const pfBase = tTaxable * 0.035, pfTotal = pfBase * 1.18;
+    
+    doc.fontSize(7).font('Helvetica').rect(30, y, 535, 25).stroke('#000000').text('Platform Service Fee', 35, y + 5).fontSize(6).fillColor('#666666').text('SAC: 998314', 35, y + 15).fillColor('#000000').fontSize(7).text('998314', cols[1], y + 10).text(`₹${pfBase.toFixed(2)}`, cols[2], y + 10).text(`₹${pfBase.toFixed(2)}`, cols[3], y + 10).text(`₹${(pfBase*0.09).toFixed(2)}`, cols[4], y + 10).text(`₹${(pfBase*0.09).toFixed(2)}`, cols[5], y + 10).font('Helvetica-Bold').text(`₹${pfTotal.toFixed(2)}`, cols[6], y + 10);
+    y += 25;
+    
+    const shipping = order.estimatedShippingCharge || 0, disc = order.couponDiscount || 0;
+    doc.rect(30, y, 535, 20).fill('#f3f4f6').stroke('#000000').fillColor('#000000').fontSize(8).text('GRAND TOTAL', 380, y + 6).text(`₹${(pfTotal + shipping - disc).toFixed(2)}`, cols[6], y + 6);
+    return y + 20;
 }
 
 function renderFooter(doc, order, y) {
-    doc.fontSize(8).font('Helvetica-Oblique').fillColor('#666666').text('This is a computer generated invoice, no need for digital signature', 0, y, { align: 'center', width: 595 });
-    doc.fontSize(10).font('Helvetica-Bold').fillColor('#000000').text('Thank you for Shopping!', 0, y + 20, { align: 'center', width: 595 });
+    const paid = (order.paymentStatus === 'Completed' || order.paymentStatus === 'Collected');
+    doc.rect(30, y, 535, 40).fill(paid ? '#f0fdf4' : '#fffbeb').stroke('#cccccc');
+    doc.fillColor('#666666').fontSize(7).font('Helvetica-Bold').text('PAYMENT METHOD', 50, y + 10).text('PAYMENT STATUS', 450, y + 10);
+    doc.fillColor('#000000').fontSize(10).text((order.paymentMethod || 'N/A').toUpperCase(), 50, y + 22);
+    doc.fillColor(paid ? '#059669' : '#d97706').text(paid ? 'PAID' : 'PENDING', 450, y + 22);
+    
+    y += 50;
+    doc.fillColor('#666666').fontSize(8).font('Helvetica-Oblique').text('Computer generated invoice.', 30, y, { align: 'center', width: 535 });
+    y += 20;
+    doc.fillColor('#000000').fontSize(9).font('Helvetica-Bold').text('Thank you!', 30, y);
+    doc.rect(500, y, 60, 60).stroke('#000000').text('QR', 500, y + 25, { align: 'center', width: 60 });
 }
