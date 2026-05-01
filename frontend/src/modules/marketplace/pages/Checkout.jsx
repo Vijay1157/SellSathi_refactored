@@ -445,7 +445,7 @@ export default function Checkout() {
                     amount: orderResult.order.amount,
                     currency: orderResult.order.currency,
                     order_id: orderResult.order.id,
-                    name: 'GudKart',
+                    name: 'Goodkart',
                     description: 'Order Payment',
                     image: '/logo.png',
                     handler: async function (response) {
@@ -898,7 +898,7 @@ export default function Checkout() {
                             <h1 className="text-2xl font-black text-gray-900 tracking-tight">
                                 Checkout <span className="text-gray-400 font-light">Process</span>
                             </h1>
-                            <p className="text-sm text-gray-500 font-medium mt-0.5">Securely complete your purchase at GudKart</p>
+                            <p className="text-sm text-gray-500 font-medium mt-0.5">Securely complete your purchase at Goodkart</p>
                         </div>
                     </div>
                 </div>

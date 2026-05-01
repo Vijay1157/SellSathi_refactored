@@ -609,7 +609,7 @@ export default function AuthModal({ isOpen, onClose, onSuccess, hideRegister, se
     };
 
     const headerTitle = isEmailLogin ? 'Login with' : isEmailSignup ? 'Register with' : step === 'phone' ? (isRegistering ? 'Create' : 'Welcome to') : 'Verify';
-    const headerBrand = isEmailSignup || isEmailLogin ? 'Email' : 'GudKart';
+    const headerBrand = isEmailSignup || isEmailLogin ? 'Email' : 'Goodkart';
     const headerSub = isEmailLogin ? 'Enter your credentials to login' : isEmailSignup ? 'Create an account using your email' : step === 'phone' ? (isRegistering ? 'Fill in your details to get started' : 'Login to your account') : `OTP sent to +91 ${phone}`;
     const HeaderIcon = isEmailSignup || isEmailLogin ? Mail : step === 'phone' ? UserIcon : ShieldCheck;
 

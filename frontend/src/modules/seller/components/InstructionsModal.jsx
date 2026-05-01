@@ -120,7 +120,7 @@ export default function InstructionsModal({ onClose }) {
                                 margin: '0 0 1rem 0',
                                 lineHeight: '1.2'
                             }}>
-                                Complete Guide to Becoming a Seller on GudKart
+                                Complete Guide to Becoming a Seller on Goodkart
                             </h2>
                             <p style={{ 
                                 fontSize: '1rem', 

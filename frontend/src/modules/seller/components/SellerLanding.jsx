@@ -4,7 +4,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import SellerHeader from '@/modules/seller/components/SellerHeader';
 import Footer from '@/modules/seller/components/Footer';
 import StatsSection from '@/modules/seller/components/StatsSection';
-import WhyGudKart from '@/modules/seller/components/WhySellSathi';
+import WhyGoodkart from '@/modules/seller/components/WhySellSathi';
 import HowItWorks from '@/modules/seller/components/HowItWorks';
 import Testimonials from '@/modules/seller/components/Testimonials';
 import { ArrowRight, BookOpen, Truck, Rocket, BarChart3, Mail, Zap, Play } from 'lucide-react';
@@ -30,7 +30,7 @@ export default function SellerLanding() {
                 Sell Online to Crores of Customers at <span style={{ color: '#3B7CF1' }}>0% Commission</span>
               </h1>
               <p className="text-xl text-gray-600 mb-10 max-w-2xl mx-auto lg:mx-0">
-                Become a GudKart seller and grow your business across India.
+                Become a Goodkart seller and grow your business across India.
               </p>
 
               <button
@@ -48,7 +48,7 @@ export default function SellerLanding() {
 
               <p className="text-sm text-gray-500 mt-4">
                 <span className="bg-brand text-white text-[10px] font-bold px-2 py-0.5 rounded mr-2">NEW</span>
-                Don't have a GSTIN? You can still sell on GudKart.{' '}
+                Don't have a GSTIN? You can still sell on Goodkart.{' '}
                 <Link to="#" className="text-brand font-semibold hover:underline">Know more</Link>
               </p>
             </motion.div>
@@ -64,7 +64,7 @@ export default function SellerLanding() {
       </section>
 
       <StatsSection />
-      <WhyGudKart />
+      <WhyGoodkart />
       <HowItWorks />
       <Testimonials />
 
@@ -76,7 +76,7 @@ export default function SellerLanding() {
                 <BookOpen size={20} className="md:w-6 md:h-6" />
                 <span className="font-bold tracking-widest uppercase text-xs md:text-sm">SUPPLIER LEARNING HUB</span>
               </div>
-              <h2 className="text-2xl md:text-4xl font-bold text-white mb-2 leading-tight">Learn how to sell and grow your business on GudKart</h2>
+              <h2 className="text-2xl md:text-4xl font-bold text-white mb-2 leading-tight">Learn how to sell and grow your business on Goodkart</h2>
             </div>
             <button className="w-full md:w-auto px-8 py-4 rounded-2xl bg-white text-brand font-bold text-base md:text-lg hover:bg-gray-50 transition-all flex items-center justify-center gap-2 whitespace-nowrap">
               <Play fill="currentColor" size={18} /> Visit Learning Hub
@@ -87,7 +87,7 @@ export default function SellerLanding() {
 
       <section className="py-16 md:py-24 bg-white">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-          <h2 className="text-2xl md:text-4xl font-bold text-gray-900 mb-10 md:mb-16 text-center tracking-tight">Grow Your Business With GudKart</h2>
+          <h2 className="text-2xl md:text-4xl font-bold text-gray-900 mb-10 md:mb-16 text-center tracking-tight">Grow Your Business With Goodkart</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-8">
             {[
               { icon: Truck, title: "Efficient & Affordable Shipping", desc: "Sell your products across India with our vast logistics network covering 28,000+ pincodes." },
@@ -130,10 +130,10 @@ export default function SellerLanding() {
           <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-brand/5 text-brand mb-8">
             <Mail size={32} />
           </div>
-          <h2 className="text-3xl font-bold text-gray-900 mb-4">GudKart Supplier Support Available 24/7</h2>
+          <h2 className="text-3xl font-bold text-gray-900 mb-4">Goodkart Supplier Support Available 24/7</h2>
           <p className="text-gray-600 mb-8">Have questions? We're here to help you every step of the way.</p>
-          <a href="mailto:support@GudKart.com" className="text-2xl font-bold hover:underline" style={{ color: '#3B7CF1' }}>
-            support@GudKart.com
+          <a href="mailto:support@Goodkart.com" className="text-2xl font-bold hover:underline" style={{ color: '#3B7CF1' }}>
+            support@Goodkart.com
           </a>
         </div>
       </section>

@@ -7,21 +7,21 @@ const testimonials = [
     name: "Amit & Rajat",
     business: "Smartees",
     city: "Tiruppur",
-    quote: "Our business has grown beyond our imagination, getting upto 10,000 orders consistently during sale days. We are now constantly bringing new products thanks to GudKart's insights.",
+    quote: "Our business has grown beyond our imagination, getting upto 10,000 orders consistently during sale days. We are now constantly bringing new products thanks to Goodkart's insights.",
     image: "https://picsum.photos/seed/seller1/400/300"
   },
   {
     name: "Suman",
     business: "Keshav Fashion",
     city: "Hisar",
-    quote: "I started selling on GudKart with 4-5 orders on the very first day. In no time I was getting over 1000 orders a day, like a dream come true.",
+    quote: "I started selling on Goodkart with 4-5 orders on the very first day. In no time I was getting over 1000 orders a day, like a dream come true.",
     image: "https://picsum.photos/seed/seller2/400/300"
   },
   {
     name: "Mohit Rathi",
     business: "Meira Jewellery",
     city: "Ahmedabad",
-    quote: "GudKart made it extremely simple to transition to online business during lockdown. Suddenly we were all over India to our surprise, seeing up to 5X growth on sale days.",
+    quote: "Goodkart made it extremely simple to transition to online business during lockdown. Suddenly we were all over India to our surprise, seeing up to 5X growth on sale days.",
     image: "https://picsum.photos/seed/seller3/400/300"
   }
 ];

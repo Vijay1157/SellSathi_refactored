@@ -253,7 +253,7 @@ const SellerOnboarding = () => {
       >
         <div className="relative z-10">
           <Link to="/" className="inline-flex items-center gap-2 text-white/60 hover:text-white mb-4 lg:mb-12 transition-colors text-sm">
-            <ArrowLeft size={18} /> Back to GudKart
+            <ArrowLeft size={18} /> Back to Goodkart
           </Link>
 
           <div className="flex items-center gap-3 mb-4 lg:mb-12">
@@ -262,12 +262,12 @@ const SellerOnboarding = () => {
             </div>
             <div>
               <h3 className="text-lg lg:text-xl font-bold">Seller Center</h3>
-              <p className="text-white/60 text-xs lg:text-sm">GudKart for Business</p>
+              <p className="text-white/60 text-xs lg:text-sm">Goodkart for Business</p>
             </div>
           </div>
 
           <h1 className="text-2xl sm:text-3xl lg:text-6xl font-bold leading-tight mb-3 lg:mb-8">
-            Grow your business with GudKart
+            Grow your business with Goodkart
           </h1>
           <p className="hidden sm:block text-base lg:text-xl text-white/80 max-w-md mb-6 lg:mb-12">
             Reach millions of customers and scale your brand with powerful selling tools.

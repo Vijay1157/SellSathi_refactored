@@ -15,15 +15,15 @@ import CartNotification from '@/modules/shared/components/common/CartNotificatio
 import WishlistNotification from '@/modules/shared/components/common/WishlistNotification';
 import './Navbar.css';
 
-function GudKartLogo() {
+function GoodkartLogo() {
     return (
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <img src="/gudkart-logo.png" alt="" style={{ height: '60px', width: '60px', objectFit: 'contain' }} />
+            <img src="/goodkart-logo.png" alt="" style={{ height: '60px', width: '60px', objectFit: 'contain' }} />
             <span style={{ fontFamily: 'Inter, sans-serif', lineHeight: 1, letterSpacing: '-0.5px', display: 'flex', flexDirection: 'column' }}>
                 <span>
-                    <span style={{ fontSize: '2rem', fontWeight: 900, color: '#1800AD' }}>Gud</span><span style={{ fontSize: '2rem', fontWeight: 400, color: '#5BB8FF' }}>kart</span>
+                    <span style={{ fontSize: '2rem', fontWeight: 900, color: '#1800AD' }}>Good</span><span style={{ fontSize: '2rem', fontWeight: 400, color: '#5BB8FF' }}>kart</span>
                 </span>
-                <span style={{ fontSize: '0.65rem', fontWeight: 600, color: '#1800AD', letterSpacing: '0.3px', marginTop: '2px', textAlign: 'center' }}>Gud Deals. Gud Life</span>
+                <span style={{ fontSize: '0.65rem', fontWeight: 600, color: '#1800AD', letterSpacing: '0.3px', marginTop: '2px', textAlign: 'center' }}>Good Deals. Good Life</span>
             </span>
         </div>
     );
@@ -416,11 +416,11 @@ export default function Navbar() {
                     <div className="container main-nav">
                         {location.pathname === '/' ? (
                             <div className="brand-logo" style={{ cursor: 'default' }}>
-                                <GudKartLogo />
+                                <GoodkartLogo />
                             </div>
                         ) : (
                             <Link to="/" className="brand-logo">
-                                <GudKartLogo />
+                                <GoodkartLogo />
                             </Link>
                         )}
 
