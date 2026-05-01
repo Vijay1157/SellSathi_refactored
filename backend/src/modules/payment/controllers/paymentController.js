@@ -116,8 +116,8 @@ const verifyPayment = async (req, res) => {
 
         const orderRef = await db.collection("orders").add(orderData);
 
-        // START BACKGROUND TASKS - DO NOT AWAIT
-        processPostOrderTasks(orderData, orderRef);
+        // START BACKGROUND TASKS - use setImmediate for true non-blocking
+        setImmediate(() => processPostOrderTasks(orderData, orderRef));
 
         return res.status(200).json({ success: true, orderId: orderData.orderId, documentId: orderRef.id });
     } catch (error) {
@@ -160,8 +160,8 @@ const codOrder = async (req, res) => {
 
         const orderRef = await db.collection("orders").add(orderData);
 
-        // START BACKGROUND TASKS - DO NOT AWAIT
-        processPostOrderTasks(orderData, orderRef);
+        // START BACKGROUND TASKS - use setImmediate for true non-blocking
+        setImmediate(() => processPostOrderTasks(orderData, orderRef));
 
         return res.status(200).json({ success: true, orderId: orderData.orderId, documentId: orderRef.id });
     } catch (error) {

@@ -4,7 +4,7 @@ const cache = require('../../../utils/cache');
 const { formatDateDDMMYYYY } = require('../../../utils/dateFormat');
 
 const ADMIN_REVIEWS_CACHE_TTL = 0; // No cache — always fetch fresh for real-time status
-const ADMIN_ANALYTICS_CACHE_TTL = 10 * 60 * 1000; // 10 minutes
+const ADMIN_ANALYTICS_CACHE_TTL = 600; // 10 minutes in seconds
 
 /**
  * Get all reviews for admin dashboard

@@ -1,38 +1,34 @@
 'use strict';
 
-const DEFAULT_TTL = 5 * 60 * 1000; // 5 minutes
+const NodeCache = require('node-cache');
 
-// Dynamic cache store — supports arbitrary keys with configurable TTLs
-const _store = new Map();
+// Initialize NodeCache with a default TTL of 5 minutes (300 seconds)
+const _cache = new NodeCache({ stdTTL: 300, checkperiod: 60 });
 
-/** Returns cached value if still fresh, otherwise null. */
+/** Returns cached value if exists, otherwise null. */
 const get = (key) => {
-    const entry = _store.get(key);
-    if (entry && entry.data !== null && Date.now() - entry.ts < (entry.ttl || DEFAULT_TTL)) {
-        return entry.data;
-    }
-    return null;
+    return _cache.get(key) || null;
 };
 
-/** Stores value with current timestamp and optional TTL. */
-const set = (key, data, ttl = DEFAULT_TTL) => {
-    _store.set(key, { data, ts: Date.now(), ttl });
+/** Stores value with optional TTL (in seconds). */
+const set = (key, data, ttlSeconds = 300) => {
+    _cache.set(key, data, ttlSeconds);
 };
 
 /** Invalidates one or more keys (all if none specified). */
 const invalidate = (...keys) => {
     if (keys.length === 0) {
-        _store.clear();
+        _cache.flushAll();
     } else {
-        keys.forEach(k => _store.delete(k));
+        keys.forEach(k => _cache.del(k));
     }
 };
 
-/** Invalidate all keys matching a prefix (e.g. 'products_' clears all product caches). */
+/** Invalidate all keys matching a prefix. */
 const invalidatePrefix = (prefix) => {
-    for (const key of _store.keys()) {
-        if (key.startsWith(prefix)) _store.delete(key);
-    }
+    const keys = _cache.keys();
+    const keysToDelete = keys.filter(k => k.startsWith(prefix));
+    _cache.del(keysToDelete);
 };
 
 module.exports = { get, set, invalidate, invalidatePrefix };

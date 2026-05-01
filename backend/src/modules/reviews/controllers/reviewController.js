@@ -2,7 +2,7 @@
 const { admin, db } = require('../../../config/firebase');
 const cache = require('../../../utils/cache');
 
-const REVIEWS_CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+const REVIEWS_CACHE_TTL = 300; // 5 minutes in seconds
 
 /**
  * Handle new product review submission.

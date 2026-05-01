@@ -2,11 +2,11 @@
 const { admin, db } = require('../../../config/firebase');
 const cache = require('../../../utils/cache');
 
-const PRODUCTS_CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+const PRODUCTS_CACHE_TTL = 60; // 60 seconds as per optimization report
 
 /**
  * Get all available products (Public).
- * Cached by category for 5 minutes to minimize Firestore reads.
+ * Cached by category for 60 seconds to minimize Firestore reads.
  */
 const getAllProducts = async (req, res) => {
     try {
@@ -52,7 +52,7 @@ const getProductById = async (req, res) => {
         if (data.adminRemoved) return res.status(404).json({ success: false, message: "Product not found" });
 
         const product = { id: doc.id, ...data };
-        cache.set(cacheKey, product, 10 * 60 * 1000);
+        cache.set(cacheKey, product, 600); // 10 minutes in seconds
         return res.status(200).json({ success: true, product });
     } catch (error) {
         return res.status(500).json({ success: false, message: "Failed to fetch product" });
@@ -72,7 +72,7 @@ const getSellerProducts = async (req, res) => {
         const snapshot = await db.collection('products').where('sellerId', '==', uid).get();
         const products = snapshot.docs
             .map(doc => ({ id: doc.id, ...doc.data() }));
-        cache.set(cacheKey, products, PRODUCTS_CACHE_TTL);
+        cache.set(cacheKey, products, 300); // 5 minutes in seconds
         return res.status(200).json({ success: true, products });
     } catch (error) {
         console.error('[GetSellerProducts] ERROR:', error);

@@ -2,7 +2,7 @@
 const { admin, db } = require('../../../config/firebase');
 const cache = require('../../../utils/cache');
 
-const CONSUMER_CACHE_TTL = 2 * 60 * 1000; // 2 minutes
+const CONSUMER_CACHE_TTL = 120; // 2 minutes in seconds
 
 /**
  * Get user cart.

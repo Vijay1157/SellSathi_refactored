@@ -4,7 +4,7 @@ const cache = require('../../../utils/cache');
 const { formatDateDDMMYYYY } = require('../../../utils/dateFormat');
 const shiprocketService = require('../../../shared/services/shiprocketService');
 
-const SELLER_DASH_TTL = 3 * 60 * 1000; // 3 minutes
+const SELLER_DASH_TTL = 180; // 3 minutes in seconds
 
 /**
  * Get seller dashboard data.

@@ -3,7 +3,7 @@ const { admin, db } = require('../../../config/firebase');
 const cache = require('../../../utils/cache');
 const { formatDateDDMMYYYY } = require('../../../utils/dateFormat');
 
-const ADMIN_ORDERS_CACHE_TTL = 3 * 60 * 1000; // 3 minutes
+const ADMIN_ORDERS_CACHE_TTL = 180; // 3 minutes in seconds
 
 /**
  * Get all orders for admin management.
